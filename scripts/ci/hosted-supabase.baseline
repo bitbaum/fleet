@@ -1,0 +1,13 @@
+# References to the RETIRED managed-cloud Supabase projects that are allowed to
+# stay, because their job is to record that we left. Everything else fails
+# hosted-supabase-audit.sh.
+#
+# Format: <repo>/<path>   # why this one is legitimate
+#
+# This list may FALL or hold. It may never RISE without a human deciding so in
+# the same PR that adds the line.
+
+fleetcrown/docs/infrastructure/hetzner-migration.md  # the migration's own record of what we moved off
+orangecat/.claude/CLAUDE.md                          # warns the cloud project is retired — that is the point
+orangecat/docs/operations/DECOMMISSION-CLOUD.md      # the decommission runbook must name what it decommissioned
+orangecat/next.config.js                             # comment marking the retired host, beside the rule that replaced it
