@@ -64,7 +64,14 @@ implementations.
 `sitekit` — substrata (proving consumer, converted the day the package
 shipped: −577 lines of local renderer, and its test now validates the whole
 site against the shared schema, so a breaking schema change fails in the
-consumer's CI first). **Next: camille-boulangerie
+consumer's CI first) **and camille-boulangerie** (merged + live 2026-08-28;
+its rebuild forced `feature`/`contact`/`faq`/hero-actions/card-icons into
+v0.2.0 — the union grows only when a real site cannot be expressed).
+**s-ink: assessed and deliberately NOT adopted** — it is a current Next
+16.3 app with seven-locale `app/[locale]` routing, a works gallery and an
+enquiry API; sitekit has no locale concept or gallery kind, so adoption
+would regress a real client's live site for nothing. Grow the union on the
+first multilingual PROSPECT instead, the way camille grew it. **Next: camille-boulangerie
 (PR open — it forced `feature`/`contact`/`faq`/hero-actions into v0.2.0), then
 s-ink (sinktattoo.com)** — real sites make the union's gaps visible on sites we
 own before the schema is pointed at strangers. wild-spirit is NOT a straight
