@@ -72,7 +72,7 @@ Usage:
   scripts/ci/find-false-needs.py --strict         # exit 1 if anything is found
 
 Env:
-  GH_OWNER   GitHub owner to enumerate (default: maonakamoto)
+  GH_OWNER   GitHub owner to enumerate (default: bitbaum)
   GH_LIMIT   max repos to inspect (default: 100)
 """
 import json
@@ -87,7 +87,7 @@ try:
 except ImportError:
     sys.exit("needs PyYAML:  pip install --user pyyaml")
 
-OWNER = os.environ.get("GH_OWNER", "maonakamoto")
+OWNER = os.environ.get("GH_OWNER", "bitbaum")
 LIMIT = os.environ.get("GH_LIMIT", "100")
 
 
