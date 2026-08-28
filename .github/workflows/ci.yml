@@ -115,6 +115,9 @@ jobs:
       - name: The model-pin audit still detects, and still stays quiet
         run: node scripts/ci/test-model-pin-audit.mjs
 
+      - name: The hosted-Supabase audit still detects, and still stays quiet
+        run: bash scripts/ci/test-hosted-supabase-audit.sh
+
       # Drift guard. The fleet is on v7; templates handing out v4 is exactly
       # how this repo fell behind the repos it governs.
       - name: No stale action versions
