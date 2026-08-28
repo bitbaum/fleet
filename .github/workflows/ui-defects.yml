@@ -1,0 +1,88 @@
+# Two defect classes that only exist once a page is painted, so no unit test,
+# type check or lint rule in any repo can see them:
+#
+#   - an interactive label below its WCAG AA contrast floor (an action nobody
+#     can find is a feature that does not exist)
+#   - a stack whose rows start at different x, or a wrapped line that does not
+#     align with the line above it
+#
+# Both were reported by the operator in plain language — "i dont see it" and
+# "this area looks bad. not aligned" — after every gate in the repo was green.
+#
+# A rule nothing enforces is a suggestion. This runs on a schedule and reports
+# into the job summary, where a human actually looks.
+name: UI defects
+
+on:
+  schedule:
+    # Weekly. These defects arrive with design changes, not with every commit;
+    # a daily run would be noise nobody reads twice.
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Fail the run when sites have defects'
+        type: boolean
+        default: false
+      sites:
+        description: 'Comma-separated URLs (default: discovered from the fleet footer)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # this repo has no package.json on purpose — it is not an npm project.
+      # Install the browser into a scratch directory and point the audit at it.
+      - name: Install playwright
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund playwright >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Self-test the detector
+        # Runs BEFORE the sweep, deliberately. A detector that has silently
+        # stopped catching anything reports a clean fleet, and a clean report
+        # from a broken detector is worse than no report at all — it is an
+        # absent check that produces a ✓. The fixtures pin both sides: the real
+        # defect is still caught, correct markup stays silent.
+        env:
+          PLAYWRIGHT_FROM: ${{ runner.temp }}/pw
+        run: node scripts/ci/test-ui-defect-audit.mjs
+
+      - name: Audit the fleet
+        env:
+          PLAYWRIGHT_FROM: ${{ runner.temp }}/pw
+          SITES: ${{ inputs.sites }}
+        run: |
+          set -uo pipefail
+          flag=--warn-only
+          if [ "${{ inputs.strict }}" = "true" ]; then flag=""; fi
+
+          # Report goes to the job summary, not just the log: a finding nobody
+          # scrolls to is the same as no finding.
+          {
+            echo '## UI defects'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          node scripts/ci/ui-defect-audit.mjs $flag 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

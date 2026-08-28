@@ -1,0 +1,43 @@
+# GOLDEN CI FLOOR — npm repos. See templates/ci/README.md.
+# Copy to .github/workflows/ci.yml and adjust step commands to the repo's scripts.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push makes the older run obsolete — don't waste minutes finishing it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # SSOT: "verified" is defined ONCE, in package.json `verify`
+      # (= lint + typecheck + test), and run identically here and locally via
+      # `npm run verify`. Change the checks in one place, not two.
+      - name: Verify
+        run: npm run verify
+
+      - name: Build
+        # Hermetic compile: proves the shipped artifact builds. Placeholder DB
+        # URL covers tools that read the var without connecting.
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+        run: npm run build

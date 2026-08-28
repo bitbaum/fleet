@@ -1,0 +1,99 @@
+# Is any model id this fleet pins still served by its vendor?
+#
+# On 2026-08-26 the AOZ assistant reported "KI-Assistent nicht konfiguriert" on
+# a deployment whose key was valid. Groq had retired the whole llama-3.x family.
+# Production had been failing exactly as long as the demo, and nobody knew,
+# because "not configured" is the only thing the app can say.
+#
+# Six pins across five repos were dead the same morning. None of it was
+# detectable from inside a repo: every gate was green, because the code is
+# correct and the vendor changed underneath it.
+#
+# Daily, not weekly. A retirement is decided by someone outside this fleet and
+# lands without warning — unlike the UI defects next door, which arrive with a
+# design change. The check costs ZERO tokens (one GET /models per vendor), so
+# the only argument against running it often is noise, and a silent day is one
+# line in a job summary.
+name: Model pins
+
+on:
+  schedule:
+    # 07:10 UTC, before the working day — a retirement found at 09:00 is a
+    # morning's work; one found by a user is an outage of unknown age.
+    - cron: '10 7 * * *'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Fail the run when pins are retired'
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - 'scripts/ci/model-pin-audit.mjs'
+      - 'scripts/ci/test-model-pin-audit.mjs'
+      - '.github/workflows/model-pins.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # The detector's own test needs no network, no key and no checkout, so it
+      # runs on pull_request too — where the sweep below cannot, because a fork
+      # has no secrets and an unreadable catalogue is deliberately not a pass.
+      - name: Self-test the detector
+        run: node scripts/ci/test-model-pin-audit.mjs
+
+      # this repo has no package.json on purpose. Install ai-kit into a scratch
+      # dir and point the audit at it — the same shape ui-defects.yml uses for
+      # playwright. The vendor query lives in ai-kit precisely so this repo does
+      # not grow a second copy of it.
+      #
+      # Installed from GitHub rather than npm: ai-kit v0.3.0 is tagged and built
+      # but not on the registry, because the repo has no NPM_TOKEN. Switch this
+      # to `npm i ai-kit` once it does.
+      - name: Install ai-kit
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p "$RUNNER_TEMP/air" && cd "$RUNNER_TEMP/air"
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund github:bitbaum/ai-kit#v0.3.0 >/dev/null
+
+      - name: Audit the fleet's pins
+        if: github.event_name != 'pull_request'
+        env:
+          AI_KIT_FROM: ${{ runner.temp }}/air
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Absent keys are handled, not fatal: the vendor is reported UNCHECKED
+          # rather than clean. "I could not look" is not "nothing is wrong".
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          set -uo pipefail
+          flag=--warn-only
+          if [ "${{ inputs.strict }}" = "true" ]; then flag=""; fi
+
+          # Into the job summary, not just the log. A finding nobody scrolls to
+          # is the same as no finding — which is how eight days passed.
+          {
+            echo '## Model pins'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          node scripts/ci/model-pin-audit.mjs $flag 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

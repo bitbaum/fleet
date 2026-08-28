@@ -1,0 +1,101 @@
+# The auto-merge sweep, once, for the whole fleet.
+#
+# Reusable (`workflow_call`). A repo adopts it with ~10 lines instead of a
+# ~400-line copy that will drift — and 22 copies did drift, into 8 versions,
+# each repo's outage fix reaching only itself. See scripts/ci/auto-merge-sweep.sh.
+#
+# The caller keeps its own triggers (workflow_run / schedule) because those are
+# genuinely per-repo: the CI workflow's NAME differs, and `workflow_run` must
+# name it exactly.
+name: Auto-merge sweep (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      base_branch:
+        description: 'Branch PRs merge into (main for most, master for some).'
+        type: string
+        default: main
+      ci_workflow:
+        description: 'CI workflow file whose green run gates a merge.'
+        type: string
+        default: ci.yml
+      rearm_workflows:
+        description: >
+          SPACE-separated workflows to dispatch after a merge, e.g.
+          "ci.yml deploy.yml". The script word-splits this value, so a
+          comma-separated list becomes ONE bogus token, every dispatch fails,
+          and the only symptom is that nothing deploys.
+
+          Load-bearing: a push made with GITHUB_TOKEN triggers NO workflows, so
+          without a working re-arm, merges land and silently never ship — and
+          the sweep still exits 0, so the automation looks healthy throughout.
+        type: string
+        default: ''
+      deploy_workflow:
+        description: >
+          Workflow that ships the base branch, e.g. deploy.yml. EMPTY DISABLES
+          the reconciler, and empty is the default.
+
+          Set it when merges must reach production: a push made with
+          GITHUB_TOKEN emits no workflow_run event — and neither does a run that
+          GITHUB_TOKEN dispatched — so nothing downstream wakes on an automated
+          merge. Rather than trust a trigger, the sweep compares the base tip
+          against the last successful deploy and closes the gap, so a deploy
+          that never fired or fired and failed is retried next sweep instead of
+          leaving a commit merged-but-not-live.
+        type: string
+        default: ''
+      max_run_attempts:
+        description: 'How many times to re-run a run that produced no verdict.'
+        type: string
+        default: '3'
+      ref:
+        description: 'Pin the sweep version (tag/sha of bitbaum/fleet).'
+        type: string
+        default: main
+    secrets:
+      token:
+        description: >
+          Token for merging. GITHUB_TOKEN works for most repos but CANNOT merge
+          a PR that touches .github/workflows — pass a PAT where that matters.
+        required: false
+
+permissions:
+  contents: write # merge the PR
+  pull-requests: write # read PR state, delete the branch
+  actions: write # dispatch the re-arm workflows
+  # Only load-bearing on a PRIVATE repo, which is exactly why it went missing
+  # for so long: the sweep reads statusCheckRollup to decide whether a PR is
+  # green, a public repo answers that with no explicit scope, and the copied
+  # file worked in ~20 public repos. The first private repo to run it
+  # (ivy-portal) failed every sweep with "Resource not accessible by
+  # integration" and merged nothing, ever — indistinguishable from having
+  # nothing to merge.
+  checks: read
+  statuses: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Check out the SWEEP, not the caller. The script talks to the caller repo
+      # entirely through the API (GH_REPO), so it never needs that checkout —
+      # and not taking one keeps a repo's own contents from influencing how its
+      # PRs get merged.
+      - uses: actions/checkout@v7
+        with:
+          repository: bitbaum/fleet
+          ref: ${{ inputs.ref }}
+
+      - name: Sweep
+        env:
+          GH_TOKEN: ${{ secrets.token || github.token }}
+          GH_REPO: ${{ github.repository }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
+          CI_WORKFLOW: ${{ inputs.ci_workflow }}
+          REARM_WORKFLOWS: ${{ inputs.rearm_workflows }}
+          DEPLOY_WORKFLOW: ${{ inputs.deploy_workflow }}
+          MAX_RUN_ATTEMPTS: ${{ inputs.max_run_attempts }}
+        run: bash scripts/ci/auto-merge-sweep.sh

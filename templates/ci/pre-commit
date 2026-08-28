@@ -1,0 +1,21 @@
+#!/usr/bin/env sh
+# GOLDEN PRE-COMMIT — the local half of the floor. See templates/ci/README.md.
+# CI protects the shared branch; this catches the same classes one step earlier
+# so you don't burn a CI round-trip on a typo. Bypassable with --no-verify, so it
+# is a convenience, NOT the guarantee — CI is the guarantee.
+#
+# Install into a repo: copy to .husky/pre-commit (repo must have husky), or wire
+# via `git config core.hooksPath`. Requires lint-staged for the staged-file pass.
+
+# 1) Committed-secret guard (lifted from botsmann — propagate everywhere).
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -v '\.env' | grep -v 'node_modules' || true)
+if [ -n "$STAGED" ]; then
+  if echo "$STAGED" | xargs -r rg -l \
+    "(SUPABASE_SERVICE_ROLE_KEY=\"eyJ[A-Za-z0-9_-]{50,}\"|NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ[A-Za-z0-9_-]{50,}|GROQ_API_KEY=gsk_[A-Za-z0-9]{30,}|VERCEL_OIDC_TOKEN=eyJ[A-Za-z0-9_-]{100,}|SUPABASE_ACCESS_TOKEN=sbp_[A-Za-z0-9]{30,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)" 2>/dev/null; then
+    echo "[SECURITY] Potential secret in staged files. Commit aborted (override: --no-verify)." >&2
+    exit 1
+  fi
+fi
+
+# 2) Lint + typecheck the staged change.
+npx lint-staged

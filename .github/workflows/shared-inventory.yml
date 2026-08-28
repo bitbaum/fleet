@@ -1,0 +1,56 @@
+# Duplication is measured, and the measurement is a ratchet.
+#
+# Every duplication in this fleet was already known before it was measured —
+# orangecat's rate-limiting ADR has sat "Proposed" since January while the count
+# went from two to four. Knowing has never changed the number. A weekly report
+# that nobody can act on would repeat that mistake, so the report exists to make
+# the trend visible and `--check` exists to make it binding.
+name: Shared inventory
+
+on:
+  schedule:
+    # Weekly. Duplication grows on the timescale of features and new repos, not
+    # individual commits — a daily run would be noise, and noise gets muted.
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Fail when duplication has risen'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Measure the fleet
+        env:
+          # Same gap as the verify-floor audit, stated rather than hidden: the
+          # default token reads public repos only, so private ones are silently
+          # omitted. The script prints how many repos it inspected — a drop in
+          # that number is the tell. Set FLEET_READ_TOKEN to cover all of them.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Shared inventory'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          bash scripts/ci/shared-inventory.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: The ratchet — duplication may fall, never rise
+        if: ${{ inputs.strict != false }}
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/shared-inventory.sh --check

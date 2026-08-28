@@ -1,0 +1,68 @@
+# The golden CI floor is defined in templates/ci/README.md: every repo exposes
+# one `verify` = lint && typecheck && test, and CI calls it verbatim. That
+# contract was written down and never checked, so it drifted — repos ship a
+# `verify` that quietly omits a gate, and "verify is green" ends up meaning
+# something different in each one.
+#
+# A rule nothing enforces is a suggestion. This runs the audit on a schedule
+# and reports into the job summary, where a human actually looks.
+name: Verify floor
+
+on:
+  schedule:
+    # Weekly. The floor drifts on the timescale of repos being created, not
+    # commits being pushed — a daily run would be noise.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Fail the run when repos are below the floor'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    # 10 was set when the audit read one file per repo. It now reads
+    # package.json, the git tree (to count test files), the workflow listing and
+    # every workflow body — roughly 150-200 API calls across the fleet, and
+    # local runs take 10-15 minutes. A timeout that kills the job mid-sweep
+    # produces no report at all, which is the precise failure this audit exists
+    # to find: a check that quietly stops checking. Weekly, so the ceiling is
+    # free; it is a backstop against a hang, not a performance target.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Audit the fleet
+        env:
+          # GITHUB_TOKEN is scoped to this repo, but public repo metadata is
+          # readable with any token, so the scheduled run covers the 31 public
+          # repos and silently omits the 3 private ones (as of 2026-08-15).
+          # That is a real gap, stated rather than hidden: the script prints
+          # how many repos it inspected, so a drop is visible. Set a
+          # FLEET_READ_TOKEN secret with `repo` scope to cover all 34.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          flag=--warn-only
+          if [ "${{ inputs.strict }}" = "true" ]; then flag=""; fi
+
+          # Report goes to the job summary, not just the log: a finding nobody
+          # scrolls to is the same as no finding.
+          {
+            echo '## Verify floor'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          bash scripts/ci/verify-floor-audit.sh $flag 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

@@ -1,0 +1,127 @@
+# The fleet's central automation defends every other repo's branch, so its own
+# CI is the last one that may quietly stop working. Moved here from dotfiles
+# 2026-08-28 — this repo is the audits, the templates and the registry; the
+# environment stayed behind.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # Shell must parse. install.sh is what lands on a new machine; a syntax
+      # error there is discovered at the worst possible moment.
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r f; do
+            found=$((found + 1))
+            bash -n "$f"
+          done < <(find . -name '*.sh' -not -path './.git/*')
+          echo "shell syntax: ok ($found script(s) checked)"
+
+      # Every CI template must be valid YAML — a broken template is copied
+      # into a repo and fails there, far from here.
+      - name: Templates are valid YAML
+        run: |
+          set -euo pipefail
+          found=0
+          for f in templates/ci/*.yml; do
+            [ -e "$f" ] || continue
+            found=$((found + 1))
+            python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" "$f"
+          done
+          [ "$found" -gt 0 ] || { echo "no CI templates found — did they move?" >&2; exit 1; }
+          echo "templates parse: ok ($found template(s))"
+
+      # The template's whole premise is that "verified" is defined ONCE, in
+      # package.json `verify`, and CI calls it verbatim. If a template stops
+      # doing that, the premise is gone and nobody would notice.
+      - name: Templates still call the verify SSOT
+        run: |
+          set -euo pipefail
+          for f in templates/ci/ci-npm.yml templates/ci/ci-pnpm.yml; do
+            grep -q 'run verify' "$f" || {
+              echo "$f no longer calls the verify SSOT — the template's core promise" >&2
+              exit 1
+            }
+          done
+          echo "verify SSOT: present in both templates"
+
+      # The fleet audit enforces the template's premise across every repo, so it
+      # is the last thing that may quietly stop working. Its wiring rules are
+      # tested BOTH ways: that each still bites against a violating fixture, and
+      # that conforming shapes are not flagged — a checker that cries wolf gets
+      # ignored, which is the same end state as no checker.
+      #
+      # The rules sit in verify-predicates.sh so they are testable at all: the
+      # audit is remote-only by design, and a rule that can only be exercised by
+      # a live API call is a rule nobody re-tests after editing its regex.
+      - name: The verify-contract rules can still go red
+        run: bash scripts/ci/test-verify-predicates.sh
+
+      # The duplication ratchet's entire value is that it CAN go red. A ratchet
+      # that silently passes while duplication rises certifies the thing it was
+      # built to stop. Its counting half needs the API; its deciding half is
+      # pure text and is tested here against fixtures, with no network.
+      - name: The duplication ratchet can still go red
+        run: bash scripts/ci/test-shared-inventory.sh
+
+      # The stranded-work guard replaces a check that failed by being ignorable:
+      # git-health reported orangecat's 118 dirty files every day for ten days
+      # and changed nothing. This one keys on AGE and stays silent when healthy,
+      # so both failure modes are gates — it must go red on aged work, and it
+      # must stay quiet on a fresh tree, or it gets muted and is then absent.
+      - name: The stranded-work guard can go red, and stays quiet when it should
+        run: bash scripts/fleet/test-stranded-work.sh
+
+      # This one DELETES CHECKOUTS, so its only interesting failure is a false
+      # positive. Every refusal in the predicate is a case that would otherwise
+      # have destroyed the single existing copy of some work, and each is pinned
+      # separately — a combined "unsafe" fixture is exactly what hides one guard
+      # silently inverting.
+      - name: The worktree GC refuses everything it should
+        run: bash scripts/fleet/test-gc-merged-worktrees.sh
+
+      # The sweep decides what ships in every repo that calls it, so it is the
+      # last script here that should be untested — and until now it was. These
+      # run the REAL script against a fake `gh`, exercising shipped control flow
+      # rather than a description of it. Ported from evig, the only repo that
+      # had them, when its copy of the script was centralised.
+      - name: The auto-merge sweep behaves
+        run: bash scripts/ci/test-auto-merge-sweep.sh
+
+      # This detector reports on repos nobody is watching, so its own failure
+      # mode is silence: a clean report from a broken audit is worse than no
+      # audit, because it prints a ✓. Both sides are pinned — the real AOZ
+      # regression is still caught, corrected code stays quiet — plus the two
+      # false positives the first live run produced (xAI's `grok-3-mini` filed
+      # under Groq, and a computed `${...}` id read as a pin). No network, no
+      # key, no checkout, so it runs here as well as in the daily sweep.
+      - name: The model-pin audit still detects, and still stays quiet
+        run: node scripts/ci/test-model-pin-audit.mjs
+
+      # Drift guard. The fleet is on v7; templates handing out v4 is exactly
+      # how this repo fell behind the repos it governs.
+      - name: No stale action versions
+        run: |
+          set -euo pipefail
+          if grep -rnE 'actions/(checkout|setup-node)@v[1-6]\b' templates/; then
+            echo "stale action version in a template — the fleet is on v7" >&2
+            exit 1
+          fi
+          echo "action versions: no stale pins"
