@@ -32,9 +32,10 @@ jobs:
       token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Existing callers that still point at `bitbaum/dotfiles/...@master` keep
-working: dotfiles carries a forwarding shim to this repo. Point new callers
-here.
+All sixteen callers point here directly. The forwarding shim that briefly
+lived in `bitbaum/dotfiles` was removed once the last one migrated — a shim
+that forwards nothing is just a second place the sweep appears to live, and
+drift between copies is the problem this repo exists to end.
 
 ## Rules of the house
 
