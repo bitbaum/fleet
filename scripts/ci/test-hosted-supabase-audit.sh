@@ -29,6 +29,13 @@ export HOSTED_SUPABASE_AUDIT_LIB_ONLY=1
 source "$SCRIPT"
 unset HOSTED_SUPABASE_AUDIT_LIB_ONLY
 
+# Sourcing the audit runs its `set -euo pipefail` in OUR shell. A test suite
+# whose whole job is to run commands that fail must not die on the first one:
+# on a GitHub runner `git commit` exits 128 for want of an identity, and this
+# suite stopped mid-file with 128 and no failure report — a red that named
+# nothing. Take -e back; keep -u and pipefail.
+set +e
+
 echo "hosted_pattern — the shapes that actually misled someone"
 matches 'https://supabase.com/dashboard/project/_/sql'                "a dashboard link, botsmann's documented migration step"
 matches 'https://supabase.com/dashboard/account/tokens'               "the account-tokens link orangecat's runbook carried"
@@ -75,7 +82,9 @@ echo "repo_ref — audit what is SHARED, not a session's stale checkout"
 D="$(mktemp -d)"
 trap 'rm -rf "$D" "$TMP"' EXIT
 git -C "$D" init -q 2>/dev/null
-git -C "$D" commit -q --allow-empty -m init 2>/dev/null
+# Explicit identity: a runner has none, and this fixture must not care.
+git -C "$D" -c user.email=test@example.invalid -c user.name=test \
+    -c commit.gpgsign=false commit -q --allow-empty -m init 2>/dev/null
 eq HEAD "$(repo_ref "$D")" "no remote falls back to HEAD rather than failing the sweep"
 git -C "$D" update-ref refs/remotes/origin/main HEAD
 eq origin/main "$(repo_ref "$D")" "origin/main wins — a local main 4 commits stale reports fixed files as broken"
