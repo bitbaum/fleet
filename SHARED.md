@@ -23,7 +23,7 @@ the inventory underneath it is **generated**, and the number it produces is a
 | Package | Install | Replaces |
 |---|---|---|
 | [`ai-forms`](https://github.com/bitbaum/ai-forms) | `npm i github:bitbaum/ai-forms#v0.1.0` | per-app "fill this form from prose" + conversational refinement. Headless — ships **no markup**, so each app keeps its own styling. |
-| [`ai-kit`](https://github.com/bitbaum/ai-kit) | `npm i github:bitbaum/ai-kit#v0.4.0` | **the AI layer, in one install** — which model to call, whether the vendor still lists it, the three kinds of 429, fair-share of a free tier, and (re-exported) `ai-forms`. Renamed from `ai-ration` 2026-08-26: the name described one of five modules, and the package had one adopter while five repos that skipped it went down together to a retired model id. |
+| [`ai-kit`](https://github.com/bitbaum/ai-kit) | `npm i github:bitbaum/ai-kit#v0.5.0` | **the AI layer, in one install** — which model to call, whether the vendor still lists it, how to walk the fallback chain and know when none of it worked (`tryChain`/`createHealthTracker`, v0.5.0), the three kinds of 429, fair-share of a free tier, and (re-exported) `ai-forms`. Renamed from `ai-ration` 2026-08-26: the name described one of five modules, and the package had one adopter while five repos that skipped it went down together to a retired model id. |
 | [`threadkit`](https://github.com/bitbaum/threadkit) | `npm i threadkit` | multi-participant message threads where *permission is participation*, not a role or an ownership column. Headless pure functions, so "who may read this" is unit-testable instead of buried in a `WHERE` clause. AI participants obey the same visibility rules. **ESM-only.** |
 | [`sitekit`](https://github.com/bitbaum/sitekit) | `npm i github:bitbaum/sitekit#v0.2.0` | **a website as data** — the closed section union (Zod as SSOT, path-addressed errors a generator can act on), one set of React renderers emitting semantic classes only (tokens stay per-site: uniform system, divergent aesthetics), and per-field provenance (`scraped`/`operator`/`inferred`/`not-found`) so `assertDeliverable()` makes "we fabricate no facts" a check instead of a promise. Extracted from substrata per orangecat ADR-0003; the planned `siteFromUrl()` extractor targets this schema. RSC-native — the Link seam stays a server-component prop (learned in v0.1.1 when the first consumer's build refused a component function crossing 'use client'). **ESM-only.** |
 | [`limitkit`](https://github.com/bitbaum/limitkit) | `npm i github:bitbaum/limitkit#v0.1.0` | the fleet's **12 hand-rolled rate limiters** (this file's own "next extraction" row). Sliding/fixed windows over an injectable two-method `Store`; **bounded** memory default (the unbounded-Map leak is impossible by construction); standard `X-RateLimit-*` + `Retry-After` headers — what orangecat's ADR-0002 specified seven months before anything enforced it; `clientIp()`. Refusals count nothing, so a hammered key recovers. Ships no middleware and **no limit values** — how many attempts a route allows is app semantics, asserted locally. |
@@ -33,6 +33,25 @@ the inventory underneath it is **generated**, and the number it produces is a
 (`model-pin-audit.mjs` calls `checkCatalog`; the audit needed exactly the vendor
 query the package owns, so writing a second one here would have been this file's
 own sin).
+
+**"Adopted" was overstating it for botsmann, specifically.** A fleet-wide
+AI-tooling audit on 2026-08-29 found botsmann had `ai-kit` installed for
+`freeChain`/`providerModels` (the model list) only — its actual retry and
+health logic (`generateWithBestProvider`, `getProviderChain`, an in-process
+`llm-health.ts`) was hand-rolled, the same shape this file exists to prevent,
+just one repo instead of five. That hand-rolled code is exactly what
+`tryChain`/`createHealthTracker` (v0.5.0) were extracted FROM, and botsmann
+was converted the same day as the proving consumer — walk one flat
+provider+model chain instead of two nested hand-rolled loops, and the health
+tracker now wraps `createHealthTracker` behind its original five-function API.
+**`tryChain`/`createHealthTracker` are new in v0.5.0 and have exactly ONE
+real adopter (botsmann) as of 2026-08-29** — fleetcrown/aoz-housing/
+truthseeker's `ai-kit` dependency predates this release and does not use
+either function yet. Say so precisely rather than let "ai-kit adopted"
+imply the failover/health gap is closed fleet-wide; it is closed in one
+repo. hirnli and revamp-info (both hand-rolled, 1 file each, no stated
+reason to skip `ai-kit`) and evig/kivvi/orangecat (deliberately on their own
+provider layers — see above) are next, not yet started.
 
 Adoption went 2 -> 5 on 2026-08-27, all of it as a side effect of repairing the
 outage rather than as a migration project — which is the only way it has ever
