@@ -44,14 +44,24 @@ just one repo instead of five. That hand-rolled code is exactly what
 was converted the same day as the proving consumer — walk one flat
 provider+model chain instead of two nested hand-rolled loops, and the health
 tracker now wraps `createHealthTracker` behind its original five-function API.
-**`tryChain`/`createHealthTracker` are new in v0.5.0 and have exactly ONE
-real adopter (botsmann) as of 2026-08-29** — fleetcrown/aoz-housing/
+**`tryChain`/`createHealthTracker` are new in v0.5.0 and have TWO real
+adopters (botsmann, hirnli) as of 2026-08-29** — fleetcrown/aoz-housing/
 truthseeker's `ai-kit` dependency predates this release and does not use
 either function yet. Say so precisely rather than let "ai-kit adopted"
-imply the failover/health gap is closed fleet-wide; it is closed in one
-repo. hirnli and revamp-info (both hand-rolled, 1 file each, no stated
-reason to skip `ai-kit`) and evig/kivvi/orangecat (deliberately on their own
-provider layers — see above) are next, not yet started.
+imply the failover/health gap is closed fleet-wide; it is closed in two
+repos. evig/kivvi/orangecat (deliberately on their own provider layers —
+see above) are next, not yet started.
+
+**hirnli and "revamp-info" were counted as two separate repos in the
+2026-08-29 audit. They are not — `git remote -v` in `/home/g/dev/revamp-info`
+points at `github.com/bitbaum/hirnli`: same repo, two local checkout
+directories, the identical measurement trap this file's own registry
+already withdrew an extraction for once (`@ai-native-cms/core`, see below).
+`revamp-info` is the `apps.conf` deploy name (hirnli's `deploy.yml` says so
+in a comment); the repo is `hirnli`. It is now on `tryChain`/
+`createHealthTracker`, same commit as the fix above — there is no separate
+"revamp-info" left to convert. Check `git remote -v` before counting a
+directory as a repo, every time, including here.
 
 Adoption went 2 -> 5 on 2026-08-27, all of it as a side effect of repairing the
 outage rather than as a migration project — which is the only way it has ever
