@@ -1,0 +1,11 @@
+# Repos where "no aria-current anywhere" is legitimate, not a defect.
+#
+# Format: <repo>   # why this one is exempt, decided in the PR that added it
+#
+# Empty on purpose. The 2026-08-31 sweep found six repos genuinely missing the
+# announcement (botsmann, datacat, petvity, printcraft, s-ink, surf-your-life)
+# and all six were real defects, fixed rather than exempted — s-ink's active
+# state IS a real navigable state (a section in view), so it got
+# aria-current="location", not a baseline entry. If a future repo's nav truly
+# has no current page to mark, add it here with a reason instead of letting it
+# fail silently or patching the audit to ignore it.
