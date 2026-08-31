@@ -18,6 +18,71 @@
 import { loadPlaywright, MEASURE } from "./ui-defect-audit.mjs";
 
 const FIXTURES = {
+  // ── navigation fixtures ───────────────────────────────────────────────────
+
+  // The orangecat sidebar as it shipped: the section title is an <h3> in a
+  // <div>, and the ONLY thing carrying the click is the chevron beside it.
+  // Visitors aimed at the word "Fund" and nothing happened.
+  navDeadLabel: `
+    <div style="background:#0d0d0d;color:#e6e6e6;font:14px sans-serif;padding:16px;width:280px">
+      <nav aria-label="Main">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 12px">
+          <h3 style="font-size:12px;text-transform:uppercase;margin:0">Fund</h3>
+          <button style="width:44px;height:44px;background:none;border:0;color:#aaa">
+            <svg aria-hidden="true" width="16" height="16"></svg>
+          </button>
+        </div>
+      </nav>
+    </div>`,
+
+  // The same row done correctly: the label lives INSIDE the control, so the
+  // whole row is the target. This must stay silent.
+  navLabelInsideControl: `
+    <div style="background:#0d0d0d;color:#e6e6e6;font:14px sans-serif;padding:16px;width:280px">
+      <nav aria-label="Main">
+        <button aria-expanded="true" style="display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:0 12px;background:none;border:0;color:#e6e6e6">
+          <h3 style="font-size:12px;text-transform:uppercase;margin:0">Fund</h3>
+          <svg aria-hidden="true" width="16" height="16"></svg>
+        </button>
+      </nav>
+    </div>`,
+
+  // A nav containing a link to the page we are on, with nothing announcing it.
+  navUnmarkedCurrent: `
+    <div style="background:#fff;color:#111;font:14px sans-serif;padding:16px">
+      <nav aria-label="Primary">
+        <a href="/here" style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;padding:0 12px">Here</a>
+        <a href="/elsewhere" style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;padding:0 12px">Elsewhere</a>
+      </nav>
+    </div>`,
+
+  // The same nav, announcing correctly.
+  navMarkedCurrent: `
+    <div style="background:#fff;color:#111;font:14px sans-serif;padding:16px">
+      <nav aria-label="Primary">
+        <a href="/here" aria-current="page" style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;padding:0 12px">Here</a>
+        <a href="/elsewhere" style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;padding:0 12px">Elsewhere</a>
+      </nav>
+    </div>`,
+
+  // A nav of outbound links only — it legitimately contains no link to the
+  // current page, so "no aria-current" is CORRECT here and must stay silent.
+  navNoSelfLink: `
+    <div style="background:#fff;color:#111;font:14px sans-serif;padding:16px">
+      <nav aria-label="Elsewhere">
+        <a href="/a" style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;padding:0 12px">A</a>
+        <a href="/b" style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;padding:0 12px">B</a>
+      </nav>
+    </div>`,
+
+  // Targets below the fleet's 44px floor.
+  navSmallTargets: `
+    <div style="background:#fff;color:#111;font:14px sans-serif;padding:16px">
+      <nav aria-label="Compact">
+        <a href="/x" aria-current="page" style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center">X</a>
+        <a href="/y" style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center">Y</a>
+      </nav>
+    </div>`,
   // The original fleetcrown fleet card: an icon INLINE at the head of two of
   // the four rows, shoving only those lines sideways by its own width, and a
   // wrapped hint whose second line falls back to the container edge.
@@ -154,6 +219,26 @@ async function main() {
     return page.evaluate(MEASURE);
   };
 
+  // The nav detectors compare each link's pathname against location.pathname,
+  // which setContent alone cannot exercise: an about:blank page has no path to
+  // match. Serve the fixture from a routed URL so "the link to the page you are
+  // on" is a real condition rather than one the test can never reach.
+  const measureAt = async (html, path) => {
+    const url = `https://fixture.test${path}`;
+    await page.route("https://fixture.test/**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "text/html",
+        body: `<!doctype html><meta charset="utf-8">${html}`,
+      }),
+    );
+    await page.goto(url, { waitUntil: "load" });
+    await page.waitForTimeout(120);
+    const r = await page.evaluate(MEASURE);
+    await page.unroute("https://fixture.test/**");
+    return r;
+  };
+
   let passed = 0;
   const check = async (label, fn) => {
     await fn();
@@ -247,6 +332,69 @@ async function main() {
     assert(
       r.wrapped.length === 0,
       `centered lines start at different x by design, got ${JSON.stringify(r.wrapped)}`,
+    );
+  });
+
+
+  await check("catches a nav label that is not the control (the orangecat sidebar bug)", async () => {
+    const r = await measure(FIXTURES.navDeadLabel);
+    // innerText is the RENDERED text, so `text-transform: uppercase` reports
+    // "FUND" and not the "Fund" in the source. Compare case-insensitively —
+    // the detector is right and a case-sensitive assertion would be the bug.
+    assert(
+      r.navDeadLabels.length === 1 &&
+        r.navDeadLabels[0].label.toLowerCase() === "fund",
+      `the stranded "Fund" heading must be reported, got ${JSON.stringify(r.navDeadLabels)}`,
+    );
+  });
+
+  await check("stays silent when the label lives inside the control", async () => {
+    const r = await measure(FIXTURES.navLabelInsideControl);
+    assert(
+      r.navDeadLabels.length === 0,
+      `a full-row button is correct markup, got ${JSON.stringify(r.navDeadLabels)}`,
+    );
+  });
+
+  await check("catches a current page that no link announces", async () => {
+    const r = await measureAt(FIXTURES.navUnmarkedCurrent, "/here");
+    assert(
+      r.navMissingCurrent.length === 1 && r.navMissingCurrent[0].href === "/here",
+      `the unmarked self-link must be reported, got ${JSON.stringify(r.navMissingCurrent)}`,
+    );
+  });
+
+  await check("stays silent when the current page IS announced", async () => {
+    const r = await measureAt(FIXTURES.navMarkedCurrent, "/here");
+    assert(
+      r.navMissingCurrent.length === 0,
+      `aria-current is present, got ${JSON.stringify(r.navMissingCurrent)}`,
+    );
+  });
+
+  await check("does NOT demand aria-current from a nav with no link to this page", async () => {
+    // A footer of outbound links has no current page to mark. Flagging it would
+    // make the detector fire on every site that has one.
+    const r = await measureAt(FIXTURES.navNoSelfLink, "/somewhere-else");
+    assert(
+      r.navMissingCurrent.length === 0,
+      `no self-link means nothing to announce, got ${JSON.stringify(r.navMissingCurrent)}`,
+    );
+  });
+
+  await check("catches nav targets below the 44px floor", async () => {
+    const r = await measureAt(FIXTURES.navSmallTargets, "/x");
+    assert(
+      r.navSmallTargets.length === 2,
+      `both 32px targets must be reported, got ${JSON.stringify(r.navSmallTargets)}`,
+    );
+  });
+
+  await check("stays silent on nav targets that meet the floor", async () => {
+    const r = await measureAt(FIXTURES.navMarkedCurrent, "/here");
+    assert(
+      r.navSmallTargets.length === 0,
+      `44px targets are fine, got ${JSON.stringify(r.navSmallTargets)}`,
     );
   });
 

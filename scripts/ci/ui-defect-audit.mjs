@@ -332,7 +332,103 @@ export const MEASURE = String.raw`(() => {
     }
   }
 
-  return { contrast: contrast, ragged: ragged, wrapped: wrapped, stacksSeen: seen };
+  // ── navigation ────────────────────────────────────────────────────────────
+  // Three defects a fleet-wide nav audit found in 20 repos, all invisible to
+  // every check that only looks for forbidden strings, because each is
+  // something someone FORGOT rather than something someone wrote.
+  //
+  // Rendered rather than grepped on purpose: this fleet holds Next apps, CSS
+  // modules, Tailwind, and one hand-rolled static generator with no framework
+  // at all. No source-level lint spans that. The DOM does.
+  var navMissingCurrent = [];
+  var navSmallTargets = [];
+  var navDeadLabels = [];
+
+  var navRoots = document.querySelectorAll('nav, [role="navigation"]');
+  var here = location.pathname.replace(/\/+$/, "") || "/";
+
+  for (var n = 0; n < navRoots.length; n++) {
+    var root = navRoots[n];
+    if (!root.getBoundingClientRect().width) continue;
+
+    // 1. AN UNMARKED CURRENT PAGE. Only claimed when a link in this nav really
+    //    does point at the page we are on — otherwise a nav that legitimately
+    //    contains no self-link (a footer of outbound links) reads as a defect.
+    var links = root.querySelectorAll("a[href]");
+    var selfLink = null, announced = false;
+    for (var l = 0; l < links.length; l++) {
+      var a = links[l];
+      if (a.getAttribute("aria-current")) announced = true;
+      var path;
+      try { path = new URL(a.href, location.origin).pathname.replace(/\/+$/, "") || "/"; }
+      catch (e) { continue; }
+      if (path === here && a.getBoundingClientRect().width > 0) selfLink = a;
+    }
+    if (selfLink && !announced) {
+      navMissingCurrent.push({
+        label: (selfLink.innerText || "").trim().slice(0, 40).replace(/\s+/g, " "),
+        href: selfLink.getAttribute("href") || "",
+        navLabel: root.getAttribute("aria-label") || root.className.slice(0, 40) || "nav"
+      });
+    }
+
+    // 2. TARGETS BELOW THE FLOOR. 44px is this fleet's own standard, not the
+    //    WCAG 2.2 AA minimum of 24px — fleetcrown enforces it centrally and
+    //    kivvi and wild-spirit state it explicitly, so a nav under it is out of
+    //    step with the fleet rather than out of compliance. Say which.
+    var controls = root.querySelectorAll('a[href], button, [role="button"], [role="tab"]');
+    for (var c = 0; c < controls.length; c++) {
+      var ctl = controls[c];
+      var cr = ctl.getBoundingClientRect();
+      if (cr.width === 0 || cr.height === 0) continue;
+      var ccs = getComputedStyle(ctl);
+      if (ccs.visibility === "hidden" || ccs.opacity === "0") continue;
+      // A control nested inside another is measured by its parent; skip it so
+      // one small icon inside a large row is not reported as the row.
+      if (ctl.parentElement && ctl.parentElement.closest('a[href], button')) continue;
+      if (cr.height < 44 || cr.width < 44) {
+        navSmallTargets.push({
+          w: Math.round(cr.width), h: Math.round(cr.height),
+          tag: ctl.tagName.toLowerCase(),
+          text: (ctl.innerText || ctl.getAttribute("aria-label") || "").trim().slice(0, 30).replace(/\s+/g, " ")
+        });
+      }
+    }
+
+    // 3. A LABEL THAT LOOKS LIKE A CONTROL BUT IS NOT. The orangecat sidebar
+    //    shipped this: an <h3> section title beside a chevron-only <button>
+    //    that carried the whole onClick. Visitors aimed at the word and nothing
+    //    happened. Claimed only when the heading is NOT inside a control and a
+    //    sibling control has no text of its own — that pairing is the bug.
+    var heads = root.querySelectorAll("h1, h2, h3, h4, h5, h6");
+    for (var hI = 0; hI < heads.length; hI++) {
+      var head = heads[hI];
+      if (head.closest('button, a[href], [role="button"]')) continue;
+      var row = head.parentElement;
+      if (!row) continue;
+      var sibs = row.querySelectorAll('button, [role="button"]');
+      for (var sI = 0; sI < sibs.length; sI++) {
+        var sib = sibs[sI];
+        if (sib.contains(head)) continue;
+        if ((sib.innerText || "").trim()) continue;   // it has its own label
+        var sr = sib.getBoundingClientRect();
+        if (!sr.width) continue;
+        navDeadLabels.push({
+          label: (head.innerText || "").trim().slice(0, 40).replace(/\s+/g, " "),
+          control: Math.round(sr.width) + "x" + Math.round(sr.height)
+        });
+        break;
+      }
+    }
+  }
+
+  return {
+    contrast: contrast, ragged: ragged, wrapped: wrapped, stacksSeen: seen,
+    navMissingCurrent: navMissingCurrent,
+    navSmallTargets: navSmallTargets,
+    navDeadLabels: navDeadLabels,
+    navsSeen: navRoots.length
+  };
 })()`;
 
 async function main() {
@@ -355,22 +451,32 @@ async function main() {
       const r = await page.evaluate(MEASURE);
       const badContrast = r.contrast.filter((c) => c.value < c.floor);
       report.push({ site, ...r, badContrast });
+      const navTotal =
+        r.navMissingCurrent.length + r.navSmallTargets.length + r.navDeadLabels.length;
       console.log(
         `${site}\n  ${r.contrast.length} actions (${badContrast.length} below AA) · ` +
-        `${r.stacksSeen} stacks (${r.ragged.length} ragged) · ${r.wrapped.length} unaligned wraps`
+        `${r.stacksSeen} stacks (${r.ragged.length} ragged) · ${r.wrapped.length} unaligned wraps · ` +
+        `${r.navsSeen} navs (${navTotal} nav defects)`
       );
     } catch (e) {
       console.log(`${site}\n  ! ${e.message}`);
-      report.push({ site, error: e.message, contrast: [], ragged: [], wrapped: [], badContrast: [] });
+      report.push({
+        site, error: e.message, contrast: [], ragged: [], wrapped: [], badContrast: [],
+        navMissingCurrent: [], navSmallTargets: [], navDeadLabels: [], navsSeen: 0,
+      });
     } finally {
       await page.close();
     }
   }
   await browser.close();
 
+  const countOf = (r) =>
+    r.badContrast.length + r.ragged.length + r.wrapped.length +
+    r.navMissingCurrent.length + r.navSmallTargets.length + r.navDeadLabels.length;
+
   let defects = 0;
   for (const r of report) {
-    const total = r.badContrast.length + r.ragged.length + r.wrapped.length;
+    const total = countOf(r);
     if (!total) continue;
     defects += total;
     console.log(`\n── ${r.site} ──`);
@@ -386,12 +492,36 @@ async function main() {
     for (const w of r.wrapped) {
       console.log(`  wrapped line off by ${w.delta}px  <${w.tag}>  "${w.text}"`);
     }
+    for (const m of r.navMissingCurrent) {
+      console.log(
+        `  nav: current page unmarked — "${m.label}" (${m.href}) in [${m.navLabel}] has no aria-current`
+      );
+    }
+    // One line per distinct SIZE, not per element: a nav of twelve identical
+    // 32px links is one decision, and twelve lines of it buries everything else.
+    const bySize = new Map();
+    for (const t of r.navSmallTargets) {
+      const k = `${t.w}x${t.h} <${t.tag}>`;
+      if (!bySize.has(k)) bySize.set(k, []);
+      bySize.get(k).push(t.text);
+    }
+    for (const [k, texts] of bySize) {
+      console.log(
+        `  nav: ${texts.length} target(s) under 44px at ${k} — e.g. "${texts[0]}"` +
+        (texts.length > 1 ? ` (+${texts.length - 1} more)` : "")
+      );
+    }
+    for (const d of r.navDeadLabels) {
+      console.log(
+        `  nav: "${d.label}" looks like a control but is not — only the ${d.control} icon beside it is clickable`
+      );
+    }
   }
 
   console.log(
     defects === 0
       ? "\n✓ no rendered UI defects found"
-      : `\n${defects} rendered UI defect(s) across ${report.filter((r) => r.badContrast.length + r.ragged.length + r.wrapped.length).length} site(s)`
+      : `\n${defects} rendered UI defect(s) across ${report.filter((r) => countOf(r) > 0).length} site(s)`
   );
   process.exit(defects && !WARN_ONLY ? 1 : 0);
 }
