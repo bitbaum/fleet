@@ -180,6 +180,55 @@ Stated explicitly, because "share everything" is its own failure:
   lists paid model ids (BYOK — the user's key, the user's choice) while the same
   id in kivvi's fallback was a bug. Centralize the **rule**; assert it
   **locally**, where the app knows which is which.
+- **Navigation chrome.** Measured 2026-08-29: ~13,300 lines of nav across 20
+  repos, and the experiment has already been run. `sitekit` is the one shared
+  renderer, it serves 2 of 20, and it shipped two defects — ~28px targets and
+  no focus style — to **both** consumers, unfixable downstream because a
+  consumer cannot patch markup it does not own. Its nav model (a flat
+  `{path, label}` list, no groups, no icons, no footer links, no mobile menu)
+  also cannot express what solon's mega-menu or reparaturbonus-zh's drawer
+  need, which is why every repo with real nav complexity reinvented its own
+  rather than adopt it. Centralizing the markup centralized the bug.
+  The navigation **contract** below is the shareable part.
+
+---
+
+## The navigation contract
+
+Six rules, each one a defect found in the 2026-08-29 audit, each mechanically
+checkable. This is the nav answer to "centralize the rule, assert it locally".
+
+1. The active link of every nav surface carries `aria-current`.
+2. Every toggle controlling a panel carries `aria-expanded`.
+3. Every interactive nav element is at least 44×44px.
+4. The label lives **inside** the control, never beside it.
+5. Persisted UI state distinguishes `null` from empty.
+6. Every internal href comes from a routes constant.
+
+**Enforced in two places, because they cover disjoint surfaces.**
+`scripts/ci/ui-defect-audit.mjs` checks 1, 3 and 4 by **rendering** each live
+site — which is the only thing that spans Next apps, CSS modules, Tailwind and
+wild-spirit's no-framework generator alike. But it renders **public entry pages
+only**, so it structurally cannot see a sidebar behind a login. Authed surfaces
+need a source-level check the repo runs in its own `verify`: orangecat's
+`check:dead-labels` (rule 4) and fleetcrown's `check_paired` in
+`check-design-system.sh` (rule 1) are the two working examples.
+
+**Deliberately NOT on the ratchet.** The ratchet counts concerns that should
+converge on ONE implementation, and nav is the opposite: every repo is supposed
+to have its own nav config, so counting those files would score the correct
+outcome as duplication and the number would have no meaning. The contract is
+enforced by the gates above instead. (This revises the audit's own first
+recommendation — writing the "do not centralize" section above is what showed
+the two could not both be right.)
+
+**Why a gate and not a convention.** The audit's sharpest finding was not that
+teams do not know these rules — it is that aoz-housing, fleetcrown, vitareba
+and evig each applied `aria-current` correctly on every nav surface **but one**.
+Four teams, four stragglers. Hand-application always fails at the margin, and
+the margin is invisible until someone renders it. Design tokens are the control
+group: near-spotless fleet-wide, because they got a convention **plus a gate**
+(`check:accent-ink`) rather than a shared component library.
 
 ---
 
