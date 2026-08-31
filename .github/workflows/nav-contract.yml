@@ -1,0 +1,86 @@
+# The nav-contract audit as a script is a suggestion; as a workflow it is a
+# gate. This is what turns scripts/ci/nav-contract-audit.sh from something
+# that exists into something that runs.
+#
+# It answers the half of the nav contract ui-defect-audit.mjs structurally
+# cannot: that audit renders each site's PUBLIC entry page, so a sidebar
+# behind a login — exactly where the bug that started this sweep lived — is
+# invisible to it. This one reads source on every repo's default branch,
+# authed surfaces included.
+name: Nav contract audit
+
+on:
+  schedule:
+    # Weekly, same cadence as the hosted-Supabase and UI-defect audits. This
+    # class of regression arrives with a new nav surface, not with every
+    # commit — daily would be noise nobody reads twice.
+    - cron: '13 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nav-contract-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # Runs BEFORE the sweep, deliberately — same reasoning as the
+      # hosted-Supabase and UI-defect audits. A detector that has silently
+      # stopped catching anything reports a clean fleet, and a clean report
+      # from a broken detector is worse than no report: it is an absent check
+      # that produces a tick. This self-test already found and fixed one real
+      # bug in the audit (an unanchored SKIP_FILE pattern) before this
+      # workflow's first run.
+      - name: The audit still detects, and still stays quiet
+        run: bash scripts/ci/test-nav-contract-audit.sh
+
+      # Same shallow-clone-the-fleet pattern as hosted-supabase.yml: this repo
+      # deliberately has no package.json, GitHub code search returns nothing
+      # for these repos, and the audit reads `origin/<default-branch>`, never
+      # a working tree.
+      - name: Clone the fleet
+        env:
+          # Same gap as the shared inventory and the hosted-Supabase audit,
+          # stated rather than hidden: the default token reads public repos
+          # only, so private ones are silently omitted. The audit prints how
+          # many repos it swept — a drop in that number is the tell. Set
+          # FLEET_READ_TOKEN to cover all of them.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          mkdir -p "$RUNNER_TEMP/dev"
+          names=$(gh repo list bitbaum --limit 200 --no-archived --json name --jq '.[].name')
+          [ -n "$names" ] || { echo "::error::no repos listed — the token cannot see the fleet"; exit 1; }
+          n=0
+          for name in $names; do
+            if gh repo clone "bitbaum/$name" "$RUNNER_TEMP/dev/$name" -- \
+                 --depth 1 --filter=blob:none --quiet 2>/dev/null; then
+              n=$((n + 1))
+            else
+              echo "::warning::could not clone $name — it will not be audited"
+            fi
+          done
+          echo "cloned $n repo(s)"
+          echo "DEV_ROOT=$RUNNER_TEMP/dev" >> "$GITHUB_ENV"
+
+      - name: Every repo announces its current page
+        run: |
+          set -uo pipefail
+          {
+            echo '## Nav contract audit'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          bash scripts/ci/nav-contract-audit.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
