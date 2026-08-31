@@ -16,6 +16,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | `scripts/ci/model-pin-audit.mjs` | runs daily: is any model id the fleet pins still served by its vendor? |
 | `scripts/ci/verify-floor-audit.sh` | does every repo's `verify` actually run lint + typecheck + test? |
 | `scripts/ci/shared-inventory.sh` | counts duplication across the fleet and holds it as a ratchet |
+| `scripts/ci/version-currency.mjs` | measures every repo against `blessed-versions.json` (SSOT of blessed majors + internal-package tags) and holds the gap count as a ratchet |
 | `scripts/ci/ui-defect-audit.mjs` | do any live sites ship WCAG AA contrast failures or misaligned stacks? |
 | `scripts/fleet/` | local upkeep: worktree GC, stranded-work guard |
 | `templates/ci/` | golden CI workflows + pre-commit — deliberately ONE central copy |

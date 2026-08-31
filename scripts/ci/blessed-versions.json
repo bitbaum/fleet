@@ -1,0 +1,36 @@
+{
+  "_comment": [
+    "The fleet's blessed MAJOR version per key package — the SSOT the",
+    "version-currency audit measures every repo against. Raise a number here",
+    "(in a PR) when the fleet decides a new major is the standard; the audit",
+    "then reports every repo below it as a gap. Majors only: 0.x packages",
+    "(drizzle-orm, @anthropic-ai/sdk) have no meaningful major and are not",
+    "listed. next-auth is deliberately absent while v5 is beta.",
+    "internal_tags: the git tag every consumer of an internal package must",
+    "pin until the package is on npm."
+  ],
+  "majors": {
+    "next": 16,
+    "react": 19,
+    "react-dom": 19,
+    "typescript": 6,
+    "tailwindcss": 4,
+    "zod": 4,
+    "eslint": 10,
+    "vitest": 4,
+    "jest": 30,
+    "@types/node": 26,
+    "prettier": 3,
+    "tsx": 4,
+    "express": 5,
+    "dotenv": 17,
+    "framer-motion": 13,
+    "lucide-react": 1,
+    "openai": 7,
+    "@supabase/supabase-js": 2,
+    "pg": 8
+  },
+  "internal_tags": {
+    "ai-kit": "v0.6.2"
+  }
+}
