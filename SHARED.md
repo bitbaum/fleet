@@ -205,14 +205,30 @@ checkable. This is the nav answer to "centralize the rule, assert it locally".
 5. Persisted UI state distinguishes `null` from empty.
 6. Every internal href comes from a routes constant.
 
-**Enforced in two places, because they cover disjoint surfaces.**
+**Enforced in three places, because they cover disjoint surfaces.**
 `scripts/ci/ui-defect-audit.mjs` checks 1, 3 and 4 by **rendering** each live
 site — which is the only thing that spans Next apps, CSS modules, Tailwind and
 wild-spirit's no-framework generator alike. But it renders **public entry pages
-only**, so it structurally cannot see a sidebar behind a login. Authed surfaces
-need a source-level check the repo runs in its own `verify`: orangecat's
-`check:dead-labels` (rule 4) and fleetcrown's `check_paired` in
-`check-design-system.sh` (rule 1) are the two working examples.
+only**, so it structurally cannot see a sidebar behind a login. `nav-contract.yml`
+/ `scripts/ci/nav-contract-audit.sh` closes exactly that gap for rule 1: a
+weekly, central, source-level sweep of every repo's default branch (public and
+authed alike), self-tested before it runs. It found and fixed six repos —
+botsmann, datacat, petvity, printcraft, s-ink, surf-your-life — on its first
+sweep, 2026-08-31. A per-repo `verify` check can still be worth adding
+alongside it: orangecat's `check:dead-labels` (rule 4) and fleetcrown's
+`check_paired` in `check-design-system.sh` (rule 1) block the *commit*,
+where the fleet sweep only reports weekly.
+
+**Open gap the central sweeps share: `orangecat.ch` isn't the whole fleet.**
+`ui-defect-audit.mjs` discovers sites from `FLEET_SITES` in fleetcrown's
+public footer — a deliberately hand-maintained editorial list, "each site's
+own words," not something to auto-expand. As of 2026-08-31 four public sites
+are outside it: s-ink (sinktattoo.com, genuinely off the `orangecat.ch`
+pattern) and substrata / camille-boulangerie / wild-spirit (all on
+`*.orangecat.ch`, but not yet linked from the footer that drives discovery).
+`nav-contract-audit.sh` still sees all four, because it reads source rather
+than a curated link list. Adding the missing three to `FLEET_SITES` is a
+one-line-each product decision for a human, not folded into this sweep.
 
 **Deliberately NOT on the ratchet.** The ratchet counts concerns that should
 converge on ONE implementation, and nav is the opposite: every repo is supposed
