@@ -118,6 +118,13 @@ jobs:
       - name: The hosted-Supabase audit still detects, and still stays quiet
         run: bash scripts/ci/test-hosted-supabase-audit.sh
 
+      # Same doctrine: the currency ratchet reports on repos nobody touches,
+      # so its own test pins both sides — the real 2026-08-31 staleness
+      # (aoz-housing's manifest, dead-owner ai-kit pin) is caught, a current
+      # manifest stays quiet, and an unreadable repo is UNCHECKED, never clean.
+      - name: The version-currency audit still detects, and still stays quiet
+        run: node scripts/ci/test-version-currency.mjs
+
       # Drift guard. The fleet is on v7; templates handing out v4 is exactly
       # how this repo fell behind the repos it governs.
       - name: No stale action versions

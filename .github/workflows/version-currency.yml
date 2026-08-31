@@ -1,0 +1,62 @@
+# Staleness is measured, and the measurement is a ratchet.
+#
+# The 2026-08-31 audit found the box on an EOL Node, one app a framework
+# generation behind on every axis, and an internal package pinned at a dead
+# owner — none of it hidden, all of it unmeasured. Same lesson as the shared
+# inventory: writing "stay current" down is what already failed. The report
+# makes the trend visible; `--check` makes it binding.
+name: Version currency
+
+on:
+  schedule:
+    # Weekly. Majors ship on the timescale of quarters; daily would be noise,
+    # and noise gets muted.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Fail when the gap count has risen'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  currency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Self-test the detector first
+        run: node scripts/ci/test-version-currency.mjs
+
+      - name: Measure the fleet
+        env:
+          # Default token reads public repos only; private ones would land in
+          # UNCHECKED (visibly — never counted as clean). FLEET_READ_TOKEN
+          # covers them all.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Version currency'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          node scripts/ci/version-currency.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: The ratchet — gaps may fall, never rise
+        if: ${{ inputs.strict != false }}
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/version-currency.mjs --check
