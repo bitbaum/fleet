@@ -12,6 +12,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | | |
 |---|---|
 | [`SHARED.md`](SHARED.md) | the shared-package registry and the duplication ratchet — **read before building anything cross-cutting** |
+| [`STACK.md`](STACK.md) | the blessed technology per job — ONE ORM, ONE test runner, ONE auth stack; deviations are documented exceptions, not habits |
 | `scripts/ci/auto-merge-sweep.sh` | the canonical merge policy; the fleet calls it via the reusable workflow below |
 | `scripts/ci/model-pin-audit.mjs` | runs daily: is any model id the fleet pins still served by its vendor? |
 | `scripts/ci/verify-floor-audit.sh` | does every repo's `verify` actually run lint + typecheck + test? |
