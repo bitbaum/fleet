@@ -116,12 +116,22 @@ function gh(args) {
   return execFileSync("gh", args, { encoding: "utf8", timeout: 60000 });
 }
 
+/**
+ * Forks are EXEMPT, not measured. A fork that tracks an upstream does not own
+ * its manifest — upstream's dependency policy is the SSOT, and patching the
+ * fork's lockfile only buys merge friction (learned on bitbaum/openclaw
+ * 2026-09-01: an openai bump there could never be more current than the next
+ * upstream sync, and its CI baseline belongs to upstream too). A fork's
+ * currency action is SYNCING, which this audit cannot ratchet. Exempted forks
+ * are printed by name so the exemption is visible, never silent.
+ */
 function listRepos(owner, limit) {
-  const raw = gh(["repo", "list", owner, "--limit", String(limit), "--json", "name,isArchived"]);
-  return JSON.parse(raw)
-    .filter((r) => !r.isArchived)
-    .map((r) => r.name)
-    .sort();
+  const raw = gh(["repo", "list", owner, "--limit", String(limit), "--json", "name,isArchived,isFork"]);
+  const all = JSON.parse(raw).filter((r) => !r.isArchived);
+  return {
+    repos: all.filter((r) => !r.isFork).map((r) => r.name).sort(),
+    forks: all.filter((r) => r.isFork).map((r) => r.name).sort(),
+  };
 }
 
 function fetchManifest(owner, repo) {
@@ -148,8 +158,9 @@ function main() {
   const limit = Number(process.env.GH_LIMIT || 100);
   const blessed = JSON.parse(readFileSync(BLESSED_PATH, "utf8"));
 
+  const { repos, forks } = listRepos(owner, limit);
   const results = [];
-  for (const repo of listRepos(owner, limit)) {
+  for (const repo of repos) {
     const present = hasPackageJson(owner, repo);
     if (present === false) continue; // shell/docs repo: no Node surface, not a gap
     if (present === null) {
@@ -176,6 +187,9 @@ function main() {
   if (current.length) console.log(`\n  current (0 gaps): ${current.join(", ")}`);
   if (uncheckedRepos.length) {
     console.log(`\n  UNCHECKED (could not read — not counted as clean): ${uncheckedRepos.join(", ")}`);
+  }
+  if (forks.length) {
+    console.log(`\n  fork-exempt (upstream owns the manifest; currency = syncing): ${forks.join(", ")}`);
   }
   console.log(`\n  TOTAL GAPS: ${total}`);
 
