@@ -24,7 +24,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Test runner (apps) | Vitest | fleetcrown: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
-| Email | Resend | evig: nodemailer pending review — if its self-hosted SMTP relay is deliberate, document it here; otherwise migrate |
+| Email | Resend | evig: Listmonk (self-hosted FOSS) primary + nodemailer SMTP fallback — DELIBERATE (reviewed 2026-09-02): its own config/email.ts documents the provider seam with admin diagnostics, and a hosted email SaaS would contradict the project's self-hosting values |
 | i18n | next-intl | — |
 | AI | ai-kit (the fleet engine) | forks (openclaw) follow upstream |
 | Forms | react-hook-form (+ ai-forms for AI fill) | — |
@@ -50,8 +50,10 @@ live-verified:
   the box (Node 24) since fleetcrown #461 — the npm-major writer/reader
   split that stranded aoz's first vitest deploy is closed at the source.
 
-Still open (tracked): evig nodemailer→resend review; OC's direct
-@google/generative-ai → ai-kit; pnpm sweep (gated on ai-kit npm bootstrap).
+Still open (tracked): pnpm sweep (gated on ai-kit npm bootstrap); openclaw
+fork CI baseline (in repair). Closed 2026-09-02: evig email reviewed →
+documented exception; OC's @google/generative-ai was import-free dead
+weight → deleted.
 
 ## Rules
 
