@@ -32,16 +32,26 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
 
-## Migration state (2026-09-01)
+## Migration state (2026-09-02: DONE)
 
-- ORM: **4 repos migrating Prisma → Drizzle** — biaslens, reparaturbonus-zh
-  (in flight), then solon, aoz-housing (largest; 88 call-site files). Decisive
-  math: Prisma 7's own breaking changes (client output relocation, driver
-  adapters, prisma.config.ts) touch nearly the same surface as the Drizzle
-  migration — staying costs almost as much as switching, once.
-- Test runner: evig jest → Vitest in flight; aoz-housing has vitest PR #141
-  from a parallel session.
-- Everything else in the table is already true (currency arc, 2026-08-31).
+Every migration this file opened with has landed, deployed, and been
+live-verified:
+
+- **ORM — Drizzle everywhere**: biaslens #26, reparaturbonus-zh #130,
+  solon #136, aoz-housing #154. Schema parity proven per repo by normalized
+  pg_dump diff (aoz: byte-empty over ~1500 DDL lines); live-DB cutovers via
+  pre-merge dual-ledger baselining, zero destructive statements, row counts
+  accounted for. `grep -rni prisma` clean in all four.
+- **Test runner — Vitest for every app**: orangecat #859, evig #429 (a
+  parallel session's conversion, verified at identical parity), aoz-housing
+  #157 (+#159 lockfile). Every conversion at exact suite parity; jest
+  deleted everywhere.
+- **Deploy fallback**: the shared selfhost-deploy .nvmrc fallback tracks
+  the box (Node 24) since fleetcrown #461 — the npm-major writer/reader
+  split that stranded aoz's first vitest deploy is closed at the source.
+
+Still open (tracked): evig nodemailer→resend review; OC's direct
+@google/generative-ai → ai-kit; pnpm sweep (gated on ai-kit npm bootstrap).
 
 ## Rules
 
