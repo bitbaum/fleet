@@ -55,6 +55,13 @@ check("absent package is not a gap", gapsFor({ dependencies: {} }, blessed).leng
 check("stale bitbaum tag flagged",
   gapsFor({ dependencies: { "ai-kit": "github:bitbaum/ai-kit#v0.5.0" } }, blessed).length === 1);
 
+// ── Empty/absent internal_tags (live config since ai-kit moved to npm) ─────
+check("absent internal_tags: only major gaps counted",
+  gapsFor(stale, { majors: blessed.majors }).length === 6);
+check("empty internal_tags: leftover git pin is not judged",
+  gapsFor({ dependencies: { "ai-kit": "github:bitbaum/ai-kit#v0.5.0" } },
+    { majors: blessed.majors, internal_tags: {} }).length === 0);
+
 // ── UNCHECKED is not clean ──────────────────────────────────────────────────
 const { rows, total, uncheckedRepos } = collate([
   { repo: "good", pkg: current, gaps: gapsFor(current, blessed) },
