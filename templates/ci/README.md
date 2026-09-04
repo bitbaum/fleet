@@ -32,8 +32,10 @@ the ladder below.
 
 ## How to adopt (copy, don't reinvent)
 
-- **npm repo** → copy `ci-npm.yml` to `.github/workflows/ci.yml`.
-- **pnpm repo** → copy `ci-pnpm.yml` to `.github/workflows/ci.yml`.
+- **pnpm repo** (every fleet repo since the 2026-09-04 pnpm sweep) → copy
+  `ci-pnpm.yml` to `.github/workflows/ci.yml`.
+- **npm repo** (none left in the fleet; template kept for forks/external work) →
+  copy `ci-npm.yml` to `.github/workflows/ci.yml`.
 - Adjust the `test`/`typecheck` step to match the repo's actual `package.json`
   script names. If a repo has no `typecheck` script, call `npx tsc --noEmit`
   directly (don't add a script just for CI).
@@ -84,8 +86,10 @@ exists; adding a no-op to satisfy the floor would be theatre). It runs weekly
 via `.github/workflows/verify-floor.yml`, reporting into the job summary.
 
 Deliberately **one central script, not a copy per repo** — `auto-merge-sweep.sh`
-was copied into 17 repos and now has at least 5 live variants, so a fix landed
-in one reaches none of the others.
+was once copied into 22 repos and drifted into 8 live variants, so a fix landed
+in one reached almost none of the others. It now lives canonically in this repo
+and the fleet calls it as a reusable workflow (see SHARED.md for the last
+local-copy holdouts).
 
 **What it does not prove:** that each gate is *effective*. A `lint` script that
 exists but silently does nothing passes. `sbb-lost-found` is the live example —

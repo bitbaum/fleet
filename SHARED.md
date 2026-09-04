@@ -5,8 +5,11 @@
 This exists because the alternative was tried and measurably failed. Every
 duplication in this fleet was already known, and knowing changed nothing:
 
-- orangecat's `ADR-0002-rate-limiting-unification.md` (2026-01-18) is still
-  **Status: Proposed**. It names *two* implementations. There are now **four**.
+- orangecat's `ADR-0002-rate-limiting-unification.md` (2026-01-18) sat at
+  **Status: Proposed** for seven months. It named *two* implementations; the
+  count reached **four** before it was finally resolved in-repo (Accepted
+  2026-08-25 — one canonical module, and almost none of the original plan
+  survived contact).
 - `templates/ci/README.md` says "deliberately ONE central script, not a copy per
   repo". `auto-merge-sweep.sh` lives in **22 repos**, and as of 2026-08-16 in
   **8 distinct versions** spanning 11,787–19,344 bytes. A fix landed in one
@@ -22,14 +25,16 @@ the inventory underneath it is **generated**, and the number it produces is a
 
 | Package | Install | Replaces |
 |---|---|---|
-| [`ai-forms`](https://github.com/bitbaum/ai-forms) | `npm i github:bitbaum/ai-forms#v0.1.0` | per-app "fill this form from prose" + conversational refinement. Headless — ships **no markup**, so each app keeps its own styling. |
-| [`ai-kit`](https://github.com/bitbaum/ai-kit) | `npm i github:bitbaum/ai-kit#v0.5.0` | **the AI layer, in one install** — which model to call, whether the vendor still lists it, how to walk the fallback chain and know when none of it worked (`tryChain`/`createHealthTracker`, v0.5.0), the three kinds of 429, fair-share of a free tier, and (re-exported) `ai-forms`. Renamed from `ai-ration` 2026-08-26: the name described one of five modules, and the package had one adopter while five repos that skipped it went down together to a retired model id. |
-| [`threadkit`](https://github.com/bitbaum/threadkit) | `npm i threadkit` | multi-participant message threads where *permission is participation*, not a role or an ownership column. Headless pure functions, so "who may read this" is unit-testable instead of buried in a `WHERE` clause. AI participants obey the same visibility rules. **ESM-only.** |
-| [`sitekit`](https://github.com/bitbaum/sitekit) | `npm i github:bitbaum/sitekit#v0.2.0` | **a website as data** — the closed section union (Zod as SSOT, path-addressed errors a generator can act on), one set of React renderers emitting semantic classes only (tokens stay per-site: uniform system, divergent aesthetics), and per-field provenance (`scraped`/`operator`/`inferred`/`not-found`) so `assertDeliverable()` makes "we fabricate no facts" a check instead of a promise. Extracted from substrata per orangecat ADR-0003; the planned `siteFromUrl()` extractor targets this schema. RSC-native — the Link seam stays a server-component prop (learned in v0.1.1 when the first consumer's build refused a component function crossing 'use client'). **ESM-only.** |
-| [`limitkit`](https://github.com/bitbaum/limitkit) | `npm i github:bitbaum/limitkit#v0.1.0` | the fleet's **12 hand-rolled rate limiters** (this file's own "next extraction" row). Sliding/fixed windows over an injectable two-method `Store`; **bounded** memory default (the unbounded-Map leak is impossible by construction); standard `X-RateLimit-*` + `Retry-After` headers — what orangecat's ADR-0002 specified seven months before anything enforced it; `clientIp()`. Refusals count nothing, so a hammered key recovers. Ships no middleware and **no limit values** — how many attempts a route allows is app semantics, asserted locally. |
+| [`ai-forms`](https://github.com/bitbaum/ai-forms) | `pnpm add @fleet/ai-forms@github:bitbaum/ai-forms#v0.1.2` | per-app "fill this form from prose" + conversational refinement. Headless — ships **no markup**, so each app keeps its own styling. |
+| [`ai-kit`](https://github.com/bitbaum/ai-kit) | `pnpm add @bitbaum/ai-kit` (on npm since 2026-09-04) | **the AI layer, in one install** — which model to call, whether the vendor still lists it, how to walk the fallback chain and know when none of it worked (`tryChain`/`createHealthTracker`, v0.5.0), the three kinds of 429, fair-share of a free tier, and (re-exported) `ai-forms`. Renamed from `ai-ration` 2026-08-26: the name described one of five modules, and the package had one adopter while five repos that skipped it went down together to a retired model id. |
+| [`threadkit`](https://github.com/bitbaum/threadkit) | `pnpm add threadkit` | multi-participant message threads where *permission is participation*, not a role or an ownership column. Headless pure functions, so "who may read this" is unit-testable instead of buried in a `WHERE` clause. AI participants obey the same visibility rules. **ESM-only.** |
+| [`sitekit`](https://github.com/bitbaum/sitekit) | `pnpm add sitekit@github:bitbaum/sitekit#v0.3.0` | **a website as data** — the closed section union (Zod as SSOT, path-addressed errors a generator can act on), one set of React renderers emitting semantic classes only (tokens stay per-site: uniform system, divergent aesthetics), and per-field provenance (`scraped`/`operator`/`inferred`/`not-found`) so `assertDeliverable()` makes "we fabricate no facts" a check instead of a promise. Extracted from substrata per orangecat ADR-0003; the planned `siteFromUrl()` extractor targets this schema. RSC-native — the Link seam stays a server-component prop (learned in v0.1.1 when the first consumer's build refused a component function crossing 'use client'). **ESM-only.** |
+| [`limitkit`](https://github.com/bitbaum/limitkit) | `pnpm add limitkit@github:bitbaum/limitkit#v0.2.0` | the fleet's **12 hand-rolled rate limiters** (this file's own "next extraction" row). Sliding/fixed windows over an injectable two-method `Store`; **bounded** memory default (the unbounded-Map leak is impossible by construction); standard `X-RateLimit-*` + `Retry-After` headers — what orangecat's ADR-0002 specified seven months before anything enforced it; `clientIp()`. Refusals count nothing, so a hammered key recovers. Ships no middleware and **no limit values** — how many attempts a route allows is app semantics, asserted locally. |
 
-**Adopted:** `ai-forms` — fleetcrown, evig, aoz-housing, surf-your-life.
-`ai-kit` — fleetcrown, aoz-housing, truthseeker, botsmann, **and this repo**
+**Adopted:** `ai-forms` — fleetcrown, evig, aoz-housing, surf-your-life, kivvi.
+`ai-kit` — fleetcrown, aoz-housing, truthseeker, botsmann, evig, orangecat,
+hirnli (all seven on `@bitbaum/ai-kit` from npm), surf-your-life and kivvi's
+`@kivvi/ai` (both still via git tag — convert when touched), **and this repo**
 (`model-pin-audit.mjs` calls `checkCatalog`; the audit needed exactly the vendor
 query the package owns, so writing a second one here would have been this file's
 own sin).
@@ -44,13 +49,14 @@ just one repo instead of five. That hand-rolled code is exactly what
 was converted the same day as the proving consumer — walk one flat
 provider+model chain instead of two nested hand-rolled loops, and the health
 tracker now wraps `createHealthTracker` behind its original five-function API.
-**`tryChain`/`createHealthTracker` are new in v0.5.0 and have TWO real
+**`tryChain`/`createHealthTracker` are new in v0.5.0 and had TWO real
 adopters (botsmann, hirnli) as of 2026-08-29** — fleetcrown/aoz-housing/
-truthseeker's `ai-kit` dependency predates this release and does not use
-either function yet. Say so precisely rather than let "ai-kit adopted"
-imply the failover/health gap is closed fleet-wide; it is closed in two
-repos. evig/kivvi/orangecat (deliberately on their own provider layers —
-see above) are next, not yet started.
+truthseeker are on `^0.6.2` now but do not use either function yet. Say so
+precisely rather than let "ai-kit adopted" imply the failover/health gap is
+closed fleet-wide. Since then: evig converted (`tryChain` in
+`src/lib/ai/providers.ts`), kivvi wraps `createHealthTracker`
+(`packages/ai/src/health.ts`), and orangecat installs `@bitbaum/ai-kit` for
+its grounding harness while keeping its own model registry.
 
 **hirnli and "revamp-info" were counted as two separate repos in the
 2026-08-29 audit. They are not — `git remote -v` in `/home/g/dev/revamp-info`
@@ -71,7 +77,8 @@ windows, tool/vision support and per-token cost, which `ai-kit` does not model.
 Installing it beside one of those adds a second source of model truth to a repo
 whose problem was having two. They were repaired in place and left pointing at
 the daily audit instead. Merging a registry into `ai-kit` is a real design
-question and belongs to a human, not to an outage.
+question and belongs to a human, not to an outage. (All three have since
+adopted anyway, each on its own terms — see the paragraph above.)
 
 **v0.4.0 is breaking:** form filling moved off the root export to `ai-kit/forms`.
 One install, one version, one import path per concern — the root re-export made
@@ -85,11 +92,13 @@ fill" are ONE feature — AOZ adopted the form half, hand-rolled the rest, and w
 taken down by the half it skipped. `threadkit` and `limitkit` are deliberately
 NOT merged in: neither is about AI, and an app throttling its login form should
 not install a model catalogue to do it. Merge by what a consumer needs together,
-never by "these are all shared utilities". `threadkit` — **nobody yet**.
+never by "these are all shared utilities". `threadkit` — **vitareba**
+(`^0.1.1`, driving its care-team messaging in `lib/domain/messages.ts` — the
+exact clinic case it was extracted for).
 `limitkit` — fleetcrown (proving consumer; its old limiter had the unbounded
-Map). **Next adopter should be orangecat** — it closes ADR-0002 by making its
-Upstash client a 12-line `Store` adapter and deleting three of its four
-implementations.
+Map). orangecat closed its ADR-0002 in-repo instead (Accepted 2026-08-25: one
+canonical `src/lib/rate-limit.ts`, the messaging duplicate deleted) — so the
+next limitkit adopter is whichever repo's hand-rolled limiter is touched next.
 `sitekit` — substrata (proving consumer, converted the day the package
 shipped: −577 lines of local renderer, and its test now validates the whole
 site against the shared schema, so a breaking schema change fails in the
@@ -100,15 +109,13 @@ v0.2.0 — the union grows only when a real site cannot be expressed).
 16.3 app with seven-locale `app/[locale]` routing, a works gallery and an
 enquiry API; sitekit has no locale concept or gallery kind, so adoption
 would regress a real client's live site for nothing. Grow the union on the
-first multilingual PROSPECT instead, the way camille grew it. **Next: camille-boulangerie
-(PR open — it forced `feature`/`contact`/`faq`/hero-actions into v0.2.0), then
-s-ink (sinktattoo.com)** — real sites make the union's gaps visible on sites we
-own before the schema is pointed at strangers. wild-spirit is NOT a straight
+first multilingual PROSPECT instead, the way camille grew it. wild-spirit is NOT a straight
 conversion: it is a hand-rolled no-framework static generator (`src/build.mjs`)
 that independently reinvented site-as-data, so adopting sitekit there is a
 port decision, not a refactor — decide deliberately, don't drift into it.
-**Not yet:** orangecat and kivvi still carry their own form-assist; kivvi, evig,
-botsmann still carry their own provider layers.
+**Not yet:** orangecat still carries its own form-assist; kivvi's provider
+layer wraps ai-kit rather than using it directly, and still pins the old git
+tag (`#v0.5.0`).
 
 A package with zero adopters removes zero duplication — publishing is the
 cheap half. `threadkit` is listed here on its first day precisely so it does
@@ -130,7 +137,7 @@ there is no role to check.
 
 | Repo | What it replaces there |
 |---|---|
-| `vitareba` | care-team messaging — the exact clinic case: threads whose reader set is "the care team", not "the patient's doctor" |
+| ~~`vitareba`~~ | **adopted** — care-team messaging runs on it (`lib/domain/messages.ts`) |
 | `orangecat` | Cat DMs / conversation visibility |
 | `fleetcrown` | agent↔human threads, where an AI participant already needs the same rules as a person |
 
@@ -160,8 +167,8 @@ Ranked by (copies × how identical the logic is). Counts from
 
 | Concern | Files | Why it is a good candidate |
 |---|---|---|
-| `auto-merge-sweep.sh` | ~~22~~ **6** | **EXTRACTED 2026-08-16/20.** Sixteen repos call the canonical as a reusable workflow, each verified to actually *run* it (a sweep that fails to start looks exactly like one with nothing to do). The six remaining are deliberate: dotfiles is the canonical home and runs it directly; ai-forms, datacat, petvity, solon had dirty working trees owned by other sessions when swept — convert when clear. The two repos that had ever *tested* their copies (evig, orangecat) had that coverage ported into the canonical suite **before** deletion: 17 cases, mutation-proven. |
-| rate limiting | **14 → adopting** | **Extracted 2026-08-20 as [`limitkit`](https://github.com/bitbaum/limitkit)** (see registry above). fleetcrown converted as the proving consumer; 13 files remain across 8 repos, orangecat first in line (its ADR-0002 becomes a 12-line `Store` adapter + three deletions). The ratchet holds the count until each adoption lands. |
+| `auto-merge-sweep.sh` | ~~22~~ **6** | **EXTRACTED 2026-08-16/20.** Most repos call the canonical as a reusable workflow, each verified to actually *run* it (a sweep that fails to start looks exactly like one with nothing to do). The remaining copies: **this repo** is the canonical home (moved here from dotfiles 2026-08-28; dotfiles has since dropped its copy, and ai-forms converted to the reusable workflow); datacat, petvity, solon still run local copies — had dirty working trees owned by other sessions when swept, convert when clear. The two repos that had ever *tested* their copies (evig, orangecat) had that coverage ported into the canonical suite **before** deletion: 17 cases, mutation-proven. |
+| rate limiting | **14 → adopting** | **Extracted 2026-08-20 as [`limitkit`](https://github.com/bitbaum/limitkit)** (see registry above). fleetcrown converted as the proving consumer; orangecat instead unified in-repo (ADR-0002 Accepted 2026-08-25, one canonical module) without limitkit. The remaining hand-rolled limiters convert as touched; the ratchet holds the count until each adoption lands. |
 | AI provider client | **16** | evig 7, orangecat 5. `ai-kit` already owns the hard part (chain, 429, budget); these are the callers. **Priced 2026-08-26, re-priced 2026-08-27:** Groq retired the llama-3.x family and the damage was far wider than the first count. Seven repos were broken, not five — the audit could not see two of them — and inside a repo the id was written down **two to four times**. Kivvi took three PRs to remove one retired id: it lived in the provider registry, an app's inline fetch body, the fallback chain, and a client hook's `FALLBACK_MODEL`. Each pass only found the copies the tooling could see. That is the cost of duplication measured rather than argued. fleetcrown, which adopted the package, was unaffected throughout. |
 | logger | **10** | sbb-lost-found alone has 4. |
 | health route | **8** | Identical shape in 8 repos; a 20-line contract. |
