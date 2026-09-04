@@ -26,9 +26,9 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | E2E | Playwright | — |
 | Email | Resend | evig: Listmonk (self-hosted FOSS) primary + nodemailer SMTP fallback — DELIBERATE (reviewed 2026-09-02): its own config/email.ts documents the provider seam with admin diagnostics, and a hosted email SaaS would contradict the project's self-hosting values |
 | i18n | next-intl | — |
-| AI | `@bitbaum/ai-kit` from npm (the fleet engine; git-tag pins retired 2026-09-04) | forks (openclaw) follow upstream |
+| AI | `@bitbaum/ai-kit` from npm (the fleet engine; on npm since 2026-09-04) | forks (openclaw) follow upstream. Two git-tag pins remain on default branches — surf-your-life (`#v0.6.2`) and kivvi's `@kivvi/ai` (`#v0.5.0`) — stragglers to convert, not exceptions |
 | Forms | react-hook-form (+ ai-forms for AI fill) | — |
-| Package manager | pnpm 11 (fleet-wide since 2026-09-04; `packageManager` pinned per repo, corepack) | openclaw follows upstream |
+| Package manager | pnpm 11 (fleet-wide since 2026-09-04; `packageManager` pinned per repo, corepack) | openclaw follows upstream; kivvi (already-pnpm before the sweep) still pins `pnpm@9` — bump pending |
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
 
@@ -52,9 +52,11 @@ live-verified:
 
 Nothing open. Closed 2026-09-04: **pnpm sweep DONE** — all 26 npm repos
 converted to pnpm 11 (every PR merged by the auto-merge sweep; deployed
-apps health-verified live), on top of the 5 already-pnpm repos; ai-kit npm
-bootstrap DONE (`@bitbaum/ai-kit@0.6.2` published, all 7 consumers on
-`^0.6.2`, git-tag pin tracking retired from blessed-versions.json);
+apps health-verified live), on top of the 5 already-pnpm repos (of which
+kivvi still pins `pnpm@9` — see the table); ai-kit npm bootstrap DONE
+(`@bitbaum/ai-kit@0.6.2` published, all 7 npm consumers on `^0.6.2`,
+git-tag pin tracking retired from blessed-versions.json — surf-your-life
+and kivvi's `@kivvi/ai` still install by git tag, see the table);
 openclaw fork CI baseline repaired (synced to upstream, main green,
 fork-exempt in the ratchet). Closed 2026-09-02: evig email reviewed →
 documented exception; OC's @google/generative-ai was import-free dead
