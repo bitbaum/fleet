@@ -26,9 +26,9 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | E2E | Playwright | — |
 | Email | Resend | evig: Listmonk (self-hosted FOSS) primary + nodemailer SMTP fallback — DELIBERATE (reviewed 2026-09-02): its own config/email.ts documents the provider seam with admin diagnostics, and a hosted email SaaS would contradict the project's self-hosting values |
 | i18n | next-intl | — |
-| AI | ai-kit (the fleet engine) | forks (openclaw) follow upstream |
+| AI | `@bitbaum/ai-kit` from npm (the fleet engine; git-tag pins retired 2026-09-04) | forks (openclaw) follow upstream |
 | Forms | react-hook-form (+ ai-forms for AI fill) | — |
-| Package manager | npm today; **pnpm once ai-kit is on npm** (the git-pin/pnpm lockfile trap gates the sweep) | kivvi, openclaw, petvity, surf-your-life, vitareba already pnpm |
+| Package manager | **pnpm — sweep in progress** (ai-kit is on npm, so the git-pin/pnpm lockfile trap no longer gates it; 5 repos still converting) | kivvi, openclaw, petvity, surf-your-life, vitareba already pnpm |
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
 
@@ -50,8 +50,10 @@ live-verified:
   the box (Node 24) since fleetcrown #461 — the npm-major writer/reader
   split that stranded aoz's first vitest deploy is closed at the source.
 
-Still open (tracked): pnpm sweep (gated on ai-kit npm bootstrap); openclaw
-fork CI baseline (in repair). Closed 2026-09-02: evig email reviewed →
+Still open (tracked): pnpm sweep (ai-kit npm bootstrap DONE 2026-09-04 —
+`@bitbaum/ai-kit@0.6.2` published, all 7 consumers on `^0.6.2` from the
+registry, git-tag pin tracking retired from blessed-versions.json — but 5
+repos are still converting to pnpm); openclaw fork CI baseline (in repair). Closed 2026-09-02: evig email reviewed →
 documented exception; OC's @google/generative-ai was import-free dead
 weight → deleted.
 
