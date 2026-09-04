@@ -28,7 +28,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | i18n | next-intl | — |
 | AI | `@bitbaum/ai-kit` from npm (the fleet engine; git-tag pins retired 2026-09-04) | forks (openclaw) follow upstream |
 | Forms | react-hook-form (+ ai-forms for AI fill) | — |
-| Package manager | **pnpm — sweep in progress** (ai-kit is on npm, so the git-pin/pnpm lockfile trap no longer gates it; 5 repos still converting) | kivvi, openclaw, petvity, surf-your-life, vitareba already pnpm |
+| Package manager | pnpm 11 (fleet-wide since 2026-09-04; `packageManager` pinned per repo, corepack) | openclaw follows upstream |
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
 
@@ -50,10 +50,13 @@ live-verified:
   the box (Node 24) since fleetcrown #461 — the npm-major writer/reader
   split that stranded aoz's first vitest deploy is closed at the source.
 
-Still open (tracked): pnpm sweep (ai-kit npm bootstrap DONE 2026-09-04 —
-`@bitbaum/ai-kit@0.6.2` published, all 7 consumers on `^0.6.2` from the
-registry, git-tag pin tracking retired from blessed-versions.json — but 5
-repos are still converting to pnpm); openclaw fork CI baseline (in repair). Closed 2026-09-02: evig email reviewed →
+Nothing open. Closed 2026-09-04: **pnpm sweep DONE** — all 26 npm repos
+converted to pnpm 11 (every PR merged by the auto-merge sweep; deployed
+apps health-verified live), on top of the 5 already-pnpm repos; ai-kit npm
+bootstrap DONE (`@bitbaum/ai-kit@0.6.2` published, all 7 consumers on
+`^0.6.2`, git-tag pin tracking retired from blessed-versions.json);
+openclaw fork CI baseline repaired (synced to upstream, main green,
+fork-exempt in the ratchet). Closed 2026-09-02: evig email reviewed →
 documented exception; OC's @google/generative-ai was import-free dead
 weight → deleted.
 
