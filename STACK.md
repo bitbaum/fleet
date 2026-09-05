@@ -24,9 +24,9 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Test runner (apps) | Vitest | fleetcrown: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
-| Email | Resend | evig: Listmonk (self-hosted FOSS) primary + nodemailer SMTP fallback — DELIBERATE (reviewed 2026-09-02): its own config/email.ts documents the provider seam with admin diagnostics, and a hosted email SaaS would contradict the project's self-hosting values |
+| Email | `@bitbaum/mail-kit` from npm (Resend over raw fetch; one shared free-tier account, all senders `<app>@fleetcrown.orangecat.ch`; daily canary in this repo's email-canary.yml) | evig: Listmonk stays for bulk/newsletter (self-hosted FOSS) + nodemailer SMTP fallback behind the provider seam; transactional mail is Resend (the 2026-09-02 "Listmonk primary" review predates discovering the prod SMTP cred was DEAD — Login denied, live-probed 2026-09-05). GoTrue (self-hosted Supabase auth) sends via Resend SMTP :587 — SMTP is its only interface |
 | i18n | next-intl | — |
-| AI | `@bitbaum/ai-kit` from npm (the fleet engine; on npm since 2026-09-04) | forks (openclaw) follow upstream. Two git-tag pins remain on default branches — surf-your-life (`#v0.6.2`) and kivvi's `@kivvi/ai` (`#v0.5.0`) — stragglers to convert, not exceptions |
+| AI | `@bitbaum/ai-kit` from npm (the fleet engine; on npm since 2026-09-04) | forks (openclaw) follow upstream. Git-tag pins: ZERO on default branches since 2026-09-05 (surf-your-life #51, kivvi #76, datacat #248 converted the last three) |
 | Forms | react-hook-form (+ ai-forms for AI fill) | — |
 | Package manager | pnpm 11 (fleet-wide since 2026-09-04; `packageManager` pinned per repo, corepack) | openclaw follows upstream; kivvi (already-pnpm before the sweep) still pins `pnpm@9` — bump pending |
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |

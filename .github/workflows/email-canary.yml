@@ -1,0 +1,84 @@
+# Email canary — a dead mail credential must never again rot unnoticed.
+#
+# Exists because the fleet's Brevo SMTP credential died silently and evig +
+# kivvi dropped ALL outbound email (invoices, verification codes, password
+# resets) for months before a live probe on 2026-09-05 caught it. Every app
+# now sends through @bitbaum/mail-kit over one shared Resend account — one
+# account means ONE canary covers the whole fleet.
+#
+# Daily: authenticated key + sender-domain check (no email, no quota cost).
+# Mondays: additionally one REAL send — a passing API probe does not prove
+# delivery; only a delivered email does. Costs 1 of the free tier's 100/day.
+# Any failure pings Telegram via the org-wide alert bot.
+name: Email canary
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # daily, 06:17 UTC (off the :00 GH cron rush)
+  workflow_dispatch: {}
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Key + sender-domain check
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "$RESEND_API_KEY" ] || { echo "RESEND_API_KEY secret is not set" >&2; exit 1; }
+          body=$(curl -sS --max-time 20 -w '\n%{http_code}' https://api.resend.com/domains \
+                   -H "Authorization: Bearer $RESEND_API_KEY")
+          code=${body##*$'\n'}
+          json=${body%$'\n'*}
+          if [ "$code" != "200" ]; then
+            echo "Resend /domains returned $code — key dead or API down" >&2
+            exit 1
+          fi
+          status=$(echo "$json" | jq -r '.data[] | select(.name=="fleetcrown.orangecat.ch") | .status')
+          if [ "$status" != "verified" ]; then
+            echo "fleetcrown.orangecat.ch is '$status', not verified — every app's sender just broke" >&2
+            exit 1
+          fi
+          echo "key valid, sender domain verified"
+
+      - name: Weekly real-delivery send (Mondays; always on manual dispatch)
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          set -euo pipefail
+          # Real send only on Mondays (or manual dispatch) — the API probe
+          # above cannot prove delivery, but a daily email would be noise.
+          if [ "$(date -u +%u)" != "1" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "not Monday — skipping the real send"; exit 0
+          fi
+          resp=$(curl -sS --max-time 20 -w '\n%{http_code}' -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" \
+            -d '{"from":"Fleet Canary <canary@fleetcrown.orangecat.ch>",
+                 "to":["georgy.butaev+canary@revamp-it.ch"],
+                 "subject":"Fleet email canary — weekly delivery proof",
+                 "text":"The shared Resend account delivered this on schedule. If these stop arriving on Mondays, the fleet has an email problem the API probe cannot see. No action needed."}')
+          code=${resp##*$'\n'}
+          if [ "$code" != "200" ]; then
+            echo "canary send failed: $resp" >&2
+            exit 1
+          fi
+          echo "canary send accepted: $(echo "${resp%$'\n'*}" | jq -r .id)"
+
+      - name: Alert Telegram on failure
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          # An alert that reaches nobody defeats the workflow's whole purpose:
+          # missing secrets or a Telegram 4xx must make THIS step red too, so
+          # the broken alert path is itself visible.
+          [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || { echo "TELEGRAM_* secrets missing — alert undeliverable" >&2; exit 1; }
+          curl -sS --fail --max-time 20 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" \
+            -d text="🚨 Fleet EMAIL canary failed — the shared Resend account (every app's outbound mail) is unhealthy. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            >/dev/null
+          echo "telegram alerted"
