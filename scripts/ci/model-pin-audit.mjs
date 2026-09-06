@@ -726,6 +726,7 @@ function loadAiKit() {
 
   for (const root of candidates) {
     for (const entry of [
+      join(root, "node_modules", "@bitbaum", "ai-kit", "dist", "index.js"),
       join(root, "node_modules", "ai-kit", "dist", "index.js"),
       join(root, "node_modules", "ai-ration", "dist", "index.js"),
       join(root, "dist", "index.js"),

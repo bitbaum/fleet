@@ -58,15 +58,15 @@ jobs:
       # playwright. The vendor query lives in ai-kit precisely so this repo does
       # not grow a second copy of it.
       #
-      # Installed from GitHub rather than npm: ai-kit v0.3.0 is tagged and built
-      # but not on the registry, because the repo has no NPM_TOKEN. Switch this
-      # to `npm i ai-kit` once it does.
+      # From npm since 2026-09-04 (@bitbaum/ai-kit — the unscoped name is
+      # blocked by npm's typosquat guard). This retired the last git-tag
+      # install of ai-kit in fleet automation; it had been frozen at v0.3.0.
       - name: Install ai-kit
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p "$RUNNER_TEMP/air" && cd "$RUNNER_TEMP/air"
           npm init -y >/dev/null
-          npm i --no-audit --no-fund github:bitbaum/ai-kit#v0.3.0 >/dev/null
+          npm i --no-audit --no-fund @bitbaum/ai-kit@^0.6.2 >/dev/null
 
       - name: Audit the fleet's pins
         if: github.event_name != 'pull_request'
