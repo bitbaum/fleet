@@ -62,6 +62,7 @@ health-route|.*api/health/route\.(ts|js)$
 slug-util|(lib|src)/.*slug(ify)?\.(ts|js)$
 date-utils|(lib|src)/.*(dates|date-utils)\.(ts|js)$
 ai-provider-client|(lib|src|packages|apps)/.*(provider|call-provider)s?\.(ts|js)$
+messaging-threads|(lib|src)/.*(message-utils|conversation-helpers|messages-view|thread-(utils|helpers))\.(ts|js)$
 '
 
 # ── Collect ──────────────────────────────────────────────────────────────────
