@@ -81,6 +81,16 @@ jobs:
       - name: The duplication ratchet can still go red
         run: bash scripts/ci/test-shared-inventory.sh
 
+      # The hygiene ratchet decides from workflow TEXT, so its deciding half is
+      # provable with fixtures and no network — which is what makes it safe to
+      # run on every PR. Both directions are asserted: it must flag a deploy
+      # that cancels itself and a Next repo building cold, and it must NOT flag
+      # a CI workflow that cancels (correct), a deploy that is a repo's only
+      # verifier, or a non-Next repo with no .next/cache to restore. A predicate
+      # that never matches passes just as quietly as one that works.
+      - name: The CI/CD hygiene ratchet can go red, and stays quiet when it should
+        run: bash scripts/ci/test-cicd-hygiene-audit.sh
+
       # The stranded-work guard replaces a check that failed by being ignorable:
       # git-health reported orangecat's 118 dirty files every day for ten days
       # and changed nothing. This one keys on AGE and stays silent when healthy,

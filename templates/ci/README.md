@@ -200,6 +200,54 @@ the field leaks, the identity is spoofed, or the scope is dropped. Until a repo
 has that, "verify is green" means the code compiles and behaves, not that it is
 safe.
 
+## The shape around the gates (Rung 5 — audited by `cicd-hygiene-audit.sh`)
+
+The four gates above say *what* must run. They say nothing about the pipeline
+around them, and that shape has cost this fleet real deploys. Three rules,
+each one written because it failed on 2026-09-07:
+
+**1. CI may cancel superseded runs. A DEPLOY may not.**
+`cancel-in-progress: true` is right for CI — an obsolete run is wasted minutes.
+It is wrong for a deploy, where the cancelled thing is *shipping*. evig ran a
+~13-minute deploy with cancel-on-push and **4 of its last 10 deploys were
+cancelled — 40%, against 0% for every other repo measured**. Three cancelled
+each other in a row and a merged fix needed three attempts to reach production.
+Cancelling is only safe if the newer run is guaranteed to finish; at 13 minutes
+it is not. Queue instead, and let the CI gate skip commits that main has already
+moved past — `fleetcrown/scripts/hetzner/ci-gate.sh` returns a distinct
+"superseded" exit code for exactly this.
+
+**2. A deploy REQUIRES CI's green. It does not re-run it.**
+evig's deploy ran `pnpm run verify` — the same bundle CI runs, concurrently, on
+the same SHA. The commit was built **four times per merge** (CI's verify, CI's
+e2e build, the deploy's verify, and the build inside the deploy script) and only
+the last one shipped. Requiring the bundle to pass *once* is the same coverage.
+Note the trap this hides: an earlier version of that step was genuinely weaker
+than CI because it re-inlined a *subset* of the gates. The fix for that is to
+depend on the full bundle, never to run a second copy of it.
+
+**3. Cache the compiler's output.**
+Next keeps its build cache in `.next/cache`. Measured across eight repos,
+exactly **one** restored it in CI; everyone else recompiled from scratch every
+run, then the deploy compiled again. Both templates here now include the step —
+delete it only if the repo is not a Next app.
+
+And the shape worth copying when a repo is ready for it: **build once, ship that
+artifact**. `orangecat` is the only repo doing it, and its CD median is **2.5m
+against a CI of 8.0m**. If you lift it, lift the packaging too — the standalone
+output under pnpm is a symlink farm, and `actions/upload-artifact` does not
+reliably preserve links, so it must travel as a **tarball** (see
+`orangecat/.github/workflows/ci.yml`; a flattened tree dies at boot with
+`Cannot find module '@swc/helpers/_/…'`).
+
+These are ratcheted fleet-wide, so a new repo cannot quietly regress them:
+
+```bash
+scripts/ci/cicd-hygiene-audit.sh            # report
+scripts/ci/cicd-hygiene-audit.sh --check    # exit 1 if a count rose
+scripts/ci/cicd-hygiene-audit.sh --update   # move the baseline, in a PR
+```
+
 ## The maturity ladder (add per-repo as the secrets/infra appear)
 
 The floor is rung 0. Reach for the next rung when the repo earns it — the
