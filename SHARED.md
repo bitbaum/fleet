@@ -174,7 +174,8 @@ Ranked by (copies × how identical the logic is). Counts from
 | AI provider client | **16** | evig 7, orangecat 5. `ai-kit` already owns the hard part (chain, 429, budget); these are the callers. **Priced 2026-08-26, re-priced 2026-08-27:** Groq retired the llama-3.x family and the damage was far wider than the first count. Seven repos were broken, not five — the audit could not see two of them — and inside a repo the id was written down **two to four times**. Kivvi took three PRs to remove one retired id: it lived in the provider registry, an app's inline fetch body, the fallback chain, and a client hook's `FALLBACK_MODEL`. Each pass only found the copies the tooling could see. That is the cost of duplication measured rather than argued. fleetcrown, which adopted the package, was unaffected throughout. |
 | logger | **10** | sbb-lost-found alone has 4. |
 | message threads | **3** | orangecat 2, vitareba 1. **Extracted already, as [`threadkit`](https://github.com/bitbaum/threadkit)** — 506 lines, headless, permission-as-participation. Added to the ratchet 2026-09-06 *after* measuring, because the intuition that prompted it ("many of our apps have messaging") turned out to be wrong: only two repos carry thread logic at all. The row still earns its place, because the copy that existed was not merely duplicated but **wrong in ways invisible below three participants** — read receipts that reported READ when any one recipient had caught up, a reader counted outside their own visibility window, and an optimistic bubble that shared no identity with its stored row and so rendered twice whenever realtime won the race. orangecat converted as the proving consumer; the remaining file is vitareba's adapter, which is the point of a headless package rather than a copy of it. |
-| health route | **8** | Identical shape in 8 repos; a 20-line contract. |
+| health route | **11** | Identical *shape* in 11 repos — and, checked 2026-09-07, not identical *content*. vitareba's asserts the app role can still read its own tables (`lib/db/schema-usable.ts`, written because a migration once created a table the app could not read); orangecat's checks Supabase reachability. Extracting the 20-line envelope would leave every app still writing the only part that differs, which is the assertions. Baseline raised 9 → 11 rather than absorbed. |
+| slug helper | **3** | bip-kit, evig, hirnli. Not one function copied three times — **three different functions that disagreed**, and two of them were broken. evig serves eight locales and deleted seven of them: `Café Genève` → `caf-gen-ve`, and a Russian or Japanese title produced the **empty string**, which under a unique constraint means the second such record cannot save at all. hirnli transliterated a hand-written list (ä ö ü à é è) that omitted ç, so `Association Française` → `association-fran-aise`. **Both fixed in place 2026-09-07** (evig 32 tests, hirnli 26) using the same approach: German digraphs first, then NFD + combining-mark strip for everything else, because a list of accents is never finished. Consolidation into `sitekit` is the right end state and is NOT done: it needs a publish plus a `minimumReleaseAgeExclude` entry in each consumer, and that chain was not worth delaying two live bug fixes. Baseline raised 2 → 3 knowingly. |
 | ~~`@ai-native-cms/core`~~ | — | **Withdrawn — measurement error.** `bitbaum/revampit` *redirects* to `bitbaum/evig` (renamed in the pivot); the "two repos" with byte-identical trees were two clones of ONE repo. Nothing to extract. Two directories are not two repos: check `git remote -v` before reporting cross-repo duplication. |
 
 ## What must NOT be centralized
@@ -293,3 +294,13 @@ cannot silently regress.
 
 **Raising the baseline is allowed** — sometimes a copy really is right. It just
 has to happen in a PR, where someone sees it, instead of by accident.
+
+**Know what the ratchet can and cannot do.** It runs *here*, and it measures the
+default branches of ~38 **other** repos. A PR in hirnli or aoz-housing never
+executes it, so it cannot block the commit that adds a copy — it can only go red
+afterwards, in a repo whose contributors did nothing. That is what happened
+between 2026-08-31 (green) and 2026-09-07 (`health-route` 9 → 11, `slug-util`
+2 → 3): the rises landed through repos the gate cannot reach. Treat it as a
+**detector with an owner**, not as a gate — a detector nobody is assigned to is
+the muting this file was written to prevent. And never run `--update` on a rise
+you have not investigated: that erases the only signal there was.
