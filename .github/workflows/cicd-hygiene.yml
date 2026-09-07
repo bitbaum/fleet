@@ -1,0 +1,58 @@
+# The shape of the fleet's pipelines is measured, and the measurement ratchets.
+#
+# verify-floor.yml already asks whether each repo runs the right GATES. This
+# asks whether the pipeline around those gates is wasteful or unsafe — a
+# distinct question, and one that cost real deploys before anyone measured it:
+# a repo cancelling 40% of its own deploys, a commit built four times per merge,
+# and seven of eight repos recompiling from scratch on every CI run.
+#
+# Weekly, because pipeline shape changes on the timescale of new repos and
+# workflow edits, not individual commits — and a daily red nobody caused is a
+# red that gets muted.
+name: CI/CD hygiene
+
+on:
+  schedule:
+    - cron: '17 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Fail when pipeline hygiene has regressed'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Measure the fleet's pipelines
+        env:
+          # Same gap the other fleet audits state rather than hide: the default
+          # token reads public repos only, so private ones are silently omitted.
+          # The script prints how many repos it inspected — a drop in that
+          # number is the tell. Set FLEET_READ_TOKEN to cover all of them.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## CI/CD hygiene'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          bash scripts/ci/cicd-hygiene-audit.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: The ratchet — pipeline hygiene may improve, never regress
+        if: ${{ inputs.strict != false }}
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/cicd-hygiene-audit.sh --check
