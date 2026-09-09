@@ -28,6 +28,11 @@
 # register is SSOT; agents read it. They do not restate the org story. A
 # new claim is a register row or it does not ship.
 #
+# DEFAULT SCAN: GitHub API via `gh`, not local checkouts. A ratchet that sees
+# nothing prevents nothing. Scans public docs (README.md, CLAUDE.md, AGENTS.md,
+# docs/*.md, site/*.md, marketing/*.md, *.html) from the bitbaum org's default
+# branches. Set USE_LOCAL=1 to scan DEV_ROOT instead (for testing).
+#
 # THE BASELINE IS A RATCHET
 #
 # Existing violations are counted and baselined. The point is a new lie
@@ -37,10 +42,11 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-DEV_ROOT="${DEV_ROOT:-$HOME/dev}"
 REGISTER="${REGISTER:-$HERE/../../registers/org.json}"
 BASELINE="${BASELINE:-$HERE/org-drift.baseline}"
 INVENTORY="${INVENTORY:-$HERE/org-drift-inventory.txt}"
+ORG="${ORG:-bitbaum}"
+USE_LOCAL="${USE_LOCAL:-0}"
 
 # ---------------------------------------------------------------- pure helpers
 
@@ -91,6 +97,25 @@ in_baseline() {
   local k
   for k in "$@"; do [ "$k" = "$key" ] && return 0; done
   return 1
+}
+
+# gh_list_repos — list repos in the org
+gh_list_repos() {
+  gh repo list "$ORG" --limit 1000 --json name --jq '.[].name' 2>/dev/null || {
+    echo "gh repo list failed" >&2
+    return 1
+  }
+}
+
+# gh_default_branch <repo> — get default branch name
+gh_default_branch() {
+  gh api "repos/$ORG/$1" --jq '.default_branch' 2>/dev/null || echo "main"
+}
+
+# gh_check_file <repo> <path> <branch> — fetch and check one file
+gh_check_file() {
+  local repo="$1" path="$2" branch="$3"
+  gh api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || true
 }
 
 # repo_ref <dir> — audit the shared default branch, not a local feature branch
@@ -156,46 +181,96 @@ if APPS_CONF="$(fetch_apps_conf)"; then
   done < <(echo "$APPS_CONF" | parse_apps_conf_doors)
 fi
 
-for gitdir in "$DEV_ROOT"/*/.git; do
-  [ -d "$gitdir" ] || continue
-  repo_dir="${gitdir%/.git}"
-  repo="$(basename "$repo_dir")"
-  ref="$(repo_ref "$repo_dir")"
-  scanned_repos+=("$repo")
+# Scan via GitHub API (default) or local checkouts (USE_LOCAL=1)
+if [ "$USE_LOCAL" = "1" ]; then
+  DEV_ROOT="${DEV_ROOT:-$HOME/dev}"
+  for gitdir in "$DEV_ROOT"/*/.git; do
+    [ -d "$gitdir" ] || continue
+    repo_dir="${gitdir%/.git}"
+    repo="$(basename "$repo_dir")"
+    ref="$(repo_ref "$repo_dir")"
+    scanned_repos+=("$repo")
 
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    path="${line%%:*}"
-    rest="${line#*:}"
-    is_exempt_path "$path" && continue
-    is_public_doc "$path" || continue
-    key="$repo/$path"
-    seen_keys+=("$key")
-    in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$rest")
-  done < <(git -C "$repo_dir" grep -nEI "$PATTERN" "$ref" -- '*.md' '*.html' 2>/dev/null | sed "s|^$ref:||" || true)
-
-  # Check for door disagreements in READMEs
-  if [ ${#doors[@]} -gt 0 ]; then
     while IFS= read -r line; do
       [ -n "$line" ] || continue
       path="${line%%:*}"
       rest="${line#*:}"
-      case "$path" in *README.md|*readme.md) ;; *) continue ;; esac
-      
-      for domain in "${!doors[@]}"; do
-        if echo "$rest" | grep -qF "$domain"; then
-          expected_repo="${doors[$domain]}"
-          if [ "$repo" != "$expected_repo" ]; then
-            key="$repo/$path"
-            detail="claims door $domain (apps.conf says $expected_repo)"
-            seen_keys+=("$key")
-            in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$detail")
+      is_exempt_path "$path" && continue
+      is_public_doc "$path" || continue
+      key="$repo/$path"
+      seen_keys+=("$key")
+      in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$rest")
+    done < <(git -C "$repo_dir" grep -nEI "$PATTERN" "$ref" -- '*.md' '*.html' 2>/dev/null | sed "s|^$ref:||" || true)
+
+    # Check for door disagreements in READMEs
+    if [ ${#doors[@]} -gt 0 ]; then
+      while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        path="${line%%:*}"
+        rest="${line#*:}"
+        case "$path" in *README.md|*readme.md) ;; *) continue ;; esac
+        
+        for domain in "${!doors[@]}"; do
+          if echo "$rest" | grep -qF "$domain"; then
+            expected_repo="${doors[$domain]}"
+            if [ "$repo" != "$expected_repo" ]; then
+              key="$repo/$path"
+              detail="claims door $domain (apps.conf says $expected_repo)"
+              seen_keys+=("$key")
+              in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$detail")
+            fi
           fi
-        fi
-      done
-    done < <(git -C "$repo_dir" grep -nEI '\.(orangecat\.ch|[a-z-]+\.(com|ch|org))' "$ref" -- '*README.md' '*readme.md' 2>/dev/null | sed "s|^$ref:||" || true)
+        done
+      done < <(git -C "$repo_dir" grep -nEI '\.(orangecat\.ch|[a-z-]+\.(com|ch|org))' "$ref" -- '*README.md' '*readme.md' 2>/dev/null | sed "s|^$ref:||" || true)
+    fi
+  done
+else
+  # GitHub API scan (default)
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "✗ gh CLI not found. Install it or set USE_LOCAL=1 to scan $HOME/dev" >&2
+    exit 2
   fi
-done
+
+  mapfile -t repos < <(gh_list_repos)
+  for repo in "${repos[@]}"; do
+    [ -n "$repo" ] || continue
+    scanned_repos+=("$repo")
+    branch="$(gh_default_branch "$repo")"
+    
+    # Check root-level public docs
+    for file in README.md CLAUDE.md AGENTS.md; do
+      content="$(gh_check_file "$repo" "$file" "$branch")"
+      [ -n "$content" ] || continue
+      
+      path="$file"
+      is_exempt_path "$path" && continue
+      
+      # Check forbidden patterns
+      if matches="$(echo "$content" | grep -oEI "$PATTERN" | head -1)"; then
+        [ -n "$matches" ] || continue
+        key="$repo/$path"
+        detail="$matches"
+        seen_keys+=("$key")
+        in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$detail")
+      fi
+      
+      # Check for door disagreements in READMEs
+      if [ ${#doors[@]} -gt 0 ] && [ "$file" = "README.md" ]; then
+        for domain in "${!doors[@]}"; do
+          if echo "$content" | grep -qF "$domain"; then
+            expected_repo="${doors[$domain]}"
+            if [ "$repo" != "$expected_repo" ]; then
+              key="$repo/$path"
+              detail="claims door $domain (apps.conf says $expected_repo)"
+              seen_keys+=("$key")
+              in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$detail")
+            fi
+          fi
+        done
+      fi
+    done
+  done
+fi
 
 # Generate inventory
 {
@@ -211,11 +286,14 @@ done
   fi
 } > "$INVENTORY"
 
-# A runner with only this repo checked out would sweep nothing and pass. A
-# vacuous pass reads exactly like coverage, so say so out loud.
+# A runner that scans nothing passes vacuously
 if [ ${#scanned_repos[@]} -eq 0 ]; then
-  echo "⊘ org-drift audit SKIPPED — no fleet checkout under $DEV_ROOT."
-  echo "  This is not a pass. Run it where the repos live."
+  if [ "$USE_LOCAL" = "1" ]; then
+    echo "⊘ org-drift audit SKIPPED — no fleet checkout under ${DEV_ROOT:-$HOME/dev}."
+  else
+    echo "⊘ org-drift audit SKIPPED — gh repo list returned nothing."
+  fi
+  echo "  This is not a pass. A ratchet that scans nothing prevents nothing."
   exit 0
 fi
 
@@ -229,7 +307,12 @@ stale=()
 for k in "${KEYS[@]:-}"; do
   [ -n "$k" ] || continue
   repo="${k%%/*}"
-  [ -d "$DEV_ROOT/$repo/.git" ] || continue
+  # Only check for stale entries if we actually scanned that repo
+  scanned=0
+  for r in "${scanned_repos[@]}"; do
+    [ "$r" = "$repo" ] && { scanned=1; break; }
+  done
+  [ "$scanned" -eq 0 ] && continue
   in_baseline "$k" "${seen_keys[@]:-}" || stale+=("$k")
 done
 
