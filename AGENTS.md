@@ -20,6 +20,8 @@ essay of the org.
 - Serve (port, process, host): `fleetcrown/scripts/hetzner/apps.conf`.
   A hostname or a path in that file is not a display name.
 - Org facts (public name, unregistered, house address, host): `registers/org.json`.
+- Tools we develop with (agent names): `registers/toolchain.json`.
+  The build stack (framework, ORM, package manager) is `STACK.md`.
 - Display name, kind, and who the work is for: the venture register. Until that
   file exists, do not invent a name. The product title in that repo is the
   temporary source, and a page that disagrees with it is a bug.
@@ -32,6 +34,7 @@ essay of the org.
 - Public name is Cato. Nothing here is registered.
 - AOZ is AOZ. Do not revive an older label. A deploy path is not the name.
 - hirnli is hirnli. A leftover slug in the serve file is not a second product.
+- The agent name is Antigravity. Do not write Gemini.
 - An `orangecat.ch` name is an address on the Hetzner box, not a product of OrangeCat.
 - GitHub Pages is not a host.
 

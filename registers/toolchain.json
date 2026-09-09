@@ -1,0 +1,14 @@
+{
+  "agents": [
+    { "id": "claude", "name": "Claude" },
+    { "id": "codex", "name": "Codex" },
+    { "id": "antigravity", "name": "Antigravity" },
+    { "id": "cursor", "name": "Cursor" },
+    { "id": "grok", "name": "Grok" },
+    { "id": "fleetcrown", "name": "FleetCrown" }
+  ],
+  "_notes": {
+    "agents": "What we use to develop. Display names come from this file. FleetCrown does not read it yet: its adapter lists still say Gemini. That label is stale. Do not invent a second list in a README.",
+    "antigravity": "The name is Antigravity. A gemini id or a gemini binary is a leftover, not a second tool. Commands present on the laptop: antigravity, agy, gemini. Which one FleetCrown launches is a serve fact, not the name."
+  }
+}
