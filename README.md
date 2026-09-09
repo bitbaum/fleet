@@ -13,10 +13,12 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 |---|---|
 | [`SHARED.md`](SHARED.md) | the shared-package registry and the duplication ratchet — **read before building anything cross-cutting** |
 | [`STACK.md`](STACK.md) | the blessed technology per job — ONE ORM, ONE test runner, ONE auth stack; deviations are documented exceptions, not habits |
+| [`registers/org.json`](registers/org.json) | machine-readable register of org facts — agents read this, not READMEs. A new claim is a register row or it does not ship. |
 | `scripts/ci/auto-merge-sweep.sh` | the canonical merge policy; the fleet calls it via the reusable workflow below |
 | `scripts/ci/model-pin-audit.mjs` | runs daily: is any model id the fleet pins still served by its vendor? |
 | `scripts/ci/verify-floor-audit.sh` | does every repo's `verify` actually run lint + typecheck + test? |
 | `scripts/ci/shared-inventory.sh` | counts duplication across the fleet and holds it as a ratchet |
+| `scripts/ci/org-drift-audit.sh` | does any public document contradict the org register? A ratchet that prevents new lies from landing. |
 | `scripts/ci/cicd-hygiene-audit.sh` | is the pipeline AROUND the gates sound — no self-cancelling deploys, no deploy re-running CI's bundle, no cold Next builds? |
 | `scripts/ci/version-currency.mjs` | measures every repo against `blessed-versions.json` (SSOT of blessed majors + internal-package tags) and holds the gap count as a ratchet |
 | `scripts/ci/ui-defect-audit.mjs` | do any live sites ship WCAG AA contrast failures or misaligned stacks? |
@@ -39,6 +41,21 @@ All sixteen callers point here directly. The forwarding shim that briefly
 lived in `bitbaum/dotfiles` was removed once the last one migrated — a shim
 that forwards nothing is just a second place the sweep appears to live, and
 drift between copies is the problem this repo exists to end.
+
+## Org drift prevention
+
+Agents read the register and apps.conf. They do not restate the org story. A
+new claim is a register row or it does not ship.
+
+The register (`registers/org.json`) holds facts that have no other producer:
+public name, legal status, house domain, host, design system. The drift audit
+(`scripts/ci/org-drift-audit.sh`) fails when a public document contradicts it.
+Existing violations are baselined; new ones cannot land. The inventory is
+generated, and the number is a ratchet.
+
+Live doors come from `bitbaum/fleetcrown:scripts/hetzner/apps.conf`, the SSOT
+manifest for self-hosted apps. A README claiming a door that disagrees with
+apps.conf is a drift violation.
 
 ## Rules of the house
 

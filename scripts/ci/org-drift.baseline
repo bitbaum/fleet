@@ -1,0 +1,6 @@
+# Existing violations that predate the org-drift audit gate.
+#
+# Format: <repo>/<path>   # why this one is allowed
+#
+# This list may FALL or hold. It may never RISE without a human deciding so in
+# the same PR that adds the line.
