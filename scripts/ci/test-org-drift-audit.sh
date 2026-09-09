@@ -103,7 +103,7 @@ printf '%s' "$result" | grep -q -- '-|internal'                         && no "d
 
 echo
 echo "the sweep must never pass vacuously"
-out="$(DEV_ROOT=/nonexistent REGISTER=/dev/null bash "$SCRIPT" --check 2>&1)"; rc=$?
+out="$(USE_LOCAL=1 DEV_ROOT=/nonexistent REGISTER=/dev/null bash "$SCRIPT" --check 2>&1)"; rc=$?
 eq 0 "$rc" "no checkout exits 0"
 printf '%s' "$out" | grep -q 'SKIPPED' && ok "announces the skip" || no "must announce skip"
 
