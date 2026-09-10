@@ -163,6 +163,35 @@ fleet-wide checker.
 
 Both report into a weekly workflow's job summary rather than only a log.
 
+**One more, and it lives elsewhere on purpose:**
+`bitbaum/fleetcrown:scripts/ci/check-register-reality.sh` — does `apps.conf`
+still describe the box? It reads the register, which is fleetcrown's SSOT, and
+needs SSH to bitbaum, so it cannot run from here or in CI; the daily
+`scripts/local/fleet-register-check` drives it. Listed here anyway, because this
+table is where you look before writing a fleet-wide checker and "is there
+already a drift check?" is exactly that question.
+
+It asks what a shape check cannot: does every registered domain SERVE ITSELF or
+merely redirect; is any Caddy vhost unbacked by a row; is anything listening in
+4000-4099 the register does not know. All three were shape-valid and wrong on
+2026-09-10 — a `domains` field naming a 308 would have had sync-infra delete a
+live client's real vhost, and an unregistered 4030 was two new sites from a port
+collision. Exceptions live in `register-reality.allow` with a reason each, so an
+exclusion is a decision someone can read rather than a silence.
+
+Two traps it encodes, both measured rather than argued:
+
+- **A daily check must run the JUDGE from the same commit as the data.**
+  `fleet-register-check` read the register from `origin/main` — with a comment
+  explaining that ~15 sessions make the working tree a scratchpad — and then ran
+  the checking script out of that scratchpad. An old judge called three good
+  rows of a new register "drift".
+- **`printf '%s\n' "$x" | grep -q …` under `set -o pipefail` fails on SUCCESS.**
+  `grep -q` exits at the first match, the writer takes SIGPIPE, and pipefail
+  reports the writer's death as the pipeline's status: 20/20 false failures on a
+  large payload, 0/20 on a small one — so it looks like a flaky gate, not a
+  wrong one. Use a here-string; it is not a pipeline and has nothing to signal.
+
 ## What is worth extracting next
 
 Ranked by (copies × how identical the logic is). Counts from
