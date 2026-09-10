@@ -138,6 +138,16 @@ jobs:
       - name: The version-currency audit still detects, and still stays quiet
         run: node scripts/ci/test-version-currency.mjs
 
+      # This one guards a fix that ALREADY reverted once: petvity's
+      # NEXTAUTH_URL was fixed in Aug and was wrong again in Sep, advertising
+      # https://localhost:4013 in public JSON for weeks. So the detector's own
+      # silence is the thing to distrust. Both sides are pinned from captured
+      # payloads — the real regression is caught, the repaired payload stays
+      # quiet, a 500 from next-auth FAILS rather than being read as "no data",
+      # and a site with no next-auth SKIPs rather than crying wolf. No network.
+      - name: The next-auth origin guard still detects, and still stays quiet
+        run: node scripts/ci/test-nextauth-origin-audit.mjs
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.

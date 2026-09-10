@@ -22,6 +22,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | `scripts/ci/cicd-hygiene-audit.sh` | is the pipeline AROUND the gates sound — no self-cancelling deploys, no deploy re-running CI's bundle, no cold Next builds? |
 | `scripts/ci/version-currency.mjs` | measures every repo against `blessed-versions.json` (SSOT of blessed majors + internal-package tags) and holds the gap count as a ratchet |
 | `scripts/ci/ui-defect-audit.mjs` | do any live sites ship WCAG AA contrast failures or misaligned stacks? |
+| `scripts/ci/nextauth-origin-audit.mjs` | runs daily: does every next-auth app advertise its own public origin, or is it publishing `localhost` from behind Caddy? |
 | `scripts/fleet/` | local upkeep: worktree GC, stranded-work guard |
 | `templates/ci/` | golden CI workflows + pre-commit — deliberately ONE central copy |
 
