@@ -8,3 +8,69 @@
 bitbaum/CLAUDE.md  # historical claim from before register existed
 bitbaum/README.md  # historical claim from before register existed
 crewless/README.md  # door disagreement from before apps.conf check existed
+
+# ---------------------------------------------------------------------------
+# RETIRED NAMES AND HOSTS — inventoried 2026-09-11, when registers/retired.json
+# first made them findable. These are DEBT, not exemptions: each line is a
+# public document still using a name or host that has been replaced. They are
+# baselined so the ratchet can hold, because fixing 51 files across 7 repos in
+# one PR would be a worse change than the drift it removes.
+#
+# Most are one host: revampit.orangecat.ch, which now redirects to evig. The
+# sbb-fundbuero ones are a repo still calling itself 'SBB Fundbüro' while the
+# site it ships is titled 'Nordbahn Fundbüro' — worth doing first, because it
+# names a real transport company on a demo that has no connection to it.
+#
+# Remove a line when you fix the file. The count may fall; it may not rise.
+# ---------------------------------------------------------------------------
+aoz-housing/CLAUDE.md
+bitbaum/site/DEPLOY.md
+evig/.claude/CLAUDE.md
+evig/AGENTS.md
+evig/CLAUDE.md
+evig/content/posts/die-revamp-it-plattform.en.md
+evig/content/posts/die-revamp-it-plattform.es.md
+evig/content/posts/die-revamp-it-plattform.fr.md
+evig/content/posts/die-revamp-it-plattform.it.md
+evig/content/posts/die-revamp-it-plattform.ja.md
+evig/content/posts/die-revamp-it-plattform.ko.md
+evig/content/posts/die-revamp-it-plattform.md
+evig/content/posts/die-revamp-it-plattform.ru.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.en.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.es.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.fr.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.it.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.ja.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.ko.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.md
+evig/content/posts/why-we-hardened-the-self-host-deploy.ru.md
+evig/content/posts/wie-ich-mit-ki-entwickle.md
+evig/docs/ARCHITECTURE_DATABASE_BACKEND.md
+evig/docs/AUDIT_REPORT_2026-06.md
+evig/docs/COMMANDS.md
+evig/docs/FEATURE_INVENTORY.md
+evig/docs/MANIFESTO.md
+evig/docs/MISSION_STATEMENT.md
+evig/docs/SHARED_CONTEXT.md
+evig/docs/SHOPWARE_MIGRATION_PLAN.md
+evig/docs/SYSTEM_MIGRATION_STRATEGY.md
+evig/docs/guides/deployment.md
+evig/docs/guides/github-vercel-setup.md
+evig/docs/guides/hosting-migration-frauenfeld.md
+evig/docs/guides/production-ready-checklist.md
+evig/docs/operations/BTCPAY_SETUP.md
+evig/docs/operations/PAYREXX_SETUP.md
+evig/docs/operations/TALER_SETUP.md
+evig/public/presentations/ki-nachhaltigkeit/index.html
+evig/public/presentations/revampit-portal/index.html
+evig/public/presentations/swico-monitor-upcycling/index.html
+fleet/templates/ci/README.md
+fleetcrown/docs/architecture/feedback-widget.md
+fleetcrown/docs/infrastructure/hetzner-migration.md
+hirnli/CLAUDE.md
+kivvi/docs/SYSTEM_DESIGN.md
+petvity/docs/fleet-shops-decision.md
+revamp-info/CLAUDE.md
+sbb-fundbuero/AGENTS.md
+sbb-fundbuero/README.md
+sbb-fundbuero/docs/ANALYSE_UND_VORSCHLAG.md

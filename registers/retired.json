@@ -1,0 +1,97 @@
+{
+  "_why": [
+    "A rename that is only remembered is a rename that drifts. Every one of these",
+    "was found in 2026-09 by tripping over it: a public page linking a host that",
+    "only redirects, a studio page naming a product by its repo name, a register",
+    "row pointing at a directory that had moved. None of them broke anything, and",
+    "that is the problem — a 308 answers 200, so a stale address looks healthy.",
+    "",
+    "Recording a retirement here is what lets org-drift-audit.sh find documents",
+    "still using the old form. A new retirement is a ROW, not a code change.",
+    "",
+    "`from` must be specific enough not to fire on prose. A host or a product",
+    "name is safe; a bare word like 'sink' is not, and does not belong here."
+  ],
+  "_fields": {
+    "kind": "host | name | repo",
+    "from": "the retired form — what a document should no longer say",
+    "to": "what it should say instead",
+    "since": "ISO date the replacement became true",
+    "why": "one line, so the entry can be judged rather than obeyed",
+    "verified": "how the retirement was confirmed, not who asserted it"
+  },
+  "retired": [
+    {
+      "kind": "host",
+      "from": "aoz-wohnen.orangecat.ch",
+      "to": "aoz.orangecat.ch",
+      "since": "2026-09-10",
+      "why": "One product, one URL. The old host stays as a permanent 308 because it is printed on paper and bookmarked by residents; it is not the address to publish.",
+      "verified": "curl -L resolves to https://aoz.orangecat.ch/ (200)"
+    },
+    {
+      "kind": "host",
+      "from": "revampit.orangecat.ch",
+      "to": "evig.orangecat.ch",
+      "since": "2026-09-10",
+      "why": "The organisation renamed to evig.",
+      "verified": "curl -L resolves to https://evig.orangecat.ch/ (200)"
+    },
+    {
+      "kind": "host",
+      "from": "sbb.orangecat.ch",
+      "to": "sbbfundbuero.orangecat.ch",
+      "since": "2026-09-08",
+      "why": "Renamed with the register row sbb-lost-found -> sbb-fundbuero (#529).",
+      "verified": "curl -L resolves to https://sbbfundbuero.orangecat.ch/ (200)"
+    },
+    {
+      "kind": "host",
+      "from": "sink.orangecat.ch",
+      "to": "sinktattoo.com",
+      "since": "2026-08-20",
+      "why": "The client's own domain is the address to publish; the subdomain is a legacy redirect kept in sink-legacy-redirect.caddy.",
+      "verified": "curl -L resolves to https://sinktattoo.com/en (200)"
+    },
+    {
+      "kind": "name",
+      "from": "AOZ Housing",
+      "to": "AOZ Begleitung",
+      "since": "2026-09-10",
+      "why": "AOZ Housing is the REPO name. The product outgrew housing into daily-life coordination, conflict resolution and participation tracking. `aoz-wohnen` is the deploy name; neither is the product.",
+      "verified": "aoz-housing/src/lib/config/brand.ts productName, and the live <title> 'AOZ Begleitung — Integrationsplattform'"
+    },
+    {
+      "kind": "name",
+      "from": "SBB Lost & Found",
+      "to": "Nordbahn Fundbüro",
+      "since": "2026-09-10",
+      "why": "The operator is invented on purpose. Naming SBB claims a relationship with a real transport company that nothing supports, on what is a demo.",
+      "verified": "live <title> 'Nordbahn Fundbüro'"
+    },
+    {
+      "kind": "name",
+      "from": "SBB Fundbüro",
+      "to": "Nordbahn Fundbüro",
+      "since": "2026-09-10",
+      "why": "Same claim in shorter form — it was on the public studio page until 2026-09-10.",
+      "verified": "live <title> 'Nordbahn Fundbüro'"
+    },
+    {
+      "kind": "repo",
+      "from": "aslan-tattoo",
+      "to": "s-ink",
+      "since": "2026-08-20",
+      "why": "The register's repo_path pointed at the old directory for an unknown number of days; fleet-register-check exists partly because of it.",
+      "verified": "scripts/local/fleet-register-check header in bitbaum/fleetcrown records the rename"
+    },
+    {
+      "kind": "repo",
+      "from": "sbb-lost-found",
+      "to": "sbb-fundbuero",
+      "since": "2026-09-08",
+      "why": "Register row renamed in fleetcrown #529.",
+      "verified": "commit ea4af617 'chore(register): rename sbb-lost-found to sbb-fundbuero'"
+    }
+  ]
+}
