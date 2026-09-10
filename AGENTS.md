@@ -15,6 +15,26 @@ only facts that exist only in that repo (how to run it, where the tests are).
 `CLAUDE.md` and any other agent file point here. They do not get their own
 essay of the org.
 
+## Your context may be stale
+
+Agent instruction files are read from the working tree, not from the remote. A
+checkout that has not pulled feeds you guidance frozen at whenever it last
+moved, and gives you no signal that this happened. Measured 2026-09-09: a
+session rediscovered a deploy-verification rule over a full day that had been
+committed five days earlier, and on the same day reported this file missing
+because the checkout sat on an older branch.
+
+Before trusting instructions, and before reporting that a file does not exist:
+
+    git fetch -q && git log HEAD..origin/HEAD --oneline -- AGENTS.md CLAUDE.md .claude/
+
+A working tree is evidence of one branch at one moment. `origin` is the fact.
+
+Memory is read from the session's working directory
+(`~/.claude/projects/<slug>/memory/`), so a lesson written in one repo is
+invisible from every other. A fleet-wide lesson written into a project silo is
+lost. That is the same bug as a private copy: put it where the readers are.
+
 ## Producers
 
 - Serve (port, process, host): `fleetcrown/scripts/hetzner/apps.conf`.
