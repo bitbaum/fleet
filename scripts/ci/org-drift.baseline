@@ -74,3 +74,8 @@ revamp-info/CLAUDE.md
 sbb-fundbuero/AGENTS.md
 sbb-fundbuero/README.md
 sbb-fundbuero/docs/ANALYSE_UND_VORSCHLAG.md
+# Found by CI, not by the local sweep: USE_LOCAL greps local checkouts,
+# which go stale, while the default scan reads the org's default branches.
+# That asymmetry is why the audit defaults to the API — a ratchet that sees
+# less than production prevents less than it claims.
+sbb-fundbuero/CLAUDE.md
