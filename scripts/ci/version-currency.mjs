@@ -33,6 +33,21 @@
  * look" and "nothing is stale" are different answers, and collapsing them is
  * how a broken detector reports a healthy fleet.
  *
+ * AND IT IS BLIND BELOW THE MAJOR — deliberately, but the blindness has a cost
+ * worth naming here rather than rediscovering. `parseMajor("^16.2.12")` is 16;
+ * blessed is 16; no gap. Every minor and patch is invisible. It also reads the
+ * declared RANGE, while the lockfile decides what actually ships — a caret that
+ * ALLOWS 16.3.4 sits happily on 16.2.12 forever, because an already-satisfied
+ * dependency is never upgraded on install.
+ *
+ * On 2026-09-10 that combination hid two CRITICAL unauthenticated RCEs in Next
+ * on a live site for months: this audit returned zero gaps for both
+ * `"^16.2.12"` and `"16.2.3"`. Do not extend it into a security check — the
+ * security question is answered by dependabot-alerts-audit.sh, which asks
+ * whether each repo can REPORT a CVE at all, and by GitHub's own continuous
+ * scanning of the lockfiles once that switch is on. This one answers a
+ * different question: are we on the major the fleet agreed to.
+ *
  * Reads each repo's REMOTE default branch via the contents API, never a local
  * checkout: clones drift, and this fleet has already shipped a redundant PR
  * off a stale clone.
