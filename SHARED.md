@@ -191,6 +191,22 @@ Two traps it encodes, both measured rather than argued:
   reports the writer's death as the pipeline's status: 20/20 false failures on a
   large payload, 0/20 on a small one — so it looks like a flaky gate, not a
   wrong one. Use a here-string; it is not a pipeline and has nothing to signal.
+- **A `sed` range never matches its end address on the START line**, so the
+  usual "strip C comments" one-liner deletes live code. `sed '/\/\*/,/\*\//d'`
+  meets a single-line `/* … */`, starts a range, then looks for the closing
+  `*/` from the NEXT line onward — running to the next comment and deleting
+  every declaration in between. A gate that stripped `globals.css` this way to
+  check for a forbidden colour **passed against the very file that declared it**:
+  the colour sat in a primitives block the stripper had eaten. It had only ever
+  worked on files that did not contain what it was looking for.
+  `perl -0777 -pe 's{/\*.*?\*/}{}gs'` strips comments as comments.
+
+  The general form is worth more than the sed detail: **an absence-shaped check
+  ("the bad value is not here") is satisfied just as well by a broken reader as
+  by a clean file.** Comment-awareness is still required — a gate that cannot
+  tolerate its own rule being written down forces the explanation to be deleted
+  — so strip comments *correctly*, and give the stripper its own two-way
+  self-check: it must drop what it must drop AND keep what it must keep.
 
 ## What is worth extracting next
 
