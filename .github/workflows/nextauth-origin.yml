@@ -1,0 +1,87 @@
+# next-auth origin guard — a fix that can silently revert is not a fix.
+#
+# Behind Caddy a Next.js app never sees its own public URL, so next-auth
+# resolves relative redirects against the INTERNAL origin unless NEXTAUTH_URL
+# (v4) / AUTH_URL (v5) is pinned in the box env. AUTH_TRUST_HOST=true does NOT
+# cover this path — which is what makes a broken app look configured.
+#
+# petvity shipped exactly that, it was fixed in petvity#39 (~2026-08-14), and
+# on 2026-09-10 petvity was again advertising
+# https://localhost:4013/api/auth/callback/google in production: Google
+# sign-in impossible, sign-out landing on a dead page. The regression sat in
+# public JSON for weeks and nothing looked. This is the thing that looks.
+#
+# Daily, unauthenticated, no secrets, no quota: next-auth publishes
+# /api/auth/providers, and every entry carries the app's CONFIGURED origin.
+# Any failure pings Telegram via the org-wide alert bot.
+name: next-auth origin
+
+on:
+  schedule:
+    - cron: "34 6 * * *" # daily, 06:34 UTC (off the :00 GH cron rush)
+  workflow_dispatch:
+    inputs:
+      sites:
+        description: "Comma-separated URLs (default: discovered from the fleet footer)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # BEFORE the sweep, deliberately. A detector that has quietly stopped
+      # detecting reports a clean fleet, and a ✓ from a dead check is worse
+      # than no check — it is precisely how the first petvity fix "held" for
+      # four weeks while being false. Fixtures pin both sides: the real
+      # localhost regression is caught, the repaired payload stays silent.
+      - name: Self-test the detector
+        run: node scripts/ci/test-nextauth-origin-audit.mjs
+
+      - name: Audit every next-auth app's advertised origin
+        env:
+          SITES: ${{ inputs.sites }}
+        run: |
+          set -uo pipefail
+          # Report goes to the job summary, not just the log: a finding nobody
+          # scrolls to is the same as no finding.
+          {
+            echo '## next-auth advertised origin'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          node scripts/ci/nextauth-origin-audit.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Alert Telegram on failure
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          # An alert that reaches nobody defeats the workflow's whole purpose:
+          # missing secrets or a Telegram 4xx must make THIS step red too, so
+          # the broken alert path is itself visible.
+          [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || { echo "TELEGRAM_* secrets missing — alert undeliverable" >&2; exit 1; }
+          curl -sS --fail --max-time 20 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" \
+            -d text="🚨 Fleet next-auth ORIGIN guard failed — an app advertises the wrong sign-in/callback origin (OAuth sign-in cannot complete, sign-out lands dead), or its /api/auth/providers is 5xx. Fix: pin NEXTAUTH_URL/AUTH_URL in the app's env on the box and restart. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            >/dev/null
+          echo "telegram alerted"
