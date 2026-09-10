@@ -1,0 +1,76 @@
+# Is every repo still able to REPORT a vulnerability?
+#
+# 2026-09-10: surf-your-life.orangecat.ch served Next 16.2.3 — two critical
+# unauthenticated RCEs — plus a critical @auth/core flaw and six more high
+# findings, for months. Nothing was ignored; Dependabot alerts were simply off
+# for that repo, so no alert was ever raised. 17 of 24 repos were in that state.
+#
+# The repos with alerts ON were the ones that got fixed: botsmann took a
+# Dependabot PR to 16.3.3 on its own, and orangecat's red security job is how
+# the whole thing surfaced.
+#
+# Weekly, not daily: this measures a SETTING, which changes when someone creates
+# a repo, not continuously. The alerts themselves arrive in real time once the
+# switch is on — this only guards the switch.
+name: Dependabot alerts
+
+on:
+  schedule:
+    # Mondays, an hour after version-currency. The two are complements: that one
+    # asks whether we are on the blessed MAJOR, this one asks whether anyone
+    # would be told if we were not.
+    - cron: '17 7 * * 1'
+  workflow_dispatch:
+    inputs:
+      fix:
+        description: 'Enable alerts on any repo found without them'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  alerts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # The detector before the measurement — a gate that cannot go red is not
+      # a gate, and this one's whole value is the red case.
+      - name: Self-test the detector first
+        run: bash scripts/ci/test-dependabot-alerts-audit.sh
+
+      - name: Audit the fleet
+        env:
+          # Reading and writing this flag needs repo admin; the default token
+          # does not have it across the org. Without FLEET_ADMIN_TOKEN every
+          # repo lands in UNREADABLE — which fails loudly rather than passing
+          # silently, by design.
+          GH_TOKEN: ${{ secrets.FLEET_ADMIN_TOKEN || secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Dependabot alerts'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          bash scripts/ci/dependabot-alerts-audit.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enable alerts where they are missing
+        if: ${{ inputs.fix == true }}
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/dependabot-alerts-audit.sh --fix
+
+      # A hard floor, not a ratchet. A repo that cannot report a CVE has no
+      # legitimate version of itself to baseline.
+      - name: Every repo must be able to report a vulnerability
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_ADMIN_TOKEN || secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/dependabot-alerts-audit.sh --check
