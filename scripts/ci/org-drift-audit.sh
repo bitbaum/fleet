@@ -24,6 +24,18 @@
 #   - the legal personal name Georgy Butaev on public docs
 #   - a live door named in a README that disagrees with apps.conf
 #
+# AND, per registers/retired.json, a document using a name or host that has
+# been REPLACED — a different failure with the same cause. A retirement that
+# is only remembered drifts: aoz-wohnen.orangecat.ch, revampit.orangecat.ch and
+# sbb.orangecat.ch all still answer 200, because each is a redirect, so a stale
+# address looks perfectly healthy from the outside and nothing ever reports it.
+# Found in 2026-09 only by tripping over them, including on the public studio
+# page, which named a real transport company on a demo unconnected to it.
+#
+# Adding a retirement is a ROW in that register, not a change to this script.
+# The finding says what to use instead and since when, because "this document
+# is wrong" costs a reader a search and "say X instead" costs them an edit.
+#
 # CENTRAL, NOT A COPY PER REPO — the rule this repo already lives by. The
 # register is SSOT; agents read it. They do not restate the org story. A
 # new claim is a register row or it does not ship.
@@ -44,6 +56,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REGISTER="${REGISTER:-$HERE/../../registers/org.json}"
 BASELINE="${BASELINE:-$HERE/org-drift.baseline}"
+RETIRED="${RETIRED:-$HERE/../../registers/retired.json}"
 INVENTORY="${INVENTORY:-$HERE/org-drift-inventory.txt}"
 ORG="${ORG:-bitbaum}"
 USE_LOCAL="${USE_LOCAL:-0}"
@@ -62,6 +75,41 @@ Georgy Butaev
 EOF
 }
 
+# retired_entries — `from|to|since|why` per line, from registers/retired.json
+#
+# A rename that is only remembered is a rename that drifts, and every instance
+# in 2026-09 was found by tripping over it rather than by looking: a public page
+# linking a host that only redirects, the studio page naming a product by its
+# repo name. None of them broke anything — a 308 answers 200 — which is exactly
+# why nothing noticed. Recording the retirement is what makes it findable.
+#
+# python3 rather than jq: jq is not guaranteed on every runner, and `gh --jq`
+# is gh's own and cannot read a local file.
+retired_entries() {
+  [ -f "$RETIRED" ] || return 0
+  python3 -c '
+import json, sys
+d = json.load(open(sys.argv[1]))
+for r in d.get("retired", []):
+    print("|".join([r["from"], r["to"], r.get("since", "?"), r.get("why", "")]))
+' "$RETIRED" 2>/dev/null || true
+}
+
+# retired_patterns — the retired forms, regex-escaped, one per line
+retired_patterns() {
+  retired_entries | cut -d'|' -f1 | sed -e 's/[][\.^$*+?(){}|]/\\&/g'
+}
+
+# retired_hint <line> — what a document using a retired form should say instead
+retired_hint() {
+  local line="$1" from to since
+  while IFS='|' read -r from to since _why; do
+    [ -n "$from" ] || continue
+    case "$line" in *"$from"*) printf 'uses retired "%s" — say "%s" (since %s)' "$from" "$to" "$since"; return 0 ;; esac
+  done < <(retired_entries)
+  return 1
+}
+
 # is_public_doc <path> — only public-facing documentation and marketing
 is_public_doc() {
   case "$1" in
@@ -78,7 +126,7 @@ is_exempt_path() {
     docs/archive/*|*/docs/archive/*) return 0 ;;
     *org-drift-audit.sh|*org-drift.baseline|*org-drift-inventory.txt) return 0 ;;
     *test-org-drift-audit.sh) return 0 ;;
-    *registers/org.json) return 0 ;;
+    *registers/org.json|*registers/retired.json) return 0 ;;
     *SHARED.md|*STACK.md) return 0 ;;
     */.git/*|*/node_modules/*|*/dist/*|*/.next/*) return 0 ;;
     *) return 1 ;;
@@ -169,7 +217,10 @@ esac
 mapfile -t KEYS < <(baseline_keys "$BASELINE")
 
 # Build forbidden pattern as a single ERE
-PATTERN="$(forbidden_patterns | paste -sd'|' -)"
+# Forbidden claims and retired forms are one sweep: both are "this document
+# says something that is no longer true", and a second pass would be a second
+# place to keep the exemption and baseline logic in step.
+PATTERN="$( { forbidden_patterns; retired_patterns; } | paste -sd'|' - )"
 
 new_hits=(); seen_keys=(); scanned_repos=()
 declare -A doors=()
@@ -199,7 +250,11 @@ if [ "$USE_LOCAL" = "1" ]; then
       is_public_doc "$path" || continue
       key="$repo/$path"
       seen_keys+=("$key")
-      in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$rest")
+      # Say what to use instead. "This document is wrong" costs a reader a
+      # search; "say X instead, since <date>" costs them an edit.
+      detail="$rest"
+      if hint="$(retired_hint "$rest")"; then detail="$rest  [$hint]"; fi
+      in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$detail")
     done < <(git -C "$repo_dir" grep -nEI "$PATTERN" "$ref" -- '*.md' '*.html' 2>/dev/null | sed "s|^$ref:||" || true)
 
     # Check for door disagreements in READMEs
@@ -250,6 +305,7 @@ else
         [ -n "$matches" ] || continue
         key="$repo/$path"
         detail="$matches"
+        if hint="$(retired_hint "$content")"; then detail="$matches  [$hint]"; fi
         seen_keys+=("$key")
         in_baseline "$key" "${KEYS[@]:-}" || new_hits+=("$key:$detail")
       fi

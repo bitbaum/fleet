@@ -103,9 +103,78 @@ printf '%s' "$result" | grep -q -- '-|internal'                         && no "d
 
 echo
 echo "the sweep must never pass vacuously"
-out="$(USE_LOCAL=1 DEV_ROOT=/nonexistent REGISTER=/dev/null bash "$SCRIPT" --check 2>&1)"; rc=$?
+# INVENTORY is redirected to a temp file, and that is not tidiness. Without it
+# this case runs the real script with the real default, so a test whose whole
+# point is "scan nothing" OVERWROTE the committed 41-repo inventory with
+# "Scanned 0 repos, found 0 violation(s)" — the tracked record of the fleet's
+# drift, replaced by the output of a deliberately empty run, every time anyone
+# ran the tests. A check that damages the artifact it checks is the same shape
+# as a reader that deletes the evidence.
+out="$(USE_LOCAL=1 DEV_ROOT=/nonexistent REGISTER=/dev/null INVENTORY="$(mktemp)" bash "$SCRIPT" --check 2>&1)"; rc=$?
 eq 0 "$rc" "no checkout exits 0"
 printf '%s' "$out" | grep -q 'SKIPPED' && ok "announces the skip" || no "must announce skip"
+
+echo
+echo "retired names and hosts — registers/retired.json"
+
+# A fixture, not the real register: these assertions are about the MECHANISM,
+# and pinning them to live data would make the test fail every time someone
+# retires something. Includes a regex metacharacter (the dots) and an ampersand
+# on purpose.
+RETIRED_FIXTURE="$(mktemp)"
+trap 'rm -f "$RETIRED_FIXTURE"' EXIT
+cat > "$RETIRED_FIXTURE" <<'JSON'
+{ "retired": [
+  { "kind": "host", "from": "old.example.ch", "to": "new.example.ch",
+    "since": "2026-01-02", "why": "moved" },
+  { "kind": "name", "from": "Old & Busted", "to": "New Hotness",
+    "since": "2026-01-03", "why": "renamed" }
+] }
+JSON
+RETIRED="$RETIRED_FIXTURE"
+
+eq 2 "$(retired_entries | grep -c .)" "both entries parse"
+eq "old.example.ch|new.example.ch|2026-01-02|moved" "$(retired_entries | head -1)" "fields survive in order"
+
+# The dots MUST be escaped, or the pattern is a wildcard: an unescaped
+# old.example.ch also matches oldXexampleYch, and a check that matches more than
+# it names is a check nobody can reason about.
+pat="$(retired_patterns | head -1)"
+eq 'old\.example\.ch' "$pat" "regex metacharacters are escaped"
+printf '%s' "see oldXexampleYch here" | grep -qE "$pat" \
+  && no "escaped pattern must not match a wildcard variant" \
+  || ok "escaped pattern does not match a wildcard variant"
+printf '%s' "see old.example.ch here" | grep -qE "$pat" \
+  && ok "escaped pattern still matches the real thing" \
+  || no "escaped pattern stopped matching the real thing"
+
+# An ampersand is not an ERE metacharacter, but it IS special in a sed
+# replacement — if the escaper mangled it, the pattern would silently stop
+# matching the very name it was written for.
+amp="$(retired_patterns | tail -1)"
+grep -qE "$amp" <<< "the Old & Busted thing" \
+  && ok "a name containing '&' still matches" \
+  || no "a name containing '&' stopped matching (sed replacement ate it)"
+
+hint="$(retired_hint 'we link old.example.ch in the readme')" && rc=0 || rc=1
+eq 0 "$rc" "a line using a retired form yields a hint"
+printf '%s' "$hint" | grep -q 'new.example.ch' && ok "the hint names the replacement" || no "hint must name the replacement"
+printf '%s' "$hint" | grep -q '2026-01-02' && ok "the hint dates the retirement" || no "hint must carry the date"
+
+retired_hint 'this document is entirely current' >/dev/null 2>&1 \
+  && no "a clean line must NOT yield a hint" \
+  || ok "a clean line yields no hint"
+
+# The document that RECORDS a retirement must not be a violation of it —
+# otherwise the register indicts itself and the ratchet can never reach zero.
+is_exempt_path "registers/retired.json" && ok "the retired register is exempt" || no "retired register must be exempt"
+is_exempt_path "fleet/registers/retired.json" && ok "exempt under a repo prefix too" || no "prefixed path must be exempt"
+
+# A missing register is not a crash and not a silent pass of a different check:
+# it simply contributes no patterns.
+RETIRED=/nonexistent
+eq 0 "$(retired_entries | grep -c . || true)" "a missing register contributes nothing"
+RETIRED="$RETIRED_FIXTURE"
 
 echo
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"

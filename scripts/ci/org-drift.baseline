@@ -8,3 +8,36 @@
 bitbaum/CLAUDE.md  # historical claim from before register existed
 bitbaum/README.md  # historical claim from before register existed
 crewless/README.md  # door disagreement from before apps.conf check existed
+
+# ---------------------------------------------------------------------------
+# RETIRED NAMES AND HOSTS — inventoried 2026-09-11, when registers/retired.json
+# first made them findable. DEBT, not exemptions.
+#
+# Seven files, in four OTHER repos, so they cannot be fixed from this one.
+# Each is an agent-facing document (CLAUDE.md / AGENTS.md / README.md), which
+# is the worst place for a stale address: it is what the next session reads
+# before touching the repo.
+#
+#   sbb-fundbuero/{README,CLAUDE,AGENTS}.md  "SBB Fundbüro" -> "Nordbahn Fundbüro"
+#       Do this one first. The site it ships is titled Nordbahn Fundbüro; the
+#       repo still names a real transport company on a demo unconnected to it.
+#   evig/{CLAUDE,AGENTS}.md                  revampit.orangecat.ch -> evig.orangecat.ch
+#   hirnli/CLAUDE.md                         revampit.orangecat.ch -> evig.orangecat.ch
+#   aoz-housing/CLAUDE.md                    aoz-wohnen.orangecat.ch -> aoz.orangecat.ch
+#
+# An earlier attempt baselined 51 files, generated with USE_LOCAL=1. That was
+# wrong: the local sweep greps every docs/*.md in local checkouts, while the
+# real scan reads a narrower set of paths from the org's default branches. CI
+# rejected it correctly — 44 of those entries matched nothing the production
+# scan can see, and a baseline full of unreachable entries is a ratchet that
+# cannot fall. Generate a baseline with the instrument that will judge it.
+#
+# Remove a line when you fix the file. The count may fall; it may not rise.
+# ---------------------------------------------------------------------------
+aoz-housing/CLAUDE.md
+evig/AGENTS.md
+evig/CLAUDE.md
+hirnli/CLAUDE.md
+sbb-fundbuero/AGENTS.md
+sbb-fundbuero/CLAUDE.md
+sbb-fundbuero/README.md
