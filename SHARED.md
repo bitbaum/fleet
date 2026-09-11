@@ -164,6 +164,8 @@ fleet-wide checker.
 
 Both report into a weekly workflow's job summary rather than only a log.
 
+| `scripts/ci/repo-metadata-audit.mjs` | does a repository's GitHub metadata agree with the register? The repo page is the first thing anyone opens and the furthest surface from the code, so it drifts first and silently: on 2026-09-11, **13 registered apps had no homepage at all** and evig's pointed at revamp-it.ch — a domain that is not the app. Checks only the MECHANICAL claims (a registered app's homepage is its canonical host; every live repo has a description) and deliberately not whether a name or description is *right* — the live `<title>` is not a reliable product name (a multi-tenant app serves the TENANT's title; some sites put the brand after a pipe), and a gate that guesses at prose gets muted. Name retirements are enforced precisely by `org-drift-audit.sh` instead. Exceptions in `repo-metadata.allow` with a reason each. Self-tested by `scripts/ci/test-repo-metadata-audit.mjs` — **17 checks, no network**, because the judgement is a pure function of (repos, register, allow); its first version ran the live audit on import and asserted nothing, which is why the CLI now sits behind an is-main guard. |
+
 **One more, and it lives elsewhere on purpose:**
 `bitbaum/fleetcrown:scripts/ci/check-register-reality.sh` — does `apps.conf`
 still describe the box? It reads the register, which is fleetcrown's SSOT, and
