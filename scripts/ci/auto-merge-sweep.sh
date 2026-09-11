@@ -436,7 +436,20 @@ INNER_EOF
 done
 
 if [ "$merged_any" -eq 1 ]; then
+  # A merge made with a PAT already triggers the push workflows; only a
+  # GITHUB_TOKEN merge is silent. Dispatching CI on top of a push-triggered
+  # run put two runs on the same ref, and the workflow's concurrency group
+  # cancelled one — under a burst of merges on fleetcrown (2026-09-10, five
+  # merges in twenty minutes) main's CI cancelled itself over and over and
+  # nothing deployed for half an hour. Re-arm only when no run for the new
+  # tip exists.
+  tip=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha' 2>/dev/null || true)
   for wf in $REARM_WORKFLOWS; do
+    if [ -n "$tip" ] && gh run list --repo "$REPO" --workflow "$wf" --branch "$BASE_BRANCH" --limit 10 \
+         --json headSha --jq '.[].headSha' 2>/dev/null | grep -qx "$tip"; then
+      echo "[auto-merge] ${wf} already running for ${tip:0:8} (push-triggered) — no re-arm needed"
+      continue
+    fi
     echo "[auto-merge] re-arming ${wf} on ${BASE_BRANCH}"
     gh workflow run "$wf" --repo "$REPO" --ref "$BASE_BRANCH" \
       || echo "[auto-merge] could not dispatch ${wf} — is workflow_dispatch declared?" >&2
