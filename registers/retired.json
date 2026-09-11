@@ -92,6 +92,14 @@
       "since": "2026-09-08",
       "why": "Register row renamed in fleetcrown #529.",
       "verified": "commit ea4af617 'chore(register): rename sbb-lost-found to sbb-fundbuero'"
+    },
+    {
+      "kind": "name",
+      "from": "VitaReBa",
+      "to": "Vita",
+      "since": "2026-09-11",
+      "why": "The clinic's own brand config is Vita GmbH / Vita and its live title agrees. VitaReBa survived on GitHub and the studio page — the surfaces nobody regenerates.",
+      "verified": "vitareba/lib/config/company.ts name 'Vita GmbH' shortName 'Vita'; live <title> 'Vita · Metabolische Psychiatrie …'"
     }
   ]
 }
