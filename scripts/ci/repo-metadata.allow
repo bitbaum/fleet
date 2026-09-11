@@ -1,0 +1,8 @@
+# Repos whose GitHub metadata deliberately differs from the register.
+#
+# Format: <repo>|<kind>|<reason>       kind = homepage | description
+#
+# A line here is a DECISION someone can read, not a silence. Anything not
+# listed is a finding. Remove a line to retire an exception.
+
+hirnli|homepage|The register row is `revamp-info` and holds the TENANT's host. The platform got its own host when it was named (src/lib/config/platform-brand.ts, 2026-09-02), and hirnli.orangecat.ch is served by a hand-written vhost that apps.conf deliberately does not list — listing it would make sync-infra emit the host twice and fail `caddy validate`. The homepage should be the platform's own door.
