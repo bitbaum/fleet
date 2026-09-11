@@ -114,6 +114,19 @@ run_failure_is_infra() {
   [ "$run_failure_is_infra_steps" = "Set up job" ]
 }
 
+# Choose the run that speaks for the base commit. Reads `gh run list` JSON on
+# stdin (an array; a lone object is tolerated so a stubbed gh still works).
+pick_base_run() {
+  jq -c --arg sha "$1" '
+    (if type == "array" then . else [.] end) as $runs
+    | [ $runs[] | select(.headSha == $sha) ] as $mine
+    | ( [ $mine[] | select(.status == "completed" and .conclusion == "success") ][0]
+        // [ $mine[] | select(.status == "completed" and .conclusion == "failure") ][0]
+        // [ $mine[] | select(.status == "completed") ][0]
+        // $mine[0]
+        // $runs[0] ) // empty'
+}
+
 run_conclusion_is_non_verdict() {
   case "$1" in
     cancelled) return 0 ;;
@@ -146,8 +159,21 @@ echo "[auto-merge] sweeping open PRs against ${BASE_BRANCH} in ${REPO}"
 # second merge onto a commit nothing has verified yet. That is exactly the
 # batching this script exists to prevent.
 base_sha=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha')
-base_ci=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 1 \
-  --json databaseId,status,conclusion,headSha --jq '.[0] // empty')
+# Several runs, not one. The concurrency group cancels a duplicate run on the
+# same ref, and when the cancelled one is newest the sweep judged the base from
+# a run that never reached a verdict, spent its three rerun attempts on it, and
+# deferred on every later sweep — with a SUCCESSFUL run for the very same
+# commit sitting beside it, ignored. Seen here 2026-09-11, where the stranded
+# PR was #44, the fix for the cancellation itself.
+#
+# A commit that any CI run passed has passed CI, whichever trigger produced
+# that run. Order, all within the base sha: a success, then a failure (the
+# only other real verdict, and the one the red-base carve-out needs in order
+# to name the failing jobs), then any completed run, then the newest. Only if
+# no run belongs to the sha at all does the newest run of ALL come back, which
+# is what keeps the "CI has not caught up" check below able to fire.
+base_ci=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 20 \
+  --json databaseId,status,conclusion,headSha | pick_base_run "$base_sha")
 
 # Declared before the branch that can skip it: `set -u` is on and the merge
 # site below always reads it. A base branch with no CI history takes the

@@ -296,3 +296,33 @@ fi
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
+
+# ── The base run that speaks for the commit ────────────────────────────────
+# A duplicate run on the same ref is cancelled by the concurrency group. When
+# that cancelled run is the newest, judging the base from it burns three rerun
+# attempts and then defers forever — while a SUCCESSFUL run for the very same
+# commit sits beside it, ignored (2026-09-11: the stranded PR was #44, the fix
+# for the cancellation itself).
+# Not a copy: the sweep's own function, so the two cannot drift.
+eval "$(awk '/^pick_base_run\(\) \{/,/^\}/' "$SWEEP")"
+
+grep -q 'pick_base_run "$base_sha"' "$SWEEP" \
+  || no 'the sweep selects its base run through pick_base_run'
+
+run='{"databaseId":%s,"status":"completed","conclusion":"%s","headSha":"%s"}'
+cancelled_then_success="[$(printf "$run" 1 cancelled tip),$(printf "$run" 2 success tip)]"
+[ "$(printf '%s' "$cancelled_then_success" | pick_base_run tip | jq -r .conclusion)" = success ] \
+  && ok 'a success for the base commit outranks a cancelled sibling' \
+  || no 'a success for the base commit outranks a cancelled sibling'
+
+[ "$(printf '%s' "[$(printf "$run" 1 cancelled tip)]" | pick_base_run tip | jq -r .conclusion)" = cancelled ] \
+  && ok 'a lone cancelled run is still returned, so the rerun path keeps working' \
+  || no 'a lone cancelled run is still returned, so the rerun path keeps working'
+
+[ "$(printf '%s' "[$(printf "$run" 1 cancelled tip),$(printf "$run" 2 failure tip)]" | pick_base_run tip | jq -r .conclusion)" = failure ] \
+  && ok 'a real failure is not hidden by a cancelled sibling' \
+  || no 'a real failure is not hidden by a cancelled sibling'
+
+[ "$(printf '%s' "[$(printf "$run" 1 success older)]" | pick_base_run tip | jq -r .headSha)" = older ] \
+  && ok 'with no run for the tip, the newest run is returned so the catch-up check fires' \
+  || no 'with no run for the tip, the newest run is returned so the catch-up check fires'
