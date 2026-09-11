@@ -131,6 +131,12 @@ jobs:
       - name: The org-drift audit still detects, and still stays quiet
         run: bash scripts/ci/test-org-drift-audit.sh
 
+      # The judgement is a pure function of (repos, register, allow), so its
+      # test needs no network — the fixtures are the shapes that were live on
+      # 2026-09-11, including hirnli's correct-but-looks-wrong homepage.
+      - name: The repo-metadata audit still detects, and still stays quiet
+        run: node scripts/ci/test-repo-metadata-audit.mjs
+
       # Same doctrine: the currency ratchet reports on repos nobody touches,
       # so its own test pins both sides — the real 2026-08-31 staleness
       # (aoz-housing's manifest, dead-owner ai-kit pin) is caught, a current
@@ -155,6 +161,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/org-drift-audit.sh --check
+
+      # A repository page is the first thing anyone opens and the furthest
+      # surface from the code. On 2026-09-11, 13 registered apps had no
+      # homepage at all and one pointed at a domain that is not the app's.
+      - name: Repo metadata agrees with the register
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/repo-metadata-audit.mjs --check
 
       # Drift guard. The fleet is on v7; templates handing out v4 is exactly
       # how this repo fell behind the repos it governs.
