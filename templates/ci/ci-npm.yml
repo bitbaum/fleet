@@ -10,8 +10,20 @@ on:
   workflow_dispatch:
 
 # A newer push makes the older run obsolete — don't waste minutes finishing it.
+# On a branch the newest push is the only one that matters, so cancel the rest.
+#
+# On main the group is keyed per COMMIT. A commit cancelling a DIFFERENT
+# commit's run breaks deployment, because everything downstream keys off that
+# run: a deploy that waits for CI to pass on the commit finds a cancelled run
+# and stops, and a deploy chained on `workflow_run` sees conclusion=cancelled
+# and skips. auto-merge also re-arms CI with a dispatch, which under one
+# group-per-branch cancels the push run for the same commit.
+#
+# Measured 2026-09-11: fleetcrown stranded four merges silently (main green,
+# nothing red, the box serving the previous build) and hirnli failed its deploy
+# loudly at the wait step. Both were this line.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'branch' }}
   cancel-in-progress: true
 
 jobs:
