@@ -63,6 +63,7 @@ slug-util|(lib|src)/.*slug(ify)?\.(ts|js)$
 date-utils|(lib|src)/.*(dates|date-utils)\.(ts|js)$
 ai-provider-client|(lib|src|packages|apps)/.*(provider|call-provider)s?\.(ts|js)$
 messaging-threads|(lib|src)/.*(message-utils|conversation-helpers|messages-view|thread-(utils|helpers))\.(ts|js)$
+list-query|(lib|src|hooks)/.*([uU]se-?[fF]ilter(s|ing)?|[uU]se-?[dD]ebounce|filter-?state|pagination)\.(ts|js)$
 '
 
 # ── Collect ──────────────────────────────────────────────────────────────────
