@@ -99,6 +99,24 @@ sets_cancel_true() {
   sed 's/#.*//' "$1" | grep -qE 'cancel-in-progress:[[:space:]]*true'
 }
 
+# A CI concurrency group that does not vary by commit lets a newer merge cancel
+# an older commit's run — and every deploy path keys off that run. Deploys that
+# wait for CI on the commit find a cancelled run and stop; deploys chained on
+# workflow_run see conclusion=cancelled and skip. The re-armed dispatch
+# auto-merge sends does the same thing to the push run for the SAME commit.
+#
+# Only a violation when the group can actually collide across commits: a group
+# already keyed by github.sha, or one that never cancels, is fine.
+ci_can_strand_a_commit() {
+  local body group
+  body=$(sed 's/#.*//' "$1")
+  printf '%s' "$body" | grep -qE 'cancel-in-progress:[[:space:]]*true' || return 1
+  group=$(printf '%s' "$body" | grep -A2 '^concurrency:' | grep 'group:' | head -1)
+  [ -n "$group" ] || return 1
+  printf '%s' "$group" | grep -q 'github\.sha' && return 1
+  return 0
+}
+
 runs_verify_bundle() {
   sed 's/#.*//' "$1" \
     | grep -qE 'run:.*(npm|pnpm|yarn)[[:space:]]+(run[[:space:]]+)?verify\b'
@@ -126,6 +144,7 @@ audit_repo_dir() {
       sets_cancel_true "$f" && printf 'deploy-cancels\t%s\n' "$(basename "$f")"
     fi
     if is_ci_file "$f"; then
+      ci_can_strand_a_commit "$f" && printf 'ci-strands-commits\t%s\n' "$(basename "$f")"
       runs_verify_bundle "$f" && ci_verifies=1
       runs_a_build "$f" && ci_builds=1
       caches_next_build "$f" && ci_caches=1
