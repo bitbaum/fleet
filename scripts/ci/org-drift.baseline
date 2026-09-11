@@ -35,13 +35,3 @@ crewless/README.md  # door disagreement from before apps.conf check existed
 # Remove a line when you fix the file. The count may fall; it may not rise.
 # ---------------------------------------------------------------------------
 evig/CLAUDE.md  # documents that revampit.orangecat.ch still resolves and MUST stay a 308 — the record of the retirement, not an instance of it
-
-# False positive, kept deliberately. The only "sbb-fundbuero" in this file is
-# inside a Blick article URL cited in the data-provenance table
-# (blick.ch/wirtschaft/sbb-fundbuero-mit-gebuehrenaufschlag-...), about SBB's
-# REAL lost-property office. That is a source citation, not our name. The
-# retirement check matches literal strings and cannot tell a citation from a
-# claim; the baseline is where that judgement is recorded.
-# Cost of the file-level key: a genuinely stale name added to this README later
-# would not be flagged. Re-read it when the provenance table changes.
-nordbahn-fundbuero/README.md

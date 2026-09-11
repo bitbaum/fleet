@@ -62,22 +62,6 @@
       "verified": "aoz-housing/src/lib/config/brand.ts productName, and the live <title> 'AOZ Begleitung — Integrationsplattform'"
     },
     {
-      "kind": "name",
-      "from": "SBB Lost & Found",
-      "to": "Nordbahn Fundbüro",
-      "since": "2026-09-10",
-      "why": "The operator is invented on purpose. Naming SBB claims a relationship with a real transport company that nothing supports, on what is a demo.",
-      "verified": "live <title> 'Nordbahn Fundbüro'"
-    },
-    {
-      "kind": "name",
-      "from": "SBB Fundbüro",
-      "to": "Nordbahn Fundbüro",
-      "since": "2026-09-10",
-      "why": "Same claim in shorter form — it was on the public studio page until 2026-09-10.",
-      "verified": "live <title> 'Nordbahn Fundbüro'"
-    },
-    {
       "kind": "repo",
       "from": "aslan-tattoo",
       "to": "s-ink",
@@ -100,22 +84,6 @@
       "since": "2026-09-11",
       "why": "The clinic's own brand config is Vita GmbH / Vita and its live title agrees. VitaReBa survived on GitHub and the studio page — the surfaces nobody regenerates.",
       "verified": "vitareba/lib/config/company.ts name 'Vita GmbH' shortName 'Vita'; live <title> 'Vita · Metabolische Psychiatrie …'"
-    },
-    {
-      "kind": "host",
-      "from": "sbbfundbuero.orangecat.ch",
-      "to": "nordbahn.orangecat.ch",
-      "since": "2026-09-11",
-      "why": "The host carried the name of a real transport company the demo has no connection to. Kept as a permanent 308 in its own vhost file so sync-infra cannot regenerate over it.",
-      "verified": "curl -L resolves to https://nordbahn.orangecat.ch/ (200); POST returns 308 with the method preserved"
-    },
-    {
-      "kind": "repo",
-      "from": "sbb-fundbuero",
-      "to": "nordbahn-fundbuero",
-      "since": "2026-09-11",
-      "why": "Same reason, on the repository name and the register key. GitHub redirects the old URL; the register row, the systemd unit, the purge cron and the local checkout all moved.",
-      "verified": "gh api repos/bitbaum/nordbahn-fundbuero returns name=nordbahn-fundbuero; apps.conf row renamed in fleetcrown #642"
     }
   ]
 }
