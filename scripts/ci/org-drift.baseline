@@ -34,10 +34,4 @@ crewless/README.md  # door disagreement from before apps.conf check existed
 #
 # Remove a line when you fix the file. The count may fall; it may not rise.
 # ---------------------------------------------------------------------------
-aoz-housing/CLAUDE.md
-evig/AGENTS.md
-evig/CLAUDE.md
-hirnli/CLAUDE.md
-sbb-fundbuero/AGENTS.md
-sbb-fundbuero/CLAUDE.md
-sbb-fundbuero/README.md
+evig/CLAUDE.md  # documents that revampit.orangecat.ch still resolves and MUST stay a 308 — the record of the retirement, not an instance of it
