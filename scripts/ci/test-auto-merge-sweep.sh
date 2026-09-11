@@ -40,7 +40,7 @@ no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 # Emits the sweep's combined output; records gh calls in $GH_LOG.
 run_sweep() {
   local conclusion="$1" failed_steps="${2:-}" attempt="${3:-1}"
-  local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}"
+  local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}" rearm_seen="${RS_REARM_SEEN:-}"
   local status_field="${RS_STATUS:-completed}"
   local head_field="${RS_HEADSHA:-basesha000000}"
   local dir; dir="$(mktemp -d)"
@@ -49,7 +49,7 @@ run_sweep() {
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -61,6 +61,8 @@ case "\$ARGS" in
   # the only thing separating them, since all three start with "run list".
   "run list"*"--json status"*)      printf '%s\n' '$deploy_running' ;;
   "run list"*"--status success"*)   printf '%s\n' '$deployed_sha' ;;
+  # Re-arm guard: the CI runs already on the base tip (push-triggered).
+  "run list"*"--json headSha"*)     printf '%s\n' '$rearm_seen' ;;
   "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"}' ;;
   *"/actions/runs/"*"/jobs"*)       printf '%s\n' '$failed_steps' ;;
   "run rerun"*)                     echo "rerun dispatched" ;;
@@ -272,6 +274,24 @@ if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] \
     && ok 'a green base merges normally, never consulting the carve-out' \
     || no 'a green base merges normally, never consulting the carve-out'
+fi
+
+# 18. A PAT merge already triggers CI on push. Dispatching CI on top of that run
+#     put two runs on one ref and the concurrency group cancelled one — under a
+#     burst of merges main's CI cancelled itself repeatedly (fleetcrown,
+#     2026-09-10). When a run for the new tip exists, no re-arm.
+rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
+if RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 0 ] \
+    && ok 'does not re-arm CI when a run for the new tip already exists' \
+    || no 'does not re-arm CI when a run for the new tip already exists'
+fi
+
+# 19. A GITHUB_TOKEN merge triggers nothing; the re-arm is what makes it ship.
+if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 1 ] \
+    && ok 're-arms CI exactly once when no run for the new tip exists' \
+    || no 're-arms CI exactly once when no run for the new tip exists'
 fi
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
