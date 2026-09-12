@@ -30,7 +30,7 @@
  *   node scripts/ci/shared-registry-audit.mjs --check   # exit 1 if a row is missing
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -285,6 +285,24 @@ function main() {
       manifestByRepo,
       generatedAt: new Date().toISOString(),
     });
+    // A timestamp that moves on every run makes the file differ on every run,
+    // so "commit only when something changed" commits every week and says
+    // nothing. Measured within an hour of shipping the first version: the
+    // sibling workflow on bitbaum/hire pushed a commit whose entire diff was
+    // one `generatedAt` line.
+    //
+    // So generatedAt means "when these FACTS last changed", not "when this
+    // script last ran" — which is the more useful claim anyway, and makes the
+    // file byte-identical when nothing moved.
+    const body = JSON.stringify({ ...payload, generatedAt: null });
+    if (existsSync(out)) {
+      try {
+        const prev = JSON.parse(readFileSync(out, "utf8"));
+        if (JSON.stringify({ ...prev, generatedAt: null }) === body) {
+          payload.generatedAt = prev.generatedAt;
+        }
+      } catch { /* unreadable previous file: write a fresh one */ }
+    }
     writeFileSync(out, JSON.stringify(payload, null, 2) + "\n");
     console.log(`wrote ${out} (${payload.packages.length} packages)`);
   }
