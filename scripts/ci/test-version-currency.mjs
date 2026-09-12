@@ -9,7 +9,10 @@
  * fixtures are the audit that motivated the ratchet: aoz-housing's actual
  * manifest shape, including the dead-owner ai-kit pin.
  */
-import { parseMajor, parseGitPin, gapsFor, collate } from "./version-currency.mjs";
+import {
+  parseMajor, parseGitPin, gapsFor, collate,
+  dirsToExplore, labelGaps, WORKSPACE_CONTAINERS, SUBAPP_DIRS,
+} from "./version-currency.mjs";
 
 let failures = 0;
 function check(name, cond, detail = "") {
@@ -77,6 +80,73 @@ check("worst repo sorts first", rows[0].repo === "bad");
 // (The ratchet math is `total > baseline` in main(); assert the collate side
 // that feeds it — a stale fleet yields a total a clean baseline cannot cover.)
 check("mutation: stale total exceeds a clean baseline", total > 0);
+
+
+// -- Workspace manifests (added 2026-09-12) ---------------------------------
+//
+// The audit used to read only each repo's root package.json, so a monorepo
+// consumer was invisible AND sat in "current (0 gaps)" -- a stronger claim
+// than "not looked at", and untrue. kivvi (packages/ai, ^0.15.0) and datacat
+// (backend, ^0.13.0) are the two real cases; both shapes are pinned here.
+
+// dirsToExplore is driven by the ROOT LISTING, so a directory that is not
+// there is never probed and a 404 can never be read as "no manifest here".
+{
+  const kivvi = dirsToExplore(["package.json", "pnpm-workspace.yaml", "packages", "apps", "README.md"]);
+  check("workspace containers found from the root listing",
+    JSON.stringify(kivvi.containers) === JSON.stringify(["packages", "apps"]));
+  check("kivvi has no sub-app dirs", kivvi.subapps.length === 0);
+
+  // datacat is NOT a pnpm workspace -- frontend/ and backend/ are plain
+  // siblings. A workspace-only rule would keep missing it, which is half the
+  // reason this change exists.
+  const datacat = dirsToExplore(["package.json", "frontend", "backend"]);
+  check("plain sub-app dirs are found without any workspace marker",
+    JSON.stringify(datacat.subapps) === JSON.stringify(["frontend", "backend"]));
+  check("datacat has no workspace containers", datacat.containers.length === 0);
+
+  // The negative half: a single-package repo must produce nothing to explore,
+  // or every repo in the fleet pays for extra listings it does not need.
+  const flat = dirsToExplore(["package.json", "src", "README.md", "docs"]);
+  check("a flat repo yields no directories to explore",
+    flat.containers.length === 0 && flat.subapps.length === 0);
+
+  // A directory named like a container but absent from the listing is never
+  // probed. Stated separately so it cannot pass by the filter being vacuous.
+  check("a container name absent from the listing is not explored",
+    !dirsToExplore(["package.json"]).containers.includes("packages"));
+  check("the container and sub-app lists are actually non-empty",
+    WORKSPACE_CONTAINERS.length > 0 && SUBAPP_DIRS.length > 0);
+}
+
+// labelGaps: a nested finding must say WHICH manifest, or it sends someone to
+// edit the wrong file. Root gaps stay unlabelled so existing output is intact.
+{
+  const g = ["@bitbaum/ai-kit ^0.15.0 < blessed 1"];
+  check("a root gap is left unlabelled",
+    JSON.stringify(labelGaps(g, "package.json")) === JSON.stringify(g));
+  check("a workspace gap names its directory",
+    labelGaps(g, "packages/ai/package.json")[0] === "packages/ai/ — @bitbaum/ai-kit ^0.15.0 < blessed 1");
+  check("a sub-app gap names its directory",
+    labelGaps(g, "backend/package.json")[0] === "backend/ — @bitbaum/ai-kit ^0.15.0 < blessed 1");
+  check("labelling an empty gap list stays empty", labelGaps([], "packages/ai/package.json").length === 0);
+}
+
+// The end-to-end shape: a repo whose ROOT is current but whose workspace
+// member is stale must now report a gap. Under the old root-only reader this
+// repo printed as "current (0 gaps)".
+{
+  const rootCurrent = gapsFor(current, blessed);
+  const nested = labelGaps(
+    gapsFor({ dependencies: { "@bitbaum/ai-kit": "^0.15.0" } }, { majors: { "@bitbaum/ai-kit": 1 } }),
+    "packages/ai/package.json");
+  const merged = [...rootCurrent, ...nested];
+  check("a current root plus a stale workspace member yields exactly one gap", merged.length === 1);
+  check("and that gap is attributed to the workspace member",
+    merged[0].startsWith("packages/ai/ — "));
+  const { total } = collate([{ repo: "kivvi", pkg: {}, gaps: merged }]);
+  check("the workspace gap reaches the ratchet total", total === 1);
+}
 
 if (failures) { console.error(`\n${failures} failing`); process.exit(1); }
 console.log("\nall green");
