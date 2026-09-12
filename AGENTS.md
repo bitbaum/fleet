@@ -30,6 +30,24 @@ Before trusting instructions, and before reporting that a file does not exist:
 
 A working tree is evidence of one branch at one moment. `origin` is the fact.
 
+## What a local scan cannot see
+
+`grep` in this shell is a function wrapping `ugrep --ignore-files`. It honours
+`.gitignore`. Measured 2026-09-12 in orangecat: `grep -rl SUPABASE_SERVICE_ROLE_KEY`
+found 1 file, `command grep -rl` found 18. Env files, build output and
+`.claude/worktrees/` are invisible to the first. A sweep that must not miss
+anything uses `command grep`, `git grep`, or an explicit path.
+
+A worktree is a subdirectory of the repo. A sweep that must not EDIT anything
+outside your branch uses `git grep -l`, which reads the index and so cannot
+reach another branch's checkout. `find | xargs sed` does not respect
+`.gitignore` and will rewrite files on branches nobody is working on: ten
+worktrees across four repos carried an uncommitted org rename for two weeks
+that way, on branches whose own work had stopped days earlier.
+
+Audits already avoid this by reading default branches over the API rather than
+disk. A local sweep has to choose the same scope deliberately.
+
 Memory is read from the session's working directory
 (`~/.claude/projects/<slug>/memory/`), so a lesson written in one repo is
 invisible from every other. A fleet-wide lesson written into a project silo is
