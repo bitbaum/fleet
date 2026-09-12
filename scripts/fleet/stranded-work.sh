@@ -132,8 +132,36 @@ scan_repo() {
     fi
   fi
 
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-    "$name" "$dirty_count" "$dirty_age" "${unpushed_count:-0}" "$unpushed_age" "$branch"
+  # How far behind the default branch is this checkout?
+  #
+  # Age alone cannot tell a session mid-work from a worktree abandoned a
+  # fortnight ago, and that difference decides what you DO about it. Measured
+  # 2026-09-12: seven orangecat worktrees each reported "9 uncommitted, oldest
+  # 15d". The counts were identical because the diff was — one identity sweep
+  # (`maonakamoto` → `bitbaum`) left uncommitted in every worktree it ran in.
+  # Main had not only made that rename, it had moved PAST it to a different org
+  # path, so "rescuing" that work would have reverted main. All seven sat
+  # 202-215 commits behind.
+  #
+  # Nobody is actively working two hundred commits behind; the live worktrees
+  # that same day sat at 0-2. So the distance goes in the report. Every finding
+  # is still listed and the exit status is unchanged — this only lets the
+  # reader tell at a glance which lines are work to ship and which are a
+  # directory to delete, which is the difference between a report that gets
+  # acted on and one that gets muted.
+  local defbase='' behind=-1
+  if git -C "$dir" rev-parse --verify -q origin/main >/dev/null 2>&1; then
+    defbase='origin/main'
+  elif git -C "$dir" rev-parse --verify -q origin/master >/dev/null 2>&1; then
+    defbase='origin/master'
+  fi
+  if [ -n "$defbase" ]; then
+    behind="$(git -C "$dir" rev-list --count "HEAD..$defbase" 2>/dev/null || echo -1)"
+  fi
+
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$name" "$dirty_count" "$dirty_age" "${unpushed_count:-0}" "$unpushed_age" "$branch" \
+    "${behind:--1}"
 }
 
 # Worktrees hold real branches, and this guard could not see them.
@@ -179,8 +207,9 @@ scan_all() {
 # ---------------------------------------------------------------------------
 decide() {
   local threshold="$1" found=0
-  local name dirty dirty_age unpushed unpushed_age branch
-  while IFS=$'\t' read -r name dirty dirty_age unpushed unpushed_age branch; do
+  local behind_max="${2:-${STRANDED_BEHIND:-50}}"
+  local name dirty dirty_age unpushed unpushed_age branch behind
+  while IFS=$'\t' read -r name dirty dirty_age unpushed unpushed_age branch behind; do
     [ -n "$name" ] || continue
     local why=""
     if [ "$dirty" -gt 0 ] && [ "$dirty_age" -ge "$threshold" ]; then
@@ -191,7 +220,17 @@ decide() {
       why="${why}${unpushed} unpushed, oldest ${unpushed_age}d"
     fi
     [ -n "$why" ] || continue
-    printf '  %-20s %s (%s)\n' "$name" "$why" "$branch"
+
+    # A caller that predates this column leaves it empty, and an unreachable
+    # default branch reports -1. Both mean "no distance measured", which must
+    # read as no annotation rather than as zero — a silent 0 would label every
+    # such row up to date, which is the failure this column exists to prevent.
+    local note=""
+    if [ -n "${behind:-}" ] && [ "$behind" -ge "$behind_max" ] 2>/dev/null; then
+      note=" — ${behind} behind, likely abandoned"
+    fi
+
+    printf '  %-20s %s (%s)%s\n' "$name" "$why" "$branch" "$note"
     found=1
   done
   return $((found == 0 ? 0 : 1))
