@@ -10,6 +10,8 @@
  */
 
 import {
+  isMissing,
+  firstLine,
   canonical, depCandidates, ownedPackages, countAdopters,
   registryEntries, findGaps, ADOPTER_THRESHOLD,
   installFor, specifiersFor, buildPackagesJson,
@@ -260,5 +262,20 @@ eq(installFor("@bitbaum/lonely", []),
 }
 
 console.log();
+
+
+// ── could-not-look vs not-there ─────────────────────────────────────────────
+// The distinction this file exists to protect: an unreadable manifest must
+// never be counted as "this repo does not use the package". On 2026-09-12 a
+// grep without that distinction nearly deleted bip-kit, limitkit and threadkit.
+eq(isMissing({ stderr: "gh: Not Found (HTTP 404)" }), true, "a 404 is a missing manifest, not a failure to look");
+eq(isMissing({ message: "gh: Not Found (HTTP 404)" }), true, "404 is recognised from the message too");
+eq(isMissing({ stderr: "API rate limit exceeded for user" }), false, "a rate limit is NOT a missing manifest");
+eq(isMissing({ stderr: "gh: Bad credentials (HTTP 401)" }), false, "an auth failure is NOT a missing manifest");
+eq(isMissing({ stderr: "dial tcp: lookup api.github.com: no such host" }), false, "a network failure is NOT a missing manifest");
+eq(isMissing({}), false, "an error with nothing in it is treated as could-not-look");
+eq(firstLine({ stderr: "boom\nsecond line", message: "ignored" }), "boom", "firstLine prefers stderr and keeps it to one line");
+eq(firstLine({ message: "only this" }), "only this", "firstLine falls back to the message");
+
 console.log(`test-shared-registry-audit: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);
