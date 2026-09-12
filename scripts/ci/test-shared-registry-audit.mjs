@@ -12,6 +12,7 @@
 import {
   canonical, depCandidates, ownedPackages, countAdopters,
   registryEntries, findGaps, ADOPTER_THRESHOLD,
+  installFor, specifiersFor, buildPackagesJson,
 } from "./shared-registry-audit.mjs";
 
 let pass = 0, fail = 0;
@@ -147,6 +148,115 @@ eq([...listed].sort(), ["ai-kit", "design-tokens"], "only linked table rows coun
   // An empty fleet must produce no findings and no crash.
   eq(findGaps({ adopters: new Map(), listed: new Set(), owned: new Map() }).length, 0,
      "an empty graph yields no findings");
+}
+
+
+// -- installFor: the published install line ---------------------------------
+//
+// This string is what a stranger will paste into a terminal, so getting it
+// wrong is worse than omitting it. The listkit case is the reason it is
+// DERIVED from what adopters actually write rather than assumed from the
+// package name: the npm name `listkit` belongs to someone else entirely, and a
+// page printing `pnpm add listkit` would install a stranger's package.
+eq(installFor("listkit", ["github:bitbaum/listkit#v0.1.0", "github:bitbaum/listkit#v0.1.0"]),
+   { source: "git", command: "pnpm add github:bitbaum/listkit#v0.1.0" },
+   "a git-pinned package publishes its GIT install, never a bare npm name");
+
+eq(installFor("@bitbaum/ai-kit", ["^1.4.1", "^1.2.0"]),
+   { source: "npm", command: "pnpm add @bitbaum/ai-kit" },
+   "a plain npm dependency publishes the package name");
+
+eq(installFor("ai-forms", ["npm:ai-forms@^0.1.2", "npm:ai-forms@^0.1.2"]),
+   { source: "npm", command: "pnpm add ai-forms" },
+   "an aliased install publishes the REAL package, not the alias key");
+
+eq(installFor("@bitbaum/sitekit", ["npm:@bitbaum/sitekit@^0.3.0"]),
+   { source: "npm", command: "pnpm add @bitbaum/sitekit" },
+   "a scoped alias target survives intact");
+
+// Ties and majorities: the line shown is the one most consumers actually use.
+eq(installFor("mixedkit", ["^1.0.0", "^1.0.0", "github:bitbaum/mixedkit#v1"]),
+   { source: "npm", command: "pnpm add mixedkit" },
+   "the most common specifier wins when consumers disagree");
+
+// No adopters at all must still yield a usable line, not undefined.
+eq(installFor("@bitbaum/lonely", []),
+   { source: "npm", command: "pnpm add @bitbaum/lonely" },
+   "a package with no adopters still publishes a sane install line");
+
+// -- specifiersFor --------------------------------------------------------
+{
+  const manifests = [
+    { repo: "listkit", path: "package.json", pkg: { name: "listkit" } },
+    { repo: "fleetcrown", path: "package.json", pkg: {
+        name: "fleetcrown", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0" } } },
+    { repo: "hirnli", path: "package.json", pkg: {
+        name: "hirnli", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0" } } },
+  ];
+  const owned = ownedPackages(manifests);
+  const specs = specifiersFor(manifests, owned);
+  eq(specs.get("listkit").length, 2, "specifiers are collected from every adopter");
+  const selfListed = specs.get("listkit").length;
+  selfListed === 2
+    ? ok("the package's own repo does not contribute a specifier")
+    : bad("the owning repo leaked into its own specifier list");
+}
+
+// -- buildPackagesJson ------------------------------------------------------
+{
+  const manifests = [
+    { repo: "ai-kit", path: "package.json", pkg: {
+        name: "@bitbaum/ai-kit", version: "1.4.1", description: "the AI layer" } },
+    { repo: "listkit", path: "package.json", pkg: {
+        name: "listkit", version: "0.1.0", description: "a list as a query" } },
+    { repo: "secretkit", path: "package.json", pkg: { name: "secretkit", version: "9.9.9" } },
+    { repo: "orangecat", path: "package.json", pkg: {
+        name: "orangecat",
+        dependencies: { "@bitbaum/ai-kit": "^1.4.1", secretkit: "^9.0.0" } } },
+    { repo: "fleetcrown", path: "package.json", pkg: {
+        name: "fleetcrown",
+        dependencies: { "@bitbaum/ai-kit": "^1.2.0", listkit: "github:bitbaum/listkit#v0.1.0" } } },
+    { repo: "hirnli", path: "package.json", pkg: {
+        name: "hirnli", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0", secretkit: "^9.0.0" } } },
+  ];
+  const owned = ownedPackages(manifests);
+  const adopters = countAdopters(manifests, owned);
+  const specifiers = specifiersFor(manifests, owned);
+  const manifestByRepo = new Map(manifests.filter((m) => m.path === "package.json").map((m) => [m.repo, m.pkg]));
+  // secretkit has two adopters but NO registry row -- it must not be published.
+  const listed = new Set(["ai-kit", "listkit"]);
+
+  const out = buildPackagesJson({ listed, owned, adopters, specifiers, manifestByRepo,
+                                  generatedAt: "2026-09-12T00:00:00.000Z" });
+
+  eq(out.packages.map((p) => p.slug), ["ai-kit", "listkit"],
+     "SHARED.md curates: only packages with a registry row are published");
+  {
+    const leaked = out.packages.some((p) => p.slug === "secretkit");
+    leaked ? bad("an unlisted package leaked into the published registry")
+           : ok("an adopted but UNLISTED package is not published (curation is the gate)");
+  }
+  eq(out.packages[0].adopters, 2, "adopter counts are derived, not asserted");
+  eq(out.packages[0].name, "@bitbaum/ai-kit", "the published name is the real package name");
+  eq(out.packages[0].adopterNames, ["fleetcrown", "orangecat"], "adopters are named and sorted");
+  eq(out.packages[1].install, { source: "git", command: "pnpm add github:bitbaum/listkit#v0.1.0" },
+     "each row carries the derived install line");
+  eq(out.packages[0].repo, "https://github.com/bitbaum/ai-kit", "each row links its repo");
+  eq(out.generatedAt, "2026-09-12T00:00:00.000Z", "the payload is stamped");
+
+  // Ordering is the page's hierarchy: most-used first. A renderer that trusted
+  // insertion order would put the registry in alphabetical noise.
+  const counts = out.packages.map((p) => p.adopters);
+  eq(counts, [...counts].sort((a, b) => b - a), "packages are ordered by adoption, descending");
+
+  // A row whose repo has no manifest must not crash the emitter.
+  const orphan = buildPackagesJson({
+    listed: new Set(["ghostkit"]), owned: new Map([["ghostkit", "ghostkit"]]),
+    adopters: new Map([["ghostkit", new Set()]]), specifiers: new Map(),
+    manifestByRepo: new Map(), generatedAt: "x",
+  });
+  eq(orphan.packages.length, 1, "a listed package with no readable manifest still emits a row");
+  eq(orphan.packages[0].adopters, 0, "and reports zero adopters rather than crashing");
 }
 
 console.log();
