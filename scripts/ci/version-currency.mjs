@@ -48,6 +48,21 @@
  * scanning of the lockfiles once that switch is on. This one answers a
  * different question: are we on the major the fleet agreed to.
  *
+ * IT USED TO READ ONLY THE ROOT MANIFEST
+ * --------------------------------------
+ * Which meant a monorepo consumer was invisible, and its silence read exactly
+ * like currency. Measured 2026-09-12: kivvi installs @bitbaum/ai-kit in
+ * `packages/ai` at ^0.15.0 and datacat in `backend` at ^0.13.0, against a
+ * published 1.4.1 — neither repo appeared in a single gap report, and both sat
+ * in the "current (0 gaps)" line, which is a stronger claim than "not looked
+ * at" and was not true.
+ *
+ * So it now walks workspace manifests too, and every probe is EVIDENCE-BASED:
+ * a directory is listed before a manifest inside it is fetched, so "no
+ * package.json here" is something the listing said, never a 404 being read as
+ * an answer. The cost is a handful of extra listings on the six repos that
+ * actually have workspaces; every other repo pays nothing.
+ *
  * Reads each repo's REMOTE default branch via the contents API, never a local
  * checkout: clones drift, and this fleet has already shipped a redundant PR
  * off a stale clone.
@@ -114,6 +129,48 @@ export function gapsFor(pkg, blessed) {
   return gaps;
 }
 
+/**
+ * Directories that hold workspace members (one manifest per CHILD), and
+ * directories that are themselves a sub-app (one manifest directly inside).
+ *
+ * Both lists are needed because the fleet has both shapes: kivvi/evig/orangecat/
+ * petvity/fleetcrown are pnpm workspaces with `packages/` (kivvi also `apps/`),
+ * while datacat is not a workspace at all — just `frontend/` and `backend/`
+ * side by side, each with its own manifest. A rule that only understood
+ * workspaces would have kept missing datacat, which is one of the two repos
+ * this change exists for.
+ */
+export const WORKSPACE_CONTAINERS = ["packages", "apps", "services"];
+export const SUBAPP_DIRS = ["frontend", "backend", "api", "web", "server", "client"];
+
+/**
+ * Given a repo's ROOT directory listing, which directories are worth listing.
+ *
+ * Pure, so the decision is testable without the network. Deliberately driven
+ * by what the listing actually contains: a name absent from the root is never
+ * probed, so the audit cannot mistake a 404 for "no manifest here".
+ */
+export function dirsToExplore(rootNames) {
+  const names = new Set(rootNames || []);
+  return {
+    containers: WORKSPACE_CONTAINERS.filter((d) => names.has(d)),
+    subapps: SUBAPP_DIRS.filter((d) => names.has(d)),
+  };
+}
+
+/**
+ * Gaps found in a non-root manifest are labelled with their directory.
+ *
+ * `kivvi` and `kivvi packages/ai` are different facts about different files,
+ * and a report that prints them identically sends someone to edit the wrong
+ * manifest. The root's gaps stay unlabelled so existing output is unchanged.
+ */
+export function labelGaps(gaps, path) {
+  if (path === "package.json") return gaps;
+  const dir = path.replace(/\/package\.json$/, "");
+  return gaps.map((g) => `${dir}/ — ${g}`);
+}
+
 /** Collate per-repo results into the report + total. */
 export function collate(results) {
   const checked = results.filter((r) => r.pkg !== undefined);
@@ -149,22 +206,47 @@ function listRepos(owner, limit) {
   };
 }
 
-function fetchManifest(owner, repo) {
+function fetchManifest(owner, repo, path = "package.json") {
   try {
-    const raw = gh(["api", `repos/${owner}/${repo}/contents/package.json`, "--jq", ".content"]);
+    const raw = gh(["api", `repos/${owner}/${repo}/contents/${path}`, "--jq", ".content"]);
     return JSON.parse(Buffer.from(raw.trim(), "base64").toString("utf8"));
   } catch {
     return undefined; // unreadable OR absent — resolved by root listing below
   }
 }
 
-function hasPackageJson(owner, repo) {
+/** Names in a directory, or null if it could not be listed at all. */
+function listDir(owner, repo, path = "") {
   try {
-    const raw = gh(["api", `repos/${owner}/${repo}/contents/`, "--jq", "[.[].name]"]);
-    return JSON.parse(raw).includes("package.json");
+    const raw = gh(["api", `repos/${owner}/${repo}/contents/${path}`, "--jq", "[.[].name]"]);
+    return JSON.parse(raw);
   } catch {
-    return null; // could not even list — UNCHECKED
+    return null; // could not look — never the same as "nothing there"
   }
+}
+
+/**
+ * Every manifest worth judging in one repo: the root, plus each workspace
+ * member and sub-app. Each is confirmed present by a LISTING before it is
+ * fetched.
+ */
+function manifestPaths(owner, repo, rootNames) {
+  const paths = rootNames.includes("package.json") ? ["package.json"] : [];
+  const { containers, subapps } = dirsToExplore(rootNames);
+
+  for (const dir of subapps) {
+    const names = listDir(owner, repo, dir);
+    if (names && names.includes("package.json")) paths.push(`${dir}/package.json`);
+  }
+  for (const container of containers) {
+    const children = listDir(owner, repo, container);
+    if (!children) continue;
+    for (const child of children) {
+      const names = listDir(owner, repo, `${container}/${child}`);
+      if (names && names.includes("package.json")) paths.push(`${container}/${child}/package.json`);
+    }
+  }
+  return paths;
 }
 
 function main() {
@@ -176,18 +258,34 @@ function main() {
   const { repos, forks } = listRepos(owner, limit);
   const results = [];
   for (const repo of repos) {
-    const present = hasPackageJson(owner, repo);
-    if (present === false) continue; // shell/docs repo: no Node surface, not a gap
-    if (present === null) {
-      results.push({ repo }); // UNCHECKED
+    const rootNames = listDir(owner, repo);
+    if (rootNames === null) {
+      results.push({ repo }); // could not even list — UNCHECKED
       continue;
     }
-    const pkg = fetchManifest(owner, repo);
-    if (pkg === undefined) {
+    const paths = manifestPaths(owner, repo, rootNames);
+    if (paths.length === 0) continue; // shell/docs repo: no Node surface, not a gap
+
+    // UNCHECKED is decided by the ROOT manifest, which is what "this repo was
+    // measured" has always meant. A workspace member that cannot be read is a
+    // hole in coverage, not grounds for discarding the repo's real findings —
+    // but it must not pass silently either, so it is named below.
+    let rootPkg;
+    const gaps = [];
+    const unreadable = [];
+    for (const path of paths) {
+      const pkg = fetchManifest(owner, repo, path);
+      if (pkg === undefined) { unreadable.push(path); continue; }
+      if (path === "package.json") rootPkg = pkg;
+      gaps.push(...labelGaps(gapsFor(pkg, blessed), path));
+    }
+
+    const rootRequired = paths.includes("package.json");
+    if (rootRequired && rootPkg === undefined) {
       results.push({ repo }); // listed but unreadable — UNCHECKED, never zero
       continue;
     }
-    results.push({ repo, pkg, gaps: gapsFor(pkg, blessed) });
+    results.push({ repo, pkg: rootPkg ?? {}, gaps, unreadable });
   }
 
   const { rows, total, uncheckedRepos } = collate(results);
@@ -200,6 +298,15 @@ function main() {
   }
   const current = rows.filter((r) => r.gaps.length === 0).map((r) => r.repo);
   if (current.length) console.log(`\n  current (0 gaps): ${current.join(", ")}`);
+
+  // A workspace manifest that was listed but could not be fetched is a hole in
+  // this run's coverage. Printed by name, because the alternative is a repo
+  // appearing in "current (0 gaps)" on the strength of files nobody read.
+  const partial = results.filter((r) => r.unreadable && r.unreadable.length > 0);
+  if (partial.length) {
+    console.log("\n  PARTIAL (some manifests unreadable — their contents are not in the total):");
+    for (const r of partial) console.log(`    ${r.repo}: ${r.unreadable.join(", ")}`);
+  }
   if (uncheckedRepos.length) {
     console.log(`\n  UNCHECKED (could not read — not counted as clean): ${uncheckedRepos.join(", ")}`);
   }
