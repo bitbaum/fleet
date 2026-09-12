@@ -30,7 +30,7 @@
  *   node scripts/ci/shared-registry-audit.mjs --check   # exit 1 if a row is missing
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -136,6 +136,75 @@ export function registryEntries(markdown) {
   return listed;
 }
 
+/**
+ * The install line, taken from what adopters ACTUALLY write.
+ *
+ * Not from SHARED.md's prose, which is a claim, and not hardcoded, which is a
+ * second source of truth. The most common specifier among real consumers is
+ * the honest answer to "how do I add this", and it also encodes the thing an
+ * outsider most needs to know: whether it comes from npm or from a git tag.
+ * `listkit` is a git tag because the npm name belongs to someone else — a page
+ * that printed `pnpm add listkit` would install a stranger's package.
+ */
+export function installFor(pkgName, specifiers) {
+  const counts = new Map();
+  for (const s of specifiers) counts.set(s, (counts.get(s) || 0) + 1);
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  if (typeof top === "string") {
+    const git = top.match(/^(?:github:|git\+https:\/\/github\.com\/)([\w.-]+\/[\w.-]+?)(?:\.git)?(#.*)?$/);
+    if (git) return { source: "git", command: `pnpm add ${top.replace(/^git\+https:\/\/github\.com\//, "github:")}` };
+    const alias = top.match(/^npm:(@?[^@]+)@/);
+    if (alias) return { source: "npm", command: `pnpm add ${alias[1]}` };
+  }
+  return { source: "npm", command: `pnpm add ${pkgName}` };
+}
+
+/** Raw dependency specifiers used for each owned package, across the fleet. */
+export function specifiersFor(manifests, owned) {
+  const out = new Map();
+  for (const c of owned.keys()) out.set(c, []);
+  for (const { repo, pkg } of manifests) {
+    const deps = { ...(pkg?.dependencies || {}), ...(pkg?.devDependencies || {}) };
+    for (const [key, value] of Object.entries(deps)) {
+      for (const cand of depCandidates(key, value)) {
+        if (!out.has(cand) || owned.get(cand) === repo) continue;
+        out.get(cand).push(value);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * The published shape: one row per package the REGISTRY lists, carrying only
+ * derived facts. SHARED.md curates (a package is here because a human wrote
+ * the row); this derives (adopters, install, description). Anything a renderer
+ * wants that cannot be derived — a short tagline — belongs in that renderer's
+ * own editorial file, the way the venture list already works.
+ */
+export function buildPackagesJson({ listed, owned, adopters, specifiers, manifestByRepo, generatedAt }) {
+  const packages = [...listed]
+    .filter((c) => owned.has(c))
+    .map((c) => {
+      const repo = owned.get(c);
+      const pkg = manifestByRepo.get(repo) || {};
+      const names = [...(adopters.get(c) || [])].sort();
+      return {
+        slug: c,
+        name: pkg.name || c,
+        repo: `https://github.com/bitbaum/${repo}`,
+        description: pkg.description || null,
+        version: pkg.version || null,
+        install: installFor(pkg.name || c, specifiers.get(c) || []),
+        adopters: names.length,
+        adopterNames: names,
+      };
+    })
+    .sort((a, b) => b.adopters - a.adopters || a.slug.localeCompare(b.slug));
+  return { generatedAt, packages };
+}
+
 /** The finding: owned packages with real adopters and no registry row. */
 export function findGaps({ adopters, listed, owned, threshold = ADOPTER_THRESHOLD }) {
   const gaps = [];
@@ -200,6 +269,25 @@ function main() {
   const adopters = countAdopters(manifests, owned);
   const listed = registryEntries(readFileSync(SHARED_MD, "utf8"));
   const gaps = findGaps({ adopters, listed, owned });
+
+  // --emit publishes the derived registry so a RENDERER never types the list.
+  // bitbaum.orangecat.ch reads this file the same way it already reads
+  // FleetCrown's venture register: facts derived here, prose editorial there.
+  const emitIdx = process.argv.indexOf("--emit");
+  if (emitIdx !== -1) {
+    const out = process.argv[emitIdx + 1];
+    if (!out) { console.error("--emit needs a path"); process.exit(2); }
+    const manifestByRepo = new Map();
+    for (const m of manifests) if (m.path === "package.json") manifestByRepo.set(m.repo, m.pkg);
+    const payload = buildPackagesJson({
+      listed, owned, adopters,
+      specifiers: specifiersFor(manifests, owned),
+      manifestByRepo,
+      generatedAt: new Date().toISOString(),
+    });
+    writeFileSync(out, JSON.stringify(payload, null, 2) + "\n");
+    console.log(`wrote ${out} (${payload.packages.length} packages)`);
+  }
 
   console.log(`shared-registry: ${repos.length} repos, ${owned.size} fleet-owned packages, ` +
               `${listed.size} rows in SHARED.md`);
