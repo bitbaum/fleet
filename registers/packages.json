@@ -1,0 +1,181 @@
+{
+  "generatedAt": "2026-09-12T18:31:32.446Z",
+  "packages": [
+    {
+      "slug": "ai-kit",
+      "name": "@bitbaum/ai-kit",
+      "repo": "https://github.com/bitbaum/ai-kit",
+      "description": null,
+      "version": "1.4.1",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/ai-kit"
+      },
+      "adopters": 13,
+      "adopterNames": [
+        "aoz-housing",
+        "botsmann",
+        "datacat",
+        "evig",
+        "fleetcrown",
+        "heidi",
+        "hirnli",
+        "kivvi",
+        "orangecat",
+        "sbb-fundbuero",
+        "surf-your-life",
+        "truthseeker",
+        "vitareba"
+      ]
+    },
+    {
+      "slug": "mail-kit",
+      "name": "@bitbaum/mail-kit",
+      "repo": "https://github.com/bitbaum/mail-kit",
+      "description": "The fleet's one email layer: Resend over raw fetch, zero dependencies, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
+      "version": "0.1.1",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/mail-kit"
+      },
+      "adopters": 11,
+      "adopterNames": [
+        "aoz-housing",
+        "botsmann",
+        "evig",
+        "fleetcrown",
+        "hirnli",
+        "kivvi",
+        "orangecat",
+        "petvity",
+        "s-ink",
+        "surf-your-life",
+        "vitareba"
+      ]
+    },
+    {
+      "slug": "bip-kit",
+      "name": "bip-kit",
+      "repo": "https://github.com/bitbaum/bip-kit",
+      "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
+      "version": "0.2.7",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add bip-kit"
+      },
+      "adopters": 8,
+      "adopterNames": [
+        "aoz-housing",
+        "botsmann",
+        "datacat",
+        "evig",
+        "fleetcrown",
+        "kivvi",
+        "orangecat",
+        "petvity"
+      ]
+    },
+    {
+      "slug": "ai-forms",
+      "name": "ai-forms",
+      "repo": "https://github.com/bitbaum/ai-forms",
+      "description": "Headless AI form filling and conversational refinement. Provider-agnostic core, React hook, and a server route factory.",
+      "version": "0.1.2",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add ai-forms"
+      },
+      "adopters": 6,
+      "adopterNames": [
+        "ai-kit",
+        "aoz-housing",
+        "evig",
+        "fleetcrown",
+        "kivvi",
+        "surf-your-life"
+      ]
+    },
+    {
+      "slug": "limitkit",
+      "name": "limitkit",
+      "repo": "https://github.com/bitbaum/limitkit",
+      "description": "Rate limiting as a decision, not a middleware: fixed and sliding windows over an injectable store, a bounded in-memory store, standard RateLimit headers, and client-IP extraction. No HTTP client, no framework.",
+      "version": "0.2.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add limitkit"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "fleetcrown",
+        "heidi",
+        "orangecat"
+      ]
+    },
+    {
+      "slug": "threadkit",
+      "name": "threadkit",
+      "repo": "https://github.com/bitbaum/threadkit",
+      "description": "Headless multi-participant message threads. Permission is participation, unread is per-person, and an AI can be a participant subject to the same visibility rules as everyone else.",
+      "version": "0.1.1",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add threadkit"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "heidi",
+        "orangecat",
+        "vitareba"
+      ]
+    },
+    {
+      "slug": "design-tokens",
+      "name": "@bitbaum/design-tokens",
+      "repo": "https://github.com/bitbaum/design-tokens",
+      "description": "Design SSOT for OrangeCat, FleetCrown and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
+      "version": "1.1.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/design-tokens"
+      },
+      "adopters": 2,
+      "adopterNames": [
+        "fleetcrown",
+        "solon"
+      ]
+    },
+    {
+      "slug": "listkit",
+      "name": "listkit",
+      "repo": "https://github.com/bitbaum/listkit",
+      "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
+      "version": "0.1.0",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/listkit#v0.1.0"
+      },
+      "adopters": 2,
+      "adopterNames": [
+        "fleetcrown",
+        "hirnli"
+      ]
+    },
+    {
+      "slug": "sitekit",
+      "name": "@bitbaum/sitekit",
+      "repo": "https://github.com/bitbaum/sitekit",
+      "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
+      "version": "0.3.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/sitekit"
+      },
+      "adopters": 2,
+      "adopterNames": [
+        "camille-boulangerie",
+        "substrata"
+      ]
+    }
+  ]
+}

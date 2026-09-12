@@ -20,7 +20,11 @@ on:
         default: true
 
 permissions:
-  contents: read
+  # write, only so the weekly run can refresh registers/packages.json — the
+  # derived registry that bitbaum.orangecat.ch renders. A hand-maintained copy
+  # of a graph that changes underneath it is exactly the drift this repo exists
+  # to prevent, and a page that types the portfolio is forbidden by AGENTS.md.
+  contents: write
 
 jobs:
   inventory:
@@ -71,6 +75,25 @@ jobs:
           node scripts/ci/shared-registry-audit.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
           set -e
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # Refresh the published registry that bitbaum.orangecat.ch renders.
+      # Commits only when the derived facts actually changed, so a quiet week
+      # produces no commit at all.
+      - name: Publish the derived package registry
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/shared-registry-audit.mjs --emit registers/packages.json >/dev/null
+          if git diff --quiet -- registers/packages.json; then
+            echo "packages.json unchanged"
+            exit 0
+          fi
+          git config user.name  "fleet-bot"
+          git config user.email "noreply@bitbaum.invalid"
+          git add registers/packages.json
+          git commit -m "chore(registers): refresh derived package registry"
+          git push
 
       # ── the ratchets, last and INDEPENDENT ─────────────────────────────────
       #
