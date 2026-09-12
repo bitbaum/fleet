@@ -32,6 +32,8 @@ the inventory underneath it is **generated**, and the number it produces is a
 | [`mail-kit`](https://github.com/bitbaum/mail-kit) | `pnpm add @bitbaum/mail-kit` (on npm since 2026-09-05) | the fleet's **~12 bespoke email implementations** across three provider styles (Resend SDK ×8, raw fetch ×4, one unused AWS SES dep). One provider (Resend over raw fetch, **zero runtime deps**), one env contract (`RESEND_API_KEY` + `RESEND_FROM`), one call shape: `sendMail()` **never throws** — honest `{sent}\|{error,status,retryable}`; `isMailConfigured()` treats placeholder keys and production `@resend.dev` sandbox senders as UNCONFIGURED (both shipped to prod once); `mailHealth()` for health routes; `conventionalFrom()` encodes the `<app>@fleetcrown.orangecat.ch` shared-sender convention (free tier: 1 verified domain, 100/day). Born from the day a dead Brevo SMTP cred was found to have silenced evig+kivvi outbound mail for months; the account-level watchdog is this repo's `email-canary.yml`. Templates stay per-app; bulk/newsletter stays Listmonk. |
 | [`limitkit`](https://github.com/bitbaum/limitkit) | `pnpm add github:bitbaum/limitkit#v0.2.0` | the fleet's **12 hand-rolled rate limiters** (this file's own "next extraction" row). Sliding/fixed windows over an injectable two-method `Store`; **bounded** memory default (the unbounded-Map leak is impossible by construction); standard `X-RateLimit-*` + `Retry-After` headers — what orangecat's ADR-0002 specified seven months before anything enforced it; `clientIp()`. Refusals count nothing, so a hammered key recovers. Ships no middleware and **no limit values** — how many attempts a route allows is app semantics, asserted locally. |
 | [`listkit`](https://github.com/bitbaum/listkit) | `pnpm add github:bitbaum/listkit#v0.1.0` | the fleet's **twelve incompatible filter-state shapes** — no two alike — plus ~34 hand-built URL builders (four of them carrying live bugs: a preset that wiped the reader's search, a date range that stranded them past the end, a builder that preserved three params by name, a debounced box using `push` so the back button walked every spelling of the word), ~25 copies of toggle-a-value-in-a-set in two encodings, ~11 debounces at five delays, ~11 copies of `Math.ceil(total / pageSize)`, and the four-of-seven repos that put a reader's text into a SQL `LIKE` without escaping `%` or `_`. Ships the DECISIONS: five facet kinds with the empty selection as the only sentinel (one repo used its *translated label* as the all-value, making filter identity depend on the reader's language), a URL codec that copies rather than rebuilds and drops `page` when the result set changes, a comparator that puts missing values last in **both** directions, page arithmetic that cannot produce a negative offset. **No markup, no tokens, no React, no search engine** — nine token vocabularies and six chip treatments were found among those repos, several different on purpose. |
+| [`bip-kit`](https://github.com/bitbaum/bip-kit) | `pnpm add bip-kit` (on npm since 2026-09-06) | **blog / roadmap / changelog on a product site** — otherwise a markdown pipeline, a renderer and a security review per repo. A zero-dependency parser turning repo-authored markdown into typed blocks, plus `bip-kit/react`, an RSC-first reference renderer emitting semantic `bp-*` classes with every colour a CSS variable — shared vocabulary, your tokens on top. `shiki`/`katex`/`mermaid` are OPTIONAL peers that degrade rather than throw. **Eight adopters, third-most-used package in this registry after `ai-kit` and `mail-kit` — and it was absent from this table until 2026-09-12**, present only in the extraction-candidate list below as a *source* of slug-helper duplication. That is this file's own failure mode rather than a clerical one: the instruction at the top ("check this file; if it is here, install it") is exactly as true as the table under it, and a package nobody can find here is a package the next agent rebuilds. |
+| [`design-tokens`](https://github.com/bitbaum/design-tokens) | `"@bitbaum/design-tokens": "github:bitbaum/design-tokens#v1.1.0"` | the **brand** SSOT for OrangeCat, FleetCrown and Solon: one `tokens.css` holding every colour, face, weight, tracking and radius the three share, a Tailwind preset that maps them, and self-hosted faces. Import it BEFORE the app's own `globals.css` — the app keeps its file, this supplies the primitives it used to hand-copy. It exists because they *were* hand-copied and drifted: Solon's `globals.css` carried a comment claiming its tokens matched OrangeCat's while sharing **zero** names or values with it, so one company's three products looked like three companies. Retheming all three is an edit to the `▼▼▼ THE KNOBS ▼▼▼` block plus a tag. **This is a deliberate exception to "each app owns its design tokens" below, and the line is OWNERSHIP, not taste:** these are one company's own products and are *supposed* to look alike. A client's site is not, and must never install this — a retheme would repaint somebody else's brand. |
 
 **Adopted:** `listkit` — fleetcrown (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count).
 
@@ -45,6 +47,32 @@ The rule both produced: **a shared package earns a dependency when it removes a 
 And never behind a security boundary: listkit's core sentinel is *empty selection filters nothing*, which is precisely the wrong default for a visibility gate. orangecat's public-surface predicates (`getOpenDemand`, `searchPlatform`, `fetchDiscoverCounts`, pinned by `__tests__/unit/public-surface-filtering.test.ts`) serve the public internet through the admin client with RLS bypassed. An in-memory array filter has no business there.
 `threadkit` — vitareba, orangecat (2026-09-06).
 `ai-forms` — fleetcrown, evig, aoz-housing, surf-your-life, kivvi.
+`bip-kit` — fleetcrown, orangecat, evig, aoz-housing, botsmann, kivvi, petvity,
+datacat (frontend only; its backend is the `ai-kit` consumer). **Eight.**
+`design-tokens` — fleetcrown, solon. **Two, not the three its own README names.**
+
+**Both counts above were read from each repo's `origin/main`, and the first
+attempt at them — read from the working checkouts in `~/dev` — was wrong in
+both directions.** Those directories sit on feature branches and go stale:
+fleetcrown's checkout was on `ci/auto-merge-pat` and showed neither `listkit`
+nor `design-tokens`, while `heidi`, `sbb-fundbuero` and `hirnli` adoptions were
+missed entirely. `~/dev/<x>` is a *checkout*, not a repo — the same trap as the
+withdrawn `@ai-native-cms/core` row below, one level down. Survey
+`git show origin/main:package.json`, and match on the package rather than the
+key, because half the fleet installs under an alias
+(`"@fleet/ai-forms": "npm:ai-forms@…"`, `"sitekit": "npm:@bitbaum/sitekit@…"`,
+solon's `"@fleet/design-tokens"`) and a key-only grep reports zero adopters for
+a package with five.
+
+**And the third name is the interesting one.** `design-tokens` is named for
+OrangeCat, FleetCrown and Solon, but orangecat does not install it. Its
+`src/app/globals.css` hand-copies the values under a comment reading *"Mirrors
+--on-accent in @fleet/design-tokens v1.1.0, which is the SSOT"* — twice, on
+`origin/main`. That is the *precise* defect this package was extracted to end,
+a comment asserting an SSOT relationship that the dependency graph does not
+have, now reproduced inside the product the package is named after. A comment
+is not an import: it cannot drift-check, and the next retheme tag will move two
+products and leave the third behind, silently and in brand colours.
 `ai-kit` — fleetcrown, aoz-housing, truthseeker, botsmann, evig, orangecat,
 hirnli (all seven on `@bitbaum/ai-kit` from npm), surf-your-life and kivvi's
 `@kivvi/ai` (both still via git tag — convert when touched), **and this repo**
@@ -158,6 +186,92 @@ there is no role to check.
 cannot `require()` it. Every candidate above is ESM already; note it before
 adopting anywhere that is not.
 
+### "If one breaks, does it break every app?" — no, and the real risk is the opposite
+
+The intuition is that a shared package is a single point of failure: push a bad
+version, take down every app that installed it. Measured on 2026-09-12, that
+cannot happen here — and the thing that *is* happening is its mirror image.
+
+**A publish reaches nobody by itself.** Every consumer commits `pnpm-lock.yaml`
+and every CI and deploy job installs with `pnpm install --frozen-lockfile`. A
+new version enters one repo at a time, as a reviewable lockfile diff, through
+that repo's own CI and its own deploy. There is no fleet-wide push and no
+ambient upgrade. `minimumReleaseAge` sits in front of that as a second gate:
+a fresh publish is refused until it ages, and our own packages need an explicit
+`minimumReleaseAgeExclude` line to be installable at all — which is why a
+missing entry fails `pnpm install --frozen-lockfile` **before a line of code
+runs**, surfacing as a bare exit 1 with no annotation, reading like a broken
+build rather than a refused dependency.
+
+**So the blast radius of a bad publish is one repo — whichever bumps first —
+and its CI is the thing that catches it.** That is what the "proving consumer"
+practice in this file is for: a package is not adopted fleet-wide on publish
+day, it is driven through one real app, and that app's CI is the integration
+test the package cannot write for itself.
+
+**What is actually broken is distribution.** `@bitbaum/ai-kit` is published at
+`1.4.1`. Its thirteen consumers, read from `origin/main` **after fetching**:
+
+| Range | Repos |
+|---|---|
+| `^0.13.0` | datacat (`backend/`), evig |
+| `^0.15.0` | aoz-housing, heidi, hirnli, kivvi (`packages/ai/`), sbb-fundbuero |
+| `^1.2.0` | fleetcrown |
+| `^1.4.0` | botsmann, surf-your-life, truthseeker, vitareba |
+| `^1.4.1` | orangecat |
+
+A caret on a `0.x` version pins the **minor**: `^0.15.0` means `>=0.15.0
+<0.16.0`. So a fix published right now as `1.4.2` reaches **six of thirteen
+repos**, and the seven on 0.x cannot receive it even by running `pnpm update` —
+each needs a deliberate major bump. Seven repos sit behind an 0.x line on the
+package that owns model ids, failover and the three kinds of 429; the last time
+this fleet was taken down it was five repos going down *together* on a retired
+model id, which is the same shape as this table.
+
+**Two measurement traps, both walked into while producing that table.** The
+first: `~/dev/<x>` is a checkout on whatever branch someone left it on, so read
+`origin/main`, never the working tree. The second is the one that survives
+fixing the first — **a remote-tracking ref is only as fresh as the last
+`git fetch`**, and a stale `origin/main` answers confidently and wrongly. The
+table above was built twice: before fetching it showed botsmann, surf-your-life,
+truthseeker and vitareba stranded on `^0.15.0`; all four had been current for
+days. `git fetch` first, or do not quote a number.
+
+**And `version-currency` can see only five of the seven.** Blessing
+`@bitbaum/ai-kit` at major 1 flags aoz-housing, evig, heidi, hirnli and
+sbb-fundbuero — but never datacat or kivvi, because the audit reads each repo's
+**root** `package.json` and those two install the package in `backend/` and
+`packages/ai/`. A monorepo consumer is invisible to the currency ratchet, and
+silence from it reads exactly like currency. The usual shape: the gate is not
+wrong, it indexes less than what it is trusted to cover.
+
+**The practice, then, is not "be careful what you share" — it is:**
+
+1. **Consumers pin through a lockfile, always.** This is already true fleet-wide
+   and is what makes shared packages safe. Never install a fleet package with a
+   floating tag or a branch ref.
+2. **A package earns adoption through one proving consumer**, whose CI is the
+   integration gate. Publishing is the cheap half.
+3. **Version spread is the metric to watch, not breakage.** A registry with
+   seven adopters on stale majors has the cost of coupling and none of the
+   benefit — the fix you wrote for everyone reached six of thirteen. Getting a
+   repo current is the cheapest work in this file and nobody schedules it.
+   **And right now nothing measures it:** `blessed-versions.json` tracks a
+   package either in `majors` (npm, judged on major) or in `internal_tags` (git
+   pin, judged on tag), and `ai-kit` fell through the seam between them. Its
+   `internal_tags` entry was deleted when it graduated to npm — correctly, per
+   that file's own rule — and it was never added to `majors` because it was
+   `0.x` on graduation day and "0.x has no meaningful major". It is `1.4.1` now.
+   The comment in that file still describes it as a 0.x package, so the reason
+   it is untracked reads as deliberate. Adding `"@bitbaum/ai-kit": 1` is a
+   one-line fix that flags five of the seven; it also raises the measured gap
+   total, so it needs a baseline bump in the same PR, which is the point — the
+   debt becomes a number someone chose rather than a silence.
+4. **Breaking changes cost N deliberate bumps**, so spend majors carefully — but
+   do not let that argue for a copy. The copy has the same cost with no version
+   number on it and no way to find the other copies.
+
+
 ### Central audits — one script, never a copy per repo
 
 Not installable packages: these run FROM this repo against every other one, so
@@ -246,7 +360,12 @@ Stated explicitly, because "share everything" is its own failure:
 - **DB schemas** — Drizzle vs Prisma vs raw SQL; a shared schema fights every ORM.
 - **UI markup for chat and forms** — behaviour is shareable, *markup is not*.
   Each app owns its design tokens and has to keep looking like itself. This is
-  why `ai-forms` is headless.
+  why `ai-forms` is headless. **One exception, and it is about ownership rather
+  than taste:** `@bitbaum/design-tokens` (registry above) is shared by
+  OrangeCat, FleetCrown and Solon, because those are one company's own products
+  and are *supposed* to look alike — three hand-copied token sets had already
+  drifted into looking like three companies. A client's site stays on its own
+  tokens; the rule holds everywhere the brand is not ours.
 - **Anything where app semantics decide correctness.** orangecat legitimately
   lists paid model ids (BYOK — the user's key, the user's choice) while the same
   id in kivvi's fallback was a bug. Centralize the **rule**; assert it
