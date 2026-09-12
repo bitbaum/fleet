@@ -4,8 +4,15 @@
     "version-currency audit measures every repo against. Raise a number here",
     "(in a PR) when the fleet decides a new major is the standard; the audit",
     "then reports every repo below it as a gap. Majors only: 0.x packages",
-    "(drizzle-orm, @anthropic-ai/sdk, @bitbaum/ai-kit) have no meaningful",
-    "major and are not listed. next-auth is deliberately absent while v5 is",
+    "(drizzle-orm, @anthropic-ai/sdk) have no meaningful major and are not",
+    "listed. THAT EXEMPTION USED TO NAME @bitbaum/ai-kit AND OUTLIVED IT: the",
+    "package graduated to npm at 0.x, so its internal_tags entry was deleted",
+    "per the rule below and it was never added here -- and then it shipped",
+    "1.0.0 and nothing noticed, because the comment explaining its absence",
+    "still described it as 0.x. Seven of thirteen consumers sat on 0.x carets",
+    "(^0.15.0 pins the MINOR) while the package was at 1.4.1, and no gate said",
+    "so. A version-tracking exemption must be re-read when the version moves.",
+    "next-auth is deliberately absent while v5 is",
     "beta — which is exactly why it stopped being the blessed auth library on",
     "2026-09-11: a choice this audit cannot measure is a choice that drifts.",
     "better-auth has a real major and is listed below. internal_tags: the git tag every consumer of an internal package",
@@ -33,7 +40,9 @@
     "openai": 7,
     "@supabase/supabase-js": 2,
     "better-auth": 1,
-    "pg": 8
+    "pg": 8,
+    "@bitbaum/ai-kit": 1,
+    "@bitbaum/design-tokens": 1
   },
   "internal_tags": {}
 }

@@ -154,6 +154,22 @@ jobs:
       - name: The next-auth origin guard still detects, and still stays quiet
         run: node scripts/ci/test-nextauth-origin-audit.mjs
 
+      # The registry that every other audit's advice points at was the one
+      # thing nothing measured: on 2026-09-12 bip-kit had eight adopters and no
+      # row, while being MENTIONED in the prose — so the fixtures pin that a
+      # mention is not a row, and that the aliases half the fleet installs
+      # under (`npm:`, `github:`) resolve to the package rather than the key.
+      - name: The shared-registry audit still detects, and still stays quiet
+        run: node scripts/ci/test-shared-registry-audit.mjs
+
+      # This script can DELETE repositories, so its selector is pinned in both
+      # directions on every fixture and its --yes guard is exercised through
+      # the script itself, not re-implemented. Four mutants (selector ignores
+      # the topic, substring instead of exact match, guard removed, silent
+      # empty result) were each confirmed to turn it red before it shipped.
+      - name: The ephemeral-repo pruner selects only what is marked
+        run: bash scripts/ci/test-prune-ephemeral-repos.sh
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.

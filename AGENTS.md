@@ -66,3 +66,39 @@ in a package. Do not add auth, ai-kit, or bip-kit unless the page needs a
 signed-in user, a model, or a public changelog.
 
 A page that types the portfolio is a copy. Generate it, or do not ship it.
+
+## Repos you create
+
+The fleet creates repos automatically now — FleetCrown provisions one per
+project, and agents scaffold sites to test that path. Six appeared in two days
+in September 2026, none registered in `apps.conf`, and together they were 15 of
+the 26 gaps that were about to turn the version-currency ratchet red against a
+committed baseline of 0. Nothing was wrong with any single one of them. A
+ratchet does not die disputed, it dies drowned: a gate whose number is mostly
+noise gets muted, and every true finding inside it is muted with it.
+
+**The rule is in `~/.claude/CLAUDE.md`: tear the experiment down in the same
+session that created it, repo included — not archived, not left private, gone.**
+Per-site teardown is `fleetcrown: scripts/hetzner/retire-site.sh`, which also
+owns the Caddy vhost and the `apps.conf` row. None of that is restated here.
+
+What is here is the backstop, because that rule covers the session that creates
+a repo and nothing covers the session that dies, is interrupted, or forgets —
+which is how all six survived. So when you create a throwaway repo:
+
+- **Mark it at birth** with the GitHub topic `fleet-ephemeral`. On the repo, not
+  in a list somebody has to remember to update — then a later sweep can find it
+  without anyone having to recognise the name.
+- **Say so in the description** too, for the human who meets it first.
+- **Do not** give it a homepage, an `apps.conf` row, or a domain. If it becomes
+  real, drop the topic; that is the promotion.
+
+Marking is insurance against your own cleanup not happening. It costs one flag
+at creation and it is the only reason an abandoned experiment is findable later:
+
+    fleet: scripts/local/prune-ephemeral-repos.sh                 # list, read-only
+    fleet: scripts/local/prune-ephemeral-repos.sh --delete --yes  # the intended action
+    fleet: scripts/local/prune-ephemeral-repos.sh --mark <repo>   # backfill an existing one
+
+The pruner refuses to touch anything that is not marked — "it is obviously a
+test repo" is the reasoning that eventually deletes something real.
