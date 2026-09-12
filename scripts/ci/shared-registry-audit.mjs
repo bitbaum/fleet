@@ -219,7 +219,19 @@ export function findGaps({ adopters, listed, owned, threshold = ADOPTER_THRESHOL
 // ── data collection (network) ────────────────────────────────────────────────
 
 function gh(args) {
-  return execFileSync("gh", args, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  // stderr is PIPED, not inherited: a missing manifest is an expected 404 and
+  // printing thirteen of them makes a working audit look broken. The error is
+  // still available to the caller, which is the half that matters.
+  return execFileSync("gh", args, {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+/** A 404 means "this repo has no such manifest". Anything else means we could not look. */
+export function isMissing(err) {
+  return /404|Not Found/i.test(String(err?.stderr ?? "") + String(err?.message ?? ""));
 }
 
 /** Manifest paths worth looking at. A monorepo consumer is still an adopter. */
@@ -239,18 +251,34 @@ function fetchManifests(owner, limit) {
     .map((r) => r.name);
 
   const manifests = [];
+  // Three-valued, like ai-kit/web's search: found, absent, or COULD NOT LOOK.
+  // Swallowing every error made a rate-limited or unauthenticated run report
+  // the same thing as a clean one — zero adopters — and "nothing depends on
+  // this package" is the sentence that gets a package deleted. On 2026-09-12 a
+  // grep with that exact blind spot nearly removed bip-kit (8 adopters),
+  // limitkit (3) and threadkit (3).
+  const unreadable = [];
   for (const repo of repos) {
     for (const path of MANIFEST_PATHS) {
       let raw;
       try {
         raw = gh(["api", `repos/${owner}/${repo}/contents/${path}`, "--jq", ".content"]);
-      } catch { continue; }
+      } catch (err) {
+        if (!isMissing(err)) unreadable.push(`${repo}/${path}: ${firstLine(err)}`);
+        continue;
+      }
       try {
         manifests.push({ repo, path, pkg: JSON.parse(Buffer.from(raw.trim(), "base64").toString("utf8")) });
       } catch { /* unparseable manifest is not an adopter claim */ }
     }
   }
-  return { repos, manifests };
+  return { repos, manifests, unreadable };
+}
+
+/** The one line of an error worth showing next to a repo name. */
+export function firstLine(err) {
+  const text = String(err?.stderr ?? "").trim() || String(err?.message ?? "").trim();
+  return text.split("\n")[0].slice(0, 120);
 }
 
 function main() {
@@ -258,7 +286,7 @@ function main() {
   const limit = Number(process.env.GH_LIMIT || 200);
   const check = process.argv.includes("--check");
 
-  const { repos, manifests } = fetchManifests(owner, limit);
+  const { repos, manifests, unreadable } = fetchManifests(owner, limit);
   if (repos.length === 0) {
     // A sweep that looked at nothing must never read as a clean sweep.
     console.error("⊘ shared-registry audit SKIPPED — gh repo list returned no repos.");
@@ -277,6 +305,14 @@ function main() {
   if (emitIdx !== -1) {
     const out = process.argv[emitIdx + 1];
     if (!out) { console.error("--emit needs a path"); process.exit(2); }
+    // Publishing a partial scan is worse than publishing nothing: the file is
+    // read as the answer to "who uses this", and a repo we could not read
+    // looks exactly like a repo that does not use it.
+    if (unreadable.length > 0) {
+      console.error(`✗ refusing to write ${out}: ${unreadable.length} manifest(s) could not be read`);
+      for (const u of unreadable.slice(0, 10)) console.error(`    ${u}`);
+      process.exit(2);
+    }
     const manifestByRepo = new Map();
     for (const m of manifests) if (m.path === "package.json") manifestByRepo.set(m.repo, m.pkg);
     const payload = buildPackagesJson({
@@ -309,6 +345,12 @@ function main() {
 
   console.log(`shared-registry: ${repos.length} repos, ${owned.size} fleet-owned packages, ` +
               `${listed.size} rows in SHARED.md`);
+  if (unreadable.length > 0) {
+    console.log();
+    console.log(`  ⚠ ${unreadable.length} manifest(s) COULD NOT BE READ — the counts below are a floor, not a count:`);
+    for (const u of unreadable.slice(0, 10)) console.log(`      ${u}`);
+    console.log("  Do not conclude a package is unused from this run.");
+  }
   console.log();
 
   const ranked = [...adopters.entries()]
