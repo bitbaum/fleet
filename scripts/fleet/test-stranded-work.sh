@@ -35,7 +35,13 @@ source "$SCRIPT" ""
 unset STRANDED_LIB_ONLY
 
 # name  dirty  dirty_age  unpushed  unpushed_age  branch
+# Deliberately still SIX columns: every row below feeds decide() a line with no
+# `behind`, which is what a caller written before that column looks like. If
+# the absent value ever starts reading as 0, these rows say so.
 row() { printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$@"; }
+
+# name  dirty  dirty_age  unpushed  unpushed_age  branch  behind
+row7() { printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$@"; }
 
 echo "deciding half — fixtures, no git:"
 
@@ -250,6 +256,47 @@ u="$(printf '%s' "$line" | cut -f4)"
 [ "$u" = "1" ] \
   && ok "a resolvable upstream is measured against, not origin/main" \
   || no "expected 1 commit ahead of upstream, got $u ('$line')"
+
+echo
+echo "distance behind the default branch:"
+
+# The finding that produced this column: seven orangecat worktrees all reporting
+# "9 uncommitted, oldest 15d" while sitting 200+ commits behind, holding one
+# superseded diff between them. Age said stranded; distance said abandoned.
+out="$(row7 old 9 15 0 -1 main 215 | decide 3)"; rc=$?
+[ $rc -ne 0 ] && [[ "$out" == *"215 behind, likely abandoned"* ]] \
+  && ok "a worktree far behind the default branch is marked, not just aged" \
+  || no "expected the behind-marker (rc=$rc, out='$out')"
+
+out="$(row7 live 9 15 0 -1 main 2 | decide 3)"; rc=$?
+[ $rc -ne 0 ] && [[ "$out" != *"behind"* ]] \
+  && ok "work that is up to date with main carries no such marker" \
+  || no "a current worktree must not be called abandoned (out='$out')"
+
+# Still a finding — the marker annotates, it never filters. Dropping these rows
+# would lose real work the moment someone left a branch alone for a fortnight.
+out="$(row7 old 9 15 0 -1 main 215 | decide 3)"; rc=$?
+[ $rc -ne 0 ] && [[ "$out" == *"9 uncommitted"* ]] \
+  && ok "a far-behind worktree is still reported and still exits non-zero" \
+  || no "the marker must annotate, not filter (rc=$rc, out='$out')"
+
+# -1 is what an unreachable default branch reports, and an empty field is what a
+# six-column caller sends. Neither is a distance of zero, and calling either one
+# "up to date" is the mistake this column exists to prevent.
+out="$(row7 unknown 9 15 0 -1 main -1 | decide 3)"; rc=$?
+[ $rc -ne 0 ] && [[ "$out" != *"behind"* ]] \
+  && ok "an unmeasurable distance is left unannotated rather than guessed" \
+  || no "-1 must not be rendered as a distance (out='$out')"
+
+out="$(row legacy 9 15 0 -1 main | decide 3)"; rc=$?
+[ $rc -ne 0 ] && [[ "$out" == *"9 uncommitted"* ]] && [[ "$out" != *"behind"* ]] \
+  && ok "a six-column row from an older caller still decides correctly" \
+  || no "the new column must be optional (rc=$rc, out='$out')"
+
+out="$(row7 tuned 9 15 0 -1 main 60 | decide 3 100)"; rc=$?
+[ $rc -ne 0 ] && [[ "$out" != *"behind"* ]] \
+  && ok "the threshold is a parameter, so a fast-moving repo can raise it" \
+  || no "decide should honour its behind threshold (out='$out')"
 
 echo
 echo "end to end:"
