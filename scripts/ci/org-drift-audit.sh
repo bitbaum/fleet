@@ -148,8 +148,17 @@ in_baseline() {
 }
 
 # gh_list_repos — list repos in the org
+#
+# `--no-archived` is load-bearing, not tidiness. Archiving is how this fleet
+# retires a repo, and six of the seven org sweeps already skip archived ones —
+# this was the only sweep that did not, so a repo taken out of service still
+# had its README judged against the org register and still reported drift that
+# nobody could act on without unarchiving it first. It is also the exclusion
+# path for throwaway repos (see scripts/local/prune-ephemeral-repos.sh): six
+# scaffolds appeared in two days, and a sweep whose findings are mostly noise
+# gets muted along with everything true inside it.
 gh_list_repos() {
-  gh repo list "$ORG" --limit 1000 --json name --jq '.[].name' 2>/dev/null || {
+  gh repo list "$ORG" --limit 1000 --no-archived --json name --jq '.[].name' 2>/dev/null || {
     echo "gh repo list failed" >&2
     return 1
   }
