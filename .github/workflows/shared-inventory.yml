@@ -49,19 +49,13 @@ jobs:
           set -e
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
-      - name: The ratchet — duplication may fall, never rise
-        if: ${{ inputs.strict != false }}
-        env:
-          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
-        run: bash scripts/ci/shared-inventory.sh --check
-
       # The other half of the same question, and the half that was never asked.
       # shared-inventory counts the duplication that SHOULD become a package;
       # this counts the packages that already exist and cannot be found in the
       # registry. bip-kit had eight adopters and no row for weeks — every agent
       # told to "check SHARED.md before building" was told to check a file that
-      # did not mention it. Runs in the same job because it is the same file's
-      # health, and the report is useless split across two summaries.
+      # did not mention it. Same job because it is the same file's health, and
+      # the report is useless split across two summaries.
       - name: Every adopted package has a registry row
         env:
           GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
@@ -78,8 +72,23 @@ jobs:
           set -e
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
+      # ── the ratchets, last and INDEPENDENT ─────────────────────────────────
+      #
+      # Both reports run before either ratchet, and each ratchet carries
+      # `!cancelled()` so that one going red cannot hide the other. Without
+      # that, the first failing check ends the job and the second gate never
+      # runs — it would report green-by-absence forever, which is worse than
+      # not having it. The duplication ratchet was already red when the
+      # registry gate was added (ai-provider-client 17 -> 19), so this was the
+      # live case, not a hypothetical.
+      - name: The ratchet — duplication may fall, never rise
+        if: ${{ !cancelled() && inputs.strict != false }}
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/shared-inventory.sh --check
+
       - name: The registry must list what the fleet actually depends on
-        if: ${{ inputs.strict != false }}
+        if: ${{ !cancelled() && inputs.strict != false }}
         env:
           GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
         run: node scripts/ci/shared-registry-audit.mjs --check
