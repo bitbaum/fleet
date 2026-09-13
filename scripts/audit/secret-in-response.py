@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scan HTTP response bodies for credential material that should never leave the server.
 
-Why a response scanner and not a code scanner: the static gate in FleetCrown
+Why a response scanner and not a code scanner: the static gate in Loki
 (scripts/test/no-raw-user-response.ts) reads API route handlers, and it says so
 in its own header that it cannot see RSC flight payloads — a server component
 handing a whole row to a client component serializes it into the HTML just the

@@ -72,7 +72,7 @@ out="$(row edge 1 3 0 -1 main | decide 3)"; rc=$?
 
 out="$(row fc 0 -1 4 11 fix/y | decide 3)"; rc=$?
 [ $rc -ne 0 ] && [[ "$out" == *"4 unpushed"* ]] \
-  && ok "committed-but-never-pushed is caught too (fleetcrown's 4)" \
+  && ok "committed-but-never-pushed is caught too (loki's 4)" \
   || no "unpushed commits must go red (rc=$rc, out='$out')"
 
 out="$(row both 9 5 2 6 main | decide 3)"; rc=$?

@@ -67,14 +67,14 @@
       "to": "s-ink",
       "since": "2026-08-20",
       "why": "The register's repo_path pointed at the old directory for an unknown number of days; fleet-register-check exists partly because of it.",
-      "verified": "scripts/local/fleet-register-check header in bitbaum/fleetcrown records the rename"
+      "verified": "scripts/local/fleet-register-check header in bitbaum/loki records the rename"
     },
     {
       "kind": "repo",
       "from": "sbb-lost-found",
       "to": "sbb-fundbuero",
       "since": "2026-09-08",
-      "why": "Register row renamed in fleetcrown #529.",
+      "why": "Register row renamed in loki #529.",
       "verified": "commit ea4af617 'chore(register): rename sbb-lost-found to sbb-fundbuero'"
     },
     {

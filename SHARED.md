@@ -33,9 +33,9 @@ the inventory underneath it is **generated**, and the number it produces is a
 | [`limitkit`](https://github.com/bitbaum/limitkit) | `pnpm add github:bitbaum/limitkit#v0.2.0` | the fleet's **12 hand-rolled rate limiters** (this file's own "next extraction" row). Sliding/fixed windows over an injectable two-method `Store`; **bounded** memory default (the unbounded-Map leak is impossible by construction); standard `X-RateLimit-*` + `Retry-After` headers — what orangecat's ADR-0002 specified seven months before anything enforced it; `clientIp()`. Refusals count nothing, so a hammered key recovers. Ships no middleware and **no limit values** — how many attempts a route allows is app semantics, asserted locally. |
 | [`listkit`](https://github.com/bitbaum/listkit) | `pnpm add github:bitbaum/listkit#v0.1.0` | the fleet's **twelve incompatible filter-state shapes** — no two alike — plus ~34 hand-built URL builders (four of them carrying live bugs: a preset that wiped the reader's search, a date range that stranded them past the end, a builder that preserved three params by name, a debounced box using `push` so the back button walked every spelling of the word), ~25 copies of toggle-a-value-in-a-set in two encodings, ~11 debounces at five delays, ~11 copies of `Math.ceil(total / pageSize)`, and the four-of-seven repos that put a reader's text into a SQL `LIKE` without escaping `%` or `_`. Ships the DECISIONS: five facet kinds with the empty selection as the only sentinel (one repo used its *translated label* as the all-value, making filter identity depend on the reader's language), a URL codec that copies rather than rebuilds and drops `page` when the result set changes, a comparator that puts missing values last in **both** directions, page arithmetic that cannot produce a negative offset. **No markup, no tokens, no React, no search engine** — nine token vocabularies and six chip treatments were found among those repos, several different on purpose. |
 | [`bip-kit`](https://github.com/bitbaum/bip-kit) | `pnpm add bip-kit` (on npm since 2026-09-06) | **blog / roadmap / changelog on a product site** — otherwise a markdown pipeline, a renderer and a security review per repo. A zero-dependency parser turning repo-authored markdown into typed blocks, plus `bip-kit/react`, an RSC-first reference renderer emitting semantic `bp-*` classes with every colour a CSS variable — shared vocabulary, your tokens on top. `shiki`/`katex`/`mermaid` are OPTIONAL peers that degrade rather than throw. **Eight adopters, third-most-used package in this registry after `ai-kit` and `mail-kit` — and it was absent from this table until 2026-09-12**, present only in the extraction-candidate list below as a *source* of slug-helper duplication. That is this file's own failure mode rather than a clerical one: the instruction at the top ("check this file; if it is here, install it") is exactly as true as the table under it, and a package nobody can find here is a package the next agent rebuilds. |
-| [`design-tokens`](https://github.com/bitbaum/design-tokens) | `"@bitbaum/design-tokens": "github:bitbaum/design-tokens#v1.1.0"` | the **brand** SSOT for OrangeCat, FleetCrown and Solon: one `tokens.css` holding every colour, face, weight, tracking and radius the three share, a Tailwind preset that maps them, and self-hosted faces. Import it BEFORE the app's own `globals.css` — the app keeps its file, this supplies the primitives it used to hand-copy. It exists because they *were* hand-copied and drifted: Solon's `globals.css` carried a comment claiming its tokens matched OrangeCat's while sharing **zero** names or values with it, so one company's three products looked like three companies. Retheming all three is an edit to the `▼▼▼ THE KNOBS ▼▼▼` block plus a tag. **This is a deliberate exception to "each app owns its design tokens" below, and the line is OWNERSHIP, not taste:** these are one company's own products and are *supposed* to look alike. A client's site is not, and must never install this — a retheme would repaint somebody else's brand. |
+| [`design-tokens`](https://github.com/bitbaum/design-tokens) | `"@bitbaum/design-tokens": "github:bitbaum/design-tokens#v1.1.0"` | the **brand** SSOT for OrangeCat, Loki and Solon: one `tokens.css` holding every colour, face, weight, tracking and radius the three share, a Tailwind preset that maps them, and self-hosted faces. Import it BEFORE the app's own `globals.css` — the app keeps its file, this supplies the primitives it used to hand-copy. It exists because they *were* hand-copied and drifted: Solon's `globals.css` carried a comment claiming its tokens matched OrangeCat's while sharing **zero** names or values with it, so one company's three products looked like three companies. Retheming all three is an edit to the `▼▼▼ THE KNOBS ▼▼▼` block plus a tag. **This is a deliberate exception to "each app owns its design tokens" below, and the line is OWNERSHIP, not taste:** these are one company's own products and are *supposed* to look alike. A client's site is not, and must never install this — a retheme would repaint somebody else's brand. |
 
-**Adopted:** `listkit` — fleetcrown (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count).
+**Adopted:** `listkit` — loki (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count).
 
 **Considered and declined, with the reason — read these before surveying a repo again.** Both cost a full survey to reach, and the survey is the expensive part.
 
@@ -46,15 +46,15 @@ The rule both produced: **a shared package earns a dependency when it removes a 
 
 And never behind a security boundary: listkit's core sentinel is *empty selection filters nothing*, which is precisely the wrong default for a visibility gate. orangecat's public-surface predicates (`getOpenDemand`, `searchPlatform`, `fetchDiscoverCounts`, pinned by `__tests__/unit/public-surface-filtering.test.ts`) serve the public internet through the admin client with RLS bypassed. An in-memory array filter has no business there.
 `threadkit` — vitareba, orangecat (2026-09-06).
-`ai-forms` — fleetcrown, evig, aoz-housing, surf-your-life, kivvi.
-`bip-kit` — fleetcrown, orangecat, evig, aoz-housing, botsmann, kivvi, petvity,
+`ai-forms` — loki, evig, aoz-housing, surf-your-life, kivvi.
+`bip-kit` — loki, orangecat, evig, aoz-housing, botsmann, kivvi, petvity,
 datacat (frontend only; its backend is the `ai-kit` consumer). **Eight.**
-`design-tokens` — fleetcrown, solon. **Two, not the three its own README names.**
+`design-tokens` — loki, solon. **Two, not the three its own README names.**
 
 **Both counts above were read from each repo's `origin/main`, and the first
 attempt at them — read from the working checkouts in `~/dev` — was wrong in
 both directions.** Those directories sit on feature branches and go stale:
-fleetcrown's checkout was on `ci/auto-merge-pat` and showed neither `listkit`
+loki's checkout was on `ci/auto-merge-pat` and showed neither `listkit`
 nor `design-tokens`, while `heidi`, `sbb-fundbuero` and `hirnli` adoptions were
 missed entirely. `~/dev/<x>` is a *checkout*, not a repo — the same trap as the
 withdrawn `@ai-native-cms/core` row below, one level down. Survey
@@ -65,7 +65,7 @@ solon's `"@fleet/design-tokens"`) and a key-only grep reports zero adopters for
 a package with five.
 
 **And the third name is the interesting one.** `design-tokens` is named for
-OrangeCat, FleetCrown and Solon, but orangecat does not install it. Its
+OrangeCat, Loki and Solon, but orangecat does not install it. Its
 `src/app/globals.css` hand-copies the values under a comment reading *"Mirrors
 --on-accent in @fleet/design-tokens v1.1.0, which is the SSOT"* — twice, on
 `origin/main`. That is the *precise* defect this package was extracted to end,
@@ -73,7 +73,7 @@ a comment asserting an SSOT relationship that the dependency graph does not
 have, now reproduced inside the product the package is named after. A comment
 is not an import: it cannot drift-check, and the next retheme tag will move two
 products and leave the third behind, silently and in brand colours.
-`ai-kit` — fleetcrown, aoz-housing, truthseeker, botsmann, evig, orangecat,
+`ai-kit` — loki, aoz-housing, truthseeker, botsmann, evig, orangecat,
 hirnli (all seven on `@bitbaum/ai-kit` from npm), surf-your-life and kivvi's
 `@kivvi/ai` (both still via git tag — convert when touched), **and this repo**
 (`model-pin-audit.mjs` calls `checkCatalog`; the audit needed exactly the vendor
@@ -91,7 +91,7 @@ was converted the same day as the proving consumer — walk one flat
 provider+model chain instead of two nested hand-rolled loops, and the health
 tracker now wraps `createHealthTracker` behind its original five-function API.
 **`tryChain`/`createHealthTracker` are new in v0.5.0 and had TWO real
-adopters (botsmann, hirnli) as of 2026-08-29** — fleetcrown/aoz-housing/
+adopters (botsmann, hirnli) as of 2026-08-29** — loki/aoz-housing/
 truthseeker are on `^0.6.2` now but do not use either function yet. Say so
 precisely rather than let "ai-kit adopted" imply the failover/health gap is
 closed fleet-wide. Since then: evig converted (`tryChain` in
@@ -136,7 +136,7 @@ not install a model catalogue to do it. Merge by what a consumer needs together,
 never by "these are all shared utilities". `threadkit` — **vitareba**
 (`^0.1.1`, driving its care-team messaging in `lib/domain/messages.ts` — the
 exact clinic case it was extracted for).
-`limitkit` — fleetcrown (proving consumer; its old limiter had the unbounded
+`limitkit` — loki (proving consumer; its old limiter had the unbounded
 Map). orangecat closed its ADR-0002 in-repo instead (Accepted 2026-08-25: one
 canonical `src/lib/rate-limit.ts`, the messaging duplicate deleted) — so the
 next limitkit adopter is whichever repo's hand-rolled limiter is touched next.
@@ -180,7 +180,7 @@ there is no role to check.
 |---|---|
 | ~~`vitareba`~~ | **adopted** — care-team messaging runs on it (`lib/domain/messages.ts`) |
 | `orangecat` | Cat DMs / conversation visibility |
-| `fleetcrown` | agent↔human threads, where an AI participant already needs the same rules as a person |
+| `loki` | agent↔human threads, where an AI participant already needs the same rules as a person |
 
 **ESM-only** (`"type": "module"`, no `require` condition), so a CJS consumer
 cannot `require()` it. Every candidate above is ESM already; note it before
@@ -216,7 +216,7 @@ test the package cannot write for itself.
 |---|---|
 | `^0.13.0` | datacat (`backend/`), evig |
 | `^0.15.0` | aoz-housing, heidi, hirnli, kivvi (`packages/ai/`), sbb-fundbuero |
-| `^1.2.0` | fleetcrown |
+| `^1.2.0` | loki |
 | `^1.4.0` | botsmann, surf-your-life, truthseeker, vitareba |
 | `^1.4.1` | orangecat |
 
@@ -292,8 +292,8 @@ Both report into a weekly workflow's job summary rather than only a log.
 | `scripts/ci/repo-metadata-audit.mjs` | does a repository's GitHub metadata agree with the register? The repo page is the first thing anyone opens and the furthest surface from the code, so it drifts first and silently: on 2026-09-11, **13 registered apps had no homepage at all** and evig's pointed at revamp-it.ch — a domain that is not the app. Checks only the MECHANICAL claims (a registered app's homepage is its canonical host; every live repo has a description) and deliberately not whether a name or description is *right* — the live `<title>` is not a reliable product name (a multi-tenant app serves the TENANT's title; some sites put the brand after a pipe), and a gate that guesses at prose gets muted. Name retirements are enforced precisely by `org-drift-audit.sh` instead. Exceptions in `repo-metadata.allow` with a reason each. Self-tested by `scripts/ci/test-repo-metadata-audit.mjs` — **17 checks, no network**, because the judgement is a pure function of (repos, register, allow); its first version ran the live audit on import and asserted nothing, which is why the CLI now sits behind an is-main guard. |
 
 **One more, and it lives elsewhere on purpose:**
-`bitbaum/fleetcrown:scripts/ci/check-register-reality.sh` — does `apps.conf`
-still describe the box? It reads the register, which is fleetcrown's SSOT, and
+`bitbaum/loki:scripts/ci/check-register-reality.sh` — does `apps.conf`
+still describe the box? It reads the register, which is loki's SSOT, and
 needs SSH to bitbaum, so it cannot run from here or in CI; the daily
 `scripts/local/fleet-register-check` drives it. Listed here anyway, because this
 table is where you look before writing a fleet-wide checker and "is there
@@ -344,8 +344,8 @@ Ranked by (copies × how identical the logic is). Counts from
 | Concern | Files | Why it is a good candidate |
 |---|---|---|
 | `auto-merge-sweep.sh` | ~~22~~ **6** | **EXTRACTED 2026-08-16/20.** Most repos call the canonical as a reusable workflow, each verified to actually *run* it (a sweep that fails to start looks exactly like one with nothing to do). The remaining copies: **this repo** is the canonical home (moved here from dotfiles 2026-08-28; dotfiles has since dropped its copy, and ai-forms converted to the reusable workflow); datacat, petvity, solon still run local copies — had dirty working trees owned by other sessions when swept, convert when clear. The two repos that had ever *tested* their copies (evig, orangecat) had that coverage ported into the canonical suite **before** deletion: 17 cases, mutation-proven. |
-| rate limiting | **14 → adopting** | **Extracted 2026-08-20 as [`limitkit`](https://github.com/bitbaum/limitkit)** (see registry above). fleetcrown converted as the proving consumer; orangecat instead unified in-repo (ADR-0002 Accepted 2026-08-25, one canonical module) without limitkit. The remaining hand-rolled limiters convert as touched; the ratchet holds the count until each adoption lands. |
-| AI provider client | **16** | evig 7, orangecat 5. `ai-kit` already owns the hard part (chain, 429, budget); these are the callers. **Priced 2026-08-26, re-priced 2026-08-27:** Groq retired the llama-3.x family and the damage was far wider than the first count. Seven repos were broken, not five — the audit could not see two of them — and inside a repo the id was written down **two to four times**. Kivvi took three PRs to remove one retired id: it lived in the provider registry, an app's inline fetch body, the fallback chain, and a client hook's `FALLBACK_MODEL`. Each pass only found the copies the tooling could see. That is the cost of duplication measured rather than argued. fleetcrown, which adopted the package, was unaffected throughout. |
+| rate limiting | **14 → adopting** | **Extracted 2026-08-20 as [`limitkit`](https://github.com/bitbaum/limitkit)** (see registry above). loki converted as the proving consumer; orangecat instead unified in-repo (ADR-0002 Accepted 2026-08-25, one canonical module) without limitkit. The remaining hand-rolled limiters convert as touched; the ratchet holds the count until each adoption lands. |
+| AI provider client | **16** | evig 7, orangecat 5. `ai-kit` already owns the hard part (chain, 429, budget); these are the callers. **Priced 2026-08-26, re-priced 2026-08-27:** Groq retired the llama-3.x family and the damage was far wider than the first count. Seven repos were broken, not five — the audit could not see two of them — and inside a repo the id was written down **two to four times**. Kivvi took three PRs to remove one retired id: it lived in the provider registry, an app's inline fetch body, the fallback chain, and a client hook's `FALLBACK_MODEL`. Each pass only found the copies the tooling could see. That is the cost of duplication measured rather than argued. loki, which adopted the package, was unaffected throughout. |
 | logger | **10** | sbb-lost-found alone has 4. |
 | message threads | **3** | orangecat 2, vitareba 1. **Extracted already, as [`threadkit`](https://github.com/bitbaum/threadkit)** — 506 lines, headless, permission-as-participation. Added to the ratchet 2026-09-06 *after* measuring, because the intuition that prompted it ("many of our apps have messaging") turned out to be wrong: only two repos carry thread logic at all. The row still earns its place, because the copy that existed was not merely duplicated but **wrong in ways invisible below three participants** — read receipts that reported READ when any one recipient had caught up, a reader counted outside their own visibility window, and an optimistic bubble that shared no identity with its stored row and so rendered twice whenever realtime won the race. orangecat converted as the proving consumer; the remaining file is vitareba's adapter, which is the point of a headless package rather than a copy of it. |
 | health route | **11** | Identical *shape* in 11 repos — and, checked 2026-09-07, not identical *content*. vitareba's asserts the app role can still read its own tables (`lib/db/schema-usable.ts`, written because a migration once created a table the app could not read); orangecat's checks Supabase reachability. Extracting the 20-line envelope would leave every app still writing the only part that differs, which is the assertions. Baseline raised 9 → 11 rather than absorbed. |
@@ -362,7 +362,7 @@ Stated explicitly, because "share everything" is its own failure:
   Each app owns its design tokens and has to keep looking like itself. This is
   why `ai-forms` is headless. **One exception, and it is about ownership rather
   than taste:** `@bitbaum/design-tokens` (registry above) is shared by
-  OrangeCat, FleetCrown and Solon, because those are one company's own products
+  OrangeCat, Loki and Solon, because those are one company's own products
   and are *supposed* to look alike — three hand-copied token sets had already
   drifted into looking like three companies. A client's site stays on its own
   tokens; the rule holds everywhere the brand is not ours.
@@ -405,12 +405,12 @@ weekly, central, source-level sweep of every repo's default branch (public and
 authed alike), self-tested before it runs. It found and fixed six repos —
 botsmann, datacat, petvity, printcraft, s-ink, surf-your-life — on its first
 sweep, 2026-08-31. A per-repo `verify` check can still be worth adding
-alongside it: orangecat's `check:dead-labels` (rule 4) and fleetcrown's
+alongside it: orangecat's `check:dead-labels` (rule 4) and loki's
 `check_paired` in `check-design-system.sh` (rule 1) block the *commit*,
 where the fleet sweep only reports weekly.
 
 **Open gap the central sweeps share: `orangecat.ch` isn't the whole fleet.**
-`ui-defect-audit.mjs` discovers sites from `FLEET_SITES` in fleetcrown's
+`ui-defect-audit.mjs` discovers sites from `FLEET_SITES` in loki's
 public footer — a deliberately hand-maintained editorial list, "each site's
 own words," not something to auto-expand. As of 2026-08-31 four public sites
 are outside it: s-ink (sinktattoo.com, genuinely off the `orangecat.ch`
@@ -429,7 +429,7 @@ recommendation — writing the "do not centralize" section above is what showed
 the two could not both be right.)
 
 **Why a gate and not a convention.** The audit's sharpest finding was not that
-teams do not know these rules — it is that aoz-housing, fleetcrown, vitareba
+teams do not know these rules — it is that aoz-housing, loki, vitareba
 and evig each applied `aria-current` correctly on every nav surface **but one**.
 Four teams, four stragglers. Hand-application always fails at the margin, and
 the margin is invisible until someone renders it. Design tokens are the control

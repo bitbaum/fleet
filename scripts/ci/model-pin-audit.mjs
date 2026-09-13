@@ -244,7 +244,7 @@ const SKIP_PATH =
  *
  * Raised 90 -> 160 because the coverage ledger stopped being a caveat and
  * became a finding: on 2026-08-27 it reported OrangeCat opening 90 of 133 with
- * 4 likely-AI files dropped, and FleetCrown 90 of 109 with 15 dropped. Ranking
+ * 4 likely-AI files dropped, and Loki 90 of 109 with 15 dropped. Ranking
  * puts likely files first, so shedding generic config is harmless — shedding
  * fifteen files that name an AI concern is a blind spot, and in the two largest
  * repos in the fleet.
@@ -719,7 +719,7 @@ function loadAiKit() {
     // checkout that has not been renamed still resolves — a rename should not
     // turn a working audit into a silent exit 2.
     process.env.AI_RATION_FROM,
-    join(homedir(), "dev", "fleetcrown"),
+    join(homedir(), "dev", "loki"),
     join(homedir(), "dev", "ai-kit"),
     join(homedir(), "dev", "ai-ration"),
   ].filter(Boolean);

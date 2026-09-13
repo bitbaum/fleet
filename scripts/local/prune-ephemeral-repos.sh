@@ -2,7 +2,7 @@
 #
 # Ephemeral repos: find them, archive them, delete them.
 #
-# The fleet creates repos automatically now — FleetCrown provisions one per
+# The fleet creates repos automatically now — Loki provisions one per
 # project, and agents scaffold dogfood sites to test that path. Six of them
 # appeared in two days (2026-09-10/11), every one a 20-54KB scaffold with no
 # entry in apps.conf, and together they were 15 of the 26 gaps that were about
@@ -33,7 +33,7 @@
 # insurance against the cleanup not happening: it lets a later sweep find what
 # an earlier session left behind, without anyone having to recognise a name.
 #
-# Per-project teardown of a deployed site belongs to fleetcrown
+# Per-project teardown of a deployed site belongs to loki
 # (`scripts/hetzner/retire-site.sh`, which also owns the Caddy vhost and the
 # apps.conf row). This is the org-wide sweep for what that missed — do not
 # grow it into a second teardown tool.

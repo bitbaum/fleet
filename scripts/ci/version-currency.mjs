@@ -134,7 +134,7 @@ export function gapsFor(pkg, blessed) {
  * directories that are themselves a sub-app (one manifest directly inside).
  *
  * Both lists are needed because the fleet has both shapes: kivvi/evig/orangecat/
- * petvity/fleetcrown are pnpm workspaces with `packages/` (kivvi also `apps/`),
+ * petvity/loki are pnpm workspaces with `packages/` (kivvi also `apps/`),
  * while datacat is not a workspace at all — just `frontend/` and `backend/`
  * side by side, each with its own manifest. A rule that only understood
  * workspaces would have kept missing datacat, which is one of the two repos

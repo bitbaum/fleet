@@ -17,7 +17,7 @@
         "botsmann",
         "datacat",
         "evig",
-        "fleetcrown",
+        "loki",
         "heidi",
         "hirnli",
         "kivvi",
@@ -43,7 +43,7 @@
         "aoz-housing",
         "botsmann",
         "evig",
-        "fleetcrown",
+        "loki",
         "hirnli",
         "kivvi",
         "orangecat",
@@ -69,7 +69,7 @@
         "botsmann",
         "datacat",
         "evig",
-        "fleetcrown",
+        "loki",
         "kivvi",
         "orangecat",
         "petvity"
@@ -90,7 +90,7 @@
         "ai-kit",
         "aoz-housing",
         "evig",
-        "fleetcrown",
+        "loki",
         "kivvi",
         "surf-your-life"
       ]
@@ -107,7 +107,7 @@
       },
       "adopters": 3,
       "adopterNames": [
-        "fleetcrown",
+        "loki",
         "heidi",
         "orangecat"
       ]
@@ -133,7 +133,7 @@
       "slug": "design-tokens",
       "name": "@bitbaum/design-tokens",
       "repo": "https://github.com/bitbaum/design-tokens",
-      "description": "Design SSOT for OrangeCat, FleetCrown and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
+      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
       "version": "1.1.0",
       "install": {
         "source": "npm",
@@ -141,7 +141,7 @@
       },
       "adopters": 2,
       "adopterNames": [
-        "fleetcrown",
+        "loki",
         "solon"
       ]
     },
@@ -157,7 +157,7 @@
       },
       "adopters": 2,
       "adopterNames": [
-        "fleetcrown",
+        "loki",
         "hirnli"
       ]
     },

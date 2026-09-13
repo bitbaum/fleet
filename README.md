@@ -54,7 +54,7 @@ public name, legal status, house domain, host, design system. The drift audit
 Existing violations are baselined; new ones cannot land. The inventory is
 generated, and the number is a ratchet.
 
-Live doors come from `bitbaum/fleetcrown:scripts/hetzner/apps.conf`, the SSOT
+Live doors come from `bitbaum/loki:scripts/hetzner/apps.conf`, the SSOT
 manifest for self-hosted apps. A README claiming a door that disagrees with
 apps.conf is a drift violation.
 

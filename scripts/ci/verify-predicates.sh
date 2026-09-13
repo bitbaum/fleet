@@ -22,7 +22,7 @@
 # The audit's remote reads were all `gh api ... 2>/dev/null`, and the empty
 # string a failure yields was then read as a FACT. On 2026-08-16 that produced
 # four wrong verdicts in a single sweep: vitareba and aoz-housing (live JS apps)
-# reported as "not a JS repo", ai-forms and fleetcrown reported as never running
+# reported as "not a JS repo", ai-forms and loki reported as never running
 # `verify` when their ci.yml does so on lines 19 and 52. The tell was
 # arithmetic — two runs an hour apart inspected 24 and 22 repos with no repo
 # created or destroyed between them.

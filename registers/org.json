@@ -12,6 +12,6 @@
   "_notes": {
     "legalStatus": "not AG, not incorporation-pending, not a registered company in any jurisdiction; the ventures are the same",
     "houseDomain": "names are addresses on the Hetzner box until a venture has its own domain, not a product line and not an OrangeCat feature",
-    "host": "The serve register is bitbaum/fleetcrown scripts/hetzner/apps.conf. GitHub Pages is not a host."
+    "host": "The serve register is bitbaum/loki scripts/hetzner/apps.conf. GitHub Pages is not a host."
   }
 }

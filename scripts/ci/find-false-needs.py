@@ -18,7 +18,7 @@ sweep it is the MAJORITY of hits:
 
   openclaw  run_live_* needs authorize_actor       <- authorize before live secrets
   openclaw  publish_* needs *_approval             <- approval before publishing
-  fleetcrown ship needs check                      <- never deploy a red build
+  loki ship needs check                      <- never deploy a red build
 
 Removing any of those would be a security or deploy regression, and every one of
 them shows up in this report. The judgment the report cannot make for you is

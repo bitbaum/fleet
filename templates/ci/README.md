@@ -214,7 +214,7 @@ cancelled — 40%, against 0% for every other repo measured**. Three cancelled
 each other in a row and a merged fix needed three attempts to reach production.
 Cancelling is only safe if the newer run is guaranteed to finish; at 13 minutes
 it is not. Queue instead, and let the CI gate skip commits that main has already
-moved past — `fleetcrown/scripts/hetzner/ci-gate.sh` returns a distinct
+moved past — `loki/scripts/hetzner/ci-gate.sh` returns a distinct
 "superseded" exit code for exactly this.
 
 **2. A deploy REQUIRES CI's green. It does not re-run it.**
@@ -336,7 +336,7 @@ wrong verdicts** from that single conflation:
 | `vitareba` | "no package.json — not a JS repo" | live Next.js app, 1,339-byte package.json |
 | `aoz-housing` | "no package.json — not a JS repo" | live Next.js app, 2,011-byte package.json |
 | `ai-forms` | "CI never runs `verify`" | `ci.yml` line 19 is `npm run verify` |
-| `fleetcrown` | "CI never runs `verify`" | `ci.yml` line 52 is `npm run verify` |
+| `loki` | "CI never runs `verify`" | `ci.yml` line 52 is `npm run verify` |
 
 Two of them were **silently dropped from the floor entirely** — not flagged,
 not counted, just absent from the report. An audit that quietly stops auditing

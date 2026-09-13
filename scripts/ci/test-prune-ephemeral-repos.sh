@@ -57,7 +57,7 @@ esac
 # above except this one.
 fx_none='[
   {"name":"orangecat","isArchived":false,"repositoryTopics":[{"name":"nextjs"}]},
-  {"name":"fleetcrown","isArchived":false,"repositoryTopics":[]}
+  {"name":"loki","isArchived":false,"repositoryTopics":[]}
 ]'
 got=$(select_names "$fx_none")
 [ -z "$got" ] \

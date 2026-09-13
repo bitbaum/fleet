@@ -300,7 +300,7 @@ function main() {
 
   // --emit publishes the derived registry so a RENDERER never types the list.
   // bitbaum.orangecat.ch reads this file the same way it already reads
-  // FleetCrown's venture register: facts derived here, prose editorial there.
+  // Loki's venture register: facts derived here, prose editorial there.
   const emitIdx = process.argv.indexOf("--emit");
   if (emitIdx !== -1) {
     const out = process.argv[emitIdx + 1];

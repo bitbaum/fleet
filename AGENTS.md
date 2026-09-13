@@ -1,6 +1,6 @@
 # For every agent
 
-Claude, Codex, Antigravity, Cursor, Grok, FleetCrown, and anything else read
+Claude, Codex, Antigravity, Cursor, Grok, Loki, and anything else read
 this file. Do not keep a private copy of these facts. If a fact is not in a
 register, it is not true yet.
 
@@ -55,7 +55,7 @@ lost. That is the same bug as a private copy: put it where the readers are.
 
 ## Producers
 
-- Serve (port, process, host): `fleetcrown/scripts/hetzner/apps.conf`.
+- Serve (port, process, host): `loki/scripts/hetzner/apps.conf`.
   A hostname or a path in that file is not a display name.
 - Org facts (public name, unregistered, house address, host): `registers/org.json`.
 - Tools we develop with (agent names): `registers/toolchain.json`.
@@ -87,7 +87,7 @@ A page that types the portfolio is a copy. Generate it, or do not ship it.
 
 ## Repos you create
 
-The fleet creates repos automatically now — FleetCrown provisions one per
+The fleet creates repos automatically now — Loki provisions one per
 project, and agents scaffold sites to test that path. Six appeared in two days
 in September 2026, none registered in `apps.conf`, and together they were 15 of
 the 26 gaps that were about to turn the version-currency ratchet red against a
@@ -97,7 +97,7 @@ noise gets muted, and every true finding inside it is muted with it.
 
 **The rule is in `~/.claude/CLAUDE.md`: tear the experiment down in the same
 session that created it, repo included — not archived, not left private, gone.**
-Per-site teardown is `fleetcrown: scripts/hetzner/retire-site.sh`, which also
+Per-site teardown is `loki: scripts/hetzner/retire-site.sh`, which also
 owns the Caddy vhost and the `apps.conf` row. None of that is restated here.
 
 What is here is the backstop, because that rule covers the session that creates

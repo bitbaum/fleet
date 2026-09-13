@@ -182,13 +182,13 @@ repo_ref() {
   printf 'HEAD'
 }
 
-# fetch_apps_conf — retrieve the current apps.conf from fleetcrown
+# fetch_apps_conf — retrieve the current apps.conf from loki
 fetch_apps_conf() {
   if ! command -v gh >/dev/null 2>&1; then
     echo "# apps.conf unavailable: gh not found" >&2
     return 1
   fi
-  gh api repos/bitbaum/fleetcrown/contents/scripts/hetzner/apps.conf --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || {
+  gh api repos/bitbaum/loki/contents/scripts/hetzner/apps.conf --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || {
     echo "# apps.conf unavailable: fetch failed" >&2
     return 1
   }

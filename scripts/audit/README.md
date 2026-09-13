@@ -6,9 +6,9 @@ Reads what actually crossed the wire and reports credential material in it.
 
 ### Why this exists
 
-FleetCrown shipped `passwordHash` and `privateZonePinHash` to the browser from
-`GET /api/me` (fleetcrown#306). The fix included a static gate that reads route
-handlers (`scripts/test/no-raw-user-response.ts`, fleetcrown#309) — and that gate
+Loki shipped `passwordHash` and `privateZonePinHash` to the browser from
+`GET /api/me` (loki#306). The fix included a static gate that reads route
+handlers (`scripts/test/no-raw-user-response.ts`, loki#309) — and that gate
 says in its own header what it cannot see: **RSC flight payloads**. A server
 component handing a whole row to a client component serializes it into the HTML
 exactly the same way, and no route handler is involved.

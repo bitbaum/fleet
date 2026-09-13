@@ -4,7 +4,7 @@
  * can see, because nothing is wrong until the page is painted.
  *
  *   1. INVISIBLE ACTIONS — an interactive label below its WCAG AA contrast
- *      floor. On fleetcrown/control the only route to a feedback report's
+ *      floor. On loki/control the only route to a feedback report's
  *      screenshot and history rendered at 3.13:1; the operator's report was not
  *      "low contrast", it was "i dont see it". An action nobody can find is a
  *      feature that does not exist.
@@ -13,7 +13,7 @@
  *      slightly different x, and wrapped lines whose second line does not align
  *      with the first. Both come from the same habit: putting an icon INLINE at
  *      the head of a line, so it shoves that one line sideways by its own width
- *      and gives a wrapped paragraph no hanging indent. On fleetcrown's fleet
+ *      and gives a wrapped paragraph no hanging indent. On loki's fleet
  *      card four stacked rows started at three different x (369 / 383 / 385)
  *      with the hint's second line snapping back to 369. The operator's words
  *      were "this area looks bad. not aligned."
@@ -22,7 +22,7 @@
  * reads every SITE remotely, never a check copied into each repo. A copied
  * check drifts; this one cannot.
  *
- * The site list is DISCOVERED, not hardcoded: fleetcrown's public footer is the
+ * The site list is DISCOVERED, not hardcoded: loki's public footer is the
  * fleet's own SSOT for "sites we run" (config/fleet-sites.ts renders there
  * precisely so each has a crawlable anchor). Reading it live means a new site
  * is audited the day it is linked, and a retired one stops being audited,
@@ -30,7 +30,7 @@
  *
  * SCOPE — what this does NOT prove. It renders each site's PUBLIC entry page
  * only, unauthenticated. Defects behind a login are invisible here; for those,
- * run the per-repo authed audits (fleetcrown: `npm run audit:contrast`). It
+ * run the per-repo authed audits (loki: `npm run audit:contrast`). It
  * also judges only text it can attribute to a background — an element painted
  * over an image reports the image's absence, not its colour, so those are
  * skipped rather than guessed at.
@@ -56,12 +56,12 @@ const AA_LARGE = 3.0;
  *  an icon accidentally shoving one line sideways. Icons in this fleet are
  *  10–16px plus a gap; 24 covers them with headroom and excludes real nesting. */
 const MAX_ACCIDENTAL_INDENT_PX = 24;
-const DISCOVERY_URL = process.env.DISCOVERY_URL ?? "https://fleetcrown.orangecat.ch/";
+const DISCOVERY_URL = process.env.DISCOVERY_URL ?? "https://loki.orangecat.ch/";
 
 export function loadPlaywright() {
   const candidates = [
     process.env.PLAYWRIGHT_FROM,
-    join(homedir(), "dev", "fleetcrown"),
+    join(homedir(), "dev", "loki"),
     join(homedir(), "dev", "orangecat"),
     join(homedir(), "dev", "vitareba"),
   ].filter(Boolean);
@@ -88,9 +88,9 @@ async function discoverSites() {
   for (const m of html.matchAll(/https:\/\/[a-z0-9.-]*orangecat\.ch(?=["'/\s<])/g)) {
     found.add(m[0]);
   }
-  // The audit runs FROM fleetcrown's own page; auditing the page we discovered
+  // The audit runs FROM loki's own page; auditing the page we discovered
   // from is still worth doing, so it stays in the list.
-  found.add("https://fleetcrown.orangecat.ch");
+  found.add("https://loki.orangecat.ch");
   return [...found].sort();
 }
 
@@ -373,7 +373,7 @@ export const MEASURE = String.raw`(() => {
     }
 
     // 2. TARGETS BELOW THE FLOOR. 44px is this fleet's own standard, not the
-    //    WCAG 2.2 AA minimum of 24px — fleetcrown enforces it centrally and
+    //    WCAG 2.2 AA minimum of 24px — loki enforces it centrally and
     //    kivvi and wild-spirit state it explicitly, so a nav under it is out of
     //    step with the fleet rather than out of compliance. Say which.
     var controls = root.querySelectorAll('a[href], button, [role="button"], [role="tab"]');

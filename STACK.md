@@ -18,11 +18,11 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Language | TypeScript (strict) | — |
 | Styling | Tailwind CSS | — |
 | Validation | zod | — |
-| ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). fleetcrown runner & ivy-portal: better-sqlite3 for embedded local state. |
-| Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | fleetcrown runner/ivy: SQLite embedded |
+| ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). loki runner & ivy-portal: better-sqlite3 for embedded local state. |
+| Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | loki runner/ivy: SQLite embedded |
 | Auth — **who the user is** | **Federate to OrangeCat** (OIDC, `openid profile email`). The app keeps NO users table. See "Identity" below. | orangecat itself IS the identity provider. Client-owned apps never federate — their users belong to the client. |
 | Auth — **client-owned apps** | **`better-auth` 1.x** + Drizzle/Postgres, magic link via `@bitbaum/mail-kit` | aoz-housing (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) — all pre-date the decision; migrate on contact, not on a schedule |
-| Test runner (apps) | Vitest | fleetcrown: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
+| Test runner (apps) | Vitest | loki: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
 | Email | `@bitbaum/mail-kit` from npm (Resend over raw fetch; one shared free-tier account, all senders `<app>@fleetcrown.orangecat.ch`; daily canary in this repo's email-canary.yml) | evig: Listmonk stays for bulk/newsletter (self-hosted FOSS) + nodemailer SMTP fallback behind the provider seam; transactional mail is Resend (the 2026-09-02 "Listmonk primary" review predates discovering the prod SMTP cred was DEAD — Login denied, live-probed 2026-09-05). GoTrue (self-hosted Supabase auth) sends via Resend SMTP :587 — SMTP is its only interface |
@@ -40,13 +40,13 @@ section exists to prevent.**
 
 **1. Our own products federate.** OrangeCat is the identity SSOT and has been
 since its OIDC provider shipped 2026-06-17 — discovery, authorize, token,
-userinfo, jwks, PKCE, refresh rotation. FleetCrown federated 2026-07-02, Solon
+userinfo, jwks, PKCE, refresh rotation. Loki federated 2026-07-02, Solon
 after, Heidi 2026-09-11. A federated app keeps **no users table, no password,
 no reset flow, no session table**. It reads `id_token.sub` — the actor id,
 never the email — and stops.
 
-The instruction the identity-bridge spec gives FleetCrown generalises to all of
-them: *"Do NOT build profiles, walls, or messaging inside FleetCrown."* If your
+The instruction the identity-bridge spec gives Loki generalises to all of
+them: *"Do NOT build profiles, walls, or messaging inside Loki."* If your
 app needs profiles, payments or a public presence, those live at OrangeCat.
 Rebuilding them locally is the same mistake in a different repo.
 
@@ -107,7 +107,7 @@ live-verified:
   #157 (+#159 lockfile). Every conversion at exact suite parity; jest
   deleted everywhere.
 - **Deploy fallback**: the shared selfhost-deploy .nvmrc fallback tracks
-  the box (Node 24) since fleetcrown #461 — the npm-major writer/reader
+  the box (Node 24) since loki #461 — the npm-major writer/reader
   split that stranded aoz's first vitest deploy is closed at the source.
 
 **Open — the AI layer is installed, not adopted.** Census 2026-09-06,
@@ -124,7 +124,7 @@ measured against `origin/main` of every repo by real import statements
 - The weakest link is the same everywhere: **9 of the 12 cannot tell the
   three kinds of 429 apart**, and 6 return an empty HTTP 200 to a user
   as though it were an answer (`content || ''`). Only aoz-housing and
-  fleetcrown get all three judgements right, and both do it by calling
+  loki get all three judgements right, and both do it by calling
   into ai-kit.
 - Highest-value conversions, ranked by how many of the three they get
   wrong: evig's second `src/lib/hirn/*` stack (3 wrong, sitting beside

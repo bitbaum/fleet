@@ -111,8 +111,8 @@ new_hits=(); seen_keys=(); scanned_repos=()
 
 for gitdir in "$DEV_ROOT"/*/.git; do
   # A linked worktree's .git is a FILE, not a directory. Skipping them stops one
-  # repo being audited twice under two names — the first run reported fleetcrown
-  # and fleetcrown-scripts as separate offenders for a single line.
+  # repo being audited twice under two names — the first run reported loki
+  # and loki-scripts as separate offenders for a single line.
   [ -d "$gitdir" ] || continue
   repo_dir="${gitdir%/.git}"
   repo="$(basename "$repo_dir")"
