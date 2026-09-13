@@ -36,9 +36,9 @@ jobs:
             echo "Resend /domains returned $code — key dead or API down" >&2
             exit 1
           fi
-          status=$(echo "$json" | jq -r '.data[] | select(.name=="fleetcrown.orangecat.ch") | .status')
+          status=$(echo "$json" | jq -r '.data[] | select(.name=="loki.orangecat.ch") | .status')
           if [ "$status" != "verified" ]; then
-            echo "fleetcrown.orangecat.ch is '$status', not verified — every app's sender just broke" >&2
+            echo "loki.orangecat.ch is '$status', not verified — every app's sender just broke" >&2
             exit 1
           fi
           echo "key valid, sender domain verified"

@@ -33,12 +33,12 @@
  *
  * THE SITE LIST IS THE FLEET'S OWN, NOT A SECOND COPY
  * ---------------------------------------------------
- * Sites are discovered from fleetcrown's public footer, the same SSOT
+ * Sites are discovered from loki's public footer, the same SSOT
  * ui-defect-audit.mjs reads (config/fleet-sites.ts renders there precisely so
  * each site has a crawlable anchor). A new site is audited the day it is
  * linked and a retired one stops being audited, with nobody editing this file.
- * It also means a repo that is not a deployment — fleetcrown-scripts is a
- * second checkout of fleetcrown, not a site — is absent by construction rather
+ * It also means a repo that is not a deployment — loki-scripts is a
+ * second checkout of loki, not a site — is absent by construction rather
  * than by an exclusion list somebody has to maintain.
  *
  * VERDICTS, AND WHY EACH ONE
@@ -68,7 +68,7 @@
  */
 
 const WARN_ONLY = process.argv.includes("--warn-only");
-const DISCOVERY_URL = process.env.DISCOVERY_URL ?? "https://fleetcrown.orangecat.ch/";
+const DISCOVERY_URL = process.env.DISCOVERY_URL ?? "https://loki.orangecat.ch/";
 const TIMEOUT_MS = Number(process.env.PROBE_TIMEOUT_MS ?? 20000);
 
 /** The fleet's own list of the sites it runs, read from where it is published. */
@@ -83,7 +83,7 @@ export async function discoverSites(fetchImpl = fetch) {
   for (const m of html.matchAll(/https:\/\/[a-z0-9.-]*orangecat\.ch(?=["'/\s<])/g)) {
     found.add(m[0]);
   }
-  found.add("https://fleetcrown.orangecat.ch");
+  found.add("https://loki.orangecat.ch");
   return [...found].sort();
 }
 

@@ -8,7 +8,7 @@
 #
 # Measured 2026-09-12, first run: 243 such branches across 24 repos, 564
 # commits. Most are old and superseded. Some were not: a 1.1 GB clone nested
-# inside fleetcrown looked entirely redundant — clean tree, nothing unpushed on
+# inside loki looked entirely redundant — clean tree, nothing unpushed on
 # its checked-out branch — and held three commits from the previous day on a
 # DIFFERENT branch, with no remote ref. It was one `rm -rf` from gone.
 #

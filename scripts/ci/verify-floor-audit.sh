@@ -57,7 +57,7 @@ WARN_ONLY=0
 #
 #   vitareba, aoz-housing  — live JS apps, reported as "not a JS repo" and
 #                            dropped from the floor entirely
-#   ai-forms, fleetcrown   — reported "CI never runs verify" while line 19 and
+#   ai-forms, loki   — reported "CI never runs verify" while line 19 and
 #                            line 52 of their ci.yml do exactly that
 #
 # The tell was arithmetic: two runs an hour apart inspected 24 and 22 repos
@@ -203,7 +203,7 @@ while IFS=$'\t' read -r name branch is_fork; do
 
   # Expand `npm run X` / `pnpm X` inside verify two levels deep, so a gate
   # counts whether it is reached via a named script or run directly. Matching
-  # only script NAMES would flag fleetcrown (which calls `tsc --noEmit`
+  # only script NAMES would flag loki (which calls `tsc --noEmit`
   # inline) and orangecat (whose script is `type-check`, hyphenated) as
   # having no typecheck — both false. A gate is satisfied by the TOOL that
   # runs, not by the name someone gave it.
@@ -331,7 +331,7 @@ $(printf '%s' "$sub_scripts" | jq -r 'to_entries[] | "\(.key) \(.value)"')"
     #     `type-check`). Then the repo asserts the gate, and we take its word —
     #     which is what lets `turbo lint` and `cd frontend && npm run lint`
     #     count without this script having to see through them.
-    #  2. verify runs the TOOL inline with no named script — fleetcrown calls
+    #  2. verify runs the TOOL inline with no named script — loki calls
     #     `tsc --noEmit` straight from verify.
     # A test RUNNER with nothing to discover is empty in fact, however it reads
     # on paper — sbb-lost-found had `test: jest` in four packages and not one

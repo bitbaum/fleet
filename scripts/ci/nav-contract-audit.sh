@@ -17,7 +17,7 @@
 #
 #   - evig spreads `{...navLinkProps(...)}`, a helper that supplies the
 #     attribute — the literal string never appears in the component.
-#   - fleetcrown's SidebarNav passes `current={...}` to SidebarNavItem, and the
+#   - loki's SidebarNav passes `current={...}` to SidebarNavItem, and the
 #     child is what announces.
 #   - a tab list correctly uses aria-selected, not aria-current.
 #
@@ -67,7 +67,7 @@ for gitdir in "$DEV_ROOT"/*/.git; do
   repo="$(dirname "$gitdir")"
   name="$(basename "$repo")"
 
-  # Two directories are not two repos: fleetcrown/fleetcrown-scripts and
+  # Two directories are not two repos: loki/loki-scripts and
   # hirnli/revamp-info are each ONE repo cloned twice.
   remote="$(git -C "$repo" remote get-url origin 2>/dev/null || echo "local:$name")"
   remote="${remote%.git}"

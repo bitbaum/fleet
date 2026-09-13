@@ -278,7 +278,7 @@ fi
 
 # 18. A PAT merge already triggers CI on push. Dispatching CI on top of that run
 #     put two runs on one ref and the concurrency group cancelled one — under a
-#     burst of merges main's CI cancelled itself repeatedly (fleetcrown,
+#     burst of merges main's CI cancelled itself repeatedly (loki,
 #     2026-09-10). When a run for the new tip exists, no re-arm.
 rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
 if RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then

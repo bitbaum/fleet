@@ -19,7 +19,7 @@ on:
 # and skips. auto-merge also re-arms CI with a dispatch, which under one
 # group-per-branch cancels the push run for the same commit.
 #
-# Measured 2026-09-11: fleetcrown stranded four merges silently (main green,
+# Measured 2026-09-11: loki stranded four merges silently (main green,
 # nothing red, the box serving the previous build) and hirnli failed its deploy
 # loudly at the wait step. Both were this line.
 concurrency:

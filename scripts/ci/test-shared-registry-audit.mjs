@@ -63,8 +63,8 @@ const manifests = [
   { repo: "orangecat", path: "package.json", pkg: {
       name: "orangecat",
       dependencies: { "@bitbaum/ai-kit": "^1.4.1", "bip-kit": "^0.2.7" } } },
-  { repo: "fleetcrown", path: "package.json", pkg: {
-      name: "fleetcrown",
+  { repo: "loki", path: "package.json", pkg: {
+      name: "loki",
       dependencies: { "bip-kit": "^0.2.7", "@bitbaum/design-tokens": "1.1.0" } } },
   { repo: "solon", path: "package.json", pkg: {
       name: "solon",
@@ -79,7 +79,7 @@ const manifests = [
 ];
 
 const owned = ownedPackages(manifests);
-eq([...owned.keys()].sort(), ["ai-kit", "bip-kit", "design-tokens", "fleetcrown", "orangecat", "solon"],
+eq([...owned.keys()].sort(), ["ai-kit", "bip-kit", "design-tokens", "loki", "orangecat", "solon"],
    "owned packages come from each repo's ROOT manifest identity");
 {
   // A nested manifest must not register a package name for the whole org --
@@ -92,9 +92,9 @@ eq([...owned.keys()].sort(), ["ai-kit", "bip-kit", "design-tokens", "fleetcrown"
 const adopters = countAdopters(manifests, owned);
 eq([...adopters.get("ai-kit")].sort(), ["kivvi", "orangecat"],
    "adopters include a NESTED consumer, and a repo with two manifests counts once");
-eq([...adopters.get("bip-kit")].sort(), ["fleetcrown", "orangecat"],
+eq([...adopters.get("bip-kit")].sort(), ["loki", "orangecat"],
    "a plain dependency is counted");
-eq([...adopters.get("design-tokens")].sort(), ["fleetcrown", "solon"],
+eq([...adopters.get("design-tokens")].sort(), ["loki", "solon"],
    "an aliased dependency is counted — this is the case that read as zero");
 eq([...adopters.get("orangecat")], [],
    "an app nobody depends on has no adopters");
@@ -127,7 +127,7 @@ eq([...listed].sort(), ["ai-kit", "design-tokens"], "only linked table rows coun
   const gaps = findGaps({ adopters, listed, owned });
   eq(gaps.map((g) => g.pkg), ["bip-kit"],
      "a 2-adopter package with no row is the finding; the listed ones are silent");
-  eq(gaps[0].adopters, ["fleetcrown", "orangecat"], "the finding names who depends on it");
+  eq(gaps[0].adopters, ["loki", "orangecat"], "the finding names who depends on it");
 }
 {
   // Vacuous-pass guard: when everything is listed, the audit must report NO
@@ -142,7 +142,7 @@ eq([...listed].sort(), ["ai-kit", "design-tokens"], "only linked table rows coun
   const ownedOne = new Map([["lonelykit", "lonelykit"]]);
   eq(findGaps({ adopters: oneAdopter, listed: new Set(), owned: ownedOne }).length, 0,
      `a single adopter is below the threshold of ${ADOPTER_THRESHOLD}`);
-  const twoAdopters = new Map([["lonelykit", new Set(["orangecat", "fleetcrown"])]]);
+  const twoAdopters = new Map([["lonelykit", new Set(["orangecat", "loki"])]]);
   eq(findGaps({ adopters: twoAdopters, listed: new Set(), owned: ownedOne }).length, 1,
      `the ${ADOPTER_THRESHOLD}nd adopter makes it a finding`);
 }
@@ -190,8 +190,8 @@ eq(installFor("@bitbaum/lonely", []),
 {
   const manifests = [
     { repo: "listkit", path: "package.json", pkg: { name: "listkit" } },
-    { repo: "fleetcrown", path: "package.json", pkg: {
-        name: "fleetcrown", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0" } } },
+    { repo: "loki", path: "package.json", pkg: {
+        name: "loki", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0" } } },
     { repo: "hirnli", path: "package.json", pkg: {
         name: "hirnli", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0" } } },
   ];
@@ -215,8 +215,8 @@ eq(installFor("@bitbaum/lonely", []),
     { repo: "orangecat", path: "package.json", pkg: {
         name: "orangecat",
         dependencies: { "@bitbaum/ai-kit": "^1.4.1", secretkit: "^9.0.0" } } },
-    { repo: "fleetcrown", path: "package.json", pkg: {
-        name: "fleetcrown",
+    { repo: "loki", path: "package.json", pkg: {
+        name: "loki",
         dependencies: { "@bitbaum/ai-kit": "^1.2.0", listkit: "github:bitbaum/listkit#v0.1.0" } } },
     { repo: "hirnli", path: "package.json", pkg: {
         name: "hirnli", dependencies: { listkit: "github:bitbaum/listkit#v0.1.0", secretkit: "^9.0.0" } } },
@@ -240,7 +240,7 @@ eq(installFor("@bitbaum/lonely", []),
   }
   eq(out.packages[0].adopters, 2, "adopter counts are derived, not asserted");
   eq(out.packages[0].name, "@bitbaum/ai-kit", "the published name is the real package name");
-  eq(out.packages[0].adopterNames, ["fleetcrown", "orangecat"], "adopters are named and sorted");
+  eq(out.packages[0].adopterNames, ["loki", "orangecat"], "adopters are named and sorted");
   eq(out.packages[1].install, { source: "git", command: "pnpm add github:bitbaum/listkit#v0.1.0" },
      "each row carries the derived install line");
   eq(out.packages[0].repo, "https://github.com/bitbaum/ai-kit", "each row links its repo");

@@ -33,7 +33,7 @@ WEBHOOK = "whsec_0123" + "456789abcdef0123456789abcdef"
 CASES = [
     # --- real, observed in production ---
     (
-        "fleetcrown GET /api/me — scrypt hex under a *Hash key, no $ prefix",
+        "loki GET /api/me — scrypt hex under a *Hash key, no $ prefix",
         '{"id":"u1","email":"g@x.ch",'
         f'"passwordHash":"{HEX64}","privateZonePinHash":"{HEX64B}"}}',
         "HIGH",

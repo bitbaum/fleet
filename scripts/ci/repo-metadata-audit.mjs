@@ -15,7 +15,7 @@
 //    1 described a product by a name its own brand file had retired
 //
 // None of that breaks anything, which is exactly why it sat there. The register
-// (fleetcrown apps.conf) already knows the canonical host of every deployed app.
+// (loki apps.conf) already knows the canonical host of every deployed app.
 // Nothing compared the two.
 //
 // WHAT IS CHECKED — only the mechanical claims
@@ -114,7 +114,7 @@ function load() {
   const repos = gh(`orgs/${ORG}/repos?per_page=100`);
   if (!repos) return null;
   let conf = null;
-  const blob = gh(`repos/${ORG}/fleetcrown/contents/scripts/hetzner/apps.conf`);
+  const blob = gh(`repos/${ORG}/loki/contents/scripts/hetzner/apps.conf`);
   if (blob?.content) conf = Buffer.from(blob.content, "base64").toString("utf8");
   return { repos, conf };
 }
@@ -136,7 +136,7 @@ if (!data) {
   process.exit(0);
 }
 if (!data.conf) {
-  console.log("· repo-metadata audit NOT RUN: could not read apps.conf from fleetcrown.");
+  console.log("· repo-metadata audit NOT RUN: could not read apps.conf from loki.");
   process.exit(0);
 }
 

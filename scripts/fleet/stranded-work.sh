@@ -4,7 +4,7 @@
 #
 # This fleet already had `git-health` (in .bashrc), and it did not prevent the
 # thing it looks like it prevents. On 2026-08-24 orangecat held 118 uncommitted
-# files and fleetcrown 88, both untouched for ten days — a completed EntityType
+# files and loki 88, both untouched for ten days — a completed EntityType
 # rename and a completed publishing workstream, existing on exactly one disk.
 # `git-health` had been reporting "118 dirty" that whole time.
 #
@@ -87,7 +87,7 @@ scan_repo() {
 
   # Unpushed: measured against the upstream when there is one, else against the
   # remote default branch. A branch that was never pushed is the worse case, not
-  # an exempt one — that is where four of fleetcrown's commits were hiding.
+  # an exempt one — that is where four of loki's commits were hiding.
   #
   # But "no upstream" and "upstream gone" are opposite facts, and conflating
   # them made this guard report the whole fleet as stranded. The fleet's normal
@@ -166,7 +166,7 @@ scan_repo() {
 
 # Worktrees hold real branches, and this guard could not see them.
 #
-# Measured 2026-08-25 in fleetcrown alone: 9 agent worktrees under
+# Measured 2026-08-25 in loki alone: 9 agent worktrees under
 # .claude/worktrees/ held 13 commits across 9 branches, NONE of them pushed,
 # the oldest 3 weeks old — while `fleet-stranded` reported the fleet clean.
 # The loop below only ever looked at $ROOT/*/, so every branch created by

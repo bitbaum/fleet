@@ -100,7 +100,7 @@ check("rejects a url", looksLikeModelId("https://api.groq.com/openai/v1"), false
 check("rejects an env var name", looksLikeModelId("GROQ_API_KEY"), false);
 check("rejects a css class", looksLikeModelId("rounded-lg"), false);
 check("rejects a module specifier", looksLikeModelId("@/lib/config/brand"), false);
-// fleetcrown builds its model id from ai-ration's chain at call time. A
+// loki builds its model id from ai-ration's chain at call time. A
 // computed id is the ABSENCE of a pin, and the first run reported it retired.
 check("rejects an interpolated id", looksLikeModelId("${link.provider.id}/${link.model}"), false);
 

@@ -10,7 +10,7 @@
  * fires on nothing, and it is more expensive, because someone has to read it.
  *
  * So every fixture below asserts a VERDICT, not just a run:
- *   - the real fleetcrown bug is still caught (positive)
+ *   - the real loki bug is still caught (positive)
  *   - correct markup stays silent (negative)
  *
  * Fixtures are inline data: URLs — no network, no fleet, no auth.
@@ -83,7 +83,7 @@ const FIXTURES = {
         <a href="/y" style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center">Y</a>
       </nav>
     </div>`,
-  // The original fleetcrown fleet card: an icon INLINE at the head of two of
+  // The original loki fleet card: an icon INLINE at the head of two of
   // the four rows, shoving only those lines sideways by its own width, and a
   // wrapped hint whose second line falls back to the container edge.
   raggedStack: `
