@@ -1,0 +1,79 @@
+# Proof of origin, nightly.
+#
+# "Anyone can join the cat or steal the cat" only pays the originator if origin
+# can be shown. Git dates cannot show it — they are fields the committer sets —
+# so this run writes one manifest of every repo's HEAD, stamps it through
+# OpenTimestamps (a Bitcoin-anchored clock nobody here controls), asks Software
+# Heritage to snapshot the public repos, and commits the proofs to proofs/origin.
+#
+# Nightly rather than per-commit: the calendars batch stamps into a block every
+# few hours anyway, so a per-commit stamp buys nothing a nightly one does not,
+# and a proof directory that grows by 48 files a day is one nobody opens. A
+# quiet day (no HEAD moved) produces no manifest and no commit; the run still
+# upgrades yesterday's pending proofs to their Bitcoin attestation.
+name: Origin proof
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  # write, only to commit proofs/origin — the derived record this workflow
+  # exists to produce. Same pattern as the register refresh in shared-inventory.
+  contents: write
+
+concurrency:
+  group: origin-proof
+  cancel-in-progress: false
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: OpenTimestamps client
+        run: pipx install opentimestamps-client
+
+      - name: Stamp, archive, upgrade
+        env:
+          # The default token reads public repos only; private ones would be
+          # silently omitted from the manifest. The script prints how many repos
+          # it stamped — a drop in that number is the tell. FLEET_READ_TOKEN
+          # covers all of them.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+          # Optional. Lifts the Software Heritage save limit from 10/h to 1200/h.
+          SWH_TOKEN: ${{ secrets.SWH_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Origin proof'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          bash scripts/ci/origin-proof.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      # A proof that does not match its manifest, or a chain with a broken
+      # link, must never be committed: the commit would be the forgery.
+      - name: The chain is intact
+        run: bash scripts/ci/origin-proof.sh --check
+
+      - name: Commit the proofs
+        run: |
+          set -euo pipefail
+          git add proofs/origin
+          if git diff --cached --quiet; then
+            echo "nothing new to prove today"
+            exit 0
+          fi
+          git config user.name  "fleet-bot"
+          git config user.email "noreply@bitbaum.invalid"
+          git commit -m "chore(proofs): origin proof $(date -u +%F)"
+          git push

@@ -115,6 +115,14 @@ jobs:
       - name: The auto-merge sweep behaves
         run: bash scripts/ci/test-auto-merge-sweep.sh
 
+      # The origin proof is only worth anything if it cannot be produced for
+      # content that did not exist and cannot be edited afterwards. Both halves
+      # are pinned with a fake calendar: a private repo's name never reaches
+      # the public manifest, an unchanged org stamps nothing, and a manifest
+      # edited after stamping fails its own proof AND the next link's.
+      - name: The origin proof cannot be forged quietly
+        run: bash scripts/ci/test-origin-proof.sh
+
       # This detector reports on repos nobody is watching, so its own failure
       # mode is silence: a clean report from a broken audit is worse than no
       # audit, because it prints a ✓. Both sides are pinned — the real AOZ
