@@ -161,6 +161,19 @@ stamp() {
     rm -f "$candidate"
     return 0
   fi
+  # Fewer repos than last time is almost always a token that sees less (the
+  # default GITHUB_TOKEN reads public repos only), not repos that vanished. A
+  # manifest missing three repos would sit in the chain forever, so refuse;
+  # a deleted or transferred repo is confirmed with ORIGIN_PROOF_ALLOW_SHRINK=1.
+  if [ -n "$prev" ] && [ "${ORIGIN_PROOF_ALLOW_SHRINK:-}" != "1" ]; then
+    local before; before="$(jq '.repos | length' "$prev")"
+    if [ "$n" -lt "$before" ]; then
+      echo "  refusing: $n repos now, $before in $(basename "$prev") — a token that cannot see them all?" >&2
+      echo "  set ORIGIN_PROOF_ALLOW_SHRINK=1 if repos were really deleted or transferred" >&2
+      rm -f "$candidate"
+      exit 1
+    fi
+  fi
   local out="$PROOF_DIR/$(date -u +%Y-%m-%dT%H%M%SZ).json"
   mv "$candidate" "$out"
   chmod 644 "$out" # mktemp made it 0600; this is a public record
