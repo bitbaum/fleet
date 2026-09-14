@@ -1,28 +1,29 @@
 {
-  "generatedAt": "2026-09-12T18:31:32.446Z",
+  "generatedAt": "2026-09-14T13:20:41.964Z",
   "packages": [
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.4.1",
+      "version": "1.7.1",
       "install": {
         "source": "npm",
         "command": "pnpm add @bitbaum/ai-kit"
       },
-      "adopters": 13,
+      "adopters": 14,
       "adopterNames": [
         "aoz-housing",
         "botsmann",
         "datacat",
         "evig",
-        "loki",
         "heidi",
         "hirnli",
         "kivvi",
+        "loki",
         "orangecat",
         "sbb-fundbuero",
+        "substrata",
         "surf-your-life",
         "truthseeker",
         "vitareba"
@@ -43,9 +44,9 @@
         "aoz-housing",
         "botsmann",
         "evig",
-        "loki",
         "hirnli",
         "kivvi",
+        "loki",
         "orangecat",
         "petvity",
         "s-ink",
@@ -58,7 +59,7 @@
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
       "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
-      "version": "0.2.7",
+      "version": "0.2.8",
       "install": {
         "source": "npm",
         "command": "pnpm add bip-kit"
@@ -69,8 +70,8 @@
         "botsmann",
         "datacat",
         "evig",
-        "loki",
         "kivvi",
+        "loki",
         "orangecat",
         "petvity"
       ]
@@ -90,8 +91,8 @@
         "ai-kit",
         "aoz-housing",
         "evig",
-        "loki",
         "kivvi",
+        "loki",
         "surf-your-life"
       ]
     },
@@ -107,9 +108,26 @@
       },
       "adopters": 3,
       "adopterNames": [
-        "loki",
         "heidi",
+        "loki",
         "orangecat"
+      ]
+    },
+    {
+      "slug": "listkit",
+      "name": "listkit",
+      "repo": "https://github.com/bitbaum/listkit",
+      "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
+      "version": "0.1.0",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/listkit#v0.1.0"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "hirnli",
+        "loki",
+        "substrata"
       ]
     },
     {
@@ -143,22 +161,6 @@
       "adopterNames": [
         "loki",
         "solon"
-      ]
-    },
-    {
-      "slug": "listkit",
-      "name": "listkit",
-      "repo": "https://github.com/bitbaum/listkit",
-      "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
-      "version": "0.1.0",
-      "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/listkit#v0.1.0"
-      },
-      "adopters": 2,
-      "adopterNames": [
-        "loki",
-        "hirnli"
       ]
     },
     {
