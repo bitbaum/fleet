@@ -1,0 +1,1153 @@
+{
+  "generatedAt": "2026-09-14T11:54:20.990Z",
+  "org": "bitbaum",
+  "proofs": {
+    "manifests": 3,
+    "firstStampedAt": "2026-09-14T01:46:51Z",
+    "latestStampedAt": "2026-09-14T08:50:49Z",
+    "anchored": 2,
+    "pending": 1,
+    "dir": "https://github.com/bitbaum/fleet/tree/main/proofs/origin"
+  },
+  "privateRepos": 3,
+  "repos": [
+    {
+      "repo": "bitbaum/ai-forms",
+      "url": "https://github.com/bitbaum/ai-forms",
+      "description": "Headless AI form filling and conversational refinement — shared across the fleet",
+      "createdAt": "2026-08-04T12:51:42Z",
+      "firstCommit": {
+        "sha": "68087895ab9d46d73d03b91ebf5e648b969ebd76",
+        "date": "2026-08-04T12:51:28Z"
+      },
+      "commits": 41,
+      "stamped": {
+        "head": "b26fa1ccbe9c82995085b78bb814850f5b2e13ce",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:6c123922a487ab31f7232ebeeac02466803b0b45",
+        "date": "2026-09-14T01:47:03.881000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fai-forms"
+      }
+    },
+    {
+      "repo": "bitbaum/ai-kit",
+      "url": "https://github.com/bitbaum/ai-kit",
+      "description": "Stay on free LLM tiers: multi-vendor fallback chain, 429 classification that tells the three kinds apart, and fair-share rationing of a shared daily pool.",
+      "createdAt": "2026-08-16T09:49:58Z",
+      "firstCommit": {
+        "sha": "71b665e5b5e022c7b0f3d44ffc94ef43f32655b7",
+        "date": "2026-08-16T09:49:17Z"
+      },
+      "commits": 57,
+      "stamped": {
+        "head": "2b919512be912ead8ad57a5f2751ccf72b83e780",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:7690553ac2810c264f42d40ce4de07d37ab4816e",
+        "date": "2026-09-14T01:47:04.208000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fai-kit"
+      }
+    },
+    {
+      "repo": "bitbaum/aoz-housing",
+      "url": "https://github.com/bitbaum/aoz-housing",
+      "description": "AOZ Begleitung — support platform for refugee care work: housing stability with compatibility matching, daily-life coordination, conflict resolution, and learning & participation tracking.",
+      "createdAt": "2026-01-23T18:58:56Z",
+      "firstCommit": {
+        "sha": "1e3517212567bea6531c52dbfa771824c6c6e4a4",
+        "date": "2026-01-22T22:25:09Z"
+      },
+      "commits": 549,
+      "stamped": {
+        "head": "431bae7f426e313dd685ef65af507a0fe885f424",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:d27a85e2bed57c52f0f97b84f752d3ba143c1275",
+        "date": "2026-09-14T01:47:03.875000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Faoz-housing"
+      }
+    },
+    {
+      "repo": "bitbaum/biaslens",
+      "url": "https://github.com/bitbaum/biaslens",
+      "description": "Media bias analysis engine — evidence before conclusions, separates fact from framing.",
+      "createdAt": "2026-07-08T10:45:49Z",
+      "firstCommit": {
+        "sha": "9fb1830b71148023e22969e9674e7bcb3b4745f1",
+        "date": "2026-07-08T10:45:38Z"
+      },
+      "commits": 34,
+      "stamped": {
+        "head": "2baab2fef8a4408ab3268850a6cef4dc3f46e05b",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:8535bd8bfeab55dc0ae1ddc1ad677c08e4411c2c",
+        "date": "2026-09-14T01:47:04.016000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbiaslens"
+      }
+    },
+    {
+      "repo": "bitbaum/bip-kit",
+      "url": "https://github.com/bitbaum/bip-kit",
+      "description": "Building in Public as a content contract — typed markdown blocks + roadmap/changelog types for product sites. Bring your own design system.",
+      "createdAt": "2026-08-20T23:56:24Z",
+      "firstCommit": {
+        "sha": "347ccbf02a75b6c39109a0f9761eb96e60e938e1",
+        "date": "2026-08-20T23:52:46Z"
+      },
+      "commits": 27,
+      "stamped": {
+        "head": "a4680e7fc66e6b895cce0a353c8520f1e9e88763",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:706220505911f192fda953db1a9661bc69c4e1b6",
+        "date": "2026-09-14T01:47:03.874000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbip-kit"
+      }
+    },
+    {
+      "repo": "bitbaum/bitbaum",
+      "url": "https://github.com/bitbaum/bitbaum",
+      "description": "AI-first product studio — umbrella structure and shared infrastructure behind OrangeCat, FleetCrown and hirn.li.",
+      "createdAt": "2026-07-17T11:30:53Z",
+      "firstCommit": {
+        "sha": "05a6f0f46ecaacbe63da9fbd85b102759059ef8f",
+        "date": "2026-07-17T11:30:51Z"
+      },
+      "commits": 25,
+      "stamped": {
+        "head": "c38dd06bf17acf4ea38f037f8c57d81f2234f05a",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:2dbf37d65902878b3bbf320abaf5b5c494120906",
+        "date": "2026-09-14T01:47:03.822000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbitbaum"
+      }
+    },
+    {
+      "repo": "bitbaum/botsmann",
+      "url": "https://github.com/bitbaum/botsmann",
+      "description": "Domain-specialized AI professionals — legal, medical, research, translation.",
+      "createdAt": "2024-10-14T10:21:00Z",
+      "firstCommit": {
+        "sha": "da14403896b0e5111e7ede91f8989263a19d210d",
+        "date": "2024-10-14T10:37:44Z"
+      },
+      "commits": 630,
+      "stamped": {
+        "head": "4ddd3dc9b1ce9405f0c493b076e7f2377c6a1218",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:3983d4923ec9a3d85093842e31c5b3a2472802b6",
+        "date": "2026-09-14T01:47:03.826000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbotsmann"
+      }
+    },
+    {
+      "repo": "bitbaum/botsmann-blog-content",
+      "url": "https://github.com/bitbaum/botsmann-blog-content",
+      "description": "Content Repository for Botsmann Blog",
+      "createdAt": "2025-03-04T21:47:56Z",
+      "firstCommit": {
+        "sha": "4e317bf1f26ae5e9e3459137fd2948c982e494e1",
+        "date": "2025-03-04T21:47:56Z"
+      },
+      "commits": 26,
+      "stamped": {
+        "head": "a821980370939b6f655fa285edceae17d4813eb6",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:2429355cf3e635c76373a3b45232f016a712f40d",
+        "date": "2026-09-14T08:51:03.096000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbotsmann-blog-content"
+      }
+    },
+    {
+      "repo": "bitbaum/botsmann-knowledge-content",
+      "url": "https://github.com/bitbaum/botsmann-knowledge-content",
+      "description": "Educational content for Botsmann Knowledge Center - guides, tutorials, and infrastructure comparisons",
+      "createdAt": "2026-01-12T00:58:30Z",
+      "firstCommit": {
+        "sha": "ec778f12d0c7141df809b044c81d48633cb48cdf",
+        "date": "2026-01-12T01:05:30Z"
+      },
+      "commits": 3,
+      "stamped": {
+        "head": "8c4afd7dbe4a60b51c1bf300646511a4b4d2ce83",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:bf8f0376d63d6ab3df21e1b410aae91d64f1aada",
+        "date": "2026-09-14T01:47:03.825000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbotsmann-knowledge-content"
+      }
+    },
+    {
+      "repo": "bitbaum/camille-boulangerie",
+      "url": "https://github.com/bitbaum/camille-boulangerie",
+      "description": "Bakery site built as a handover test: can a client cancel any time and walk away with the code? Rehearsed end-to-end.",
+      "createdAt": "2026-08-27T13:12:02Z",
+      "firstCommit": {
+        "sha": "a6f31a7117fdc69e459a82c96fe5c93101298229",
+        "date": "2026-08-27T13:10:03Z"
+      },
+      "commits": 29,
+      "stamped": {
+        "head": "bd7d94d96553104ef3ad1f543f7a2118323fffa9",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/causius",
+      "url": "https://github.com/bitbaum/causius",
+      "description": "Scaffolded, not built. Intended shape: law, the same pattern as Diplodoctor. Day-zero page only — see bitbaum.orangecat.ch (Not live).",
+      "createdAt": "2026-09-10T20:48:15Z",
+      "firstCommit": {
+        "sha": "cf97b95c463e5c34475440b74527322a76284821",
+        "date": "2026-09-10T20:48:08Z"
+      },
+      "commits": 3,
+      "stamped": {
+        "head": "200223f1f3589cf0ae25cd0f2aaf82f1a98d288e",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/crewless",
+      "url": "https://github.com/bitbaum/crewless",
+      "description": "One person, 36 repos, no crew — the merge/verify/deploy/publish harness that lets a solo builder ship like a company. Extracted from production, outage reports included.",
+      "createdAt": "2026-08-22T10:10:03Z",
+      "firstCommit": {
+        "sha": "c0eae6a712738b12def7d5a975e08a3beefb98cc",
+        "date": "2026-08-22T10:07:53Z"
+      },
+      "commits": 9,
+      "stamped": {
+        "head": "97c6a57cbc832a51b14b2db8ad6136c7873ddb2c",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/datacat",
+      "url": "https://github.com/bitbaum/datacat",
+      "description": "Universal AI-powered data capture, analysis, and delivery platform",
+      "createdAt": "2025-07-07T10:25:09Z",
+      "firstCommit": {
+        "sha": "923713dbc509543490c1162c3e0adcd1dd5121ba",
+        "date": "2025-07-07T10:25:10Z"
+      },
+      "commits": 151,
+      "stamped": {
+        "head": "7477ccfc7b304575c0f6228cd6a80c0610f7425e",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/design-tokens",
+      "url": "https://github.com/bitbaum/design-tokens",
+      "description": "Design SSOT for OrangeCat, FleetCrown and Solon — tokens, self-hosted faces, Tailwind preset",
+      "createdAt": "2026-08-14T01:50:13Z",
+      "firstCommit": {
+        "sha": "1b90de9ba84cb7f4ebbf97f59c39f97ddcfdc8c4",
+        "date": "2026-08-14T01:50:42Z"
+      },
+      "commits": 44,
+      "stamped": {
+        "head": "8f7a816d2f590eee12b1b1c6a659c8b4d5a1fb0b",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:9c1eabccfe124741005f17866ec3c359ff3c2ac6",
+        "date": "2026-09-14T08:51:03.046000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fdesign-tokens"
+      }
+    },
+    {
+      "repo": "bitbaum/diplodoctor",
+      "url": "https://github.com/bitbaum/diplodoctor",
+      "description": "Scaffolded, not built. Intended shape: health platform. Day-zero page only — see bitbaum.orangecat.ch (Not live).",
+      "createdAt": "2026-09-10T18:07:43Z",
+      "firstCommit": {
+        "sha": "2c3a769e2a4232903333f1d92464538538411226",
+        "date": "2026-09-10T18:07:40Z"
+      },
+      "commits": 6,
+      "stamped": {
+        "head": "be81e4e13365c12c053952a7f337204f12e9ef3e",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/dotfiles",
+      "url": "https://github.com/bitbaum/dotfiles",
+      "description": "Personal development environment — shell, editor, and tool configuration",
+      "createdAt": "2026-02-18T05:52:32Z",
+      "firstCommit": {
+        "sha": "427b5ca559d2d096766a74d216288c804920a815",
+        "date": "2026-02-18T05:50:01Z"
+      },
+      "commits": 127,
+      "stamped": {
+        "head": "71becc525314eadd8c1329dff00640f8c5b3c9c5",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/evig",
+      "url": "https://github.com/bitbaum/evig",
+      "description": "evig — affordable intelligence. Curated, decent hardware people actually want, made accessible to everyone. Storefront, community marketplace, repair & IT-help, workshops, AI-assisted intake.",
+      "createdAt": "2025-04-08T09:41:36Z",
+      "firstCommit": {
+        "sha": "5f4af04d59f201297d131626e9160eff2317e2fa",
+        "date": "2025-04-08T09:38:59Z"
+      },
+      "commits": 2679,
+      "stamped": {
+        "head": "5ea3bd5bd3ad5cf2c65d87ec31ec20bfe93d848a",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/fitfoot",
+      "url": "https://github.com/bitbaum/fitfoot",
+      "description": "Swiss sustainable footwear e-commerce platform. Archived — no longer deployed.",
+      "createdAt": "2025-05-27T10:41:23Z",
+      "firstCommit": {
+        "sha": "ff67f7e17d76c86389a566b754c93af236457524",
+        "date": "2025-05-27T10:41:23Z"
+      },
+      "commits": 40,
+      "stamped": {
+        "head": "45d15c1da97148b7cb0923dc1e8d8826d8fe8e6c",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/fleet",
+      "url": "https://github.com/bitbaum/fleet",
+      "description": "The fleet's central automation: audits that run from here against every repo, golden CI templates, and the shared-package registry.",
+      "createdAt": "2026-08-28T08:10:23Z",
+      "firstCommit": {
+        "sha": "f1d5549a3699aa8b894ac4a512fb27977c8d5c0b",
+        "date": "2026-08-28T08:10:21Z"
+      },
+      "commits": 72,
+      "stamped": {
+        "head": "0b9c963f2dcfe2418183bf969a5b6516b7a2c962",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:ad8d97c8e514b7fd3c0839685a4e02af1e7e1cd5",
+        "date": "2026-09-14T01:42:31.412000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Ffleet"
+      }
+    },
+    {
+      "repo": "bitbaum/g-but",
+      "url": "https://github.com/bitbaum/g-but",
+      "description": "GitHub profile README",
+      "createdAt": "2026-02-25T14:00:14Z",
+      "firstCommit": {
+        "sha": "b9edc0f7410820581135711d6086d5ea3ffca883",
+        "date": "2026-02-25T14:15:14Z"
+      },
+      "commits": 20,
+      "stamped": {
+        "head": "0a295d73a382578d58d778f741e559cb9fdc3acb",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/hamstercheek",
+      "url": "https://github.com/bitbaum/hamstercheek",
+      "description": "Weatherproof box + web app for storing valuables outside homes and banks. Drop a pin, add a note and photo, always know where a stash is.",
+      "createdAt": "2026-08-04T15:05:08Z",
+      "firstCommit": {
+        "sha": "9161ab99beae48f07dc7d4bab5a092d491b9a84f",
+        "date": "2026-08-04T15:05:09Z"
+      },
+      "commits": 27,
+      "stamped": {
+        "head": "900dbeb420545b7446d4809b084a37088ad608b7",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:6c5cba7173a20c6b771f4fc899915bb87875c405",
+        "date": "2026-09-14T08:51:03.104000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fhamstercheek"
+      }
+    },
+    {
+      "repo": "bitbaum/heidi",
+      "url": "https://github.com/bitbaum/heidi",
+      "description": "For people who already know some German and still understand nothing a Zurich local says — Züridütsch, taught from real speech.",
+      "createdAt": "2026-09-10T18:45:45Z",
+      "firstCommit": {
+        "sha": "678bc15b1f0e1d1853e1c471c45d1f17a4daf300",
+        "date": "2026-09-10T18:45:39Z"
+      },
+      "commits": 35,
+      "stamped": {
+        "head": "845ae0e87b2eb43651a0dec81b5641b337a40ecb",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:d717403eb73365938808a088f5452a2bbfaa895a",
+        "date": "2026-09-14T08:51:03.060000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fheidi"
+      }
+    },
+    {
+      "repo": "bitbaum/hire",
+      "url": "https://github.com/bitbaum/hire",
+      "description": "Fractional CTO / contract engineering — Zürich",
+      "createdAt": "2026-08-15T10:13:13Z",
+      "firstCommit": {
+        "sha": "57228298c73bd532f77f0c794fed580eebeafc14",
+        "date": "2026-08-15T10:14:27Z"
+      },
+      "commits": 13,
+      "stamped": {
+        "head": "25cf347ab6a8b52e7d07a368b55e08f0a526eb3b",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/hirnli",
+      "url": "https://github.com/bitbaum/hirnli",
+      "description": "Hirnli — Swiss fundraising-intelligence platform. 16,900 foundations → actionable grant applications. Multi-tenant SaaS built with Next.js, TypeScript, Drizzle, Zod, Tailwind v4.",
+      "createdAt": "2026-07-23T22:36:33Z",
+      "firstCommit": {
+        "sha": "6c7cae8cdd8d5a07391d66d118d819fed74ba415",
+        "date": "2026-02-05T14:57:32Z"
+      },
+      "commits": 976,
+      "stamped": {
+        "head": "bcf1fa980a8754be4b0d56f644dbb1ca4b85803d",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/ivy-portal",
+      "url": "https://github.com/bitbaum/ivy-portal",
+      "description": "Personal localhost dashboard for driving a coding-agent workspace. Internal tool, not a product.",
+      "createdAt": "2026-06-16T17:18:01Z",
+      "firstCommit": {
+        "sha": "24f1db920327e416808ee106594b22da011ae965",
+        "date": "2026-03-17T15:15:16Z"
+      },
+      "commits": 35,
+      "stamped": {
+        "head": "969f7f1c7aa5c94f721bb7b9cb8db84b9476ba87",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/kivvi",
+      "url": "https://github.com/bitbaum/kivvi",
+      "description": "Kivvi ERP — AI-first ERP for Swiss SMEs, business on autopilot",
+      "createdAt": "2026-02-11T16:23:00Z",
+      "firstCommit": {
+        "sha": "181e43fb7ae8a3c05978b6c22c1a95c395b4ea5f",
+        "date": "2026-02-11T16:22:46Z"
+      },
+      "commits": 670,
+      "stamped": {
+        "head": "c6035009a71a5a0045e6fec3e6b502bccce75896",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/limitkit",
+      "url": "https://github.com/bitbaum/limitkit",
+      "description": "Rate limiting as a decision, not a middleware: fixed/sliding windows over an injectable store, bounded memory default, standard RateLimit headers.",
+      "createdAt": "2026-08-20T13:55:40Z",
+      "firstCommit": {
+        "sha": "9010598cab22b2bc7c6ee243280f141a25e4c8fa",
+        "date": "2026-08-20T13:55:38Z"
+      },
+      "commits": 19,
+      "stamped": {
+        "head": "e3e7bc2ad9cde0b7387a90681e0561e59aa21306",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/listkit",
+      "url": "https://github.com/bitbaum/listkit",
+      "description": "A list as a query: facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, page arithmetic that cannot go negative. Headless.",
+      "createdAt": "2026-09-11T15:17:21Z",
+      "firstCommit": {
+        "sha": "69cb4f4ef12d6a2a56b56db1bb4d4ac14aced525",
+        "date": "2026-09-11T15:17:16Z"
+      },
+      "commits": 1,
+      "stamped": {
+        "head": "69cb4f4ef12d6a2a56b56db1bb4d4ac14aced525",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/loki",
+      "url": "https://github.com/bitbaum/loki",
+      "description": "Execution OS for builders: SaaS control plane, cloud builder by default, optional local agent runtime — projects, goals, people, money, and AI agent fleets",
+      "createdAt": "2026-04-22T12:06:12Z",
+      "firstCommit": {
+        "sha": "0e0852330afaf540cfa21fe3520a2118af525a08",
+        "date": "2026-04-04T20:47:22Z"
+      },
+      "commits": 2554,
+      "stamped": {
+        "head": "f481ad22a6307bbbe042cf2f9b87c302a0976257",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:cfc4bd0afe9886a3c0e60a6739133cb777a86be9",
+        "date": "2026-09-14T08:51:03.085000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Floki"
+      }
+    },
+    {
+      "repo": "bitbaum/loki-releases",
+      "url": "https://github.com/bitbaum/loki-releases",
+      "description": "Public binary releases for Loki and Fleet Runner",
+      "createdAt": "2026-06-03T07:09:43Z",
+      "firstCommit": {
+        "sha": "8f577ed37d6d662f2ace1cdcba28e676d2392cdd",
+        "date": "2026-06-03T07:10:58Z"
+      },
+      "commits": 1,
+      "stamped": {
+        "head": "8f577ed37d6d662f2ace1cdcba28e676d2392cdd",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:6b9817aa8a27131f24cdd53207053f1729d19c2d",
+        "date": "2026-09-14T08:51:03.444000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Floki-releases"
+      }
+    },
+    {
+      "repo": "bitbaum/mail-kit",
+      "url": "https://github.com/bitbaum/mail-kit",
+      "description": "The fleet's one email layer: Resend over raw fetch, zero deps, honest never-throwing results",
+      "createdAt": "2026-09-05T09:49:52Z",
+      "firstCommit": {
+        "sha": "076e8606ee63e5be272e057f49e2e7f41601b78f",
+        "date": "2026-09-05T09:49:50Z"
+      },
+      "commits": 7,
+      "stamped": {
+        "head": "572f43fdeb89f7732e14fb35c74d5200b2ee14a0",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/orangecat",
+      "url": "https://github.com/bitbaum/orangecat",
+      "description": "AI economic agent — exchange, fund, lend, invest, and govern with any identity, in any currency, without gatekeepers.",
+      "createdAt": "2025-04-02T14:37:17Z",
+      "firstCommit": {
+        "sha": "ec10ffb202b6ffc0489a6b223444ed633fad96a0",
+        "date": "2025-04-02T14:37:17Z"
+      },
+      "commits": 2900,
+      "stamped": {
+        "head": "dabb6679913211e38e62a09a884762824cb67c20",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/petvity",
+      "url": "https://github.com/bitbaum/petvity",
+      "description": "Global pet care platform",
+      "createdAt": "2026-04-20T17:30:45Z",
+      "firstCommit": {
+        "sha": "f6befa379ea5cd72ce1ff80f1f88c901bf01866f",
+        "date": "2026-04-20T16:44:06Z"
+      },
+      "commits": 412,
+      "stamped": {
+        "head": "ef4c7c31441d5c8bcf78bb3656b226755647bcc4",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/printcraft",
+      "url": "https://github.com/bitbaum/printcraft",
+      "description": "Scene composer for physical art. Turns separate photos of real people into unified artwork for print.",
+      "createdAt": "2026-03-26T17:52:05Z",
+      "firstCommit": {
+        "sha": "ae7bd677b1263f150da3b2746d809858c514e9fe",
+        "date": "2026-03-26T17:51:29Z"
+      },
+      "commits": 80,
+      "stamped": {
+        "head": "e908c485fdaa3850ca31407d32cee32b5f3788cd",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:fb6cdc3cc0271366fb00530cb9e15d1afa0ee9da",
+        "date": "2026-09-14T08:51:03.998000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fprintcraft"
+      }
+    },
+    {
+      "repo": "bitbaum/reparaturbonus-zh",
+      "url": "https://github.com/bitbaum/reparaturbonus-zh",
+      "description": "City of Zurich repair bonus platform. Connecting residents with certified repair shops instead of landfills.",
+      "createdAt": "2025-06-18T16:23:50Z",
+      "firstCommit": {
+        "sha": "08dbff05d0cf11748acfcc819dbda7fae7ed418a",
+        "date": "2025-06-18T12:02:31Z"
+      },
+      "commits": 134,
+      "stamped": {
+        "head": "05877e90c1b4899815abbac548b5727257936455",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:194642e259c9bd73ccbe532bd5c91f991320b349",
+        "date": "2026-09-14T08:51:03.054000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Freparaturbonus-zh"
+      }
+    },
+    {
+      "repo": "bitbaum/s-ink",
+      "url": "https://github.com/bitbaum/s-ink",
+      "description": "S.Ink — tattoo artist portfolio. Fine line · Blackwork.",
+      "createdAt": "2026-08-06T12:47:12Z",
+      "firstCommit": {
+        "sha": "ce48a41c39145c1455e11a8e3a73531a70754311",
+        "date": "2026-08-06T10:58:15Z"
+      },
+      "commits": 36,
+      "stamped": {
+        "head": "b02e1a6beb734c6992e7238e87d97891975995b5",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/sbb-fundbuero",
+      "url": "https://github.com/bitbaum/sbb-fundbuero",
+      "description": "Report something lost on a train while you're still on it, bound to the real journey from Swiss open transport data. Concept, not affiliated with SBB.",
+      "createdAt": "2026-01-23T18:58:59Z",
+      "firstCommit": {
+        "sha": "4877575c1f84fa69942107fa866d6d798f1bc826",
+        "date": "2026-01-23T15:13:32Z"
+      },
+      "commits": 93,
+      "stamped": {
+        "head": "e3c11baaec1c2d768c3cf1f1d39aa58c04258a8f",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/sitekit",
+      "url": "https://github.com/bitbaum/sitekit",
+      "description": "A website as data: a closed section union validated by Zod, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
+      "createdAt": "2026-08-28T07:13:45Z",
+      "firstCommit": {
+        "sha": "1b3a6b4a93e25189a9a569b882472010da920e06",
+        "date": "2026-08-28T07:13:38Z"
+      },
+      "commits": 19,
+      "stamped": {
+        "head": "e5c5149b690ba0cc64835d46e1351e3756b6030c",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/solon",
+      "url": "https://github.com/bitbaum/solon",
+      "description": "Governance you can verify instead of trust. Treasury on-chain, votes cryptographically signed, decisions tracked against KPIs.",
+      "createdAt": "2025-08-26T09:12:28Z",
+      "firstCommit": {
+        "sha": "2c38ee94084c32363066a2e0e1ac909dc1d1326b",
+        "date": "2025-08-26T09:12:28Z"
+      },
+      "commits": 133,
+      "stamped": {
+        "head": "74843fbf71a5c1c79b7ea95f5e895d4cd98bd183",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:b12202359dc6dc9cbfde78b61b2d743f2a3bd887",
+        "date": "2026-09-14T08:51:03.971000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fsolon"
+      }
+    },
+    {
+      "repo": "bitbaum/substrata",
+      "url": "https://github.com/bitbaum/substrata",
+      "description": "Open-source research on the physical chokepoints between here and a technological singularity — 15 chokepoint materials, corpus as data.",
+      "createdAt": "2026-08-27T12:41:06Z",
+      "firstCommit": {
+        "sha": "ee83c6dfb793fe03510fef2066b8f270d3a8d71c",
+        "date": "2026-08-27T12:41:04Z"
+      },
+      "commits": 31,
+      "stamped": {
+        "head": "2f51d2e5cd9d9745a589095e985197ba618e4848",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/surf-your-life",
+      "url": "https://github.com/bitbaum/surf-your-life",
+      "description": "Clinic portal for burnout and Long COVID recovery — daily check-ins, symptom tracking, and practitioner visibility to intervene early. Zürich.",
+      "createdAt": "2026-06-16T20:37:16Z",
+      "firstCommit": {
+        "sha": "9c46fcd86bc5df2ead0b08f0b79d2979dbea3743",
+        "date": "2026-04-10T15:11:11Z"
+      },
+      "commits": 568,
+      "stamped": {
+        "head": "7120996b362d7843d44d5922cf912193cdd74ecd",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/threadkit",
+      "url": "https://github.com/bitbaum/threadkit",
+      "description": "Headless multi-participant message threads. Permission is participation, unread is per-person, and an AI participant obeys the same visibility rules as everyone else.",
+      "createdAt": "2026-08-16T11:17:35Z",
+      "firstCommit": {
+        "sha": "082d431fd4dd49861134774296af79d0476907b0",
+        "date": "2026-08-16T11:05:50Z"
+      },
+      "commits": 30,
+      "stamped": {
+        "head": "7ccc759bb101252995c0dcc2207fc2bb24ed6262",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/truthseeker",
+      "url": "https://github.com/bitbaum/truthseeker",
+      "description": "First-principles rebuttal generator with full source and author transparency",
+      "createdAt": "2026-06-05T13:34:50Z",
+      "firstCommit": {
+        "sha": "2ac01e649583570348af650c658b4d7b9eeaa618",
+        "date": "2026-06-05T13:34:51Z"
+      },
+      "commits": 62,
+      "stamped": {
+        "head": "b3fba72be9010b04e2cb347059da2865967e8406",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": null
+    },
+    {
+      "repo": "bitbaum/vitareba",
+      "url": "https://github.com/bitbaum/vitareba",
+      "description": "Vita (Vita GmbH) — clinic in Zürich for metabolic psychiatry and systemic longevity. Patient portal and practitioner tools.",
+      "createdAt": "2026-04-13T09:24:41Z",
+      "firstCommit": {
+        "sha": "ea4fba815dba7e6db84ee47c88525993c357f5c9",
+        "date": "2026-04-13T09:14:43Z"
+      },
+      "commits": 471,
+      "stamped": {
+        "head": "f1c60c61e8cf6c501758897a60d563390ad3b718",
+        "at": "2026-09-14T08:50:49Z",
+        "manifest": "2026-09-14T085049Z.json",
+        "anchored": null
+      },
+      "firstStampedAt": "2026-09-14T01:46:51Z",
+      "provenSince": {
+        "at": "2026-09-14T01:46:51Z",
+        "block": 966918,
+        "manifest": "2026-09-14T014651Z.json"
+      },
+      "swh": {
+        "snapshot": "swh:1:snp:908d002fe6337a7ca073e4f979559fa6032c63b0",
+        "date": "2026-09-14T08:51:04.088000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fvitareba"
+      }
+    }
+  ],
+  "_notes": [
+    "One row per public, non-fork repository. Private repositories are counted, not listed.",
+    "createdAt and firstCommit are GitHub's server-side dates. swh is Software Heritage's own visit date and snapshot. stamped is the newest OpenTimestamps manifest naming this HEAD; anchored is the Bitcoin block it is committed in, or null while the calendar's promise is still pending.",
+    "provenSince is the oldest anchored manifest naming the repository: the strongest claim, independent of what moved since.",
+    "Derived by fleet/scripts/ci/origin-register.mjs from proofs/origin, the GitHub API and the Software Heritage API. Nobody types this file."
+  ]
+}

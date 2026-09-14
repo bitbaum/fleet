@@ -123,6 +123,13 @@ jobs:
       - name: The origin proof cannot be forged quietly
         run: bash scripts/ci/test-origin-proof.sh
 
+      # The register is what a public page says about when real work existed,
+      # so its test is about what it must NOT claim: a private repo listed, a
+      # pending proof called anchored, "proven since" taken from the newest
+      # manifest instead of the oldest anchored one.
+      - name: The origin register claims only what the proofs support
+        run: node scripts/ci/test-origin-register.mjs
+
       # This detector reports on repos nobody is watching, so its own failure
       # mode is silence: a clean report from a broken audit is worse than no
       # audit, because it prints a ✓. Both sides are pinned — the real AOZ
