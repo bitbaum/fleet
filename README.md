@@ -15,7 +15,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | [`STACK.md`](STACK.md) | the blessed technology per job — ONE ORM, ONE test runner, ONE auth stack; deviations are documented exceptions, not habits |
 | [`registers/origin.json`](registers/origin.json) | derived nightly: for every public repo, GitHub's first commit, the OpenTimestamps manifest and Bitcoin block it is proven in, and its Software Heritage snapshot. What bitbaum.orangecat.ch says about origin comes from here. |
 | [`registers/org.json`](registers/org.json) | machine-readable register of org facts — agents read this, not READMEs. A new claim is a register row or it does not ship. |
-| `scripts/ci/auto-merge-sweep.sh` | the canonical merge policy; the fleet calls it via the reusable workflow below. Includes the contributor gate: an outside PR merges only when every commit is `Signed-off-by`, certifying [`templates/CONTRIBUTING.md`](templates/CONTRIBUTING.md) — the DCO plus the licence grant that keeps relicensing possible |
+| `scripts/ci/auto-merge-sweep.sh` | the canonical merge policy; the fleet calls it via the reusable workflow below. Includes the contributor gate: an outside PR merges only when every commit is `Signed-off-by`, certifying [`bitbaum/.github/CONTRIBUTING.md`](https://github.com/bitbaum/.github/blob/main/CONTRIBUTING.md) — the DCO plus the licence grant that keeps relicensing possible |
 | `scripts/ci/model-pin-audit.mjs` | runs daily: is any model id the fleet pins still served by its vendor? |
 | `scripts/ci/verify-floor-audit.sh` | does every repo's `verify` actually run lint + typecheck + test? |
 | `scripts/ci/shared-inventory.sh` | counts duplication across the fleet and holds it as a ratchet |
@@ -27,7 +27,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | `scripts/ci/nextauth-origin-audit.mjs` | runs daily: does every next-auth app advertise its own public origin, or is it publishing `localhost` from behind Caddy? |
 | `scripts/fleet/` | local upkeep: worktree GC, stranded-work guard |
 | `templates/ci/` | golden CI workflows + pre-commit — deliberately ONE central copy |
-| [`templates/CONTRIBUTING.md`](templates/CONTRIBUTING.md) | the contributor terms every repo points at: sign-off = DCO + licence grant. Copy it in, or link to it |
+| [`templates/CONTRIBUTING.md`](templates/CONTRIBUTING.md) | a pointer only: the terms live in `bitbaum/.github`, which GitHub shows on every repo's PR form. Do not copy them into a repo |
 
 ## The reusable auto-merge sweep
 
