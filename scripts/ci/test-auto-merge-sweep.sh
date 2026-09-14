@@ -49,7 +49,12 @@ run_sweep() {
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""
+  printf '{"author_association":"%s"}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  # Not `${RS_COMMITS:-{...}}`: the first `}` inside closes the expansion.
+  local commits="${RS_COMMITS:-}"
+  [ -n "$commits" ] || commits='{"commits":[]}'
+  printf '%s\n' "$commits" > "$dir/commits.json"
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -73,6 +78,9 @@ case "\$ARGS" in
   # ever prints. The MERGE loop parses it with real jq, so fixtures must be
   # well-formed JSON.
   "pr list"*)                       cat "$dir/prs.json" ;;
+  # The DCO gate: who opened the PR, and what its commits say.
+  "api repos/"*"/pulls/"*)          cat "$dir/assoc.txt" ;;
+  "pr view"*"--json commits"*)      cat "$dir/commits.json" ;;
   "pr view"*)                       cat "$dir/view.json" ;;
   "pr merge"*)                      echo "merged" ;;
   "api -X PUT"*"update-branch"*)    echo "updated" ;;
@@ -293,6 +301,56 @@ if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
     && ok 're-arms CI exactly once when no run for the new tip exists' \
     || no 're-arms CI exactly once when no run for the new tip exists'
 fi
+
+echo "auto-merge sweep — the contributor gate"
+
+signed()   { printf '{"oid":"%s","messageBody":"some work\\n\\nSigned-off-by: Ada Outsider <ada@example.org>"}' "$1"; }
+unsigned() { printf '{"oid":"%s","messageBody":"some work"}' "$1"; }
+
+# 19. An outside PR whose commit carries no sign-off is left alone, and the
+#     sweep says which commit, so the contributor knows what to add.
+if RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(unsigned aaaaaaaa11111111)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'without a Signed-off-by.*aaaaaaaa' \
+    && ok 'an outside PR without a sign-off is not merged, and the commit is named' \
+    || no 'an outside PR without a sign-off is not merged, and the commit is named'
+fi
+
+# 20. One signed commit does not cover an unsigned one: EVERY commit certifies.
+if RS_ASSOC=FIRST_TIME_CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed bbbbbbbb22222222),$(unsigned cccccccc33333333)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'cccccccc' && ! printf '%s' "$SWEEP_OUT" | grep -q 'bbbbbbbb' \
+    && ok 'a partly signed outside PR is held, naming only the unsigned commit' \
+    || no 'a partly signed outside PR is held, naming only the unsigned commit'
+fi
+
+# 21. Every commit signed off: the outside PR merges like any other.
+if RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(signed dddddddd44444444),$(signed eeeeeeee55555555)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] \
+    && ok 'an outside PR with every commit signed off merges' \
+    || no 'an outside PR with every commit signed off merges'
+fi
+
+# 22. A member's PR never needs a sign-off — agents commit under Cato's own
+#     identity with Co-Authored-By, and the copyright holder cannot certify
+#     to themself. Test 17 already merges a MEMBER PR; this one says so with
+#     an explicitly unsigned commit.
+if RS_ASSOC=MEMBER RS_COMMITS="{\"commits\":[$(unsigned ffffffff66666666)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] \
+    && ok 'a member PR merges without a sign-off' \
+    || no 'a member PR merges without a sign-off'
+fi
+
+# 23. REQUIRE_DCO=0 switches the gate off for a repo with its own terms.
+if REQUIRE_DCO=0 RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 9999999977777777)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] \
+    && ok 'REQUIRE_DCO=0 disables the gate' \
+    || no 'REQUIRE_DCO=0 disables the gate'
+fi
+
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
