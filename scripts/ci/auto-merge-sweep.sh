@@ -37,6 +37,8 @@
 #
 # THE POLICY
 #   merge a PR  <=>  it is not a draft
+#                    AND (its author is a member/owner/collaborator
+#                         OR every commit is Signed-off-by — the DCO gate)
 #                    AND carries no hold label
 #                    AND has at least one check
 #                    AND every check has finished green
@@ -375,6 +377,40 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
       done
     fi
     continue
+  fi
+
+  # ── the contributor gate ─────────────────────────────────────────────────
+  #
+  # This is the one place every repo's PRs pass through, so it is where the
+  # org's contributor terms are enforced: an OUTSIDE pull request merges only
+  # if every commit carries a Signed-off-by line, which under
+  # fleet/templates/CONTRIBUTING.md certifies the Developer Certificate of
+  # Origin AND the licence grant that keeps relicensing possible. Members,
+  # owners and collaborators are exempt — they are the copyright holder's
+  # own hands (agents commit under Cato's identity) and their commits carry
+  # Co-Authored-By, not Signed-off-by. A sign-off is a plain line in the
+  # message, so the check is text: no app, no per-repo workflow to roll out.
+  #
+  # Read only when the PR is otherwise ready, so it costs nothing on the
+  # skip path; REQUIRE_DCO=0 turns it off for a repo that has its own terms.
+  if [ "${REQUIRE_DCO:-1}" = "1" ]; then
+    # gh's JSON is filtered with real jq afterwards, like every other call
+    # here — the test fake returns payloads verbatim and ignores --jq.
+    association=$(gh api "repos/${REPO}/pulls/${number}" 2>/dev/null | jq -r '.author_association // "UNKNOWN"' 2>/dev/null || echo UNKNOWN)
+    case "$association" in
+      OWNER|MEMBER|COLLABORATOR) ;;
+      *)
+        commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
+        unsigned=$(printf '%s' "$commits_json" \
+          | jq -r '[.commits[] | select((.messageBody // "") | test("(^|\\n)Signed-off-by: .+ <.+@.+>") | not) | .oid[0:8]] | join(" ")')
+        if [ -n "$unsigned" ]; then
+          echo "[auto-merge] #${number} skip: outside PR (${association}) without a Signed-off-by on every commit (${unsigned}) — ${title}"
+          echo "- ✋ #${number} needs a DCO sign-off on ${unsigned} before it can merge — ${title}" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          continue
+        fi
+        echo "[auto-merge] #${number} outside PR (${association}), every commit signed off"
+        ;;
+    esac
   fi
 
   # Mergeability is computed lazily by GitHub and is invalidated every time the
