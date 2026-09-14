@@ -35,7 +35,8 @@ cat > "$TMP/bin/gh" <<'FAKE'
 case "$1 $2" in
   "repo list")
     if [[ "$*" == *isFork* && "$*" == *defaultBranchRef* ]]; then
-      printf 'pubkit\tPUBLIC\tmain\nsecret-thing\tPRIVATE\tmain\n'
+      printf 'pubkit\tPUBLIC\tmain\n'
+      [ -n "${FAKE_HIDE_PRIVATE:-}" ] || printf 'secret-thing\tPRIVATE\tmain\n'
     else
       printf 'pubkit\tPUBLIC\nsecret-thing\tPRIVATE\n'
     fi ;;
@@ -103,13 +104,28 @@ m2="$(ls "$TMP/proofs"/*.json | sort | tail -1)"
   && [ "$(jq -r '.previous.sha256' "$m2")" = "$(sha256sum "$m1" | cut -c1-64)" ] \
   && ok "the second manifest links to the first by name and sha256" || no "chain link wrong: $(jq '.previous' "$m2")"
 
+# ── the org shrank ─────────────────────────────────────────────────────────
+# A token that reads public repos only sees fewer repos — the manifest must
+# NOT be written, or the private repos silently drop out of the chain.
+echo "fourth run, the token sees one repo fewer"
+cp "$TMP/heads" "$TMP/heads.full"
+sed -i '/^secret-thing/d' "$TMP/heads"
+FAKE_HIDE_PRIVATE=1 out="$(FAKE_HIDE_PRIVATE=1 run --stamp)"; rc=$?
+[ $rc -ne 0 ] && grep -q "refusing: 1 repos now, 2" <<<"$out" && [ "$(ls "$TMP/proofs"/*.json | wc -l)" = "2" ] \
+  && ok "fewer repos than the last manifest is refused, nothing written" || no "shrink not refused (rc=$rc): $out"
+out="$(FAKE_HIDE_PRIVATE=1 ORIGIN_PROOF_ALLOW_SHRINK=1 run --stamp)"; rc=$?
+[ $rc -eq 0 ] && [ "$(ls "$TMP/proofs"/*.json | wc -l)" = "3" ] \
+  && ok "ORIGIN_PROOF_ALLOW_SHRINK=1 confirms a real deletion" || no "allow-shrink did not write (rc=$rc): $out"
+m3="$(ls "$TMP/proofs"/*.json | sort | tail -1)"
+cp "$TMP/heads.full" "$TMP/heads"
+
 # ── check ──────────────────────────────────────────────────────────────────
 echo "check"
 out="$(run --check)"; rc=$?
 [ $rc -eq 0 ] && grep -q "chain intact" <<<"$out" && ok "--check passes on an untouched chain" || no "check failed on clean chain: $out"
 
 out="$(run --upgrade)"
-grep -q "anchored in Bitcoin: 2, awaiting a block: 0" <<<"$out" \
+grep -q "anchored in Bitcoin: 3, awaiting a block: 0" <<<"$out" \
   && ok "--upgrade reports attestations and removes .bak files" || no "upgrade tally: $out"
 [ -z "$(ls "$TMP/proofs"/*.bak 2>/dev/null)" ] && ok "no .bak litter after upgrade" || no ".bak left behind"
 
@@ -120,7 +136,7 @@ out="$(run --check)"; rc=$?
 [ $rc -ne 0 ] && grep -q "proof is over" <<<"$out" && grep -q "previous link does not match" <<<"$out" \
   && ok "editing a stamped manifest fails its proof AND breaks the next link" || no "tamper not detected (rc=$rc): $out"
 
-rm "$m2.ots"
+rm "$m3.ots"
 out="$(run --check)"; rc=$?
 [ $rc -ne 0 ] && grep -q "has no .ots proof" <<<"$out" \
   && ok "a manifest without a proof is reported" || no "missing proof not detected: $out"

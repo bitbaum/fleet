@@ -40,10 +40,12 @@ jobs:
       - name: Stamp, archive, upgrade
         env:
           # The default token reads public repos only; private ones would be
-          # silently omitted from the manifest. The script prints how many repos
-          # it stamped — a drop in that number is the tell. FLEET_READ_TOKEN
-          # covers all of them.
-          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+          # silently omitted from the manifest. FLEET_PAT is the org PAT the
+          # auto-merge sweep already runs on, so it can see every repo. The
+          # script refuses to write a manifest that lists FEWER repos than the
+          # last one — a token that sees less is far likelier than repos
+          # vanishing, and a wrong manifest is in the chain forever.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
           # Optional. Lifts the Software Heritage save limit from 10/h to 1200/h.
           SWH_TOKEN: ${{ secrets.SWH_TOKEN }}
         run: |
