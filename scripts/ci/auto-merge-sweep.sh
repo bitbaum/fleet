@@ -383,8 +383,8 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
   #
   # This is the one place every repo's PRs pass through, so it is where the
   # org's contributor terms are enforced: an OUTSIDE pull request merges only
-  # if every commit carries a Signed-off-by line, which under
-  # fleet/templates/CONTRIBUTING.md certifies the Developer Certificate of
+  # if every commit carries a Signed-off-by line, which under the org-wide
+  # bitbaum/.github/CONTRIBUTING.md certifies the Developer Certificate of
   # Origin AND the licence grant that keeps relicensing possible. Members,
   # owners and collaborators are exempt — they are the copyright holder's
   # own hands (agents commit under Cato's identity) and their commits carry
