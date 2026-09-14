@@ -174,7 +174,11 @@ stamp() {
       exit 1
     fi
   fi
+  # Names are second-resolution and the chain is ordered by name, so a second
+  # stamp within the same second must wait rather than overwrite the first —
+  # CI's runner did exactly that on 2026-09-14 and broke its own chain link.
   local out="$PROOF_DIR/$(date -u +%Y-%m-%dT%H%M%SZ).json"
+  while [ -e "$out" ]; do sleep 1; out="$PROOF_DIR/$(date -u +%Y-%m-%dT%H%M%SZ).json"; done
   mv "$candidate" "$out"
   chmod 644 "$out" # mktemp made it 0600; this is a public record
   ots stamp "$out" >/dev/null
