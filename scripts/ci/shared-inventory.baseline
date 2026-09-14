@@ -3,9 +3,9 @@ rate-limit	9	13
 email-send	6	7
 logger	5	6
 api-envelope	3	3
-health-route	12	12
+health-route	13	13
 slug-util	4	4
 date-utils	4	5
-ai-provider-client	7	17
+ai-provider-client	8	19
 messaging-threads	2	3
 list-query	2	5
