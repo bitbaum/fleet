@@ -13,6 +13,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 |---|---|
 | [`SHARED.md`](SHARED.md) | the shared-package registry and the duplication ratchet — **read before building anything cross-cutting** |
 | [`STACK.md`](STACK.md) | the blessed technology per job — ONE ORM, ONE test runner, ONE auth stack; deviations are documented exceptions, not habits |
+| [`registers/origin.json`](registers/origin.json) | derived nightly: for every public repo, GitHub's first commit, the OpenTimestamps manifest and Bitcoin block it is proven in, and its Software Heritage snapshot. What bitbaum.orangecat.ch says about origin comes from here. |
 | [`registers/org.json`](registers/org.json) | machine-readable register of org facts — agents read this, not READMEs. A new claim is a register row or it does not ship. |
 | `scripts/ci/auto-merge-sweep.sh` | the canonical merge policy; the fleet calls it via the reusable workflow below. Includes the contributor gate: an outside PR merges only when every commit is `Signed-off-by`, certifying [`templates/CONTRIBUTING.md`](templates/CONTRIBUTING.md) — the DCO plus the licence grant that keeps relicensing possible |
 | `scripts/ci/model-pin-audit.mjs` | runs daily: is any model id the fleet pins still served by its vendor? |
