@@ -96,7 +96,6 @@ out="$(run --stamp)"
 # ── a HEAD moved ───────────────────────────────────────────────────────────
 echo "third run, one HEAD moved"
 sed -i 's/^pubkit\t.*/pubkit\t3333333333333333333333333333333333333333/' "$TMP/heads"
-sleep 1 # filenames are second-resolution
 out="$(run --stamp)"
 m2="$(ls "$TMP/proofs"/*.json | sort | tail -1)"
 [ "$m2" != "$m1" ] && ok "a moved HEAD produces a second manifest" || no "no second manifest: $out"
@@ -113,9 +112,12 @@ sed -i '/^secret-thing/d' "$TMP/heads"
 FAKE_HIDE_PRIVATE=1 out="$(FAKE_HIDE_PRIVATE=1 run --stamp)"; rc=$?
 [ $rc -ne 0 ] && grep -q "refusing: 1 repos now, 2" <<<"$out" && [ "$(ls "$TMP/proofs"/*.json | wc -l)" = "2" ] \
   && ok "fewer repos than the last manifest is refused, nothing written" || no "shrink not refused (rc=$rc): $out"
+# No sleep before this one on purpose: it can land in the same second as the
+# previous manifest, and the script must pick a distinct, later name rather
+# than overwrite it (which is what happened on CI's faster runner).
 out="$(FAKE_HIDE_PRIVATE=1 ORIGIN_PROOF_ALLOW_SHRINK=1 run --stamp)"; rc=$?
 [ $rc -eq 0 ] && [ "$(ls "$TMP/proofs"/*.json | wc -l)" = "3" ] \
-  && ok "ORIGIN_PROOF_ALLOW_SHRINK=1 confirms a real deletion" || no "allow-shrink did not write (rc=$rc): $out"
+  && ok "ORIGIN_PROOF_ALLOW_SHRINK=1 confirms a real deletion, under a distinct name" || no "allow-shrink did not write (rc=$rc): $out"
 m3="$(ls "$TMP/proofs"/*.json | sort | tail -1)"
 cp "$TMP/heads.full" "$TMP/heads"
 
