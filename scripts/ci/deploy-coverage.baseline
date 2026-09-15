@@ -1,0 +1,35 @@
+# Every repo in the org that ships to the box, one per line.
+#
+# This is a RATCHET, not documentation. deploy-freshness-audit.mjs compares its
+# survey against this list and fails --check when a baselined repo was not
+# surveyed AT ALL, because a repo the running token cannot see is absent from
+# `gh repo list` in exactly the same way as a repo that does not exist — and the
+# audit will otherwise print "✓ every deploying repo has its main tip live"
+# having never looked at it. That happened: annushka is PRIVATE, CI's token
+# could not enumerate it, and a clean CI run covered 20 of 21 repos.
+#
+# Coverage may RISE: when a repo starts deploying, the audit prints it as an
+# addition and you add the line. A FALL is a finding. If a repo is genuinely
+# retired, remove its line in the same PR that retires it, so a human sees the
+# decision instead of the gate quietly getting smaller.
+annushka
+aoz-housing
+botsmann
+camille-boulangerie
+causius
+datacat
+diplodoctor
+evig
+heidi
+hirnli
+kivvi
+loki
+petvity
+printcraft
+reparaturbonus-zh
+s-ink
+sbb-fundbuero
+solon
+substrata
+surf-your-life
+vitareba
