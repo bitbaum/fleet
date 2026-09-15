@@ -48,7 +48,7 @@ function check(name, actual, expected) {
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
-/** aoz-housing/src/lib/env.ts as it stood when both AI surfaces went down. */
+/** aoz-begleitung/src/lib/env.ts as it stood when both AI surfaces went down. */
 const AOZ_BROKEN = `
 import { z } from 'zod'
 
@@ -67,7 +67,7 @@ const schema = z.object({
 /** The same file after the fix. Must produce no findings at all. */
 const AOZ_FIXED = AOZ_BROKEN.replace("llama-3.3-70b-versatile", "openai/gpt-oss-120b");
 
-/** aoz-housing/src/lib/ai/provider.ts — one module, BOTH vendors named. */
+/** aoz-begleitung/src/lib/ai/provider.ts — one module, BOTH vendors named. */
 const TWO_VENDOR_FILE = `
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
@@ -164,7 +164,7 @@ const GROQ_LIVE = new Set(["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qw
 const OR_LIVE = new Set(["openai/gpt-oss-20b:free"]);
 
 {
-  const findings = findingsFrom("aoz-housing", "src/lib/env.ts", AOZ_BROKEN);
+  const findings = findingsFrom("aoz-begleitung", "src/lib/env.ts", AOZ_BROKEN);
   const live = new Map([["groq", GROQ_LIVE], ["openrouter", OR_LIVE]]);
   const judged = judge(findings, live);
 
@@ -183,7 +183,7 @@ const OR_LIVE = new Set(["openai/gpt-oss-20b:free"]);
 {
   // The negative that matters most: correct code must produce a silent report,
   // or the audit trains people to ignore it.
-  const findings = findingsFrom("aoz-housing", "src/lib/env.ts", AOZ_FIXED);
+  const findings = findingsFrom("aoz-begleitung", "src/lib/env.ts", AOZ_FIXED);
   const live = new Map([["groq", GROQ_LIVE], ["openrouter", OR_LIVE]]);
   const judged = judge(findings, live);
   check("the FIXED file reports nothing retired", judged.filter((j) => j.state === "gone"), []);
@@ -193,7 +193,7 @@ const OR_LIVE = new Set(["openai/gpt-oss-20b:free"]);
 {
   // An unreadable catalogue must never read as rot. This is the guard against
   // a missing key printing a fleet-wide outage that somebody then acts on.
-  const findings = findingsFrom("aoz-housing", "src/lib/env.ts", AOZ_BROKEN);
+  const findings = findingsFrom("aoz-begleitung", "src/lib/env.ts", AOZ_BROKEN);
   const live = new Map([["groq", null], ["openrouter", null]]);
   const judged = judge(findings, live);
   check("no key => UNCHECKED, never GONE", judged.filter((j) => j.state === "gone"), []);

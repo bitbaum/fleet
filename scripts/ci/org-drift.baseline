@@ -23,7 +23,7 @@ crewless/README.md  # door disagreement from before apps.conf check existed
 #       repo still names a real transport company on a demo unconnected to it.
 #   evig/{CLAUDE,AGENTS}.md                  revampit.orangecat.ch -> evig.orangecat.ch
 #   hirnli/CLAUDE.md                         revampit.orangecat.ch -> evig.orangecat.ch
-#   aoz-housing/CLAUDE.md                    aoz-wohnen.orangecat.ch -> aoz.orangecat.ch
+#   aoz-begleitung/CLAUDE.md                    aoz-wohnen.orangecat.ch -> aoz.orangecat.ch
 #
 # An earlier attempt baselined 51 files, generated with USE_LOCAL=1. That was
 # wrong: the local sweep greps every docs/*.md in local checkouts, while the

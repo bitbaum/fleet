@@ -204,7 +204,7 @@ else
   # base quietly collecting more of them and getting harder to diagnose. But
   # when the PR *is* the repair, the same rule deadlocks the repo — the fix
   # cannot travel the path its own redness blocks, and only a human can move
-  # it. Seen in bitbaum/aoz-housing on 2026-08-07: E2E red on the base, the
+  # it. Seen in bitbaum/aoz-begleitung on 2026-08-07: E2E red on the base, the
   # fix sitting green in a PR, every sweep refusing politely.
   #
   # So identify WHICH jobs are red and let a PR through only if its own checks

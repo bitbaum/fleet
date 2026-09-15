@@ -90,7 +90,7 @@ has(gapsFor(complete({ urls: { ...complete().urls, solon: null } })), "no solon 
 
 console.log("\nwork owned by someone else is not ours to decide");
 
-const theirs = complete({ slug: "aoz-housing", owner: "AOZ", urls: { ...complete().urls, orangecat: null, solon: null } });
+const theirs = complete({ slug: "aoz-begleitung", owner: "AOZ", urls: { ...complete().urls, orangecat: null, solon: null } });
 is(gapsFor(theirs).length, 0, "someone else's product owes us no OrangeCat profile and no Solon org");
 has(gapsFor({ ...theirs, what: null }), "no what", "but it still owes a description — that is its own field");
 is(gapsFor(complete({ owner: undefined })).length, 0, "an absent owner defaults to ours, not to exempt");

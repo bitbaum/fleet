@@ -13,7 +13,7 @@
 # retired, remove its line in the same PR that retires it, so a human sees the
 # decision instead of the gate quietly getting smaller.
 annushka
-aoz-housing
+aoz-begleitung
 botsmann
 camille-boulangerie
 causius

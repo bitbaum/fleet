@@ -21,7 +21,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). loki runner & ivy-portal: better-sqlite3 for embedded local state. |
 | Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | loki runner/ivy: SQLite embedded |
 | Auth — **who the user is** | **Federate to OrangeCat** (OIDC, `openid profile email`). The app keeps NO users table. See "Identity" below. | orangecat itself IS the identity provider. Client-owned apps never federate — their users belong to the client. |
-| Auth — **client-owned apps** | **`better-auth` 1.x** + Drizzle/Postgres, magic link via `@bitbaum/mail-kit` | aoz-housing (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) — all pre-date the decision; migrate on contact, not on a schedule |
+| Auth — **client-owned apps** | **`better-auth` 1.x** + Drizzle/Postgres, magic link via `@bitbaum/mail-kit` | aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) — all pre-date the decision; migrate on contact, not on a schedule |
 | Test runner (apps) | Vitest | loki: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
@@ -58,7 +58,7 @@ Heidi's provider config verbatim: OrangeCat's token endpoint accepts ONLY
 rejects with a 400 reading "client_id is required"), and PKCE is required even
 for confidential clients. Both cost a debugging cycle the first time.
 
-**2. Client-owned apps never federate.** aoz-housing's residents belong to AOZ,
+**2. Client-owned apps never federate.** aoz-begleitung's residents belong to AOZ,
 not to us. Those apps keep local auth, and the blessed library for new local
 auth is **better-auth 1.x**.
 
@@ -98,12 +98,12 @@ Every migration this file opened with has landed, deployed, and been
 live-verified:
 
 - **ORM — Drizzle everywhere**: biaslens #26, reparaturbonus-zh #130,
-  solon #136, aoz-housing #154. Schema parity proven per repo by normalized
+  solon #136, aoz-begleitung #154. Schema parity proven per repo by normalized
   pg_dump diff (aoz: byte-empty over ~1500 DDL lines); live-DB cutovers via
   pre-merge dual-ledger baselining, zero destructive statements, row counts
   accounted for. `grep -rni prisma` clean in all four.
 - **Test runner — Vitest for every app**: orangecat #859, evig #429 (a
-  parallel session's conversion, verified at identical parity), aoz-housing
+  parallel session's conversion, verified at identical parity), aoz-begleitung
   #157 (+#159 lockfile). Every conversion at exact suite parity; jest
   deleted everywhere.
 - **Deploy fallback**: the shared selfhost-deploy .nvmrc fallback tracks
@@ -123,7 +123,7 @@ measured against `origin/main` of every repo by real import statements
   one.
 - The weakest link is the same everywhere: **9 of the 12 cannot tell the
   three kinds of 429 apart**, and 6 return an empty HTTP 200 to a user
-  as though it were an answer (`content || ''`). Only aoz-housing and
+  as though it were an answer (`content || ''`). Only aoz-begleitung and
   loki get all three judgements right, and both do it by calling
   into ai-kit.
 - Highest-value conversions, ranked by how many of the three they get

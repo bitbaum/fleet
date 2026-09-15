@@ -157,7 +157,7 @@ export function readBaseline(path = BASELINE_PATH) {
  * This audit makes dozens of sequential API calls and the network is not
  * reliable: a single `unexpected EOF` used to be swallowed into an empty run
  * list, which the verdict then read as "no successful Deploy run on record" —
- * a COULD-NOT-LOOK reported as a fact about the repo. loki and aoz-housing were
+ * a COULD-NOT-LOOK reported as a fact about the repo. loki and aoz-begleitung were
  * both flagged that way while having 2 and 9 successful deploys respectively.
  */
 export function gh(args, { attempts = 3 } = {}) {
@@ -244,7 +244,7 @@ export function reposWithDeploy(owner, limit) {
 
   const out = [];
   for (const r of all) {
-    // The default branch is per-repo: aoz-housing and sbb-fundbuero are on
+    // The default branch is per-repo: aoz-begleitung and sbb-fundbuero are on
     // `master`. Hardcoding `main` asked for runs on a branch that does not
     // exist there, got none back, and reported both as never deployed.
     const branch = r.defaultBranchRef?.name || "main";
@@ -278,7 +278,7 @@ export function tipOf(owner, repo, branch) {
  * The first version read `actions/runs?per_page=40` and filtered by name. On a
  * busy repo that window is entirely CI and auto-merge runs, so a perfectly
  * healthy Deploy from two days ago falls off the end and the repo reports
- * "no successful Deploy run on record". Measured immediately: aoz-housing was
+ * "no successful Deploy run on record". Measured immediately: aoz-begleitung was
  * flagged UNKNOWN while its newest Deploy was green.
  *
  * A window is not an absence. Scoping the query to each deploy workflow's own

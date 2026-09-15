@@ -29,7 +29,7 @@ to be in disguise.
 
 Measured instances that motivated this (2026-08-15/16):
 
-  aoz-housing  E2E Tests            waited on build    +231s  serves its own app
+  aoz-begleitung  E2E Tests            waited on build    +231s  serves its own app
   evig         Local E2E Journeys   waited on quality  +373s  self-contained
   evig         Inventory Smoke      waited on quality  +435s  tests LIVE prod
   evig         Auth Smoke Test      waited on quality  +434s  tests LIVE prod
@@ -53,7 +53,7 @@ TWO TRAPS, both paid for in the instances above:
     became the new critical path the instant it cleared. Re-run this audit
     AFTER every scheduling fix.
 
-  * The obvious knob is rarely the big one. In aoz-housing the eye-catching
+  * The obvious knob is rarely the big one. In aoz-begleitung the eye-catching
     defect was `workers: process.env.CI ? 1 : undefined` (the stock
     `npm init playwright` scaffold, which makes `fullyParallel: true` a no-op).
     Raising it bought 494s -> 346s — worth less than deleting one `needs:`,
