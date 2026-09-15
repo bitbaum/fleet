@@ -84,6 +84,14 @@
       "since": "2026-09-11",
       "why": "The clinic's own brand config is Vita GmbH / Vita and its live title agrees. VitaReBa survived on GitHub and the studio page — the surfaces nobody regenerates.",
       "verified": "vitareba/lib/config/company.ts name 'Vita GmbH' shortName 'Vita'; live <title> 'Vita · Metabolische Psychiatrie …'"
+    },
+    {
+      "kind": "name",
+      "from": "mao@orangecat.ch",
+      "to": "cato@orangecat.ch",
+      "since": "2026-09-15",
+      "why": "It was never a mailbox. The orangecat.ch mail service held 0 of 1 addresses — 'You don't have an address yet on orangecat.ch' — so every security report, licensing enquiry and privacy request sent to it bounced, silently, for as long as it was published. cato@orangecat.ch exists and matches the public name.",
+      "verified": "Infomaniak mail service 849950 listed 1/1 addresses after creation: cato@orangecat.ch, access Georg Butaev (2026-09-15)"
     }
   ]
 }
