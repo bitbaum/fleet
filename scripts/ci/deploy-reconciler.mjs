@@ -64,6 +64,13 @@ import {
  */
 export const MAX_DISPATCHES = 5;
 
+/**
+ * How many CI re-runs one tick may start. Lower than the deploy cap on purpose:
+ * a predicate bug here would re-run CI across the org every half hour forever,
+ * and unlike a stalled deploy nothing about that is self-limiting.
+ */
+export const MAX_RERUNS = 3;
+
 export const ACTION = {
   DISPATCH: "dispatch",
   SKIP: "skip",
@@ -108,6 +115,37 @@ export function shouldDispatch({ state, ci, deployInFlight }) {
 }
 
 /**
+ * Should this repo's CI be re-run?
+ *
+ * The case: a tip is STALE and has NO green CI run at all, because concurrency
+ * cancelled every run it had. Observed on loki 2026-09-15 — two cancelled CI
+ * runs, and therefore SIX Deploy runs that all `skipped`, because the chained
+ * trigger requires `workflow_run.conclusion == 'success'`. The tip sat
+ * unshipped for over two hours and would have sat there indefinitely: nothing
+ * in the fleet re-runs a cancelled CI, so the green run the chain waits for
+ * could never appear.
+ *
+ * shouldDispatch deliberately refuses to deploy this, and that refusal is
+ * right — shipping an unverified tip to clear a stalled deploy turns a stall
+ * into a bad release. But refusing is not repairing, and a reconciler that only
+ * ever declines leaves the repo exactly as stuck as it found it.
+ *
+ * Re-running CI is the remedy that matches the fault, and it is a categorically
+ * cheaper action than deploying: it publishes nothing, changes nothing on the
+ * box, and is idempotent. If it goes green the ordinary chain ships the tip; if
+ * it goes red, the tip SHOULD be stuck and now says so out loud.
+ */
+export function needsCiRerun({ state, ci, ciInFlight }) {
+  if (state !== FRESHNESS.STALE) return { rerun: false, reason: `not stale (${state})` };
+  // Only the no-green-run case. A RED tip is not repaired by running it again —
+  // that is a broken build, and re-running it in a loop is how a reconciler
+  // becomes a CI amplifier.
+  if (ci !== "none") return { rerun: false, reason: `CI verdict is ${ci}, not a missing green run` };
+  if (ciInFlight) return { rerun: false, reason: "a CI run is already in flight" };
+  return { rerun: true, reason: "no green CI run exists for the tip — re-running CI, not deploying" };
+}
+
+/**
  * Collapse a commit's check runs into one verdict.
  *
  * "No completed run" and "a completed run that failed" are different answers
@@ -144,6 +182,75 @@ function deployInFlight(runs) {
   return (runs ?? []).some((r) => r.status !== "completed");
 }
 
+/**
+ * Ask again before shipping.
+ *
+ * Observed 2026-09-15: two dry runs twenty-five minutes apart disagreed about
+ * datacat. The second called it STALE and would have dispatched a deploy; the
+ * same code path, re-run immediately afterwards against the same unchanged tip,
+ * said DEPLOYED — and the tip did have a successful Deploy run for its exact
+ * SHA, from 05:22 that morning. Nothing about the repo changed between the
+ * three reads.
+ *
+ * The likeliest mechanism is the one behind every other bug in this pair of
+ * files: `actions/workflows/{file}/runs` is eventually consistent, and a reply
+ * from a lagging replica that omits the newest run is indistinguishable from a
+ * repo that never deployed. A window is not an absence; neither is a stale
+ * replica.
+ *
+ * A wrong STALE costs a redundant deploy of a repo that is already live, which
+ * on a client site is a real production event triggered by a phantom. So the
+ * verdict has to survive being asked twice. Two reads is not a proof — a
+ * replica can lag twice — but it converts a common transient into a rare one,
+ * and the cost of asking is one API call per repo actually being shipped.
+ */
+export function confirmedStale(owner, repo, branch, deployFiles, now) {
+  try {
+    const runs = deployRunsOf(owner, repo, deployFiles, branch);
+    const tip = tipOf(owner, repo, branch);
+    const { state } = deployFreshness({
+      tipSha: tip.sha, tipCommittedAt: tip.committedAt, deployRuns: runs, now,
+    });
+    return { ok: state === FRESHNESS.STALE, state };
+  } catch (e) {
+    // Could not re-read. That is not a confirmation, so it is not a deploy.
+    return { ok: false, state: `re-check failed: ${String(e.message).split("\n")[0].slice(0, 60)}` };
+  }
+}
+
+/**
+ * The repo's CI workflow file.
+ *
+ * Not assumed to be `ci.yml`. The sweep takes it as a per-repo input precisely
+ * because it varies, and a hardcoded name would silently re-run nothing in the
+ * repos that spell it differently — the same shape as hardcoding `main` as the
+ * default branch, which reported two repos as never deployed.
+ */
+function ciWorkflowOf(owner, repo) {
+  try {
+    const files = JSON.parse(
+      gh(["api", `repos/${owner}/${repo}/contents/.github/workflows`, "--jq", "[.[].name]"]),
+    ).filter((f) => /\.ya?ml$/.test(f));
+    // Prefer a file literally named ci, then one whose `name:` is CI.
+    const exact = files.find((f) => /^ci\.ya?ml$/i.test(f));
+    if (exact) return exact;
+    for (const f of files) {
+      try {
+        const body = Buffer.from(
+          JSON.parse(gh(["api", `repos/${owner}/${repo}/contents/.github/workflows/${f}`, "--jq", "{c: .content}"])).c,
+          "base64",
+        ).toString("utf8");
+        if (/^name:\s*["']?CI["']?\s*$/m.test(body)) return f;
+      } catch { /* unreadable candidate, try the next */ }
+    }
+  } catch { /* no workflows directory */ }
+  return null;
+}
+
+function ciInFlightFor(checkRuns) {
+  return (checkRuns ?? []).some((r) => r.status !== "completed");
+}
+
 function dispatch(owner, repo, workflowFile, branch) {
   execFileSync("gh", ["workflow", "run", workflowFile, "--repo", `${owner}/${repo}`, "--ref", branch], {
     encoding: "utf8", timeout: 60000,
@@ -173,9 +280,14 @@ function main() {
       });
 
       // Only pay for the check-runs call where it can change the answer.
-      const ci = state === FRESHNESS.STALE ? ciVerdict(checkRunsFor(owner, repo, tip.sha)) : "green";
+      const checks = state === FRESHNESS.STALE ? checkRunsFor(owner, repo, tip.sha) : null;
+      const ci = state === FRESHNESS.STALE ? ciVerdict(checks) : "green";
       const d = shouldDispatch({ state, ci, deployInFlight: deployInFlight(runs) });
-      decisions.push({ repo, branch, tip: tip.sha.slice(0, 7), file: deployFiles[0], state, ci, ...d });
+      const r = needsCiRerun({ state, ci, ciInFlight: ciInFlightFor(checks) });
+      decisions.push({
+        repo, branch, tip: tip.sha.slice(0, 7), file: deployFiles[0], files: deployFiles,
+        state, ci, rerun: r.rerun, rerunReason: r.reason, ...d,
+      });
     } catch (e) {
       decisions.push({
         repo, branch, tip: "?", state: FRESHNESS.UNKNOWN, ci: "none", action: ACTION.SKIP,
@@ -196,6 +308,36 @@ function main() {
     for (const d of stuck) console.log(`      ${d.repo.padEnd(22)} ${d.reason}`);
   }
 
+  // Repairs that are not deploys. Done BEFORE the deploy block returns early,
+  // or a fleet with nothing to ship would never re-run anything.
+  const reruns = decisions.filter((d) => d.rerun);
+  if (reruns.length > MAX_RERUNS) {
+    console.error();
+    console.error(`✗ ${reruns.length} repos want a CI re-run, over the cap of ${MAX_RERUNS}. Re-running NONE.`);
+    for (const d of reruns) console.error(`      ${d.repo} ${d.tip}`);
+    process.exitCode = 1;
+  } else if (reruns.length) {
+    console.log();
+    for (const d of reruns) {
+      const file = ciWorkflowOf(owner, d.repo);
+      if (!file) {
+        console.log(`  ? no CI workflow  ${d.repo.padEnd(22)} cannot re-run what cannot be found`);
+        continue;
+      }
+      if (!go) {
+        console.log(`  would re-run CI ${d.repo.padEnd(22)} ${file} @ ${d.branch} (${d.tip})`);
+        continue;
+      }
+      try {
+        dispatch(owner, d.repo, file, d.branch);
+        console.log(`  ✓ re-ran CI     ${d.repo.padEnd(22)} ${file} @ ${d.branch} (${d.tip})`);
+      } catch (e) {
+        console.error(`  ✗ RERUN FAILED  ${d.repo.padEnd(22)} ${String(e.message).split("\n")[0].slice(0, 80)}`);
+        process.exitCode = 1;
+      }
+    }
+  }
+
   if (wanted.length === 0) {
     console.log();
     console.log("✓ nothing to reconcile — every deploying repo's tip is live or in flight.");
@@ -213,6 +355,12 @@ function main() {
 
   console.log();
   for (const d of wanted) {
+    // Ask again, immediately before acting. See confirmedStale.
+    const again = confirmedStale(owner, d.repo, d.branch, d.files, new Date().toISOString());
+    if (!again.ok) {
+      console.log(`  ~ not confirmed ${d.repo.padEnd(22)} first read said stale, second said ${again.state} — NOT shipping`);
+      continue;
+    }
     if (!go) {
       console.log(`  would dispatch  ${d.repo.padEnd(22)} ${d.file} @ ${d.branch} (${d.tip})`);
       continue;
