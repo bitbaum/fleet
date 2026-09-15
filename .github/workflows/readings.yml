@@ -1,0 +1,46 @@
+# The numbers the bet rests on, read nightly from sources that are not us.
+#
+# stars and forks from GitHub, npm downloads per shared package, paying
+# clients and CHF/month from loki's apps.conf, originator share routed by
+# Solon. All of them are near zero today and that is the point: a belief with
+# a reading can be wrong in public, which is the only way it gets to be right.
+# history[] gains a row when a reading changes, so a flat month is one row and
+# one commit — never thirty.
+name: Readings
+
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readings
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Take the readings
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/readings.mjs --emit registers/readings.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit when a reading changed
+        run: |
+          set -euo pipefail
+          git add registers/readings.json
+          if git diff --cached --quiet; then
+            echo "no reading changed"
+            exit 0
+          fi
+          git config user.name  "fleet-bot"
+          git config user.email "noreply@bitbaum.invalid"
+          git commit -m "chore(registers): readings $(date -u +%F)"
+          git push

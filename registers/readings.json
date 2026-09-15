@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-09-15T04:45:58.996Z",
+  "org": "bitbaum",
+  "current": {
+    "date": "2026-09-15",
+    "stars": 2,
+    "forks": 1,
+    "downloads": {
+      "lastMonth": 6812,
+      "byPackage": {
+        "@bitbaum/ai-kit": 2233,
+        "@bitbaum/mail-kit": 654,
+        "bip-kit": 953,
+        "ai-forms": 1959,
+        "limitkit": 254,
+        "threadkit": 403,
+        "@bitbaum/design-tokens": 192,
+        "@bitbaum/sitekit": 164
+      }
+    },
+    "clients": {
+      "live": 11,
+      "products": 7,
+      "clients": 4,
+      "paying": 0,
+      "favours": 4,
+      "unknown": 0,
+      "mrrChf": 0
+    },
+    "originatorShare": {
+      "paid": 0,
+      "currency": "BTC",
+      "source": "solon originator_share policy: no ledger yet"
+    }
+  },
+  "history": [
+    {
+      "date": "2026-09-15",
+      "stars": 2,
+      "forks": 1,
+      "downloads": 6812,
+      "payingClients": 0,
+      "mrrChf": 0,
+      "originatorSharePaid": 0
+    }
+  ],
+  "_notes": [
+    "Every number is read from a source that is not us; nobody types a reading, and zero is a reading.",
+    "stars and forks are summed over the org's non-fork repositories. downloads are npm's last-30-day counts per shared package and include our own CI installs.",
+    "clients come from loki's scripts/hetzner/apps.conf over live rows whose owner is not us: paying has a price, favours are recorded as favour|0, unknown is '-'. mrrChf sums the prices. products counts our own live apps.",
+    "originatorShare is what the Solon originator_share policy has routed to originators; until a ledger exists it is 0 by source, not by omission.",
+    "history gains a row when any reading changes, so the series reads as steps; a flat month is one row.",
+    "Derived by fleet/scripts/ci/readings.mjs."
+  ]
+}
