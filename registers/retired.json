@@ -92,6 +92,14 @@
       "since": "2026-09-15",
       "why": "It was never a mailbox. The orangecat.ch mail service held 0 of 1 addresses — 'You don't have an address yet on orangecat.ch' — so every security report, licensing enquiry and privacy request sent to it bounced, silently, for as long as it was published. cato@orangecat.ch exists and matches the public name.",
       "verified": "Infomaniak mail service 849950 listed 1/1 addresses after creation: cato@orangecat.ch, access Georg Butaev (2026-09-15)"
+    },
+    {
+      "kind": "repo",
+      "from": "aoz-housing",
+      "to": "aoz-begleitung",
+      "since": "2026-09-15",
+      "why": "The last place the product was still called Housing. The name row below retired 'AOZ Housing' as the PRODUCT name on 2026-09-10, but the repo kept it, and the repo is public — so the retired name stayed on the org page, in every clone URL and in ~40 references across the fleet. The deploy name `aoz-wohnen` is deliberately NOT renamed with it: it is an infrastructure identifier (systemd unit, /opt path, database), nothing keys on the repo name, and moving it would touch a live site for no visible gain.",
+      "verified": "gh repo view bitbaum/aoz-begleitung returns the repo and bitbaum/aoz-housing redirects to it; https://aoz.orangecat.ch still 200 and aoz-wohnen-app active across the rename."
     }
   ]
 }
