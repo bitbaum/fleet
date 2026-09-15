@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T08:38:29.974Z",
+  "generatedAt": "2026-09-15T12:31:42.056Z",
   "org": "bitbaum",
   "proofs": {
     "manifests": 5,
@@ -74,7 +74,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 58,
+      "commits": 60,
       "stamped": {
         "head": "982b26f9095b956fda3dc8092d6daa44680fa9da",
         "at": "2026-09-15T08:37:46Z",
@@ -194,7 +194,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 33,
+      "commits": 36,
       "stamped": {
         "head": "29f45c1e09994cc60890fb07f2a7f846b9029729",
         "at": "2026-09-15T08:37:46Z",
@@ -238,8 +238,8 @@
         "manifest": "2026-09-14T014651Z.json"
       },
       "swh": {
-        "snapshot": "swh:1:snp:3983d4923ec9a3d85093842e31c5b3a2472802b6",
-        "date": "2026-09-14T01:47:03.826000+00:00",
+        "snapshot": "swh:1:snp:09fdeec7a485cd3229d0584628b28311b369a5a5",
+        "date": "2026-09-15T08:42:35.069000+00:00",
         "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbotsmann"
       }
     },
@@ -269,7 +269,7 @@
       },
       "swh": {
         "snapshot": "swh:1:snp:2429355cf3e635c76373a3b45232f016a712f40d",
-        "date": "2026-09-14T12:03:07.931000+00:00",
+        "date": "2026-09-15T08:43:15.134000+00:00",
         "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbotsmann-blog-content"
       }
     },
@@ -299,7 +299,7 @@
       },
       "swh": {
         "snapshot": "swh:1:snp:bf8f0376d63d6ab3df21e1b410aae91d64f1aada",
-        "date": "2026-09-14T01:47:03.825000+00:00",
+        "date": "2026-09-15T10:15:53.950000+00:00",
         "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fbotsmann-knowledge-content"
       }
     },
@@ -552,7 +552,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 83,
+      "commits": 96,
       "stamped": {
         "head": "6b364ef561ea95c6f96d68e7221db645bd0fe800",
         "at": "2026-09-15T08:37:46Z",
@@ -598,36 +598,6 @@
       "swh": null
     },
     {
-      "repo": "bitbaum/hamstercheek",
-      "url": "https://github.com/bitbaum/hamstercheek",
-      "description": "Weatherproof box + web app for storing valuables outside homes and banks. Drop a pin, add a note and photo, always know where a stash is.",
-      "createdAt": "2026-08-04T15:05:08Z",
-      "firstCommit": {
-        "sha": "9161ab99beae48f07dc7d4bab5a092d491b9a84f",
-        "date": "2026-08-04T15:05:09Z",
-        "author": "catomean",
-        "originator": "Cato"
-      },
-      "commits": 28,
-      "stamped": {
-        "head": "b04f31a91c832108f1154b6514240b8744253f64",
-        "at": "2026-09-15T08:37:46Z",
-        "manifest": "2026-09-15T083746Z.json",
-        "anchored": null
-      },
-      "firstStampedAt": "2026-09-14T01:46:51Z",
-      "provenSince": {
-        "at": "2026-09-14T01:46:51Z",
-        "block": 966918,
-        "manifest": "2026-09-14T014651Z.json"
-      },
-      "swh": {
-        "snapshot": "swh:1:snp:6c5cba7173a20c6b771f4fc899915bb87875c405",
-        "date": "2026-09-14T12:03:08.387000+00:00",
-        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fhamstercheek"
-      }
-    },
-    {
       "repo": "bitbaum/heidi",
       "url": "https://github.com/bitbaum/heidi",
       "description": "For people who already know some German and still understand nothing a Zurich local says — Züridütsch, taught from real speech.",
@@ -638,7 +608,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 45,
+      "commits": 52,
       "stamped": {
         "head": "1b2697469c767f479ba6f4837b393ed0eef8e2e1",
         "at": "2026-09-15T08:37:46Z",
@@ -694,7 +664,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 977,
+      "commits": 978,
       "stamped": {
         "head": "c5700392ab7a9ff394287e400d874bc92bc70804",
         "at": "2026-09-15T08:37:46Z",
@@ -811,7 +781,11 @@
         "block": 966918,
         "manifest": "2026-09-14T014651Z.json"
       },
-      "swh": null
+      "swh": {
+        "snapshot": "swh:1:snp:4895e5e84032359a45200d5dd8a719af927ecd92",
+        "date": "2026-09-15T10:15:54.886000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Flistkit"
+      }
     },
     {
       "repo": "bitbaum/loki",
@@ -824,7 +798,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 2566,
+      "commits": 2574,
       "stamped": {
         "head": "aa287aa2cf8c81703243bca555e93ecb5d737d69",
         "at": "2026-09-15T08:37:46Z",
@@ -910,7 +884,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 2920,
+      "commits": 2930,
       "stamped": {
         "head": "0a2f042056d0c6dcabf3b5af707182a6273b3c1c",
         "at": "2026-09-15T08:37:46Z",
@@ -923,7 +897,11 @@
         "block": 966918,
         "manifest": "2026-09-14T014651Z.json"
       },
-      "swh": null
+      "swh": {
+        "snapshot": "swh:1:snp:d1a1f7ac98f8a9a2db81143c23df8d4bcd145a4f",
+        "date": "2026-09-15T11:28:23.166000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Forangecat"
+      }
     },
     {
       "repo": "bitbaum/petvity",
@@ -936,7 +914,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 413,
+      "commits": 414,
       "stamped": {
         "head": "e41024a24b0011f11d2df37eda94599a4aef4df0",
         "at": "2026-09-15T08:37:46Z",
@@ -1114,8 +1092,8 @@
         "manifest": "2026-09-14T014651Z.json"
       },
       "swh": {
-        "snapshot": "swh:1:snp:b12202359dc6dc9cbfde78b61b2d743f2a3bd887",
-        "date": "2026-09-14T12:03:07.914000+00:00",
+        "snapshot": "swh:1:snp:5c7980e7acc2e016716b4bc91b25c02eee4aa7f7",
+        "date": "2026-09-15T10:11:24.418000+00:00",
         "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fsolon"
       }
     },
@@ -1130,7 +1108,7 @@
         "author": "Mao Nakamoto",
         "originator": "Cato"
       },
-      "commits": 37,
+      "commits": 39,
       "stamped": {
         "head": "6e25553f6defa61228280f9b3cb28151924da334",
         "at": "2026-09-15T08:37:46Z",
@@ -1143,7 +1121,11 @@
         "block": 966918,
         "manifest": "2026-09-14T014651Z.json"
       },
-      "swh": null
+      "swh": {
+        "snapshot": "swh:1:snp:26e76ad434e339e8fd656e60c68ad462f37db357",
+        "date": "2026-09-15T10:12:06.671000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fsubstrata"
+      }
     },
     {
       "repo": "bitbaum/surf-your-life",
@@ -1169,7 +1151,11 @@
         "block": 966918,
         "manifest": "2026-09-14T014651Z.json"
       },
-      "swh": null
+      "swh": {
+        "snapshot": "swh:1:snp:ebbcf67a20c259d850eb1178ab964708f7f54e42",
+        "date": "2026-09-15T10:15:56.580000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fsurf-your-life"
+      }
     },
     {
       "repo": "bitbaum/threadkit",
@@ -1195,7 +1181,11 @@
         "block": 966918,
         "manifest": "2026-09-14T014651Z.json"
       },
-      "swh": null
+      "swh": {
+        "snapshot": "swh:1:snp:0e04c96a7389ecdef9f083091a1df4f9d87054d3",
+        "date": "2026-09-15T08:43:03.222000+00:00",
+        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fthreadkit"
+      }
     },
     {
       "repo": "bitbaum/truthseeker",
@@ -1252,6 +1242,23 @@
         "date": "2026-09-14T12:03:08.360000+00:00",
         "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Fvitareba"
       }
+    },
+    {
+      "repo": "bitbaum/zeitkastli",
+      "url": "https://github.com/bitbaum/zeitkastli",
+      "description": "A weatherproof time capsule and a web app that remembers where you put it. Drop a pin, add a photo and a note, find it again years later.",
+      "createdAt": "2026-08-04T15:05:08Z",
+      "firstCommit": {
+        "sha": "9161ab99beae48f07dc7d4bab5a092d491b9a84f",
+        "date": "2026-08-04T15:05:09Z",
+        "author": "catomean",
+        "originator": "Cato"
+      },
+      "commits": 29,
+      "stamped": null,
+      "firstStampedAt": null,
+      "provenSince": null,
+      "swh": null
     }
   ],
   "_notes": [
