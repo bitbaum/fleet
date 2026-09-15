@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T12:03:33.968Z",
+  "generatedAt": "2026-09-15T05:09:34.627Z",
   "org": "bitbaum",
   "proofs": {
     "manifests": 4,
@@ -12,13 +12,32 @@
   "privateRepos": 3,
   "repos": [
     {
+      "repo": "bitbaum/.github",
+      "url": "https://github.com/bitbaum/.github",
+      "description": "Org-wide defaults: the contributor terms every bitbaum repository shows on its pull requests",
+      "createdAt": "2026-09-14T12:06:28Z",
+      "firstCommit": {
+        "sha": "8de7c0729ef3563673aee564ac293cfa401762ab",
+        "date": "2026-09-14T12:07:08Z",
+        "author": "catomean",
+        "originator": "Cato"
+      },
+      "commits": 2,
+      "stamped": null,
+      "firstStampedAt": null,
+      "provenSince": null,
+      "swh": null
+    },
+    {
       "repo": "bitbaum/ai-forms",
       "url": "https://github.com/bitbaum/ai-forms",
       "description": "Headless AI form filling and conversational refinement — shared across the fleet",
       "createdAt": "2026-08-04T12:51:42Z",
       "firstCommit": {
         "sha": "68087895ab9d46d73d03b91ebf5e648b969ebd76",
-        "date": "2026-08-04T12:51:28Z"
+        "date": "2026-08-04T12:51:28Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
       "commits": 41,
       "stamped": {
@@ -46,9 +65,11 @@
       "createdAt": "2026-08-16T09:49:58Z",
       "firstCommit": {
         "sha": "71b665e5b5e022c7b0f3d44ffc94ef43f32655b7",
-        "date": "2026-08-16T09:49:17Z"
+        "date": "2026-08-16T09:49:17Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 57,
+      "commits": 58,
       "stamped": {
         "head": "2b919512be912ead8ad57a5f2751ccf72b83e780",
         "at": "2026-09-14T12:02:52Z",
@@ -74,7 +95,9 @@
       "createdAt": "2026-01-23T18:58:56Z",
       "firstCommit": {
         "sha": "1e3517212567bea6531c52dbfa771824c6c6e4a4",
-        "date": "2026-01-22T22:25:09Z"
+        "date": "2026-01-22T22:25:09Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 549,
       "stamped": {
@@ -102,9 +125,11 @@
       "createdAt": "2026-07-08T10:45:49Z",
       "firstCommit": {
         "sha": "9fb1830b71148023e22969e9674e7bcb3b4745f1",
-        "date": "2026-07-08T10:45:38Z"
+        "date": "2026-07-08T10:45:38Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
-      "commits": 34,
+      "commits": 35,
       "stamped": {
         "head": "2baab2fef8a4408ab3268850a6cef4dc3f46e05b",
         "at": "2026-09-14T12:02:52Z",
@@ -130,9 +155,11 @@
       "createdAt": "2026-08-20T23:56:24Z",
       "firstCommit": {
         "sha": "347ccbf02a75b6c39109a0f9761eb96e60e938e1",
-        "date": "2026-08-20T23:52:46Z"
+        "date": "2026-08-20T23:52:46Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 27,
+      "commits": 28,
       "stamped": {
         "head": "a4680e7fc66e6b895cce0a353c8520f1e9e88763",
         "at": "2026-09-14T12:02:52Z",
@@ -158,9 +185,11 @@
       "createdAt": "2026-07-17T11:30:53Z",
       "firstCommit": {
         "sha": "05a6f0f46ecaacbe63da9fbd85b102759059ef8f",
-        "date": "2026-07-17T11:30:51Z"
+        "date": "2026-07-17T11:30:51Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 26,
+      "commits": 27,
       "stamped": {
         "head": "b996e708c921523e973a3c275bcdf9f929104579",
         "at": "2026-09-14T12:02:52Z",
@@ -186,7 +215,9 @@
       "createdAt": "2024-10-14T10:21:00Z",
       "firstCommit": {
         "sha": "da14403896b0e5111e7ede91f8989263a19d210d",
-        "date": "2024-10-14T10:37:44Z"
+        "date": "2024-10-14T10:37:44Z",
+        "author": "George",
+        "originator": "Cato"
       },
       "commits": 630,
       "stamped": {
@@ -214,7 +245,9 @@
       "createdAt": "2025-03-04T21:47:56Z",
       "firstCommit": {
         "sha": "4e317bf1f26ae5e9e3459137fd2948c982e494e1",
-        "date": "2025-03-04T21:47:56Z"
+        "date": "2025-03-04T21:47:56Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 26,
       "stamped": {
@@ -242,7 +275,9 @@
       "createdAt": "2026-01-12T00:58:30Z",
       "firstCommit": {
         "sha": "ec778f12d0c7141df809b044c81d48633cb48cdf",
-        "date": "2026-01-12T01:05:30Z"
+        "date": "2026-01-12T01:05:30Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 3,
       "stamped": {
@@ -270,9 +305,11 @@
       "createdAt": "2026-08-27T13:12:02Z",
       "firstCommit": {
         "sha": "a6f31a7117fdc69e459a82c96fe5c93101298229",
-        "date": "2026-08-27T13:10:03Z"
+        "date": "2026-08-27T13:10:03Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
-      "commits": 29,
+      "commits": 30,
       "stamped": {
         "head": "bd7d94d96553104ef3ad1f543f7a2118323fffa9",
         "at": "2026-09-14T12:02:52Z",
@@ -294,9 +331,11 @@
       "createdAt": "2026-09-10T20:48:15Z",
       "firstCommit": {
         "sha": "cf97b95c463e5c34475440b74527322a76284821",
-        "date": "2026-09-10T20:48:08Z"
+        "date": "2026-09-10T20:48:08Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 3,
+      "commits": 4,
       "stamped": {
         "head": "200223f1f3589cf0ae25cd0f2aaf82f1a98d288e",
         "at": "2026-09-14T12:02:52Z",
@@ -318,7 +357,9 @@
       "createdAt": "2026-08-22T10:10:03Z",
       "firstCommit": {
         "sha": "c0eae6a712738b12def7d5a975e08a3beefb98cc",
-        "date": "2026-08-22T10:07:53Z"
+        "date": "2026-08-22T10:07:53Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 9,
       "stamped": {
@@ -342,9 +383,11 @@
       "createdAt": "2025-07-07T10:25:09Z",
       "firstCommit": {
         "sha": "923713dbc509543490c1162c3e0adcd1dd5121ba",
-        "date": "2025-07-07T10:25:10Z"
+        "date": "2025-07-07T10:25:10Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 151,
+      "commits": 152,
       "stamped": {
         "head": "7477ccfc7b304575c0f6228cd6a80c0610f7425e",
         "at": "2026-09-14T12:02:52Z",
@@ -366,7 +409,9 @@
       "createdAt": "2026-08-14T01:50:13Z",
       "firstCommit": {
         "sha": "1b90de9ba84cb7f4ebbf97f59c39f97ddcfdc8c4",
-        "date": "2026-08-14T01:50:42Z"
+        "date": "2026-08-14T01:50:42Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 44,
       "stamped": {
@@ -394,9 +439,11 @@
       "createdAt": "2026-09-10T18:07:43Z",
       "firstCommit": {
         "sha": "2c3a769e2a4232903333f1d92464538538411226",
-        "date": "2026-09-10T18:07:40Z"
+        "date": "2026-09-10T18:07:40Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 6,
+      "commits": 7,
       "stamped": {
         "head": "be81e4e13365c12c053952a7f337204f12e9ef3e",
         "at": "2026-09-14T12:02:52Z",
@@ -418,9 +465,11 @@
       "createdAt": "2026-02-18T05:52:32Z",
       "firstCommit": {
         "sha": "427b5ca559d2d096766a74d216288c804920a815",
-        "date": "2026-02-18T05:50:01Z"
+        "date": "2026-02-18T05:50:01Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 127,
+      "commits": 128,
       "stamped": {
         "head": "71becc525314eadd8c1329dff00640f8c5b3c9c5",
         "at": "2026-09-14T12:02:52Z",
@@ -442,7 +491,9 @@
       "createdAt": "2025-04-08T09:41:36Z",
       "firstCommit": {
         "sha": "5f4af04d59f201297d131626e9160eff2317e2fa",
-        "date": "2025-04-08T09:38:59Z"
+        "date": "2025-04-08T09:38:59Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 2679,
       "stamped": {
@@ -466,7 +517,9 @@
       "createdAt": "2025-05-27T10:41:23Z",
       "firstCommit": {
         "sha": "ff67f7e17d76c86389a566b754c93af236457524",
-        "date": "2025-05-27T10:41:23Z"
+        "date": "2025-05-27T10:41:23Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 40,
       "stamped": {
@@ -490,9 +543,11 @@
       "createdAt": "2026-08-28T08:10:23Z",
       "firstCommit": {
         "sha": "f1d5549a3699aa8b894ac4a512fb27977c8d5c0b",
-        "date": "2026-08-28T08:10:21Z"
+        "date": "2026-08-28T08:10:21Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 73,
+      "commits": 80,
       "stamped": {
         "head": "71f19264c06250fe8b84030ef4fdca5a3eee4b4d",
         "at": "2026-09-14T12:02:52Z",
@@ -518,7 +573,9 @@
       "createdAt": "2026-02-25T14:00:14Z",
       "firstCommit": {
         "sha": "b9edc0f7410820581135711d6086d5ea3ffca883",
-        "date": "2026-02-25T14:15:14Z"
+        "date": "2026-02-25T14:15:14Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 20,
       "stamped": {
@@ -542,9 +599,11 @@
       "createdAt": "2026-08-04T15:05:08Z",
       "firstCommit": {
         "sha": "9161ab99beae48f07dc7d4bab5a092d491b9a84f",
-        "date": "2026-08-04T15:05:09Z"
+        "date": "2026-08-04T15:05:09Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 27,
+      "commits": 28,
       "stamped": {
         "head": "900dbeb420545b7446d4809b084a37088ad608b7",
         "at": "2026-09-14T12:02:52Z",
@@ -570,9 +629,11 @@
       "createdAt": "2026-09-10T18:45:45Z",
       "firstCommit": {
         "sha": "678bc15b1f0e1d1853e1c471c45d1f17a4daf300",
-        "date": "2026-09-10T18:45:39Z"
+        "date": "2026-09-10T18:45:39Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 35,
+      "commits": 39,
       "stamped": {
         "head": "845ae0e87b2eb43651a0dec81b5641b337a40ecb",
         "at": "2026-09-14T12:02:52Z",
@@ -598,9 +659,11 @@
       "createdAt": "2026-08-15T10:13:13Z",
       "firstCommit": {
         "sha": "57228298c73bd532f77f0c794fed580eebeafc14",
-        "date": "2026-08-15T10:14:27Z"
+        "date": "2026-08-15T10:14:27Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
-      "commits": 13,
+      "commits": 14,
       "stamped": {
         "head": "25cf347ab6a8b52e7d07a368b55e08f0a526eb3b",
         "at": "2026-09-14T12:02:52Z",
@@ -622,7 +685,9 @@
       "createdAt": "2026-07-23T22:36:33Z",
       "firstCommit": {
         "sha": "6c7cae8cdd8d5a07391d66d118d819fed74ba415",
-        "date": "2026-02-05T14:57:32Z"
+        "date": "2026-02-05T14:57:32Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 976,
       "stamped": {
@@ -646,9 +711,11 @@
       "createdAt": "2026-06-16T17:18:01Z",
       "firstCommit": {
         "sha": "24f1db920327e416808ee106594b22da011ae965",
-        "date": "2026-03-17T15:15:16Z"
+        "date": "2026-03-17T15:15:16Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 35,
+      "commits": 36,
       "stamped": {
         "head": "969f7f1c7aa5c94f721bb7b9cb8db84b9476ba87",
         "at": "2026-09-14T12:02:52Z",
@@ -670,7 +737,9 @@
       "createdAt": "2026-02-11T16:23:00Z",
       "firstCommit": {
         "sha": "181e43fb7ae8a3c05978b6c22c1a95c395b4ea5f",
-        "date": "2026-02-11T16:22:46Z"
+        "date": "2026-02-11T16:22:46Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 670,
       "stamped": {
@@ -694,7 +763,9 @@
       "createdAt": "2026-08-20T13:55:40Z",
       "firstCommit": {
         "sha": "9010598cab22b2bc7c6ee243280f141a25e4c8fa",
-        "date": "2026-08-20T13:55:38Z"
+        "date": "2026-08-20T13:55:38Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 19,
       "stamped": {
@@ -718,7 +789,9 @@
       "createdAt": "2026-09-11T15:17:21Z",
       "firstCommit": {
         "sha": "69cb4f4ef12d6a2a56b56db1bb4d4ac14aced525",
-        "date": "2026-09-11T15:17:16Z"
+        "date": "2026-09-11T15:17:16Z",
+        "author": "Cato",
+        "originator": "Cato"
       },
       "commits": 1,
       "stamped": {
@@ -742,9 +815,11 @@
       "createdAt": "2026-04-22T12:06:12Z",
       "firstCommit": {
         "sha": "0e0852330afaf540cfa21fe3520a2118af525a08",
-        "date": "2026-04-04T20:47:22Z"
+        "date": "2026-04-04T20:47:22Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 2554,
+      "commits": 2559,
       "stamped": {
         "head": "b8aea459889dc5961e8e7b1bf08f64b49f3d9419",
         "at": "2026-09-14T12:02:52Z",
@@ -770,9 +845,11 @@
       "createdAt": "2026-06-03T07:09:43Z",
       "firstCommit": {
         "sha": "8f577ed37d6d662f2ace1cdcba28e676d2392cdd",
-        "date": "2026-06-03T07:10:58Z"
+        "date": "2026-06-03T07:10:58Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 1,
+      "commits": 2,
       "stamped": {
         "head": "8f577ed37d6d662f2ace1cdcba28e676d2392cdd",
         "at": "2026-09-14T12:02:52Z",
@@ -798,7 +875,9 @@
       "createdAt": "2026-09-05T09:49:52Z",
       "firstCommit": {
         "sha": "076e8606ee63e5be272e057f49e2e7f41601b78f",
-        "date": "2026-09-05T09:49:50Z"
+        "date": "2026-09-05T09:49:50Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 7,
       "stamped": {
@@ -822,9 +901,11 @@
       "createdAt": "2025-04-02T14:37:17Z",
       "firstCommit": {
         "sha": "ec10ffb202b6ffc0489a6b223444ed633fad96a0",
-        "date": "2025-04-02T14:37:17Z"
+        "date": "2025-04-02T14:37:17Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 2900,
+      "commits": 2914,
       "stamped": {
         "head": "dabb6679913211e38e62a09a884762824cb67c20",
         "at": "2026-09-14T12:02:52Z",
@@ -846,9 +927,11 @@
       "createdAt": "2026-04-20T17:30:45Z",
       "firstCommit": {
         "sha": "f6befa379ea5cd72ce1ff80f1f88c901bf01866f",
-        "date": "2026-04-20T16:44:06Z"
+        "date": "2026-04-20T16:44:06Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 412,
+      "commits": 413,
       "stamped": {
         "head": "ef4c7c31441d5c8bcf78bb3656b226755647bcc4",
         "at": "2026-09-14T12:02:52Z",
@@ -870,9 +953,11 @@
       "createdAt": "2026-03-26T17:52:05Z",
       "firstCommit": {
         "sha": "ae7bd677b1263f150da3b2746d809858c514e9fe",
-        "date": "2026-03-26T17:51:29Z"
+        "date": "2026-03-26T17:51:29Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 80,
+      "commits": 82,
       "stamped": {
         "head": "e908c485fdaa3850ca31407d32cee32b5f3788cd",
         "at": "2026-09-14T12:02:52Z",
@@ -898,9 +983,11 @@
       "createdAt": "2025-06-18T16:23:50Z",
       "firstCommit": {
         "sha": "08dbff05d0cf11748acfcc819dbda7fae7ed418a",
-        "date": "2025-06-18T12:02:31Z"
+        "date": "2025-06-18T12:02:31Z",
+        "author": "Your Name",
+        "originator": "Cato"
       },
-      "commits": 134,
+      "commits": 139,
       "stamped": {
         "head": "05877e90c1b4899815abbac548b5727257936455",
         "at": "2026-09-14T12:02:52Z",
@@ -926,7 +1013,9 @@
       "createdAt": "2026-08-06T12:47:12Z",
       "firstCommit": {
         "sha": "ce48a41c39145c1455e11a8e3a73531a70754311",
-        "date": "2026-08-06T10:58:15Z"
+        "date": "2026-08-06T10:58:15Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
       "commits": 36,
       "stamped": {
@@ -950,9 +1039,11 @@
       "createdAt": "2026-01-23T18:58:59Z",
       "firstCommit": {
         "sha": "4877575c1f84fa69942107fa866d6d798f1bc826",
-        "date": "2026-01-23T15:13:32Z"
+        "date": "2026-01-23T15:13:32Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 93,
+      "commits": 95,
       "stamped": {
         "head": "e3c11baaec1c2d768c3cf1f1d39aa58c04258a8f",
         "at": "2026-09-14T12:02:52Z",
@@ -974,7 +1065,9 @@
       "createdAt": "2026-08-28T07:13:45Z",
       "firstCommit": {
         "sha": "1b3a6b4a93e25189a9a569b882472010da920e06",
-        "date": "2026-08-28T07:13:38Z"
+        "date": "2026-08-28T07:13:38Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 19,
       "stamped": {
@@ -998,9 +1091,11 @@
       "createdAt": "2025-08-26T09:12:28Z",
       "firstCommit": {
         "sha": "2c38ee94084c32363066a2e0e1ac909dc1d1326b",
-        "date": "2025-08-26T09:12:28Z"
+        "date": "2025-08-26T09:12:28Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 133,
+      "commits": 140,
       "stamped": {
         "head": "74843fbf71a5c1c79b7ea95f5e895d4cd98bd183",
         "at": "2026-09-14T12:02:52Z",
@@ -1026,9 +1121,11 @@
       "createdAt": "2026-08-27T12:41:06Z",
       "firstCommit": {
         "sha": "ee83c6dfb793fe03510fef2066b8f270d3a8d71c",
-        "date": "2026-08-27T12:41:04Z"
+        "date": "2026-08-27T12:41:04Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
-      "commits": 32,
+      "commits": 35,
       "stamped": {
         "head": "08b275aa5673a2ffff963d996631e60174aa44ca",
         "at": "2026-09-14T12:02:52Z",
@@ -1050,9 +1147,11 @@
       "createdAt": "2026-06-16T20:37:16Z",
       "firstCommit": {
         "sha": "9c46fcd86bc5df2ead0b08f0b79d2979dbea3743",
-        "date": "2026-04-10T15:11:11Z"
+        "date": "2026-04-10T15:11:11Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 568,
+      "commits": 569,
       "stamped": {
         "head": "7120996b362d7843d44d5922cf912193cdd74ecd",
         "at": "2026-09-14T12:02:52Z",
@@ -1074,7 +1173,9 @@
       "createdAt": "2026-08-16T11:17:35Z",
       "firstCommit": {
         "sha": "082d431fd4dd49861134774296af79d0476907b0",
-        "date": "2026-08-16T11:05:50Z"
+        "date": "2026-08-16T11:05:50Z",
+        "author": "Mao Nakamoto",
+        "originator": "Cato"
       },
       "commits": 30,
       "stamped": {
@@ -1098,9 +1199,11 @@
       "createdAt": "2026-06-05T13:34:50Z",
       "firstCommit": {
         "sha": "2ac01e649583570348af650c658b4d7b9eeaa618",
-        "date": "2026-06-05T13:34:51Z"
+        "date": "2026-06-05T13:34:51Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
-      "commits": 62,
+      "commits": 63,
       "stamped": {
         "head": "b3fba72be9010b04e2cb347059da2865967e8406",
         "at": "2026-09-14T12:02:52Z",
@@ -1122,7 +1225,9 @@
       "createdAt": "2026-04-13T09:24:41Z",
       "firstCommit": {
         "sha": "ea4fba815dba7e6db84ee47c88525993c357f5c9",
-        "date": "2026-04-13T09:14:43Z"
+        "date": "2026-04-13T09:14:43Z",
+        "author": "catomean",
+        "originator": "Cato"
       },
       "commits": 471,
       "stamped": {
@@ -1146,7 +1251,7 @@
   ],
   "_notes": [
     "One row per public, non-fork repository. Private repositories are counted, not listed.",
-    "createdAt and firstCommit are GitHub's server-side dates. swh is Software Heritage's own visit date and snapshot. stamped is the newest OpenTimestamps manifest naming this HEAD; anchored is the Bitcoin block it is committed in, or null while the calendar's promise is still pending.",
+    "createdAt and firstCommit are GitHub's server-side dates. firstCommit.author is what GitHub reports (login, or the commit's author name when unlinked); firstCommit.originator resolves it through registers/org.json originatorAliases and is who Solon's originator_share rule pays. swh is Software Heritage's own visit date and snapshot. stamped is the newest OpenTimestamps manifest naming this HEAD; anchored is the Bitcoin block it is committed in, or null while the calendar's promise is still pending.",
     "provenSince is the oldest anchored manifest naming the repository: the strongest claim, independent of what moved since.",
     "Derived by fleet/scripts/ci/origin-register.mjs from proofs/origin, the GitHub API and the Software Heritage API. Nobody types this file."
   ]
