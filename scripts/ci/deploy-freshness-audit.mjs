@@ -299,6 +299,49 @@ export function deployRunsOf(owner, repo, workflowFiles, branch) {
   return runs;
 }
 
+/**
+ * Was this exact commit deployed, according to the run index keyed by COMMIT?
+ *
+ * This exists because re-reading the same endpoint twice was not enough.
+ *
+ * `actions/workflows/{file}/runs?branch=main` intermittently returns a page
+ * that omits its own newest runs. Measured 2026-09-15: it happened to datacat
+ * twice and to evig once inside ninety minutes, and on evig it got past the
+ * double-read guard and dispatched a real, redundant deploy of a tip that had
+ * been live since 05:42. Reading a flaky endpoint twice mostly gives you the
+ * same flake twice; it is not independent evidence.
+ *
+ * `actions/runs?head_sha=<sha>` is a DIFFERENT index — keyed by commit rather
+ * than by workflow and branch — and answers the question actually being asked:
+ * has this commit had a successful deploy run? On evig it returned the
+ * deploy-selfhost.yml success that the other endpoint had just denied.
+ *
+ * Runs carry `path` (".github/workflows/deploy-selfhost.yml"), so the file is
+ * compared by basename against the repo's known deploy workflows.
+ */
+export function deployedByShaIndex(runsForSha, deployFiles) {
+  const want = new Set((deployFiles ?? []).map((f) => String(f).toLowerCase()));
+  return (runsForSha ?? []).some(
+    (r) =>
+      r &&
+      r.status === "completed" &&
+      r.conclusion === "success" &&
+      want.has(String(r.path ?? "").split("/").pop().toLowerCase()),
+  );
+}
+
+export function runsForSha(owner, repo, sha) {
+  try {
+    return JSON.parse(
+      gh(["api", `repos/${owner}/${repo}/actions/runs?head_sha=${sha}&per_page=100`, "--jq",
+          "[.workflow_runs[] | {path, status, conclusion}]"]),
+    );
+  } catch {
+    return null; // unreadable: deployedByShaIndex(null) is false, so it does not
+                 // manufacture a confirmation either way
+  }
+}
+
 function main() {
   const owner = process.env.GH_OWNER || "bitbaum";
   const limit = Number(process.env.GH_LIMIT || 200);
@@ -316,12 +359,33 @@ function main() {
   for (const { name: repo, branch, deployFiles } of repos) {
     try {
       const tip = tipOf(owner, repo, branch);
-      const verdict = deployFreshness({
+      let verdict = deployFreshness({
         tipSha: tip.sha,
         tipCommittedAt: tip.committedAt,
         deployRuns: deployRunsOf(owner, repo, deployFiles, branch),
         now,
       });
+
+      // Before calling a repo stale, ask a DIFFERENT index.
+      //
+      // `actions/workflows/{file}/runs?branch=...` intermittently returns a
+      // page that omits its own newest runs — measured on datacat twice and
+      // evig twice on 2026-09-15, each time contradicted seconds later by a
+      // direct probe. The reconciler already cross-checks, because a wrong
+      // STALE there costs a real redundant deploy. This gate only reports, so
+      // the cross-check was left out of it, and that was the wrong call: on the
+      // first run after the aoz rename it went RED on evig, whose tip had a
+      // successful deploy-selfhost.yml run sitting in the commit index the
+      // whole time. A gate that cries wolf gets muted, which is the one thing
+      // this file cannot afford.
+      if (verdict.state === FRESHNESS.STALE &&
+          deployedByShaIndex(runsForSha(owner, repo, tip.sha), deployFiles)) {
+        verdict = {
+          state: FRESHNESS.DEPLOYED,
+          reason: `deployed by a run for ${short(tip.sha)} (found in the commit index, not the workflow listing)`,
+        };
+      }
+
       rows.push({ repo, tip: short(tip.sha), ...verdict });
     } catch (e) {
       rows.push({

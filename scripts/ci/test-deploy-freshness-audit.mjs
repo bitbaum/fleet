@@ -9,7 +9,7 @@
  * check that cries wolf gets muted, and then it protects nothing.
  */
 
-import { deployFreshness, isDeployerSource, missingFrom, newlyDeploying, readBaseline, FRESHNESS, GRACE_MINUTES } from "./deploy-freshness-audit.mjs";
+import { deployFreshness, isDeployerSource, deployedByShaIndex, missingFrom, newlyDeploying, readBaseline, FRESHNESS, GRACE_MINUTES } from "./deploy-freshness-audit.mjs";
 
 let pass = 0, fail = 0;
 const ok = (m) => { pass++; console.log(`  ✓ ${m}`); };
@@ -216,6 +216,65 @@ eq(
   real.some((l) => l.startsWith("#"))
     ? bad("comments leaked into the baseline list")
     : ok("comments and blank lines are stripped from the baseline");
+}
+
+// ── the independent confirmation, keyed by commit ───────────────────────────
+//
+// Re-reading the same endpoint twice was not enough. `actions/workflows/{file}/
+// runs?branch=main` intermittently omits its own newest runs — datacat twice
+// and evig once inside ninety minutes — and on evig that got past the
+// double-read and dispatched a real, redundant deploy of a tip live since
+// 05:42. Reading a flaky endpoint twice mostly gives you the same flake twice.
+{
+  const DEPLOYS = ["deploy-selfhost.yml"];
+  const run = (path, status, conclusion) => ({ path, status, conclusion });
+
+  // The exact shape the head_sha index returned for evig's tip.
+  const evig = [
+    run(".github/workflows/ci.yml", "completed", "success"),
+    run(".github/workflows/auto-merge.yml", "completed", "success"),
+    run(".github/workflows/deploy-selfhost.yml", "completed", "success"),
+  ];
+  deployedByShaIndex(evig, DEPLOYS)
+    ? ok("a successful deploy run in the commit index counts as deployed — the evig false positive is caught")
+    : bad("the evig case still reads as undeployed");
+
+  // Green CI is not a deploy. This is the whole point of matching the path.
+  deployedByShaIndex([run(".github/workflows/ci.yml", "completed", "success")], DEPLOYS)
+    ? bad("a successful CI run was mistaken for a deploy")
+    : ok("a successful CI run is not a deploy");
+
+  deployedByShaIndex([run(".github/workflows/deploy-selfhost.yml", "completed", "failure")], DEPLOYS)
+    ? bad("a FAILED deploy counted as deployed")
+    : ok("a failed deploy run does not count");
+  deployedByShaIndex([run(".github/workflows/deploy-selfhost.yml", "completed", "cancelled")], DEPLOYS)
+    ? bad("a CANCELLED deploy counted as deployed")
+    : ok("a cancelled deploy run does not count");
+  deployedByShaIndex([run(".github/workflows/deploy-selfhost.yml", "in_progress", null)], DEPLOYS)
+    ? bad("an in-flight deploy counted as already deployed")
+    : ok("an in-flight deploy is not yet a deploy");
+  // The line above is enforced by the CONCLUSION check, not the status one: a
+  // non-terminal run reports conclusion null, so it fails either way. Mutating
+  // `status === "completed"` therefore left the suite green — an untested
+  // branch pretending to be covered. This case exercises it directly: a run
+  // that is not finished but somehow already claims success is not a deploy,
+  // whatever it claims.
+  deployedByShaIndex([run(".github/workflows/deploy-selfhost.yml", "in_progress", "success")], DEPLOYS)
+    ? bad("a run still in flight was accepted because it already claimed success")
+    : ok("a deploy must be COMPLETED, not merely claiming success mid-flight");
+
+  // Must not manufacture a confirmation out of nothing, in either direction.
+  deployedByShaIndex([], DEPLOYS) || deployedByShaIndex(null, DEPLOYS)
+    ? bad("an empty or unreadable index was read as deployed")
+    : ok("an empty or unreadable commit index does not claim a deploy");
+
+  // A repo whose deploy workflow is named differently must still match.
+  deployedByShaIndex([run(".github/workflows/deploy.yml", "completed", "success")], ["deploy.yml"])
+    ? ok("matches whatever the repo's deploy workflow is actually called")
+    : bad("a differently-named deploy workflow was not matched");
+  deployedByShaIndex([run(".github/workflows/deploy.yml", "completed", "success")], DEPLOYS)
+    ? bad("matched a deploy workflow belonging to a different repo's naming")
+    : ok("does not match a workflow that is not this repo's deployer");
 }
 
 console.log();
