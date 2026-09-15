@@ -67,5 +67,6 @@ apps.conf is a drift violation.
 
 - Every audit has a test suite beside it (`test-*.sh`, `test-*.mjs`). Keep it
   that way — these gate every repo, so a broken checker is a fleet-wide outage.
-- The duplication ratchet (`scripts/ci/shared-inventory.sh --check`) runs on
-  every PR here: counts may fall, may hold, and may never rise.
+- The duplication ratchet (`scripts/ci/shared-inventory.sh --check`) runs
+  weekly, not per PR — a PR runs its network-free self-test. Counts may fall,
+  may hold, and may never rise.
