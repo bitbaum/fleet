@@ -107,23 +107,102 @@ const short = (s) => (typeof s === "string" ? s.slice(0, 7) : String(s));
 
 // ── live data ───────────────────────────────────────────────────────────────
 
-function gh(args) {
-  return execFileSync("gh", args, { encoding: "utf8", timeout: 60000, maxBuffer: 32 * 1024 * 1024 });
+/**
+ * `gh`, with retries.
+ *
+ * This audit makes dozens of sequential API calls and the network is not
+ * reliable: a single `unexpected EOF` used to be swallowed into an empty run
+ * list, which the verdict then read as "no successful Deploy run on record" —
+ * a COULD-NOT-LOOK reported as a fact about the repo. loki and aoz-housing were
+ * both flagged that way while having 2 and 9 successful deploys respectively.
+ */
+function gh(args, { attempts = 3 } = {}) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return execFileSync("gh", args, { encoding: "utf8", timeout: 60000, maxBuffer: 32 * 1024 * 1024 });
+    } catch (e) {
+      last = e;
+      const msg = String(e.stderr || e.message || "");
+      // Only retry transport failures. A 404 is an answer; retrying it is waste.
+      if (!/EOF|timeout|timed out|reset by peer|dial tcp|connection refused|502|503|504/i.test(msg)) break;
+    }
+  }
+  throw last;
+}
+
+/**
+ * Is this deploy-named workflow actually a deployer?
+ *
+ * Two wrong answers were tried before this one, and the order matters.
+ *
+ * Name alone (/deploy/i) was too WIDE: this audit's own
+ * `deploy-freshness.yml` matched, so the fleet repo — which deploys nothing —
+ * was reported as a deploying repo with no successful deploy.
+ *
+ * Requiring the content to call `selfhost-deploy.yml` or `deploy.sh` was too
+ * NARROW, and failed on the most important repo: loki's own deploy.yml ships
+ * inline (checkout, build, rsync) and matched neither, so the control plane
+ * itself was excluded while holding seven successful deploys.
+ *
+ * A false negative is the worse direction — a missed deployer is a repo nobody
+ * is checking — so the rule is now: include by name, and exclude only what is
+ * PROVEN not to deploy. Today that is exactly one thing, this audit itself.
+ */
+const NOT_A_DEPLOYER = /deploy-freshness-audit|deploy-freshness\.yml/;
+
+/**
+ * The whole decision, as a pure function, because I got it wrong twice and a
+ * heuristic nobody can test is a heuristic that will be wrong a third time.
+ *
+ * `body` is null when the file could not be read.
+ */
+export function isDeployerSource(file, body) {
+  // A `.disabled` file is not a workflow: GitHub does not run it, and asking
+  // the API for its runs 404s. datacat's deploy.yml.disabled matched /deploy/i
+  // and took the whole repo out of the audit with an unreadable error.
+  if (!/\.ya?ml$/.test(file)) return false;
+  // Unreadable. Keep it: an unreadable candidate that IS a deployer must not
+  // silently drop its repo out of the audit. Erring loud beats erring quiet.
+  if (body == null) return true;
+  return !NOT_A_DEPLOYER.test(body);
+}
+
+function isDeployWorkflow(owner, repo, file) {
+  if (!/\.ya?ml$/.test(file)) return false; // do not spend a request on it
+  let body = null;
+  try {
+    body = Buffer.from(
+      JSON.parse(gh(["api", `repos/${owner}/${repo}/contents/.github/workflows/${file}`, "--jq", "{c: .content}"])).c,
+      "base64",
+    ).toString("utf8");
+  } catch {
+    /* leave body null — isDeployerSource decides what that means */
+  }
+  return isDeployerSource(file, body);
 }
 
 /** Repos that actually have a deploy workflow — the only ones this can judge. */
 function reposWithDeploy(owner, limit) {
   const all = JSON.parse(
-    gh(["repo", "list", owner, "--limit", String(limit), "--no-archived", "--json", "name,isFork"]),
-  ).filter((r) => !r.isFork).map((r) => r.name);
+    gh(["repo", "list", owner, "--limit", String(limit), "--no-archived",
+        "--json", "name,isFork,defaultBranchRef"]),
+  ).filter((r) => !r.isFork);
 
   const out = [];
-  for (const name of all) {
+  for (const r of all) {
+    // The default branch is per-repo: aoz-housing and sbb-fundbuero are on
+    // `master`. Hardcoding `main` asked for runs on a branch that does not
+    // exist there, got none back, and reported both as never deployed.
+    const branch = r.defaultBranchRef?.name || "main";
     try {
       const files = JSON.parse(
-        gh(["api", `repos/${owner}/${name}/contents/.github/workflows`, "--jq", "[.[].name]"]),
+        gh(["api", `repos/${owner}/${r.name}/contents/.github/workflows`, "--jq", "[.[].name]"]),
       );
-      if (files.some((f) => /deploy/i.test(f))) out.push(name);
+      const deployFiles = files
+        .filter((f) => /deploy/i.test(f))
+        .filter((f) => isDeployWorkflow(owner, r.name, f));
+      if (deployFiles.length) out.push({ name: r.name, branch, deployFiles });
     } catch {
       /* no workflows directory: not a deploying repo */
     }
@@ -131,23 +210,40 @@ function reposWithDeploy(owner, limit) {
   return out;
 }
 
-function tipOf(owner, repo) {
+function tipOf(owner, repo, branch) {
   const c = JSON.parse(
-    gh(["api", `repos/${owner}/${repo}/commits?per_page=1`, "--jq",
+    gh(["api", `repos/${owner}/${repo}/commits?per_page=1&sha=${encodeURIComponent(branch)}`, "--jq",
         "[.[0].sha, .[0].commit.committer.date]"]),
   );
   return { sha: c[0], committedAt: c[1] };
 }
 
-function deployRunsOf(owner, repo) {
-  try {
-    return JSON.parse(
-      gh(["api", `repos/${owner}/${repo}/actions/runs?per_page=40&branch=main`, "--jq",
-          "[.workflow_runs[] | select(.name | test(\"deploy\";\"i\")) | {headSha: .head_sha, status, conclusion, createdAt: .created_at}]"]),
-    );
-  } catch {
-    return [];
+/**
+ * A repo's Deploy runs — asked of the DEPLOY WORKFLOW, not of a window of all
+ * runs.
+ *
+ * The first version read `actions/runs?per_page=40` and filtered by name. On a
+ * busy repo that window is entirely CI and auto-merge runs, so a perfectly
+ * healthy Deploy from two days ago falls off the end and the repo reports
+ * "no successful Deploy run on record". Measured immediately: aoz-housing was
+ * flagged UNKNOWN while its newest Deploy was green.
+ *
+ * A window is not an absence. Scoping the query to each deploy workflow's own
+ * runs makes the answer independent of how chatty the rest of the repo is.
+ */
+function deployRunsOf(owner, repo, workflowFiles, branch) {
+  const runs = [];
+  for (const file of workflowFiles) {
+    // Deliberately NOT swallowed. A workflow with no runs returns an empty
+    // array from the API; only a genuine read failure throws, and the caller
+    // must be able to tell those apart or a flaky network reads as a verdict.
+    runs.push(...JSON.parse(
+      gh(["api", `repos/${owner}/${repo}/actions/workflows/${file}/runs?branch=${encodeURIComponent(branch)}&per_page=20`,
+          "--jq",
+          "[.workflow_runs[] | {headSha: .head_sha, status, conclusion, createdAt: .created_at}]"]),
+    ));
   }
+  return runs;
 }
 
 function main() {
@@ -164,18 +260,21 @@ function main() {
   }
 
   const rows = [];
-  for (const repo of repos) {
+  for (const { name: repo, branch, deployFiles } of repos) {
     try {
-      const tip = tipOf(owner, repo);
+      const tip = tipOf(owner, repo, branch);
       const verdict = deployFreshness({
         tipSha: tip.sha,
         tipCommittedAt: tip.committedAt,
-        deployRuns: deployRunsOf(owner, repo),
+        deployRuns: deployRunsOf(owner, repo, deployFiles, branch),
         now,
       });
       rows.push({ repo, tip: short(tip.sha), ...verdict });
     } catch (e) {
-      rows.push({ repo, tip: "?", state: FRESHNESS.UNKNOWN, reason: `could not read: ${e.message}` });
+      rows.push({
+        repo, tip: "?", state: FRESHNESS.UNKNOWN,
+        reason: `COULD NOT READ (not a verdict): ${String(e.message).split("\n")[0].slice(0, 90)}`,
+      });
     }
   }
 

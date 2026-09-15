@@ -9,7 +9,7 @@
  * check that cries wolf gets muted, and then it protects nothing.
  */
 
-import { deployFreshness, FRESHNESS, GRACE_MINUTES } from "./deploy-freshness-audit.mjs";
+import { deployFreshness, isDeployerSource, FRESHNESS, GRACE_MINUTES } from "./deploy-freshness-audit.mjs";
 
 let pass = 0, fail = 0;
 const ok = (m) => { pass++; console.log(`  ✓ ${m}`); };
@@ -125,6 +125,52 @@ eq(
   v.state === FRESHNESS.STALE
     ? ok("a months-old undeployed tip is still reported — the predicate is not 'always fine'")
     : bad(`a months-old undeployed tip returned ${v.state}`);
+}
+
+// ── which /deploy/i-named files are actually deployers ──────────────────────
+//
+// Two shipped versions of this predicate were wrong, in OPPOSITE directions,
+// so both directions are pinned here with the real files that fooled them.
+{
+  // Too WIDE, v1: matching the filename alone. fleet deploys nothing, but its
+  // audit workflow is spelled "deploy-freshness.yml", so fleet was reported as
+  // a deploying repo with no successful deploy.
+  isDeployerSource("deploy-freshness.yml", "jobs:\n  audit:\n    run: node scripts/ci/deploy-freshness-audit.mjs")
+    ? bad("this audit's own workflow counted as a deployer — the v1 false positive is back")
+    : ok("a workflow that only RUNS this audit is not a deployer");
+
+  // Too NARROW, v2: requiring the body to name selfhost-deploy.yml or
+  // deploy.sh. loki ships inline and matched neither, so the control plane
+  // dropped out of its own audit while holding seven successful deploys.
+  const lokiInline = [
+    "name: Deploy",
+    "on:",
+    "  workflow_run:",
+    "    workflows: [\"CI\"]",
+    "jobs:",
+    "  deploy:",
+    "    steps:",
+    "      - uses: actions/checkout@v7",
+    "      - run: pnpm build",
+    "      - run: rsync -a .next/ ubuntu@box:/opt/loki/releases/$TS/",
+  ].join("\n");
+  isDeployerSource("deploy.yml", lokiInline)
+    ? ok("an inline rsync deploy counts — loki does not drop out of its own audit")
+    : bad("loki's inline deploy.yml was excluded — the v2 false negative is back");
+
+  // datacat kept a deploy.yml.disabled. GitHub will not run it, and asking the
+  // API for its runs 404s, which surfaced as an unreadable repo.
+  isDeployerSource("deploy.yml.disabled", "anything at all")
+    ? bad("a .disabled file counted as a live workflow")
+    : ok("a .disabled workflow is not a deployer");
+  isDeployerSource("deploy.yaml", "jobs:\n  deploy:\n    run: ./deploy.sh")
+    ? ok(".yaml is a workflow extension too")
+    : bad(".yaml was rejected");
+
+  // An unreadable file must not quietly shrink the audit's coverage.
+  isDeployerSource("deploy.yml", null)
+    ? ok("an unreadable deploy workflow is KEPT — coverage must not shrink on a network blip")
+    : bad("an unreadable deploy workflow was dropped, silently removing its repo from the audit");
 }
 
 console.log();
