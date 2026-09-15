@@ -12,6 +12,14 @@
   "_notes": {
     "legalStatus": "not AG, not incorporation-pending, not a registered company in any jurisdiction; the ventures are the same",
     "houseDomain": "names are addresses on the Hetzner box until a venture has its own domain, not a product line and not an OrangeCat feature",
-    "host": "The serve register is bitbaum/loki scripts/hetzner/apps.conf. GitHub Pages is not a host."
+    "host": "The serve register is bitbaum/loki scripts/hetzner/apps.conf. GitHub Pages is not a host.",
+    "originatorAliases": "First-commit author strings GitHub reports across the org, mapped to the ONE originator they are. All five are the same person under earlier handles and one unconfigured git default ('Your Name', reparaturbonus-zh 2025-06-18). Read by fleet/scripts/ci/origin-register.mjs to fill firstCommit.originator; the raw author string is kept beside it. A new contributor's first commit is NOT mapped here \u2014 an unmapped author is their own originator, which is the point of the rule."
+  },
+  "originatorAliases": {
+    "catomean": "Cato",
+    "Cato": "Cato",
+    "Mao Nakamoto": "Cato",
+    "George": "Cato",
+    "Your Name": "Cato"
   }
 }

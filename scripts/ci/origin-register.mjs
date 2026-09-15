@@ -39,11 +39,14 @@ const SWH_API = process.env.SWH_API || "https://archive.softwareheritage.org/api
 
 /**
  * @param repos       [{name, url, description, createdAt, visibility, isFork}]
- * @param firstCommits {name: {sha, date, count}}
+ * @param firstCommits {name: {sha, date, count, author}}   author = GitHub login of the first commit's author, or its name when unlinked
  * @param manifests   [{file, generatedAt, repos:[{repo, head, committedAt}], anchored: number|null}]
  * @param swh         {name: {snapshot, date}|null}
+ * @param originatorAliases {authorString: originator} from registers/org.json — the same
+ *                    person under several handles resolves to ONE originator; an
+ *                    unmapped author is their own originator.
  */
-export function buildRegister({ repos, firstCommits, manifests, swh, generatedAt }) {
+export function buildRegister({ repos, firstCommits, manifests, swh, generatedAt, originatorAliases = {} }) {
   const ordered = [...manifests].sort((a, b) => a.file.localeCompare(b.file));
   const rows = repos
     .filter((r) => !r.isFork && r.visibility === "PUBLIC")
@@ -62,7 +65,17 @@ export function buildRegister({ repos, firstCommits, manifests, swh, generatedAt
         url: r.url,
         description: r.description || null,
         createdAt: r.createdAt,
-        firstCommit: fc ? { sha: fc.sha, date: fc.date } : null,
+        // author is the originator the Solon originator_share rule pays: the
+        // first commit's author, by GitHub login, or by name when the commit
+        // is not linked to an account.
+        firstCommit: fc
+          ? {
+              sha: fc.sha,
+              date: fc.date,
+              author: fc.author ?? null,
+              originator: fc.author ? (originatorAliases[fc.author] ?? fc.author) : null,
+            }
+          : null,
         commits: fc?.count ?? null,
         stamped: latest
           ? {
@@ -102,7 +115,7 @@ export function buildRegister({ repos, firstCommits, manifests, swh, generatedAt
     repos: rows,
     _notes: [
       "One row per public, non-fork repository. Private repositories are counted, not listed.",
-      "createdAt and firstCommit are GitHub's server-side dates. swh is Software Heritage's own visit date and snapshot. stamped is the newest OpenTimestamps manifest naming this HEAD; anchored is the Bitcoin block it is committed in, or null while the calendar's promise is still pending.",
+      "createdAt and firstCommit are GitHub's server-side dates. firstCommit.author is what GitHub reports (login, or the commit's author name when unlinked); firstCommit.originator resolves it through registers/org.json originatorAliases and is who Solon's originator_share rule pays. swh is Software Heritage's own visit date and snapshot. stamped is the newest OpenTimestamps manifest naming this HEAD; anchored is the Bitcoin block it is committed in, or null while the calendar's promise is still pending.",
       "provenSince is the oldest anchored manifest naming the repository: the strongest claim, independent of what moved since.",
       "Derived by fleet/scripts/ci/origin-register.mjs from proofs/origin, the GitHub API and the Software Heritage API. Nobody types this file.",
     ],
@@ -172,14 +185,21 @@ function firstCommitsOf(repos) {
     .map((r) => {
       const h = heads[r.name];
       const after = h.count > 1 ? `, after:"${h.oid} ${h.count - 2}"` : "";
-      return `${alias(r)}: repository(owner:"${ORG}", name:"${r.name}") { defaultBranchRef { target { ... on Commit { history(first:1${after}) { nodes { oid committedDate } } } } } }`;
+      return `${alias(r)}: repository(owner:"${ORG}", name:"${r.name}") { defaultBranchRef { target { ... on Commit { history(first:1${after}) { nodes { oid committedDate author { name user { login } } } } } } } }`;
     })
     .join(" ")} }`;
   const d2 = JSON.parse(gh(["api", "graphql", "-f", `query=${q2}`])).data;
   const out = {};
   for (const r of repos) {
     const node = d2[alias(r)]?.defaultBranchRef?.target?.history?.nodes?.[0];
-    if (node && heads[r.name]) out[r.name] = { sha: node.oid, date: node.committedDate, count: heads[r.name].count };
+    if (node && heads[r.name]) {
+      out[r.name] = {
+        sha: node.oid,
+        date: node.committedDate,
+        count: heads[r.name].count,
+        author: node.author?.user?.login ?? node.author?.name ?? null,
+      };
+    }
   }
   return out;
 }
@@ -213,14 +233,18 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split("/").pop()
   const firstCommits = firstCommitsOf(pub);
   const manifests = readManifests(PROOF_DIR);
   const swh = await swhOf(pub);
-  const payload = buildRegister({ repos, firstCommits, manifests, swh, generatedAt: new Date().toISOString() });
+  const originatorAliases = existsSync("registers/org.json")
+    ? JSON.parse(readFileSync("registers/org.json", "utf8")).originatorAliases ?? {}
+    : {};
+  const payload = buildRegister({ repos, firstCommits, manifests, swh, generatedAt: new Date().toISOString(), originatorAliases });
 
+  const originators = new Set(payload.repos.map((r) => r.firstCommit?.originator).filter(Boolean));
   const withSwh = payload.repos.filter((r) => r.swh).length;
   const proven = payload.repos.filter((r) => r.provenSince).length;
   console.log(
     `origin register: ${payload.repos.length} public repos (${payload.privateRepos} private counted), ` +
       `${payload.proofs.manifests} manifests (${payload.proofs.anchored} anchored, ${payload.proofs.pending} pending), ` +
-      `${proven} repos proven in Bitcoin, ${withSwh} archived by Software Heritage`,
+      `${proven} repos proven in Bitcoin, ${withSwh} archived by Software Heritage, ${originators.size} distinct originator(s)`,
   );
 
   if (out) {

@@ -25,7 +25,7 @@ const repos = [
   { name: "secret", url: "https://github.com/bitbaum/secret", description: "x", createdAt: "2026-01-01T00:00:00Z", visibility: "PRIVATE", isFork: false },
   { name: "openclaw", url: "https://github.com/bitbaum/openclaw", description: "fork", createdAt: "2026-01-01T00:00:00Z", visibility: "PUBLIC", isFork: true },
 ];
-const firstCommits = { pubkit: { sha: "f1", date: "2026-01-01T01:00:00Z", count: 40 }, newkit: { sha: "n1", date: "2026-03-01T01:00:00Z", count: 2 } };
+const firstCommits = { pubkit: { sha: "f1", date: "2026-01-01T01:00:00Z", count: 40, author: "cato" }, newkit: { sha: "n1", date: "2026-03-01T01:00:00Z", count: 2 } };
 const manifests = [
   { file: "2026-02-01T000000Z.json", generatedAt: "2026-02-01T00:00:00Z", anchored: 900001, repos: [{ repo: "bitbaum/pubkit", head: "aaa" }] },
   { file: "2026-02-15T000000Z.json", generatedAt: "2026-02-15T00:00:00Z", anchored: 900500, repos: [{ repo: "bitbaum/pubkit", head: "bbb" }] },
@@ -34,7 +34,7 @@ const manifests = [
 const swh = { pubkit: { snapshot: "abc123", date: "2026-02-02T00:00:00Z" }, newkit: null };
 
 console.log("origin register");
-const reg = buildRegister({ repos, firstCommits, manifests, swh, generatedAt: "2026-03-03T00:00:00Z" });
+const reg = buildRegister({ repos, firstCommits, manifests, swh, generatedAt: "2026-03-03T00:00:00Z", originatorAliases: { cato: "Cato" } });
 
 eq(reg.repos.map((r) => r.repo), ["bitbaum/newkit", "bitbaum/pubkit"], "lists public non-fork repos only, sorted");
 eq(reg.privateRepos, 1, "counts the private repo instead of naming it");
@@ -44,7 +44,9 @@ const pk = reg.repos.find((r) => r.repo === "bitbaum/pubkit");
 eq(pk.stamped, { head: "ccc", at: "2026-03-02T00:00:00Z", manifest: "2026-03-02T000000Z.json", anchored: null }, "stamped is the newest manifest, and a pending proof is anchored: null");
 eq(pk.provenSince, { at: "2026-02-01T00:00:00Z", block: 900001, manifest: "2026-02-01T000000Z.json" }, "provenSince is the OLDEST anchored manifest, not the newest");
 eq(pk.firstStampedAt, "2026-02-01T00:00:00Z", "firstStampedAt is the first manifest naming the repo");
-eq(pk.firstCommit, { sha: "f1", date: "2026-01-01T01:00:00Z" }, "firstCommit is carried through");
+eq(pk.firstCommit, { sha: "f1", date: "2026-01-01T01:00:00Z", author: "cato", originator: "Cato" }, "firstCommit keeps GitHub's author and resolves the originator through the alias map");
+const stranger = buildRegister({ repos, firstCommits: { pubkit: { sha: "s1", date: "2026-01-01T01:00:00Z", count: 1, author: "ada-outsider" } }, manifests: [], swh: {}, generatedAt: "x", originatorAliases: { cato: "Cato" } });
+eq(stranger.repos.find((r) => r.repo === "bitbaum/pubkit").firstCommit.originator, "ada-outsider", "an unmapped author is their own originator, never folded into ours");
 eq(pk.commits, 40, "commit count is carried through");
 eq(pk.swh.snapshot, "swh:1:snp:abc123", "SWH snapshot is written as a SWHID");
 
@@ -52,6 +54,8 @@ const nk = reg.repos.find((r) => r.repo === "bitbaum/newkit");
 eq(nk.provenSince, null, "a repo whose only manifest is pending is not 'proven'");
 eq(nk.stamped.head, "n2", "a repo stamped once still shows its stamp");
 eq(nk.swh, null, "no SWH visit means null, not a made-up link");
+eq(nk.firstCommit.author, null, "an unknown author is null, never guessed");
+eq(nk.firstCommit.originator, null, "…and so is the originator");
 
 eq(reg.proofs, {
   manifests: 3, firstStampedAt: "2026-02-01T00:00:00Z", latestStampedAt: "2026-03-02T00:00:00Z", anchored: 2, pending: 1,
