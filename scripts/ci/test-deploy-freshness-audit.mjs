@@ -9,7 +9,7 @@
  * check that cries wolf gets muted, and then it protects nothing.
  */
 
-import { deployFreshness, isDeployerSource, FRESHNESS, GRACE_MINUTES } from "./deploy-freshness-audit.mjs";
+import { deployFreshness, isDeployerSource, missingFrom, newlyDeploying, readBaseline, FRESHNESS, GRACE_MINUTES } from "./deploy-freshness-audit.mjs";
 
 let pass = 0, fail = 0;
 const ok = (m) => { pass++; console.log(`  ✓ ${m}`); };
@@ -171,6 +171,51 @@ eq(
   isDeployerSource("deploy.yml", null)
     ? ok("an unreadable deploy workflow is KEPT — coverage must not shrink on a network blip")
     : bad("an unreadable deploy workflow was dropped, silently removing its repo from the audit");
+}
+
+// ── the coverage ratchet ────────────────────────────────────────────────────
+//
+// This audit once printed "✓ every deploying repo has its main tip live" over
+// a run that had never looked at annushka, because the repo is PRIVATE and the
+// workflow's token could not enumerate it. A repo a token cannot see is absent
+// from `gh repo list` in exactly the same way as a repo that does not exist.
+{
+  const baseline = ["alpha", "beta", "gamma"];
+
+  missingFrom(baseline, ["alpha", "beta", "gamma"]).length === 0
+    ? ok("a full survey reports nothing missing")
+    : bad("a full survey invented a missing repo");
+
+  const gone = missingFrom(baseline, ["alpha", "gamma"]);
+  gone.length === 1 && gone[0] === "beta"
+    ? ok("a repo that silently dropped out of the survey is NAMED, not just counted")
+    : bad(`a vanished repo was not reported: ${JSON.stringify(gone)}`);
+
+  // The direction that actually bit: the survey shrank and every remaining row
+  // was healthy. "All green" must not be reachable while coverage has fallen.
+  missingFrom(baseline, []).length === 3
+    ? ok("a survey that saw NOTHING reports all three missing, not a clean fleet")
+    : bad("an empty survey did not report the baseline as missing");
+
+  // Coverage rising is not a failure — it is a baseline update.
+  const extra = newlyDeploying(baseline, ["alpha", "beta", "gamma", "delta"]);
+  extra.length === 1 && extra[0] === "delta"
+    ? ok("a newly deploying repo is surfaced so the baseline can rise")
+    : bad(`a new deploying repo was not surfaced: ${JSON.stringify(extra)}`);
+
+  newlyDeploying(baseline, ["alpha", "beta", "gamma"]).length === 0
+    ? ok("no spurious additions when the survey matches the baseline")
+    : bad("an addition was invented");
+
+  // And the committed baseline must actually load — an unreadable baseline
+  // silently disables the whole ratchet, which is the same class of bug again.
+  const real = readBaseline();
+  real.length >= 20 && real.includes("annushka") && real.includes("loki")
+    ? ok(`the committed baseline loads (${real.length} repos) and includes the private repo that was being missed`)
+    : bad(`the committed baseline did not load properly: ${real.length} entries`);
+  real.some((l) => l.startsWith("#"))
+    ? bad("comments leaked into the baseline list")
+    : ok("comments and blank lines are stripped from the baseline");
 }
 
 console.log();

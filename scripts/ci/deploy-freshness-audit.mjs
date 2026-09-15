@@ -43,6 +43,9 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 /** How long a merged commit may sit undeployed before it is a finding. The
  *  auto-merge sweep runs every 10 minutes; this is that plus room for a build. */
@@ -104,6 +107,47 @@ export function deployFreshness({ tipSha, tipCommittedAt, deployRuns, now, grace
 }
 
 const short = (s) => (typeof s === "string" ? s.slice(0, 7) : String(s));
+
+/**
+ * Which repos did this run stop looking at?
+ *
+ * A count is not coverage. This audit printed "✓ every deploying repo has its
+ * main tip live" over a run that had silently never looked at `annushka`: the
+ * repo is PRIVATE, the workflow's token could not enumerate it, and a repo the
+ * token cannot see is absent from `gh repo list` in exactly the same way as a
+ * repo that does not exist. Locally, with a token that could see it, the same
+ * command surveyed 21 repos; in CI it surveyed 20 and called that clean.
+ *
+ * That is the failure this whole file exists to prevent, committed by the file
+ * itself. So the fleet's deploying repos are pinned in a committed baseline and
+ * coverage becomes a ratchet: it may RISE (a new repo starts deploying, and the
+ * baseline is updated) but a silent FALL is a finding. A repo that is genuinely
+ * retired leaves the baseline in the same PR, where a human sees the decision —
+ * the same shape as the duplication ratchet in SHARED.md.
+ */
+export function missingFrom(baseline, surveyed) {
+  const seen = new Set(surveyed);
+  return (baseline ?? []).filter((name) => !seen.has(name)).sort();
+}
+
+/** Repos surveyed now that the baseline does not know about yet. */
+export function newlyDeploying(baseline, surveyed) {
+  const known = new Set(baseline ?? []);
+  return (surveyed ?? []).filter((name) => !known.has(name)).sort();
+}
+
+const BASELINE_PATH = join(dirname(fileURLToPath(import.meta.url)), "deploy-coverage.baseline");
+
+export function readBaseline(path = BASELINE_PATH) {
+  try {
+    return readFileSync(path, "utf8")
+      .split("\n")
+      .map((l) => l.replace(/#.*$/, "").trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
 // ── live data ───────────────────────────────────────────────────────────────
 
@@ -287,6 +331,12 @@ function main() {
     }
   }
 
+  // Before any verdict is printed: did this run see the whole fleet?
+  const baseline = readBaseline();
+  const surveyed = repos.map((r) => r.name);
+  const missing = missingFrom(baseline, surveyed);
+  const added = newlyDeploying(baseline, surveyed);
+
   const order = { stale: 0, unknown: 1, pending: 2, deployed: 3 };
   rows.sort((a, b) => order[a.state] - order[b.state] || a.repo.localeCompare(b.repo));
 
@@ -299,6 +349,21 @@ function main() {
   const stale = rows.filter((r) => r.state === FRESHNESS.STALE);
   const unknown = rows.filter((r) => r.state === FRESHNESS.UNKNOWN);
   console.log();
+  if (added.length) {
+    console.log(`  ${added.length} repo(s) now deploy that the baseline does not list — add them:`);
+    for (const name of added) console.log(`      + ${name}`);
+    console.log();
+  }
+  if (missing.length) {
+    console.log(`✗ COVERAGE FELL — ${missing.length} baselined repo(s) were not surveyed at all:`);
+    for (const name of missing) console.log(`      - ${name}`);
+    console.log("  A repo this token cannot see is missing from `gh repo list` in exactly the");
+    console.log("  same way as a repo that does not exist, so the rows above do NOT describe");
+    console.log("  the whole fleet. Check the token's scope (a PRIVATE repo needs one that can");
+    console.log("  read it); if the repo is genuinely retired, drop it from the baseline.");
+    console.log();
+    if (check) process.exit(1);
+  }
   if (unknown.length) {
     console.log(`  ${unknown.length} repo(s) could not be judged — that is not the same as clean:`);
     for (const r of unknown) console.log(`      ${r.repo}: ${r.reason}`);
