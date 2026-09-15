@@ -38,7 +38,8 @@
 # THE POLICY
 #   merge a PR  <=>  it is not a draft
 #                    AND (its author is a member/owner/collaborator
-#                         OR every commit is Signed-off-by — the DCO gate)
+#                         OR every commit is Signed-off-by AND a maintainer
+#                             approved its head commit — the contributor gate)
 #                    AND carries no hold label
 #                    AND has at least one check
 #                    AND every check has finished green
@@ -381,36 +382,64 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
 
   # ── the contributor gate ─────────────────────────────────────────────────
   #
-  # This is the one place every repo's PRs pass through, so it is where the
-  # org's contributor terms are enforced: an OUTSIDE pull request merges only
-  # if every commit carries a Signed-off-by line, which under the org-wide
-  # bitbaum/.github/CONTRIBUTING.md certifies the Developer Certificate of
-  # Origin AND the licence grant that keeps relicensing possible. Members,
-  # owners and collaborators are exempt — they are the copyright holder's
-  # own hands (agents commit under Cato's identity) and their commits carry
-  # Co-Authored-By, not Signed-off-by. A sign-off is a plain line in the
-  # message, so the check is text: no app, no per-repo workflow to roll out.
+  # This is the one place every repo's PRs pass through, so it is where an
+  # OUTSIDE pull request is held to two separate things:
   #
-  # Read only when the PR is otherwise ready, so it costs nothing on the
-  # skip path; REQUIRE_DCO=0 turns it off for a repo that has its own terms.
-  if [ "${REQUIRE_DCO:-1}" = "1" ]; then
-    # gh's JSON is filtered with real jq afterwards, like every other call
-    # here — the test fake returns payloads verbatim and ignores --jq.
-    association=$(gh api "repos/${REPO}/pulls/${number}" 2>/dev/null | jq -r '.author_association // "UNKNOWN"' 2>/dev/null || echo UNKNOWN)
-    case "$association" in
-      OWNER|MEMBER|COLLABORATOR) ;;
-      *)
-        commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
-        unsigned=$(printf '%s' "$commits_json" \
+  #   1. its licence terms — every commit carries a Signed-off-by line, which
+  #      under the org-wide bitbaum/.github/CONTRIBUTING.md certifies the
+  #      Developer Certificate of Origin and the licence grant that keeps
+  #      relicensing possible; and
+  #   2. a maintainer's review — an APPROVED review, from an owner, member or
+  #      collaborator, on the commit actually being merged.
+  #
+  # (2) was missing until 2026-09-15, and its absence was a supply-chain hole:
+  # every repo this sweep serves deploys on merge, so a stranger's
+  # signed-off, CI-green pull request went from "opened" to "running in
+  # production" with no human looking at it. Signing off is a statement about
+  # licensing; it says nothing about whether code is safe to run. The approval
+  # must be on the HEAD commit, or a contributor gets v1 approved and pushes v2.
+  #
+  # Members, owners and collaborators are exempt from both — they are the
+  # copyright holder's own hands (agents commit under Cato's identity). An
+  # association the API could not tell us is treated as outside: fail closed.
+  #
+  # Read only when the PR is otherwise ready, so it costs nothing on the skip
+  # path. The two properties have separate switches on purpose: REQUIRE_DCO=0
+  # is for a repo with its own licence terms, and must never also switch off
+  # review. REQUIRE_OUTSIDE_REVIEW=0 exists only so a repo that has no deploy
+  # can opt out deliberately.
+  pull_json=$(gh api "repos/${REPO}/pulls/${number}" 2>/dev/null || echo '{}')
+  association=$(printf '%s' "$pull_json" | jq -r '.author_association // "UNKNOWN"' 2>/dev/null || echo UNKNOWN)
+  case "$association" in
+    OWNER|MEMBER|COLLABORATOR) outside=0 ;;
+    *) outside=1 ;;
+  esac
+
+  if [ "$outside" = "1" ] && [ "${REQUIRE_DCO:-1}" = "1" ]; then
+    commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
+    unsigned=$(printf '%s' "$commits_json" \
           | jq -r '[.commits[] | select((.messageBody // "") | test("(^|\\n)Signed-off-by: .+ <.+@.+>") | not) | .oid[0:8]] | join(" ")')
-        if [ -n "$unsigned" ]; then
-          echo "[auto-merge] #${number} skip: outside PR (${association}) without a Signed-off-by on every commit (${unsigned}) — ${title}"
-          echo "- ✋ #${number} needs a DCO sign-off on ${unsigned} before it can merge — ${title}" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
-          continue
-        fi
-        echo "[auto-merge] #${number} outside PR (${association}), every commit signed off"
-        ;;
-    esac
+    if [ -n "$unsigned" ]; then
+      echo "[auto-merge] #${number} skip: outside PR (${association}) without a Signed-off-by on every commit (${unsigned}) — ${title}"
+      echo "- ✋ #${number} needs a DCO sign-off on ${unsigned} before it can merge — ${title}" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      continue
+    fi
+    echo "[auto-merge] #${number} outside PR (${association}), every commit signed off"
+  fi
+
+  if [ "$outside" = "1" ] && [ "${REQUIRE_OUTSIDE_REVIEW:-1}" = "1" ]; then
+    head_sha=$(printf '%s' "$pull_json" | jq -r '.head.sha // ""' 2>/dev/null || echo "")
+    # gh api prints an error BODY to stdout on failure; jq then fails on it and
+    # the count falls back to 0, which holds the PR. Fail closed, never open.
+    approvals=$(gh api "repos/${REPO}/pulls/${number}/reviews" 2>/dev/null \
+      | jq -r --arg head "$head_sha" '[.[] | select(.state == "APPROVED" and .commit_id == $head and ((.author_association // "") | test("^(OWNER|MEMBER|COLLABORATOR)$")))] | length' 2>/dev/null \
+      || echo 0)
+    if [ -z "$head_sha" ] || [ "${approvals:-0}" -lt 1 ]; then
+      echo "[auto-merge] #${number} skip: outside PR (${association}) has no approving review from a maintainer on its head commit — ${title}"
+      echo "- 👀 #${number} is an outside PR: it needs a maintainer's approving review on its latest commit before it can merge — ${title}" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      continue
+    fi
+    echo "[auto-merge] #${number} outside PR (${association}), approved by a maintainer on ${head_sha:0:8}"
   fi
 
   # Mergeability is computed lazily by GitHub and is invalidated every time the
