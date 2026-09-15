@@ -49,12 +49,15 @@ run_sweep() {
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  printf '{"author_association":"%s"}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  printf '{"author_association":"%s","head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  local reviews="${RS_REVIEWS:-}"
+  [ -n "$reviews" ] || reviews='[]'
+  printf '%s\n' "$reviews" > "$dir/reviews.json"
   # Not `${RS_COMMITS:-{...}}`: the first `}` inside closes the expansion.
   local commits="${RS_COMMITS:-}"
   [ -n "$commits" ] || commits='{"commits":[]}'
   printf '%s\n' "$commits" > "$dir/commits.json"
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -79,6 +82,8 @@ case "\$ARGS" in
   # well-formed JSON.
   "pr list"*)                       cat "$dir/prs.json" ;;
   # The DCO gate: who opened the PR, and what its commits say.
+  # The review list, matched BEFORE the pull itself: both paths start the same.
+  "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
   "api repos/"*"/pulls/"*)          cat "$dir/assoc.txt" ;;
   "pr view"*"--json commits"*)      cat "$dir/commits.json" ;;
   "pr view"*)                       cat "$dir/view.json" ;;
@@ -306,6 +311,7 @@ echo "auto-merge sweep — the contributor gate"
 
 signed()   { printf '{"oid":"%s","messageBody":"some work\\n\\nSigned-off-by: Ada Outsider <ada@example.org>"}' "$1"; }
 unsigned() { printf '{"oid":"%s","messageBody":"some work"}' "$1"; }
+approval() { printf '[{"state":"APPROVED","commit_id":"%s","author_association":"%s"}]' "$1" "$2"; }
 
 # 19. An outside PR whose commit carries no sign-off is left alone, and the
 #     sweep says which commit, so the contributor knows what to add.
@@ -325,11 +331,11 @@ if RS_ASSOC=FIRST_TIME_CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed bbbbbbbb22
 fi
 
 # 21. Every commit signed off: the outside PR merges like any other.
-if RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(signed dddddddd44444444),$(signed eeeeeeee55555555)]}" \
+if RS_REVIEWS="$(approval headsha0001 MEMBER)" RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(signed dddddddd44444444),$(signed eeeeeeee55555555)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] \
-    && ok 'an outside PR with every commit signed off merges' \
-    || no 'an outside PR with every commit signed off merges'
+    && ok 'an outside PR, signed off and approved by a maintainer on its head, merges' \
+    || no 'an outside PR, signed off and approved by a maintainer on its head, merges'
 fi
 
 # 22. A member's PR never needs a sign-off — agents commit under Cato's own
@@ -344,13 +350,51 @@ if RS_ASSOC=MEMBER RS_COMMITS="{\"commits\":[$(unsigned ffffffff66666666)]}" \
 fi
 
 # 23. REQUIRE_DCO=0 switches the gate off for a repo with its own terms.
-if REQUIRE_DCO=0 RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 9999999977777777)]}" \
+if REQUIRE_DCO=0 RS_REVIEWS="$(approval headsha0001 MEMBER)" RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 9999999977777777)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] \
     && ok 'REQUIRE_DCO=0 disables the gate' \
     || no 'REQUIRE_DCO=0 disables the gate'
 fi
 
+
+echo "auto-merge sweep — outside PRs need a maintainer's review"
+
+# 24. Signed off is not reviewed. The contributor terms are about licensing;
+#     they say nothing about whether code is safe to run, and every repo this
+#     sweep serves deploys on merge.
+if RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed abababab11111111)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'no approving review' \
+    && ok 'a signed-off outside PR with no review is held, and says why' \
+    || no 'a signed-off outside PR with no review is held, and says why'
+fi
+
+# 25. An approval on an older commit does not cover the one being merged —
+#     otherwise a contributor gets v1 approved and pushes v2.
+if RS_REVIEWS="$(approval oldsha0000 MEMBER)" RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed cdcdcdcd22222222)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'an approval on an older commit does not merge the new head' \
+    || no 'an approval on an older commit does not merge the new head'
+fi
+
+# 26. Only a maintainer's approval counts — anyone can press Approve.
+if RS_REVIEWS="$(approval headsha0001 CONTRIBUTOR)" RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed efefefef33333333)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'an approval from a non-maintainer does not count' \
+    || no 'an approval from a non-maintainer does not count'
+fi
+
+# 27. Switching the licence terms off must not switch review off: separate
+#     properties, separate switches.
+if REQUIRE_DCO=0 RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 1212121244444444)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'REQUIRE_DCO=0 still requires a maintainer review for an outside PR' \
+    || no 'REQUIRE_DCO=0 still requires a maintainer review for an outside PR'
+fi
 
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
