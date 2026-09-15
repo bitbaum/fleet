@@ -185,6 +185,15 @@ jobs:
       - name: The next-auth origin guard still detects, and still stays quiet
         run: node scripts/ci/test-nextauth-origin-audit.mjs
 
+      # Merged is not live. Most commits here never fire their own Deploy — they
+      # ride the auto-merge reconciler — so the audit's common case is "covered
+      # by a LATER successful deploy", and demanding an exact-SHA run would
+      # report nearly the whole fleet stale while everything was fine. The
+      # fixtures pin that, both boundaries of the grace window, and that a
+      # failed/cancelled/in-progress deploy never counts as shipped.
+      - name: The deploy-freshness audit still detects, and still stays quiet
+        run: node scripts/ci/test-deploy-freshness-audit.mjs
+
       # The registry that every other audit's advice points at was the one
       # thing nothing measured: on 2026-09-12 bip-kit had eight adopters and no
       # row, while being MENTIONED in the prose — so the fixtures pin that a

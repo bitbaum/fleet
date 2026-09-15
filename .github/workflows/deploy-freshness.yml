@@ -1,0 +1,70 @@
+# Merged is not live, and nothing was checking.
+#
+# uptime-sweep.sh probes /api/health and treats 5xx as DOWN — that proves a
+# process is UP, not that it is running the code we merged. Most commits in this
+# fleet never fire a Deploy of their own (a push made with GITHUB_TOKEN triggers
+# no workflows); they ship because the auto-merge sweep reconciles every ten
+# minutes. That reconciler is the single thing between "merged" and "live", and
+# it had no alarm on it.
+#
+# On its first run this audit found bitbaum/reparaturbonus-zh — a client site —
+# merged and NOT live for three and a half hours: its Deploy had failed, six
+# sweeps had passed, and every other signal was green.
+#
+# Hourly, not per-merge: the reconciler's own window is ten minutes, so anything
+# faster reports pending work as a problem, and a check that cries wolf gets
+# muted.
+name: Deploy freshness
+
+on:
+  schedule:
+    - cron: "37 * * * *"
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail when a repo is merged but not live"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: The judgement is pure — test it before trusting it
+        run: node scripts/ci/test-deploy-freshness-audit.mjs
+
+      - name: Is what is on main actually live?
+        env:
+          # The default token reads public repos only; private ones would land
+          # in UNKNOWN, which this audit prints by name rather than counting as
+          # clean. FLEET_READ_TOKEN covers them all.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Deploy freshness'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          node scripts/ci/deploy-freshness-audit.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Merged but not live is a failure
+        if: ${{ !cancelled() && inputs.strict != false }}
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/deploy-freshness-audit.mjs --check
