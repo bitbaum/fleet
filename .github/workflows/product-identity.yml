@@ -8,8 +8,8 @@
 # identity at all — a description, an address, and a presence on the three
 # platforms it is supposed to live on.
 #
-# Deliberately NOT in ci.yml's --check list. The register is served by Loki on
-# the Hetzner box, so a per-PR gate on it would turn every box blip into a red
+# Deliberately NOT in ci.yml's --check list. The map is served by Loki on the
+# Hetzner box, so a per-PR gate on it would turn every box blip into a red
 # PR on unrelated work, and a gate that goes red for reasons the author cannot
 # fix is a gate that gets muted. The audit's own unit test DOES run per-PR
 # (in ci.yml, no network) — the detector is guarded on every change, the sweep
@@ -47,13 +47,14 @@ jobs:
         run: node scripts/ci/test-product-identity-audit.mjs
 
       # The report is the deliverable even when the gate is green: it names
-      # which products are missing which field, which generated experiments are
-      # still in the register, and which live projects have no register row and
-      # so escape every rule.
+      # which products are missing which field, gives a per-field count across
+      # the fleet (so "roadmap is missing nearly everywhere" is visible at a
+      # glance rather than buried in a per-project list), and names the
+      # generated experiments still sitting in the register.
       - name: What the world can see of each product
         run: node scripts/ci/product-identity-audit.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # The ratchet. Exits 2 — not 0 — if the register cannot be read, so a
-      # Loki outage can never be published as a fleet with no gaps.
+      # The ratchet. Exits 2 — not 0 — if the map cannot be read, so a Loki
+      # outage can never be published as a fleet with no gaps.
       - name: Identity gaps have not risen
         run: node scripts/ci/product-identity-audit.mjs --check
