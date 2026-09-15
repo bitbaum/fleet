@@ -106,7 +106,7 @@ TypeScript literal is a copy, and it rots on schedule. Measured 2026-09-15:
 orangecat's public changelog carried 13 entries, newest dated 2026-07-31, while
 its main branch ran to PR #1039 on 2026-09-14. Loki's own `/changelog` is a
 `redirect()`. `bip-kit` exists to render exactly these from markdown and has
-eight adopters; seven of them use it for blogs only. `aoz-housing` is the one
+eight adopters; seven of them use it for blogs only. `aoz-begleitung` is the one
 repo doing it right, and is the pattern to copy.
 
 **A profile is not a page — it is the same fact on three surfaces.** A product

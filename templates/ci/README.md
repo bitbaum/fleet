@@ -349,7 +349,7 @@ property worth having is weaker and more useful:
 > every gate `verify` composes also runs in CI, **unsoftened**.
 
 Calling `npm run verify` satisfies that. So does calling each script by name —
-which `aoz-housing` does deliberately, fanning lint+typecheck, unit tests and
+which `aoz-begleitung` does deliberately, fanning lint+typecheck, unit tests and
 build into parallel jobs each with its own artifact. It was reported
 `⊗ UNCALLED` from this audit's first run onward while in fact running all three
 gates on every PR. **The rule was asking a conforming repo to serialize the
@@ -357,7 +357,7 @@ slowest pipeline in the fleet to satisfy a regex.**
 
 botsmann is still caught, because the distinction is not "hand-copied" but
 "hand-copied with a soft landing": every one of its steps carried
-`--if-present`, so a rename passed silently. aoz-housing's carry none, so a
+`--if-present`, so a rename passed silently. aoz-begleitung's carry none, so a
 rename fails CI exactly as hard as it fails `verify`.
 
 The residual risk in the decomposed shape is real and is why it stays reported
@@ -390,7 +390,7 @@ wrong verdicts** from that single conflation:
 | Repo | Reported | Truth |
 |---|---|---|
 | `vitareba` | "no package.json — not a JS repo" | live Next.js app, 1,339-byte package.json |
-| `aoz-housing` | "no package.json — not a JS repo" | live Next.js app, 2,011-byte package.json |
+| `aoz-begleitung` | "no package.json — not a JS repo" | live Next.js app, 2,011-byte package.json |
 | `ai-forms` | "CI never runs `verify`" | `ci.yml` line 19 is `npm run verify` |
 | `loki` | "CI never runs `verify`" | `ci.yml` line 52 is `npm run verify` |
 

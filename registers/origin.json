@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T12:31:42.056Z",
+  "generatedAt": "2026-09-15T13:03:40.053Z",
   "org": "bitbaum",
   "proofs": {
     "manifests": 5,
@@ -94,8 +94,8 @@
       }
     },
     {
-      "repo": "bitbaum/aoz-housing",
-      "url": "https://github.com/bitbaum/aoz-housing",
+      "repo": "bitbaum/aoz-begleitung",
+      "url": "https://github.com/bitbaum/aoz-begleitung",
       "description": "AOZ Begleitung — support platform for refugee care work: housing stability with compatibility matching, daily-life coordination, conflict resolution, and learning & participation tracking.",
       "createdAt": "2026-01-23T18:58:56Z",
       "firstCommit": {
@@ -105,23 +105,10 @@
         "originator": "Cato"
       },
       "commits": 549,
-      "stamped": {
-        "head": "431bae7f426e313dd685ef65af507a0fe885f424",
-        "at": "2026-09-15T08:37:46Z",
-        "manifest": "2026-09-15T083746Z.json",
-        "anchored": null
-      },
-      "firstStampedAt": "2026-09-14T01:46:51Z",
-      "provenSince": {
-        "at": "2026-09-14T01:46:51Z",
-        "block": 966918,
-        "manifest": "2026-09-14T014651Z.json"
-      },
-      "swh": {
-        "snapshot": "swh:1:snp:d27a85e2bed57c52f0f97b84f752d3ba143c1275",
-        "date": "2026-09-14T01:47:03.875000+00:00",
-        "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Faoz-housing"
-      }
+      "stamped": null,
+      "firstStampedAt": null,
+      "provenSince": null,
+      "swh": null
     },
     {
       "repo": "bitbaum/biaslens",
@@ -552,7 +539,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 96,
+      "commits": 99,
       "stamped": {
         "head": "6b364ef561ea95c6f96d68e7221db645bd0fe800",
         "at": "2026-09-15T08:37:46Z",
@@ -566,8 +553,8 @@
         "manifest": "2026-09-14T014651Z.json"
       },
       "swh": {
-        "snapshot": "swh:1:snp:ad8d97c8e514b7fd3c0839685a4e02af1e7e1cd5",
-        "date": "2026-09-14T01:42:31.412000+00:00",
+        "snapshot": "swh:1:snp:0c737ca642b5e8d3fddd25e91658c2a3ddfcc289",
+        "date": "2026-09-15T12:41:47.570000+00:00",
         "url": "https://archive.softwareheritage.org/browse/origin/directory/?origin_url=https%3A%2F%2Fgithub.com%2Fbitbaum%2Ffleet"
       }
     },
@@ -608,7 +595,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 52,
+      "commits": 54,
       "stamped": {
         "head": "1b2697469c767f479ba6f4837b393ed0eef8e2e1",
         "at": "2026-09-15T08:37:46Z",
@@ -884,7 +871,7 @@
         "author": "catomean",
         "originator": "Cato"
       },
-      "commits": 2930,
+      "commits": 2931,
       "stamped": {
         "head": "0a2f042056d0c6dcabf3b5af707182a6273b3c1c",
         "at": "2026-09-15T08:37:46Z",
@@ -1108,7 +1095,7 @@
         "author": "Mao Nakamoto",
         "originator": "Cato"
       },
-      "commits": 39,
+      "commits": 40,
       "stamped": {
         "head": "6e25553f6defa61228280f9b3cb28151924da334",
         "at": "2026-09-15T08:37:46Z",

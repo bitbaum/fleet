@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-09-14T13:20:41.964Z",
+  "generatedAt": "2026-09-15T13:06:30.871Z",
   "packages": [
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.7.1",
+      "version": "1.9.0",
       "install": {
         "source": "npm",
         "command": "pnpm add @bitbaum/ai-kit"
       },
       "adopters": 14,
       "adopterNames": [
-        "aoz-housing",
+        "aoz-begleitung",
         "botsmann",
         "datacat",
         "evig",
@@ -41,7 +41,7 @@
       },
       "adopters": 11,
       "adopterNames": [
-        "aoz-housing",
+        "aoz-begleitung",
         "botsmann",
         "evig",
         "hirnli",
@@ -64,16 +64,39 @@
         "source": "npm",
         "command": "pnpm add bip-kit"
       },
-      "adopters": 8,
+      "adopters": 9,
       "adopterNames": [
-        "aoz-housing",
+        "aoz-begleitung",
         "botsmann",
         "datacat",
         "evig",
         "kivvi",
         "loki",
         "orangecat",
-        "petvity"
+        "petvity",
+        "substrata"
+      ]
+    },
+    {
+      "slug": "limitkit",
+      "name": "limitkit",
+      "repo": "https://github.com/bitbaum/limitkit",
+      "description": "Rate limiting as a decision, not a middleware: fixed and sliding windows over an injectable store, a bounded in-memory store, standard RateLimit headers, and client-IP extraction. No HTTP client, no framework.",
+      "version": "0.2.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add limitkit"
+      },
+      "adopters": 8,
+      "adopterNames": [
+        "botsmann",
+        "evig",
+        "heidi",
+        "loki",
+        "orangecat",
+        "petvity",
+        "surf-your-life",
+        "truthseeker"
       ]
     },
     {
@@ -89,28 +112,11 @@
       "adopters": 6,
       "adopterNames": [
         "ai-kit",
-        "aoz-housing",
+        "aoz-begleitung",
         "evig",
         "kivvi",
         "loki",
         "surf-your-life"
-      ]
-    },
-    {
-      "slug": "limitkit",
-      "name": "limitkit",
-      "repo": "https://github.com/bitbaum/limitkit",
-      "description": "Rate limiting as a decision, not a middleware: fixed and sliding windows over an injectable store, a bounded in-memory store, standard RateLimit headers, and client-IP extraction. No HTTP client, no framework.",
-      "version": "0.2.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add limitkit"
-      },
-      "adopters": 3,
-      "adopterNames": [
-        "heidi",
-        "loki",
-        "orangecat"
       ]
     },
     {

@@ -6,7 +6,7 @@
  * WHY THIS EXISTS
  * ---------------
  * On 2026-08-31 a manual audit of all 38 repos found the production box on
- * Node 20 four months past EOL, one app (aoz-housing) a full framework
+ * Node 20 four months past EOL, one app (aoz-begleitung) a full framework
  * generation behind on every axis at once, the flagship's own CLAUDE.md
  * describing a Tailwind major that main had left months earlier, and ai-kit
  * pinned at three different tags across seven consumers — one of them still

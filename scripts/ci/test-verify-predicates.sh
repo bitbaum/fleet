@@ -87,7 +87,7 @@ assert2() {
 
 VERIFY_NPM='npm run lint && npm run typecheck && npm run test'
 
-# aoz-housing's real shape: the same three scripts, split across parallel jobs
+# aoz-begleitung's real shape: the same three scripts, split across parallel jobs
 # for speed, none of them softened. This is the case that proved the
 # string-match rule wrong.
 AOZ_WF='  - name: Lint
@@ -117,7 +117,7 @@ got=$(verify_gate_scripts 'eslint . && tsc --noEmit && jest')
 
 echo "ci_runs_verify_gates"
 assert2 pass ci_runs_verify_gates "$AOZ_WF" "$VERIFY_NPM" \
-  'aoz-housing: gates run individually, unsoftened → satisfied'
+  'aoz-begleitung: gates run individually, unsoftened → satisfied'
 assert2 fail ci_runs_verify_gates "$AOZ_MISSING_TYPECHECK" "$VERIFY_NPM" \
   'a gate in verify that CI never runs → NOT satisfied'
 assert2 fail ci_runs_verify_gates "$HANDCOPIED" 'npm run lint && npm run test' \

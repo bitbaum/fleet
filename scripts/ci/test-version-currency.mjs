@@ -6,7 +6,7 @@
  * Both sides pinned, per fleet doctrine: the real 2026-08-31 staleness is
  * still caught (positive), a fully-current manifest stays silent (negative),
  * and an unreadable repo is UNCHECKED — never counted as gap-free. The
- * fixtures are the audit that motivated the ratchet: aoz-housing's actual
+ * fixtures are the audit that motivated the ratchet: aoz-begleitung's actual
  * manifest shape, including the dead-owner ai-kit pin.
  */
 import {
@@ -33,7 +33,7 @@ check("parseGitPin github:catomean/ai-kit#v0.4.0",
   JSON.stringify({ owner: "catomean", repo: "ai-kit", tag: "v0.4.0" }));
 check("parseGitPin registry range -> null", parseGitPin("^4.5.4") === null);
 
-// ── Positive: the aoz-housing regression is caught ──────────────────────────
+// ── Positive: the aoz-begleitung regression is caught ──────────────────────────
 const stale = {
   dependencies: { next: "^14.2.5", react: "^18.3.1", "ai-kit": "github:catomean/ai-kit#v0.4.0" },
   devDependencies: { tailwindcss: "^3.4.9", zod: "^3.23.8", eslint: "^8.57.0", "@types/node": "^20.14.10" },

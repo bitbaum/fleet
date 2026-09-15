@@ -55,7 +55,7 @@ WARN_ONLY=0
 # "no workflows". A transient 403/5xx is not a fact. Measured 2026-08-16, one
 # sweep produced FOUR wrong verdicts from that conflation:
 #
-#   vitareba, aoz-housing  — live JS apps, reported as "not a JS repo" and
+#   vitareba, aoz-begleitung  — live JS apps, reported as "not a JS repo" and
 #                            dropped from the floor entirely
 #   ai-forms, loki   — reported "CI never runs verify" while line 19 and
 #                            line 52 of their ci.yml do exactly that
@@ -445,7 +445,7 @@ ${wf_body}"
   # fan the gates into parallel jobs. That satisfies the actual contract — every
   # gate runs and every one can still fail — so it is reported separately rather
   # than counted as a violation. Demanding the literal string was asking
-  # aoz-housing to serialize the slowest pipeline in the fleet to please a
+  # aoz-begleitung to serialize the slowest pipeline in the fleet to please a
   # regex.
   if [ -n "$verify" ] && [ "$ci_calls_verify" = no ]; then
     if [ -n "$wiring_unknown" ]; then
@@ -529,7 +529,7 @@ printf '%b' "${uncalled_list:-  (none)\n}"
 echo
 printf '≡ DECOMPOSED — CI runs every gate by name, unsoftened, but never the\n'
 printf '  word `verify`. NOT a violation: the contract is that each gate runs\n'
-printf '  and can still fail, and it does. aoz-housing splits lint+typecheck,\n'
+printf '  and can still fail, and it does. aoz-begleitung splits lint+typecheck,\n'
 printf '  unit tests and build into parallel jobs on purpose — collapsing that\n'
 printf '  into one verify step would serialize the fleet-slowest pipeline.\n'
 printf '  Residual risk, stated: a gate ADDED to verify later will not reach\n'
