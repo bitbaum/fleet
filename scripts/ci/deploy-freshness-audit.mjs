@@ -116,11 +116,20 @@ const short = (s) => (typeof s === "string" ? s.slice(0, 7) : String(s));
  * a COULD-NOT-LOOK reported as a fact about the repo. loki and aoz-housing were
  * both flagged that way while having 2 and 9 successful deploys respectively.
  */
-function gh(args, { attempts = 3 } = {}) {
+export function gh(args, { attempts = 3 } = {}) {
   let last;
   for (let i = 0; i < attempts; i++) {
     try {
-      return execFileSync("gh", args, { encoding: "utf8", timeout: 60000, maxBuffer: 32 * 1024 * 1024 });
+      return execFileSync("gh", args, {
+        encoding: "utf8", timeout: 60000, maxBuffer: 32 * 1024 * 1024,
+        // CAPTURE stderr rather than letting it through. execFileSync forwards
+        // the child's stderr to ours by default, so probing 21 repos for a
+        // .github/workflows directory printed eight bare `gh: Not Found (HTTP
+        // 404)` lines above the report — expected misses, indistinguishable
+        // from a real failure, and noisy enough to hide one. Captured, they
+        // reach the retry predicate and the COULD NOT READ row instead.
+        stdio: ["ignore", "pipe", "pipe"],
+      });
     } catch (e) {
       last = e;
       const msg = String(e.stderr || e.message || "");
@@ -183,7 +192,7 @@ function isDeployWorkflow(owner, repo, file) {
 }
 
 /** Repos that actually have a deploy workflow — the only ones this can judge. */
-function reposWithDeploy(owner, limit) {
+export function reposWithDeploy(owner, limit) {
   const all = JSON.parse(
     gh(["repo", "list", owner, "--limit", String(limit), "--no-archived",
         "--json", "name,isFork,defaultBranchRef"]),
@@ -210,7 +219,7 @@ function reposWithDeploy(owner, limit) {
   return out;
 }
 
-function tipOf(owner, repo, branch) {
+export function tipOf(owner, repo, branch) {
   const c = JSON.parse(
     gh(["api", `repos/${owner}/${repo}/commits?per_page=1&sha=${encodeURIComponent(branch)}`, "--jq",
         "[.[0].sha, .[0].commit.committer.date]"]),
@@ -231,7 +240,7 @@ function tipOf(owner, repo, branch) {
  * A window is not an absence. Scoping the query to each deploy workflow's own
  * runs makes the answer independent of how chatty the rest of the repo is.
  */
-function deployRunsOf(owner, repo, workflowFiles, branch) {
+export function deployRunsOf(owner, repo, workflowFiles, branch) {
   const runs = [];
   for (const file of workflowFiles) {
     // Deliberately NOT swallowed. A workflow with no runs returns an empty

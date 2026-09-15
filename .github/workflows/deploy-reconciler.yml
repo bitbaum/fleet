@@ -1,0 +1,60 @@
+# One clock for the whole fleet's deploys.
+#
+# The sweep in each repo already knows how to close the merged-but-not-live
+# gap. What it does not have is a clock that fires: ~25 per-repo `schedule:`
+# triggers, and GitHub honours them erratically — measured 2026-09-15, time
+# since each repo's sweep last ran was loki 19m, evig 151m, reparaturbonus-zh
+# 244m, vitareba 276m, against a stated ten-minute cadence.
+#
+# This is one schedule instead of twenty-five. It is not immune to the same
+# de-prioritisation, but it lives in the most active repo in the org, which is
+# the one GitHub is most willing to run, and a single late clock is a far
+# smaller surface than twenty-five independent ones.
+name: Deploy reconciler
+
+on:
+  schedule:
+    # Not on the hour. A cron on :00 competes with everything else in the org
+    # for the same scheduler slot, which is part of why the per-repo ones drift.
+    - cron: '23,53 * * * *'
+  workflow_dispatch:
+    inputs:
+      go:
+        description: 'Actually dispatch deploys (false = report only).'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # The gate must be proven before it is trusted, and proven BEFORE the run
+      # that can dispatch deploys across the org — not after.
+      - name: Prove the guards
+        run: |
+          node scripts/ci/test-deploy-freshness-audit.mjs
+          node scripts/ci/test-deploy-reconciler.mjs
+
+      - name: Reconcile
+        env:
+          # Cross-repo: GITHUB_TOKEN cannot dispatch a workflow in another repo,
+          # and a missing token here fails every dispatch while the job still
+          # exits 0 — the automation would look healthy and ship nothing.
+          GH_TOKEN: ${{ secrets.FLEET_PAT }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::error::FLEET_PAT is not set — the reconciler cannot dispatch across repos."
+            exit 1
+          fi
+          # `--go` on the schedule; the manual run can ask for a dry run instead.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.go }}" != "true" ]; then
+            node scripts/ci/deploy-reconciler.mjs | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            node scripts/ci/deploy-reconciler.mjs --go | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
