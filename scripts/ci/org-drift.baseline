@@ -35,4 +35,3 @@ crewless/README.md  # door disagreement from before apps.conf check existed
 # Remove a line when you fix the file. The count may fall; it may not rise.
 # ---------------------------------------------------------------------------
 evig/CLAUDE.md  # documents that revampit.orangecat.ch still resolves and MUST stay a 308 — the record of the retirement, not an instance of it
-aoz-begleitung/CLAUDE.md  # `JWT_ISSUER` is still the literal string `aoz-housing` and must stay so: src/proxy.ts and src/lib/auth/config.ts pass it as the JWT issuer, and changing it invalidates every live session. A live auth value, not a name.
