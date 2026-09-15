@@ -1,0 +1,59 @@
+# The product-identity audit as a script is a suggestion; as a workflow it is
+# a gate. This is what turns scripts/ci/product-identity-audit.mjs from
+# something that exists into something that runs.
+#
+# It answers a question no other audit asks. repo-metadata-audit checks that a
+# repository PAGE agrees with the register; version-currency checks that its
+# dependencies are current; this one checks that the product has a public
+# identity at all — a description, an address, and a presence on the three
+# platforms it is supposed to live on.
+#
+# Deliberately NOT in ci.yml's --check list. The register is served by Loki on
+# the Hetzner box, so a per-PR gate on it would turn every box blip into a red
+# PR on unrelated work, and a gate that goes red for reasons the author cannot
+# fix is a gate that gets muted. The audit's own unit test DOES run per-PR
+# (in ci.yml, no network) — the detector is guarded on every change, the sweep
+# runs on a schedule.
+name: Product identity audit
+
+on:
+  schedule:
+    # Weekly, same cadence as the nav-contract and UI-defect audits. A product
+    # gains a mission or a Solon organisation on the scale of weeks, not
+    # commits; daily would be the same 31 lines nobody reads twice.
+    - cron: '29 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-identity-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # Runs BEFORE the sweep, deliberately — same reasoning as the
+      # nav-contract, hosted-Supabase and UI-defect audits. A detector that has
+      # silently stopped catching anything reports a clean fleet, and a clean
+      # report from a broken detector is worse than no report: it is an absent
+      # check that produces a tick.
+      - name: The audit still detects, and still stays quiet
+        run: node scripts/ci/test-product-identity-audit.mjs
+
+      # The report is the deliverable even when the gate is green: it names
+      # which products are missing which field, which generated experiments are
+      # still in the register, and which live projects have no register row and
+      # so escape every rule.
+      - name: What the world can see of each product
+        run: node scripts/ci/product-identity-audit.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # The ratchet. Exits 2 — not 0 — if the register cannot be read, so a
+      # Loki outage can never be published as a fleet with no gaps.
+      - name: Identity gaps have not risen
+        run: node scripts/ci/product-identity-audit.mjs --check

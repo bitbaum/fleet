@@ -193,6 +193,15 @@ jobs:
       - name: The shared-registry audit still detects, and still stays quiet
         run: node scripts/ci/test-shared-registry-audit.mjs
 
+      # The identity gate's own sweep runs weekly (product-identity.yml) because
+      # it reads the register over the network; its JUDGEMENT is a pure function
+      # of the rows, so it is pinned here on every change. Both directions plus
+      # a mutation: flipping one FIELDS row to published must turn a previously
+      # clean product red, or the table is decoration and rule 1 is the whole
+      # audit forever.
+      - name: The product-identity audit still detects, and still stays quiet
+        run: node scripts/ci/test-product-identity-audit.mjs
+
       # This script can DELETE repositories, so its selector is pinned in both
       # directions on every fixture and its --yes guard is exercised through
       # the script itself, not re-implemented. Four mutants (selector ignores
