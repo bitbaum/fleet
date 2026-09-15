@@ -52,6 +52,8 @@ import {
   reposWithDeploy,
   tipOf,
   deployRunsOf,
+  deployedByShaIndex,
+  runsForSha,
   gh,
   FRESHNESS,
 } from "./deploy-freshness-audit.mjs";
@@ -165,37 +167,6 @@ export function ciVerdict(checkRuns) {
   return "green";
 }
 
-/**
- * Was this exact commit deployed, according to the run index keyed by COMMIT?
- *
- * This exists because re-reading the same endpoint twice was not enough.
- *
- * `actions/workflows/{file}/runs?branch=main` intermittently returns a page
- * that omits its own newest runs. Measured 2026-09-15: it happened to datacat
- * twice and to evig once inside ninety minutes, and on evig it got past the
- * double-read guard and dispatched a real, redundant deploy of a tip that had
- * been live since 05:42. Reading a flaky endpoint twice mostly gives you the
- * same flake twice; it is not independent evidence.
- *
- * `actions/runs?head_sha=<sha>` is a DIFFERENT index — keyed by commit rather
- * than by workflow and branch — and answers the question actually being asked:
- * has this commit had a successful deploy run? On evig it returned the
- * deploy-selfhost.yml success that the other endpoint had just denied.
- *
- * Runs carry `path` (".github/workflows/deploy-selfhost.yml"), so the file is
- * compared by basename against the repo's known deploy workflows.
- */
-export function deployedByShaIndex(runsForSha, deployFiles) {
-  const want = new Set((deployFiles ?? []).map((f) => String(f).toLowerCase()));
-  return (runsForSha ?? []).some(
-    (r) =>
-      r &&
-      r.status === "completed" &&
-      r.conclusion === "success" &&
-      want.has(String(r.path ?? "").split("/").pop().toLowerCase()),
-  );
-}
-
 // ── live data ───────────────────────────────────────────────────────────────
 
 function checkRunsFor(owner, repo, sha) {
@@ -235,17 +206,6 @@ function deployInFlight(runs) {
  * replica can lag twice — but it converts a common transient into a rare one,
  * and the cost of asking is one API call per repo actually being shipped.
  */
-function runsForSha(owner, repo, sha) {
-  try {
-    return JSON.parse(
-      gh(["api", `repos/${owner}/${repo}/actions/runs?head_sha=${sha}&per_page=100`, "--jq",
-          "[.workflow_runs[] | {path, status, conclusion}]"]),
-    );
-  } catch {
-    return null; // unreadable: deployedByShaIndex(null) is false, so it does not
-                 // manufacture a confirmation either way
-  }
-}
 
 export function confirmedStale(owner, repo, branch, deployFiles, now) {
   try {
