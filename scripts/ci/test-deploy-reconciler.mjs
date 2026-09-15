@@ -8,7 +8,7 @@
  * indistinguishable from a broken reconciler, and a guard that only ever says
  * "yes" is a fleet-wide outage waiting for one bad predicate.
  */
-import { shouldDispatch, ciVerdict, ACTION, MAX_DISPATCHES } from "./deploy-reconciler.mjs";
+import { shouldDispatch, ciVerdict, needsCiRerun, ACTION, MAX_DISPATCHES, MAX_RERUNS } from "./deploy-reconciler.mjs";
 import { FRESHNESS } from "./deploy-freshness-audit.mjs";
 
 let pass = 0, fail = 0;
@@ -72,6 +72,44 @@ is(shouldDispatch({ state: FRESHNESS.STALE, ci: "green", deployInFlight: true })
 MAX_DISPATCHES > 0 && MAX_DISPATCHES < 21
   ? ok(`the dispatch cap (${MAX_DISPATCHES}) is smaller than the fleet — a bad predicate cannot ship everything`)
   : bad(`the cap ${MAX_DISPATCHES} does not bound a fleet-wide mistake`);
+
+// ── re-running CI: the repair for a tip that can never go green ─────────────
+//
+// loki 2026-09-15: concurrency cancelled both CI runs for the tip, so all six
+// chained Deploy runs skipped and the tip could never ship — the green run the
+// chain waits for could not appear, because nothing re-runs a cancelled CI.
+// Declining to deploy that is right; declining AND doing nothing leaves the
+// repo exactly as stuck as it was found.
+{
+  needsCiRerun({ state: FRESHNESS.STALE, ci: "none", ciInFlight: false }).rerun
+    ? ok("a stale tip with no green CI run gets its CI re-run — the repair is not inert")
+    : bad("the one case this exists for did not trigger a re-run");
+
+  // A red build is not repaired by running it again, and a reconciler that
+  // retries red CI every half hour forever is a CI amplifier, not a fix.
+  needsCiRerun({ state: FRESHNESS.STALE, ci: "red", ciInFlight: false }).rerun
+    ? bad("a RED tip was re-run — that loops on a genuinely broken build")
+    : ok("a RED tip is not re-run; it is broken, not unverified");
+
+  needsCiRerun({ state: FRESHNESS.STALE, ci: "green", ciInFlight: false }).rerun
+    ? bad("a green tip was re-run for no reason")
+    : ok("a green tip is not re-run — it needs a deploy, not another CI");
+
+  needsCiRerun({ state: FRESHNESS.STALE, ci: "none", ciInFlight: true }).rerun
+    ? bad("CI was re-run while a run was already in flight")
+    : ok("no re-run while a CI run is already in flight");
+
+  needsCiRerun({ state: FRESHNESS.DEPLOYED, ci: "none", ciInFlight: false }).rerun
+    ? bad("a deployed repo had its CI re-run")
+    : ok("a repo that is already live is left alone");
+  needsCiRerun({ state: FRESHNESS.PENDING, ci: "none", ciInFlight: false }).rerun
+    ? bad("a repo inside the reconciler window had its CI re-run")
+    : ok("a repo inside the window is left alone");
+
+  MAX_RERUNS > 0 && MAX_RERUNS <= MAX_DISPATCHES
+    ? ok(`the re-run cap (${MAX_RERUNS}) is set and no looser than the deploy cap`)
+    : bad(`the re-run cap ${MAX_RERUNS} is not a bound`);
+}
 
 console.log();
 console.log(`test-deploy-reconciler: ${pass} passed, ${fail} failed`);
