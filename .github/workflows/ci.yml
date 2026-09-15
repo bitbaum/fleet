@@ -138,6 +138,14 @@ jobs:
       - name: The bus-factor audit still detects, and still stays quiet
         run: bash scripts/ci/test-bus-factor-audit.sh
 
+      # The readings are a public statement of the numbers the bet rests on,
+      # so the test is about not lying: a favour is not a paying client, '-'
+      # is unknown not zero, our own products are not clients, a package npm
+      # could not answer for is null not zero, and history grows only when a
+      # reading changes.
+      - name: The readings cannot flatter
+        run: node scripts/ci/test-readings.mjs
+
       # This detector reports on repos nobody is watching, so its own failure
       # mode is silence: a clean report from a broken audit is worse than no
       # audit, because it prints a ✓. Both sides are pinned — the real AOZ
