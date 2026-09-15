@@ -77,6 +77,16 @@ lost. That is the same bug as a private copy: put it where the readers are.
 - The agent name is Antigravity. Do not write Gemini.
 - An `orangecat.ch` name is an address on the Hetzner box, not a product of OrangeCat.
 - GitHub Pages is not a host.
+- **Nothing is Live. Everything is beta — OrangeCat included.** `live` in
+  `apps.conf` is a PROVISIONING fact: the process is served and Caddy has a
+  vhost. It is not a release state, and rendering it as one is a claim nobody
+  here can back. "Live" is reserved for something we would be comfortable
+  releasing; today that is nothing, so the word appears on no public surface.
+  This is the same column-misread as `client-app` two fields over, which is why
+  that one is published as Pilot and Concept rather than "client".
+  A product that is served says **beta**; one that is served and unfinished
+  says so in full: "Beta — running, not released". "N products run today" is
+  fine — that is a claim about processes, not about readiness.
 
 ## The identity contract
 
