@@ -16,15 +16,15 @@
  *     loki 19m · evig 151m · reparaturbonus-zh 244m · vitareba 276m
  *
  * A ten-minute cron that last fired four hours ago is not a reconciler. The visible
- * consequence that day: reparaturbonus-zh, a client site, sat merged-but-not-
+ * consequence that day: reparaturbonus-zh, a concept site, sat merged-but-not-
  * live for four hours because its Deploy lost a timing race at 05:56 and
  * nothing retried it. CI was green, /api/health was 200, and the box served the
  * previous release the whole time.
  *
  * Quiet repos are hit worst, which is exactly backwards: GitHub de-prioritises
- * schedules on low-activity repos, and a client site nobody pushes to all week
- * is the definition of low-activity. The repos least likely to be watched by a
- * human are the ones whose clock stops first.
+ * schedules on low-activity repos, and a pilot or concept site nobody pushes to
+ * all week is the definition of low-activity. The repos least likely to be
+ * watched by a human are the ones whose clock stops first.
  *
  * So: one scheduler, in the most active repo in the org, dispatching deploys
  * for the repos that actually need one. It does not reimplement the sweep and
