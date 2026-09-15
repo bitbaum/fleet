@@ -60,9 +60,11 @@ lost. That is the same bug as a private copy: put it where the readers are.
 - Org facts (public name, unregistered, house address, host): `registers/org.json`.
 - Tools we develop with (agent names): `registers/toolchain.json`.
   The build stack (framework, ORM, package manager) is `STACK.md`.
-- Display name, kind, and who the work is for: the venture register. Until that
-  file exists, do not invent a name. The product title in that repo is the
-  temporary source, and a page that disagrees with it is a bug.
+- Display name, kind, who the work is for, and what the product IS: a Loki
+  project profile, published at `loki.orangecat.ch/api/fleet/register` (the
+  platform join) and `/api/fleet/map` (the venture list). A page that disagrees
+  with it is a bug. See "The identity contract" below before writing any of it
+  down a second time.
 - Repeating behavior: one package, one job. A package does not store names or
   hosts. Do not merge kits to make a wiki.
 - Design: `@bitbaum/design-tokens`. A site is data rendered by `sitekit`.
@@ -75,6 +77,47 @@ lost. That is the same bug as a private copy: put it where the readers are.
 - The agent name is Antigravity. Do not write Gemini.
 - An `orangecat.ch` name is an address on the Hetzner box, not a product of OrangeCat.
 - GitHub Pages is not a host.
+
+## The identity contract
+
+Six things are true of every product we ship, and a reader must be able to find
+all six: **problem, solution, mission, vision, roadmap, changelog.**
+
+**They already have a producer. Do not invent a second one.** A Loki project
+profile holds all six today: `problem` / `solution` / `mission` / `vision` are
+canonical keys in `loki: src/config/project-attrs.ts`, the roadmap is the
+`goals` table, the changelog is `user_projects.dev_log`. They are edited in the
+project's Context tab and injected into every dispatch, so the agent building a
+product and the page describing it read the same words — which is the entire
+reason to keep one copy.
+
+So: **a product site RENDERS these, it does not author them.** A `ROADMAP` in a
+TypeScript literal is a copy, and it rots on schedule. Measured 2026-09-15:
+orangecat's public changelog carried 13 entries, newest dated 2026-07-31, while
+its main branch ran to PR #1039 on 2026-09-14. Loki's own `/changelog` is a
+`redirect()`. `bip-kit` exists to render exactly these from markdown and has
+eight adopters; seven of them use it for blogs only. `aoz-housing` is the one
+repo doing it right, and is the pattern to copy.
+
+**A profile is not a page — it is the same fact on three surfaces.** A product
+has a Loki project (how it gets built), an OrangeCat profile (how it is funded
+and found) and a Solon organisation (how it is governed). All three are joined
+by repo slug and published at `/api/fleet/register`. On 2026-09-15 that was
+35 projects, 7 with an OrangeCat profile, **1 with a Solon organisation**, and
+`description` — the register's only prose field — null on all 35.
+
+    fleet: node scripts/ci/product-identity-audit.mjs          # report
+    fleet: node scripts/ci/product-identity-audit.mjs --check  # ratchet
+
+The audit judges only mechanical claims — a field is empty, a profile is
+absent — never whether prose is good, for the reason `repo-metadata-audit.mjs`
+gives. It also reports two things it deliberately does not count: generated
+experiments still in the register, and projects that are live with no register
+row at all (`loki` and `orangecat` among them, which is why the pillars escape
+every register-derived gate).
+
+Adding a field to a profile is one row in that audit's `FIELDS` table the day
+Loki publishes it. Adding a seventh *thing* is a conversation, not a commit.
 
 ## Packages
 
