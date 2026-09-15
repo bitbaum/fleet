@@ -82,13 +82,35 @@ repos=$(gh repo list "$OWNER" --limit "$LIMIT" --no-archived --source \
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 truncated=""
+unreadable=""
 inspected=0
+
+# A repo we could not read contributes ZERO files, which is indistinguishable
+# from a repo that deleted its duplicate. The fetch used to `|| continue` on any
+# failure, so one TLS handshake timeout — common enough that a single sweep over
+# 43 repos dropped NINE of them on 2026-09-15 — turned into an apparent fall in
+# email-send, health-route and slug-util that nobody had earned. Retry, and then
+# say the repo's name rather than quietly counting nothing.
+fetch_tree() {
+  local name="$1" branch="$2" attempt body
+  for attempt in 1 2 3 4; do
+    if body=$(gh api "repos/$OWNER/$name/git/trees/$branch?recursive=1" 2>/dev/null) \
+       && [ -n "$body" ]; then
+      printf '%s' "$body"
+      return 0
+    fi
+    sleep $((attempt * 3))
+  done
+  return 1
+}
 
 while IFS=$'\t' read -r name branch; do
   [ -n "$name" ] || continue
   [ -n "$branch" ] || continue
-  body=$(gh api "repos/$OWNER/$name/git/trees/$branch?recursive=1" 2>/dev/null) || continue
-  [ -n "$body" ] || continue
+  if ! body=$(fetch_tree "$name" "$branch"); then
+    unreadable="$unreadable $name"
+    continue
+  fi
   # A truncated tree UNDERCOUNTS, which would read as progress. Say so.
   if [ "$(printf '%s' "$body" | jq -r '.truncated // false')" = "true" ]; then
     truncated="$truncated $name"
@@ -133,12 +155,20 @@ if [ "$MODE" = report ]; then
   echo
   echo "inspected $inspected repo(s) on their default branches"
   [ -n "$truncated" ] && echo "⚠ TRUNCATED trees (undercounted):$truncated"
+  [ -n "$unreadable" ] && echo "⚠ COULD NOT READ (undercounted):$unreadable"
   echo
   echo "A count is not a verdict — see SHARED.md for what is worth extracting."
   exit 0
 fi
 
 if [ "$MODE" = update ]; then
+  # Writing a baseline from an undercount is the worst outcome available: it
+  # locks in a fall that never happened, and the ratchet then defends it.
+  if [ -n "$truncated$unreadable" ]; then
+    echo "✗ incomplete read (truncated:${truncated:- none}) (unreadable:${unreadable:- none})" >&2
+    echo "  refusing to write a baseline from counts that are known to be low." >&2
+    exit 2
+  fi
   cp "$current" "$BASELINE"
   echo "baseline written: $BASELINE"
   cat "$BASELINE"
@@ -152,6 +182,13 @@ fi
 # certify rather than report a decrease that did not happen.
 if [ -n "$truncated" ]; then
   echo "✗ tree truncated for:$truncated — counts undercount, refusing to judge" >&2
+  exit 2
+fi
+
+# Same reasoning, different cause: a repo the API would not hand over is a repo
+# whose duplication we did not see. Absence is not an answer.
+if [ -n "$unreadable" ]; then
+  echo "✗ could not read:$unreadable — counts undercount, refusing to judge" >&2
   exit 2
 fi
 

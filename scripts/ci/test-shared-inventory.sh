@@ -84,6 +84,49 @@ else
   no 'a concern removed from the script does not fail the ratchet'
 fi
 
+# ── an incomplete read must never be certified ───────────────────────────────
+#
+# A repo the API would not hand over contributes zero files, which looks exactly
+# like a repo that deleted its duplicate. On 2026-09-15 one sweep over 43 repos
+# silently dropped nine and three rows appeared to fall that nobody had earned.
+# So the guard is the same shape as the truncation guard: refuse to judge, and
+# refuse to WRITE a baseline from counts known to be low.
+printf 'incomplete reads\n'
+
+# (truncated, unreadable) -> 2 when either is non-empty, 0 otherwise.
+incomplete_guard() {
+  [ -n "$1$2" ] && return 2
+  return 0
+}
+
+if incomplete_guard "" ""; then ok 'a complete read is judged'
+else no 'a complete read is judged'; fi
+
+if incomplete_guard " evig" ""; then no 'a truncated tree refuses judgement'
+else ok 'a truncated tree refuses judgement'; fi
+
+if incomplete_guard "" " kivvi"; then no 'an unreadable repo refuses judgement'
+else ok 'an unreadable repo refuses judgement'; fi
+
+# The fixtures above prove the rule; these prove the script still applies it.
+if grep -q 'fetch_tree()' "$HERE/shared-inventory.sh"; then
+  ok 'the tree fetch retries instead of skipping on first failure'
+else
+  no 'the tree fetch retries instead of skipping on first failure'
+fi
+
+if grep -q 'refusing to write a baseline' "$HERE/shared-inventory.sh"; then
+  ok '--update refuses an incomplete read'
+else
+  no '--update refuses an incomplete read'
+fi
+
+if grep -q 'could not read:\$unreadable' "$HERE/shared-inventory.sh"; then
+  ok '--check refuses an incomplete read'
+else
+  no '--check refuses an incomplete read'
+fi
+
 # ── the baseline in the repo must match the script's concerns ────────────────
 printf 'baseline integrity\n'
 BASE="$HERE/shared-inventory.baseline"
