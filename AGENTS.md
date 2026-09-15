@@ -102,22 +102,27 @@ repo doing it right, and is the pattern to copy.
 **A profile is not a page — it is the same fact on three surfaces.** A product
 has a Loki project (how it gets built), an OrangeCat profile (how it is funded
 and found) and a Solon organisation (how it is governed). All three are joined
-by repo slug and published at `/api/fleet/register`. On 2026-09-15 that was
-35 projects, 7 with an OrangeCat profile, **1 with a Solon organisation**, and
-`description` — the register's only prose field — null on all 35.
+by repo slug and published at `/api/fleet/register`; the six themselves ride on
+`/api/fleet/map`, which is what the audit reads. Of the 16 projects that have
+shipped, on 2026-09-15: **roadmap missing on 14**, a Solon organisation on 11,
+an OrangeCat profile on 10.
 
     fleet: node scripts/ci/product-identity-audit.mjs          # report
     fleet: node scripts/ci/product-identity-audit.mjs --check  # ratchet
 
 The audit judges only mechanical claims — a field is empty, a profile is
 absent — never whether prose is good, for the reason `repo-metadata-audit.mjs`
-gives. It also reports two things it deliberately does not count: generated
-experiments still in the register, and projects that are live with no register
-row at all (`loki` and `orangecat` among them, which is why the pillars escape
-every register-derived gate).
+gives. It reports two things it deliberately does not count: generated
+experiments still in the register, and projects that are not live anywhere.
 
-Adding a field to a profile is one row in that audit's `FIELDS` table the day
-Loki publishes it. Adding a seventh *thing* is a conversation, not a commit.
+**It reads the map, not the register, and that is load-bearing.** The register
+takes `status` from `apps.conf`, which deliberately omits the handcrafted
+4001-4004 services — so `loki` and `orangecat`, two of the three pillars, had no
+row and every rule skipped them while they served the public internet. The map
+resolves a project with a live URL and no hosting row as live.
+
+Adding a field is one row in that audit's `FIELDS` table. Adding a seventh
+*thing* is a conversation, not a commit.
 
 ## Packages
 

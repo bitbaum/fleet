@@ -74,8 +74,6 @@ import { dirname, join } from "node:path";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASELINE = process.env.PRODUCT_IDENTITY_BASELINE || join(HERE, "product-identity.baseline");
 
-export const REGISTER_URL =
-  process.env.FLEET_REGISTER_URL || "https://loki.orangecat.ch/api/fleet/register";
 export const MAP_URL = process.env.FLEET_MAP_URL || "https://loki.orangecat.ch/api/fleet/map";
 
 /** A product is held to this standard once it is one of these. */
@@ -91,13 +89,13 @@ export const OUR_OWNER = "bitbaum";
  * here the day each is published — that is the entire extension path.
  */
 export const FIELDS = [
-  { key: "description", published: true, from: "user_projects.description" },
-  { key: "problem", published: false, from: "attributes.key='problem'" },
-  { key: "solution", published: false, from: "attributes.key='solution'" },
-  { key: "mission", published: false, from: "attributes.key='mission'" },
-  { key: "vision", published: false, from: "attributes.key='vision'" },
-  { key: "roadmap", published: false, from: "goals" },
-  { key: "changelog", published: false, from: "user_projects.dev_log" },
+  { key: "what", published: true, from: "user_projects.description", at: (p) => p.what },
+  { key: "problem", published: true, from: "attributes", at: (p) => p.identity?.problem },
+  { key: "solution", published: true, from: "attributes", at: (p) => p.identity?.solution },
+  { key: "mission", published: true, from: "attributes", at: (p) => p.identity?.mission },
+  { key: "vision", published: true, from: "attributes", at: (p) => p.identity?.vision },
+  { key: "roadmap", published: true, from: "goals", at: (p) => p.roadmap },
+  { key: "changelog", published: true, from: "dev_log", at: (p) => p.changelog },
 ];
 
 /** Slugs a generated experiment left behind. They inflate every denominator. */
@@ -106,31 +104,40 @@ const LITTER = /^(factory-|dogfood-|one-shot-slop|website-design-development-)/;
 /**
  * A project the audit is entitled to judge.
  *
- * A row with no site row is not a product yet — it is a repo, or a name Loki
- * knows about. Holding those to a public-identity standard is how a gate fills
+ * A project that has not shipped is not held: holding it is how a gate fills
  * with rows nobody intends to fix, and a gate that is mostly noise gets muted.
+ *
+ * The map decides `status`, and that is why this reads the map rather than the
+ * register. The register takes status from apps.conf, which deliberately omits
+ * the handcrafted 4001-4004 services — so on the register `loki` and
+ * `orangecat`, two of the three pillars, had no row at all and every rule here
+ * skipped them while they served the public internet. The map resolves a
+ * project with a live URL and no hosting row as live, which is the truth.
  */
-export function isHeld(row) {
-  if (!row || LITTER.test(row.slug)) return false;
-  const site = row.site;
-  if (!site) return false;
-  return HELD_STATUSES.has(site.status);
+export function isHeld(p) {
+  if (!p || LITTER.test(p.slug)) return false;
+  return HELD_STATUSES.has(p.status);
 }
 
-/** Gaps on one register row. One string per missing thing, or []. */
-export function gapsFor(row) {
+/** Is this identity field answered? A field is either prose or a list. */
+function answered(value) {
+  if (Array.isArray(value)) return value.length > 0;
+  return typeof value === "string" && value.trim() !== "";
+}
+
+/** Gaps on one map entry. One string per missing thing, or []. */
+export function gapsFor(p) {
   const out = [];
-  const ours = row.site?.owner === OUR_OWNER;
+  const ours = (p.owner ?? OUR_OWNER) === OUR_OWNER;
 
   for (const f of FIELDS) {
     if (!f.published) continue;
-    const v = row[f.key];
-    if (typeof v !== "string" || v.trim() === "") out.push(`no ${f.key}`);
+    if (!answered(f.at(p))) out.push(`no ${f.key}`);
   }
 
-  if (!row.site?.url) out.push("no site url");
-  if (ours && !row.orangecat) out.push("no orangecat profile");
-  if (ours && !row.solon) out.push("no solon org");
+  if (!p.urls?.live) out.push("no site url");
+  if (ours && !p.urls?.orangecat) out.push("no orangecat profile");
+  if (ours && !p.urls?.solon) out.push("no solon org");
 
   return out;
 }
@@ -150,25 +157,22 @@ export function litterIn(rows) {
 }
 
 /**
- * Rows that are demonstrably live and that this audit still cannot judge.
+ * Projects the map knows about that are not live anywhere.
  *
- * `site` comes from apps.conf, and apps.conf deliberately does not carry the
- * handcrafted 4001-4004 services. So on 2026-09-15 `loki` and `orangecat` —
- * two of the three pillars — plus `wild-spirit` each had `site: null` and were
- * skipped by every register-derived rule here, while serving the public
- * internet. bitbaum's own site is a fourth: a static Caddy vhost with no
- * apps.conf row AND no Loki live url, so it is invisible even to this.
+ * Reported, never counted. A project with no address is not failing to have an
+ * identity — it has not shipped, and holding it to a public standard is how a
+ * gate fills with rows nobody intends to fix.
  *
- * That is worse than a gap, because a gap is visible and this is not. It is
- * reported separately and loudly rather than folded into the count: folding it
- * in would let filling it look like progress on identity, when the fix is a
- * register row.
+ * This used to report the opposite problem: live projects the REGISTER could
+ * not see, because apps.conf omits the handcrafted services. Reading the map
+ * fixed that at the source — `loki` and `orangecat` are now judged like
+ * everything else — so the blind spot this named no longer exists.
  */
-export function unjudgeable(rows) {
-  return rows
-    .filter((r) => !LITTER.test(r.slug) && !r.site && r.loki?.liveUrl)
-    .map((r) => ({ slug: r.slug, liveUrl: r.loki.liveUrl }))
-    .sort((a, b) => a.slug.localeCompare(b.slug));
+export function notShipped(projects) {
+  return projects
+    .filter((p) => !LITTER.test(p.slug) && !HELD_STATUSES.has(p.status))
+    .map((p) => p.slug)
+    .sort();
 }
 
 export function readBaseline(path = BASELINE) {
@@ -189,59 +193,75 @@ async function main() {
   const argv = process.argv.slice(2);
   const fixtureIdx = argv.indexOf("--fixture");
 
-  let register;
+  let map;
   if (fixtureIdx !== -1) {
     const p = argv[fixtureIdx + 1];
-    if (!p) { console.error("--fixture needs a path"); process.exit(2); }
-    register = JSON.parse(readFileSync(p, "utf8"));
+    if (!p) {
+      console.error("--fixture needs a path");
+      process.exit(2);
+    }
+    map = JSON.parse(readFileSync(p, "utf8"));
   } else {
     try {
-      register = await fetchJson(REGISTER_URL);
+      map = await fetchJson(MAP_URL);
     } catch (err) {
-      // A register we could not read is not a fleet without gaps. Exiting 0
-      // here would report a clean sweep that never happened — the failure mode
-      // this repo's audits exist to avoid.
-      console.error(`✗ could not read the register: ${err.message}`);
+      // A map we could not read is not a fleet without gaps. Exiting 0 here
+      // would report a clean sweep that never happened — the failure mode this
+      // repo's audits exist to avoid.
+      console.error(`✗ could not read the fleet map: ${err.message}`);
       console.error("  not reporting a result. Fix the fetch, then re-run.");
       process.exit(2);
     }
   }
 
-  const rows = Array.isArray(register.rows) ? register.rows : [];
-  if (rows.length === 0) {
-    console.error("✗ register carried no rows — refusing to report zero gaps");
+  const projects = Array.isArray(map.projects) ? map.projects : [];
+  if (projects.length === 0) {
+    console.error("✗ the map carried no projects — refusing to report zero gaps");
     process.exit(2);
   }
 
-  const held = rows.filter(isHeld);
-  const gaps = findGaps(rows);
-  const litter = litterIn(rows);
-  const blind = unjudgeable(rows);
+  const held = projects.filter(isHeld);
+  const gaps = findGaps(projects);
+  const litter = litterIn(projects);
+  const unshipped = notShipped(projects);
   const total = gaps.reduce((n, r) => n + r.gaps.length, 0);
 
-  console.log(`product identity — ${held.length} held of ${rows.length} register rows`);
-  console.log(`checking ${FIELDS.filter((f) => f.published).length} of ${FIELDS.length} identity fields (the rest are not published yet)\n`);
+  console.log(`product identity — ${held.length} shipped of ${projects.length} projects`);
+  console.log(`checking all ${FIELDS.length} identity fields\n`);
 
-  for (const r of gaps) console.log(`  ${r.slug.padEnd(24)} ${r.gaps.join(", ")}`);
+  for (const r of gaps) console.log(`  ${r.slug.padEnd(20)} ${r.gaps.join(", ")}`);
   if (gaps.length === 0) console.log("  no gaps");
 
-  if (blind.length > 0) {
-    console.log(`\n  ${blind.length} live project(s) this audit CANNOT judge — no register row:`);
-    for (const b of blind) console.log(`    ${b.slug.padEnd(24)} ${b.liveUrl}`);
-    console.log("  they serve the public internet and every rule above skips them.");
-    console.log("  fix is a row in fleetcrown scripts/hetzner/apps.conf, not a field.");
+  // Per-field totals: which of the six is the fleet worst at, in one glance.
+  // A per-project list alone hides that (say) roadmap is missing nearly
+  // everywhere while vision is nearly everywhere present.
+  console.log("\n  by field, across the shipped projects:");
+  for (const f of FIELDS) {
+    const missing = held.filter((p) => gapsFor(p).includes(`no ${f.key}`)).length;
+    const bar = "█".repeat(missing) + "·".repeat(held.length - missing);
+    console.log(`    ${f.key.padEnd(10)} ${String(missing).padStart(2)} missing  ${bar}`);
+  }
+  for (const [label, has] of [
+    ["orangecat", (p) => p.urls?.orangecat],
+    ["solon", (p) => p.urls?.solon],
+  ]) {
+    const ours = held.filter((p) => (p.owner ?? OUR_OWNER) === OUR_OWNER);
+    const missing = ours.filter((p) => !has(p)).length;
+    console.log(
+      `    ${label.padEnd(10)} ${String(missing).padStart(2)} missing  ` +
+        "█".repeat(missing) +
+        "·".repeat(ours.length - missing),
+    );
   }
 
   if (litter.length > 0) {
     console.log(`\n  ${litter.length} generated experiment(s) still in the register, not counted:`);
     for (const s of litter) console.log(`    ${s}`);
-    console.log("  tear-down: fleetcrown scripts/hetzner/retire-site.sh");
+    console.log("  tear-down: loki scripts/hetzner/retire-site.sh");
   }
 
-  const unpublished = FIELDS.filter((f) => !f.published);
-  if (unpublished.length > 0) {
-    console.log(`\n  ${unpublished.length} field(s) exist in Loki but are absent from the payload:`);
-    for (const f of unpublished) console.log(`    ${f.key.padEnd(12)} ${f.from}`);
+  if (unshipped.length > 0) {
+    console.log(`\n  ${unshipped.length} project(s) not live anywhere, not counted: ${unshipped.join(", ")}`);
   }
 
   console.log(`\ntotal gaps: ${total}`);
