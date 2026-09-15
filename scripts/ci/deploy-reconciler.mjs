@@ -144,6 +144,42 @@ function deployInFlight(runs) {
   return (runs ?? []).some((r) => r.status !== "completed");
 }
 
+/**
+ * Ask again before shipping.
+ *
+ * Observed 2026-09-15: two dry runs twenty-five minutes apart disagreed about
+ * datacat. The second called it STALE and would have dispatched a deploy; the
+ * same code path, re-run immediately afterwards against the same unchanged tip,
+ * said DEPLOYED — and the tip did have a successful Deploy run for its exact
+ * SHA, from 05:22 that morning. Nothing about the repo changed between the
+ * three reads.
+ *
+ * The likeliest mechanism is the one behind every other bug in this pair of
+ * files: `actions/workflows/{file}/runs` is eventually consistent, and a reply
+ * from a lagging replica that omits the newest run is indistinguishable from a
+ * repo that never deployed. A window is not an absence; neither is a stale
+ * replica.
+ *
+ * A wrong STALE costs a redundant deploy of a repo that is already live, which
+ * on a client site is a real production event triggered by a phantom. So the
+ * verdict has to survive being asked twice. Two reads is not a proof — a
+ * replica can lag twice — but it converts a common transient into a rare one,
+ * and the cost of asking is one API call per repo actually being shipped.
+ */
+export function confirmedStale(owner, repo, branch, deployFiles, now) {
+  try {
+    const runs = deployRunsOf(owner, repo, deployFiles, branch);
+    const tip = tipOf(owner, repo, branch);
+    const { state } = deployFreshness({
+      tipSha: tip.sha, tipCommittedAt: tip.committedAt, deployRuns: runs, now,
+    });
+    return { ok: state === FRESHNESS.STALE, state };
+  } catch (e) {
+    // Could not re-read. That is not a confirmation, so it is not a deploy.
+    return { ok: false, state: `re-check failed: ${String(e.message).split("\n")[0].slice(0, 60)}` };
+  }
+}
+
 function dispatch(owner, repo, workflowFile, branch) {
   execFileSync("gh", ["workflow", "run", workflowFile, "--repo", `${owner}/${repo}`, "--ref", branch], {
     encoding: "utf8", timeout: 60000,
@@ -175,7 +211,7 @@ function main() {
       // Only pay for the check-runs call where it can change the answer.
       const ci = state === FRESHNESS.STALE ? ciVerdict(checkRunsFor(owner, repo, tip.sha)) : "green";
       const d = shouldDispatch({ state, ci, deployInFlight: deployInFlight(runs) });
-      decisions.push({ repo, branch, tip: tip.sha.slice(0, 7), file: deployFiles[0], state, ci, ...d });
+      decisions.push({ repo, branch, tip: tip.sha.slice(0, 7), file: deployFiles[0], files: deployFiles, state, ci, ...d });
     } catch (e) {
       decisions.push({
         repo, branch, tip: "?", state: FRESHNESS.UNKNOWN, ci: "none", action: ACTION.SKIP,
@@ -213,6 +249,12 @@ function main() {
 
   console.log();
   for (const d of wanted) {
+    // Ask again, immediately before acting. See confirmedStale.
+    const again = confirmedStale(owner, d.repo, d.branch, d.files, new Date().toISOString());
+    if (!again.ok) {
+      console.log(`  ~ not confirmed ${d.repo.padEnd(22)} first read said stale, second said ${again.state} — NOT shipping`);
+      continue;
+    }
     if (!go) {
       console.log(`  would dispatch  ${d.repo.padEnd(22)} ${d.file} @ ${d.branch} (${d.tip})`);
       continue;
