@@ -6,10 +6,22 @@
 # since each repo's sweep last ran was loki 19m, evig 151m, reparaturbonus-zh
 # 244m, vitareba 276m, against a stated ten-minute cadence.
 #
-# This is one schedule instead of twenty-five. It is not immune to the same
-# de-prioritisation, but it lives in the most active repo in the org, which is
-# the one GitHub is most willing to run, and a single late clock is a far
-# smaller surface than twenty-five independent ones.
+# Moving from twenty-five GitHub crons to ONE GitHub cron did not fix that, and
+# should not have been expected to: measured the same day, this workflow missed
+# its 11:53 slot and deploy-freshness.yml — hourly at :37 since that morning —
+# fired at neither 10:37 nor 11:37. Every run either workflow had was a manual
+# dispatch. GitHub's scheduler is not a clock you can build on.
+#
+# THE REAL CLOCK IS THE BOX. `fleet-reconciler.timer` on bitbaum ticks this
+# workflow every 15 minutes via workflow_dispatch (see
+# scripts/hetzner/deploy-reconciler-tick.sh). The box's timers do fire, on time,
+# and have for months — security-check, host-check and watchdog all run every
+# 5 minutes without drifting.
+#
+# The `schedule:` below is kept only as a free second chance: the run is
+# idempotent, so if GitHub ever does honour it, nothing is harmed. Nothing
+# depends on it. If you are debugging why a merge did not ship, look at
+# `systemctl list-timers fleet-reconciler.timer` on the box, not here.
 name: Deploy reconciler
 
 on:

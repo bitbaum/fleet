@@ -1,0 +1,14 @@
+[Unit]
+Description=Tick the fleet deploy reconciler every 15 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+# Catch up after a reboot or a box outage rather than silently skipping the
+# ticks that were missed — the whole point of this timer is that a missed tick
+# is how a merge stays un-deployed.
+Persistent=true
+Unit=fleet-reconciler.service
+
+[Install]
+WantedBy=timers.target

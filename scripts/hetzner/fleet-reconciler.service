@@ -1,0 +1,12 @@
+[Unit]
+Description=Tick the fleet deploy reconciler (dispatches bitbaum/fleet deploy-reconciler.yml)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Runs as ubuntu, not root: the box's `gh` credentials live in
+# /home/ubuntu/.config/gh/hosts.yml, and root has none — as root this would
+# fail every tick with an auth error that nothing reads.
+User=ubuntu
+ExecStart=/opt/fleet/deploy-reconciler-tick.sh
