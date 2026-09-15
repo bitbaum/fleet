@@ -35,3 +35,12 @@ crewless/README.md  # door disagreement from before apps.conf check existed
 # Remove a line when you fix the file. The count may fall; it may not rise.
 # ---------------------------------------------------------------------------
 evig/CLAUDE.md  # documents that revampit.orangecat.ch still resolves and MUST stay a 308 — the record of the retirement, not an instance of it
+
+# ---------------------------------------------------------------------------
+# A DATED RECORD, not drift. Added 2026-09-15 with the mao@orangecat.ch row.
+#
+# The audit report states what the seed fallback WAS on the day it was written.
+# Rewriting it would make the document lie about its own date, which is the
+# opposite of what an audit report is for. Every other published use of the
+# address was fixed in bitbaum/loki#726; this one is deliberately left.
+loki/docs/AUDIT_REPORT.md  # dated record of the old seed fallback, not a live contact
