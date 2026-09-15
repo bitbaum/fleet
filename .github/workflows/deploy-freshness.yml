@@ -7,7 +7,7 @@
 # minutes. That reconciler is the single thing between "merged" and "live", and
 # it had no alarm on it.
 #
-# On its first run this audit found bitbaum/reparaturbonus-zh — a client site —
+# On its first run this audit found bitbaum/reparaturbonus-zh — a concept site —
 # merged and NOT live for three and a half hours: its Deploy had failed, six
 # sweeps had passed, and every other signal was green.
 #
