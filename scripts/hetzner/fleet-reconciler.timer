@@ -2,11 +2,25 @@
 Description=Tick the fleet deploy reconciler every 15 minutes
 
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=15min
-# Catch up after a reboot or a box outage rather than silently skipping the
-# ticks that were missed — the whole point of this timer is that a missed tick
-# is how a merge stays un-deployed.
+# REALTIME, not monotonic, and that distinction bit immediately.
+#
+# The first version used OnBootSec=5min + OnUnitActiveSec=15min. It worked until
+# the timer was stopped and started again — then `systemctl is-active` said
+# active, `is-enabled` said enabled, and `NextElapseUSecMonotonic` said
+# **infinity**: it would never have fired again. OnBootSec's trigger point was
+# hours in the past, and OnUnitActiveSec re-arms from an activation that, after
+# the restart, systemd no longer had. A clock that reports healthy and never
+# ticks is the exact failure this whole mechanism exists to end, so it must not
+# be the mechanism's own shape.
+#
+# OnCalendar is absolute: :00, :15, :30, :45 of every hour, computable without
+# reference to boot time or to any previous run, and unaffected by stop/start.
+OnCalendar=*:0/15
+# Do not land on the quarter hour with every other cron in the world.
+RandomizedDelaySec=45
+# Only meaningful for a realtime timer — which is now what this is. After the
+# box is down over a tick, run once on return rather than silently skipping it;
+# a missed tick is how a merge stays un-deployed.
 Persistent=true
 Unit=fleet-reconciler.service
 
