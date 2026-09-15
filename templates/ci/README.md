@@ -88,8 +88,8 @@ via `.github/workflows/verify-floor.yml`, reporting into the job summary.
 Deliberately **one central script, not a copy per repo** — `auto-merge-sweep.sh`
 was once copied into 22 repos and drifted into 8 live variants, so a fix landed
 in one reached almost none of the others. It now lives canonically in this repo
-and the fleet calls it as a reusable workflow (see SHARED.md for the last
-local-copy holdouts).
+and every other repo calls it as a reusable workflow — see "Auto-merge: call
+it, never copy it" below for the caller.
 
 **What it does not prove:** that each gate is *effective*. A `lint` script that
 exists but silently does nothing passes. `sbb-lost-found` is the live example —
@@ -247,6 +247,62 @@ scripts/ci/cicd-hygiene-audit.sh            # report
 scripts/ci/cicd-hygiene-audit.sh --check    # exit 1 if a count rose
 scripts/ci/cicd-hygiene-audit.sh --update   # move the baseline, in a PR
 ```
+
+## Auto-merge: call it, never copy it
+
+A green, non-draft PR merges and deploys itself. The policy is
+`scripts/ci/auto-merge-sweep.sh` in this repo, exposed as the reusable workflow
+`.github/workflows/auto-merge-sweep.yml` (`on: workflow_call`). A repo adopts it
+by copying **`auto-merge.yml` from this directory** to
+`.github/workflows/auto-merge.yml` and setting the `CHANGEME` lines. The whole
+caller is:
+
+```yaml
+jobs:
+  sweep:
+    uses: bitbaum/fleet/.github/workflows/auto-merge-sweep.yml@main
+    with:
+      base_branch: main            # master in the older repos
+      ci_workflow: ci.yml          # the FILE whose green run gates a merge
+      rearm_workflows: 'ci.yml'    # SPACE-separated push-triggered workflows
+      deploy_workflow: deploy.yml  # the reconciler — delete if the repo does not deploy
+    secrets:
+      token: ${{ secrets.FLEET_PAT }}
+```
+
+The triggers (`workflow_run` naming the CI workflow **exactly**, the schedule,
+`workflow_dispatch`) and the `permissions` block stay on the caller — see the
+template for why each line is there. Every other line is identical in every
+repo, so a caller that differs from the template in anything but those values
+is a question, not a customisation.
+
+| Input | What it does | Wrong value looks like |
+|---|---|---|
+| `base_branch` | the branch PRs merge into | nothing merges, sweep exits 0 |
+| `ci_workflow` | the workflow file whose green run gates a merge | PRs wait forever |
+| `rearm_workflows` | dispatched after a merge, because a `GITHUB_TOKEN` push triggers nothing | a comma instead of a space: one bogus token, nothing ships, sweep still green |
+| `deploy_workflow` | compared against the base tip each sweep and re-dispatched when behind | omitted on a repo that deploys: merged-but-not-live until someone notices |
+| `token` | `FLEET_PAT` (org secret); a PAT-made dispatch emits `workflow_run`, so the queue drains at CI speed | unset falls back to `github.token` — merges, but only at the throttled schedule |
+
+Verified 2026-09-15 from every repo's **default branch via the API**: 33 repos
+carry an `auto-merge.yml`, 32 are callers of this workflow and the 33rd is this
+repo running the script inline (it *is* the reusable workflow). Two things that
+audit turned up are why the shape is now checked rather than trusted:
+
+- **dotfiles** had two `secrets:` blocks under the same job. A YAML mapping
+  cannot hold a key twice, so GitHub refused the file — the Actions tab listed
+  the workflow by its *path* instead of its name and every run was a zero-job
+  failure. The repo merged nothing for days and nothing said so.
+- **substrata** and **camille-boulangerie** re-armed a `publish.yml` neither
+  repo has. The sweep dispatched it after every merge, logged "could not
+  dispatch", and exited 0.
+
+`cicd-hygiene-audit.sh` therefore reports `automerge-miswired` for a caller with
+a duplicate key, a caller that neither calls the reusable workflow nor runs the
+canonical script, or a caller naming a workflow file the repo does not have.
+Proven both ways in `test-cicd-hygiene-audit.sh` — including that two `- cron:`
+items are not a duplicate key, the false positive the naive version would have
+shipped with.
 
 ## The maturity ladder (add per-repo as the secrets/infra appear)
 

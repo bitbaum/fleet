@@ -25,6 +25,23 @@
 #                    across 8 repos, exactly ONE cached it in CI. Everyone else
 #                    recompiled from scratch on every run, twice per merge.
 #
+#   automerge-miswired  The sweep lives ONCE (bitbaum/fleet) and each repo's
+#                    auto-merge.yml is a ~10-line caller — but a caller can be
+#                    wrong in ways no run ever reports, found 2026-09-15:
+#                      - a DUPLICATE MAPPING KEY. GitHub refuses the whole file,
+#                        lists the workflow by its path instead of its name, and
+#                        every run is a zero-job failure. dotfiles carried two
+#                        `secrets:` blocks and merged nothing for days; a sweep
+#                        that fails to start looks exactly like one with nothing
+#                        to merge.
+#                      - it names a workflow the repo does not HAVE. The sweep
+#                        dispatches it after every merge, logs "could not
+#                        dispatch", and exits 0. substrata and camille-boulangerie
+#                        both re-armed a publish.yml that did not exist.
+#                      - it neither calls the reusable workflow nor runs the
+#                        canonical script inline (only fleet itself may do the
+#                        latter — shared-inventory.sh ratchets that count).
+#
 # Like every audit here this is ONE central script reading each repo's REMOTE
 # default branch, never a check copied per repo: auto-merge-sweep.sh was copied
 # into 17 repos and now has 5 live variants, so a fix in one reaches none.
@@ -131,6 +148,53 @@ caches_next_build() {
   sed 's/#.*//' "$1" | grep -q '\.next/cache'
 }
 
+# ── auto-merge caller predicates ─────────────────────────────────────────────
+
+# Print every mapping key that appears twice among its siblings. No YAML
+# parser on purpose — the audit must run wherever bash and awk do — so this
+# tracks (indent, key) pairs and forgets deeper ones whenever a shallower key
+# starts a new subtree. A `- ` item opens a fresh mapping, so two `- cron:`
+# entries in a list are siblings of the LIST, not duplicates of each other.
+yaml_duplicate_keys() {
+  sed 's/#.*//' "$1" | awk '
+    /^[[:space:]]*$/ { next }
+    {
+      match($0, /^ */); ind = RLENGTH
+      rest = substr($0, ind + 1)
+      if (rest ~ /^- /) {
+        for (k in seen) { split(k, p, SUBSEP); if (p[1] + 0 > ind) delete seen[k] }
+        ind += 2; rest = substr(rest, 3)
+      }
+      if (rest !~ /^[A-Za-z0-9_.-]+:([[:space:]]|$)/) next
+      key = rest; sub(/:.*/, "", key)
+      for (k in seen) { split(k, p, SUBSEP); if (p[1] + 0 > ind) delete seen[k] }
+      if ((ind, key) in seen) print key
+      seen[ind, key] = 1
+    }'
+}
+
+calls_the_sweep() {
+  sed 's/#.*//' "$1" \
+    | grep -qE 'uses:[[:space:]]*bitbaum/fleet/\.github/workflows/auto-merge-sweep\.ya?ml@'
+}
+
+runs_the_sweep_inline() {
+  sed 's/#.*//' "$1" | grep -qE 'run:.*scripts/ci/auto-merge-sweep\.sh'
+}
+
+# The workflow FILES a caller points the sweep at: the CI gate, the re-arm list
+# (space-separated) and the deploy reconciler. Both the reusable inputs and the
+# inline env names, so fleet's own file is held to the same rule. Expressions
+# are skipped — they resolve at run time and cannot be checked as text.
+automerge_named_workflows() {
+  sed 's/#.*//' "$1" | awk '
+    /^[[:space:]]*(ci_workflow|CI_WORKFLOW|rearm_workflows|REARM_WORKFLOWS|deploy_workflow|DEPLOY_WORKFLOW):/ {
+      sub(/^[^:]*:[[:space:]]*/, ""); gsub(/["'"'"']/, "")
+      n = split($0, a, /[[:space:]]+/)
+      for (i = 1; i <= n; i++) if (a[i] != "" && a[i] !~ /\$/) print a[i]
+    }'
+}
+
 # Audit one repo directory; prints "check<TAB>detail" per violation.
 audit_repo_dir() {
   local dir="$1" wf f
@@ -165,11 +229,29 @@ audit_repo_dir() {
   if [ -f "$dir/.is-next" ] && [ "$ci_builds" = 1 ] && [ "$ci_caches" = 0 ]; then
     printf 'cold-ci-build\t%s\n' "ci builds without .next/cache"
   fi
+
+  # The auto-merge caller. Only repos that opted in have one; a repo with no
+  # such file is not miswired, it is simply not auto-merging.
+  local am="$wf/auto-merge.yml" dup named
+  if [ -f "$am" ]; then
+    while IFS= read -r dup; do
+      [ -n "$dup" ] || continue
+      printf 'automerge-miswired\t%s\n' "auto-merge.yml: duplicate key '$dup' — GitHub refuses the whole file"
+    done < <(yaml_duplicate_keys "$am")
+    if ! calls_the_sweep "$am" && ! runs_the_sweep_inline "$am"; then
+      printf 'automerge-miswired\t%s\n' "auto-merge.yml: neither calls bitbaum/fleet auto-merge-sweep.yml nor runs scripts/ci/auto-merge-sweep.sh"
+    fi
+    while IFS= read -r named; do
+      [ -n "$named" ] || continue
+      [ -f "$wf/$named" ] \
+        || printf 'automerge-miswired\t%s\n' "auto-merge.yml names $named, which the repo does not have"
+    done < <(automerge_named_workflows "$am")
+  fi
 }
 
 # ── Collect ──────────────────────────────────────────────────────────────────
 declare -A COUNTS=()
-ORDER="deploy-cancels deploy-reverifies cold-ci-build"
+ORDER="deploy-cancels deploy-reverifies cold-ci-build automerge-miswired"
 for k in $ORDER; do COUNTS[$k]=0; done
 detail_file="$TMP/details"
 : > "$detail_file"

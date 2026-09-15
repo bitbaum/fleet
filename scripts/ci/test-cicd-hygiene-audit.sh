@@ -142,6 +142,99 @@ YML
   && ok "does NOT flag a non-Next repo for missing a Next cache" \
   || bad "flagged a non-Next repo for missing .next/cache"
 
+# ── automerge-miswired ───────────────────────────────────────────────────────
+# A sound caller: the reusable workflow, every named file present, and a
+# schedule list with TWO items — sequence entries are siblings of the list,
+# not duplicate keys, and a naive key counter would flag them.
+good_caller() {
+  cat <<'YML'
+name: Auto-merge
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+  schedule:
+    - cron: '*/10 * * * *'
+    - cron: '5 3 * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  sweep:
+    uses: bitbaum/fleet/.github/workflows/auto-merge-sweep.yml@main
+    with:
+      base_branch: main
+      ci_workflow: ci.yml
+      rearm_workflows: 'ci.yml'
+      deploy_workflow: deploy.yml
+    secrets:
+      token: ${{ secrets.FLEET_PAT }}
+YML
+}
+rm -rf "${TMP:?}"/*; mkrepo sound
+good_caller > "$TMP/sound/workflows/auto-merge.yml"
+: > "$TMP/sound/workflows/ci.yml"; : > "$TMP/sound/workflows/deploy.yml"
+[ "$(count_for automerge-miswired)" = "0" ] \
+  && ok "does NOT flag a sound auto-merge caller (two cron items are not a duplicate key)" \
+  || bad "flagged a sound auto-merge caller"
+
+# dotfiles, 2026-09-13: two `secrets:` blocks under the same job. GitHub
+# refused the file and the repo merged nothing for days.
+rm -rf "${TMP:?}"/*; mkrepo dupkey
+good_caller | sed 's/^    secrets:$/    secrets:\n      token: ${{ secrets.GITHUB_TOKEN }}\n    secrets:/' \
+  > "$TMP/dupkey/workflows/auto-merge.yml"
+: > "$TMP/dupkey/workflows/ci.yml"; : > "$TMP/dupkey/workflows/deploy.yml"
+[ "$(count_for automerge-miswired)" = "1" ] \
+  && ok "flags a caller whose job declares the same key twice" \
+  || bad "did NOT flag a duplicate mapping key in auto-merge.yml"
+
+# substrata, camille-boulangerie: re-arming a publish.yml the repo never had.
+rm -rf "${TMP:?}"/*; mkrepo phantom
+good_caller | sed "s/rearm_workflows: 'ci.yml'/rearm_workflows: 'ci.yml publish.yml'/" \
+  > "$TMP/phantom/workflows/auto-merge.yml"
+: > "$TMP/phantom/workflows/ci.yml"; : > "$TMP/phantom/workflows/deploy.yml"
+[ "$(count_for automerge-miswired)" = "1" ] \
+  && ok "flags a caller that re-arms a workflow the repo does not have" \
+  || bad "did NOT flag a re-arm of a non-existent workflow"
+
+# A hand-maintained copy of the sweep is what the reusable workflow exists to
+# end. Neither `uses:` nor the canonical script → miswired.
+rm -rf "${TMP:?}"/*; mkrepo handcopy
+good_caller | sed 's|uses: bitbaum/fleet/.github/workflows/auto-merge-sweep.yml@main|runs-on: ubuntu-latest|' \
+  > "$TMP/handcopy/workflows/auto-merge.yml"
+: > "$TMP/handcopy/workflows/ci.yml"; : > "$TMP/handcopy/workflows/deploy.yml"
+[ "$(count_for automerge-miswired)" = "1" ] \
+  && ok "flags a caller that neither calls the reusable workflow nor runs the canonical script" \
+  || bad "did NOT flag a hand-rolled auto-merge job"
+
+# fleet itself runs the script inline (it IS the reusable workflow) with the
+# same values as env — held to the same "names a real file" rule, not flagged.
+rm -rf "${TMP:?}"/*; mkrepo canonical
+cat > "$TMP/canonical/workflows/auto-merge.yml" <<'YML'
+name: Auto-merge
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - env:
+          CI_WORKFLOW: ci.yml
+          REARM_WORKFLOWS: ci.yml
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+        run: bash scripts/ci/auto-merge-sweep.sh
+YML
+: > "$TMP/canonical/workflows/ci.yml"
+[ "$(count_for automerge-miswired)" = "0" ] \
+  && ok "does NOT flag the canonical inline run (expressions are not file names)" \
+  || bad "flagged fleet's own inline sweep"
+
+# No caller at all is a repo that has not opted in, not a miswired one.
+rm -rf "${TMP:?}"/*; mkrepo optedout
+: > "$TMP/optedout/workflows/ci.yml"
+[ "$(count_for automerge-miswired)" = "0" ] \
+  && ok "does NOT flag a repo with no auto-merge.yml" \
+  || bad "flagged a repo that has no auto-merge caller"
+
 # ── the ratchet itself ───────────────────────────────────────────────────────
 # A ratchet that cannot fail is the failure mode this fleet keeps hitting, so
 # assert BOTH directions against a baseline rather than trusting exit 0.
