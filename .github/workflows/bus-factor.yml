@@ -1,0 +1,50 @@
+# Could someone who is not Cato operate each live app tomorrow?
+#
+# loki's check-deploy-ready.sh proves each app can be deployed; the watchdog
+# proves each URL answers. This asks the part that needs a human who knows
+# things: are the secrets an app needs NAMED in its repo, so an operator can
+# rotate a key or rebuild the box without reading the code? Ratcheted — the
+# count of live apps without a committed env example may fall, never rise.
+#
+# The ssh half (rollback symlink, backup freshness, off-box dumps) runs
+# locally with --box; no fleet workflow holds a box key on purpose.
+#
+# Weekly: an env example appears when someone adds it, not when a commit
+# lands. A daily red that nobody can act on is a red that gets muted.
+name: Bus factor
+
+on:
+  schedule:
+    - cron: '23 7 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Who else could run this
+        env:
+          # Reads loki's apps.conf and each app repo's default branch. The
+          # default token sees public repos only; a private app repo would be
+          # reported as missing its env example, which is wrong in the safe
+          # direction (red, not green-by-absence). FLEET_PAT sees them all.
+          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Bus factor'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          bash scripts/ci/bus-factor-audit.sh --check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
