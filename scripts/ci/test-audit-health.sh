@@ -176,6 +176,42 @@ out=$(run_case "$d"); rc=$?
 [ $rc -eq 1 ] && ok "never-run workflow caught" || bad "never-run not caught"
 grep -q "duplicate key" <<<"$out" && ok "names the duplicate-key cause" || bad "no duplicate-key hint"
 
+# A workflow YOUNGER than its own cadence cannot have run yet. entity-drift.yml
+# was added at 07:22 on a `41 6 * * *` cron — that day's tick had passed — and
+# this rule charged it seven hours later for not doing the impossible.
+# `git log --diff-filter=A` supplies the add date, so the fixture needs a repo.
+d=$(new_case)
+mkwf "$d" fresh.yml '41 6 * * *'
+echo '{"workflows":[{"id":1,"path":".github/workflows/fresh.yml","name":"Fresh","state":"active"}]}' > "$d/spec/WFLIST"
+echo '{"workflow_runs":[]}' > "$d/spec/RUNS_1"
+( cd "$d" && git init -q . && git add .github >/dev/null 2>&1 \
+  && git -c user.email=t@t -c user.name=t commit -qm "add fresh.yml" >/dev/null 2>&1 )
+out=$(run_case "$d"); rc=$?
+[ $rc -eq 0 ] && ok "a workflow younger than its cadence is not charged" || bad "charged a workflow that could not have run yet: $out"
+grep -q "too new to have run" <<<"$out" && ok "says why it was not counted" || bad "silently skipped instead of saying why"
+
+# ...but the grace must not become a blanket excuse: an OLD workflow that has
+# never run is still a finding.
+d=$(new_case)
+mkwf "$d" stalefresh.yml '41 6 * * *'
+echo '{"workflows":[{"id":1,"path":".github/workflows/stalefresh.yml","name":"SF","state":"active"}]}' > "$d/spec/WFLIST"
+echo '{"workflow_runs":[]}' > "$d/spec/RUNS_1"
+( cd "$d" && git init -q . && git add .github >/dev/null 2>&1 \
+  && GIT_AUTHOR_DATE="2020-01-01T00:00:00" GIT_COMMITTER_DATE="2020-01-01T00:00:00" \
+     git -c user.email=t@t -c user.name=t commit -qm "old" >/dev/null 2>&1 )
+out=$(run_case "$d"); rc=$?
+[ $rc -eq 1 ] && ok "an OLD workflow that never ran is still caught" || bad "grace swallowed a real never-run"
+
+# and a REFUSED file gets no grace at any age — it is a defect, not a calendar
+d=$(new_case)
+mkwf "$d" refusedfresh.yml '41 6 * * *'
+echo '{"workflows":[{"id":1,"path":".github/workflows/refusedfresh.yml","name":".github/workflows/refusedfresh.yml","state":"active"}]}' > "$d/spec/WFLIST"
+echo '{"workflow_runs":[]}' > "$d/spec/RUNS_1"
+( cd "$d" && git init -q . && git add .github >/dev/null 2>&1 \
+  && git -c user.email=t@t -c user.name=t commit -qm "add refused" >/dev/null 2>&1 )
+out=$(run_case "$d"); rc=$?
+[ $rc -eq 1 ] && ok "a REFUSED file is caught even when brand new" || bad "grace hid a refused workflow"
+
 # =============================================================================
 echo
 echo "audit-health — PHANTOM SECRET"
