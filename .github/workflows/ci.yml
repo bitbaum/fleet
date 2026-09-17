@@ -234,6 +234,31 @@ jobs:
       - name: The audit-health rules bite, and stay quiet on conforming shapes
         run: bash scripts/ci/test-audit-health.sh
 
+      # NO phantom-secret check here, and the reason is worth the paragraph.
+      #
+      # The check needs the names of the secrets that exist. The API listing
+      # needs a scope no token in this repo has, so the only way to get them is
+      # `toJSON(secrets)` — and a workflow that references the secrets context
+      # UNDER A `pull_request` TRIGGER is held by GitHub for manual approval:
+      # the run completes `action_required` with ZERO JOBS, and nothing
+      # executes. Measured four times, and the factor is exactly that:
+      #
+      #   #105 audit-health, pull_request, no toJSON   -> ran
+      #   #106 audit-health, pull_request, toJSON      -> action_required
+      #   #106 ci.yml,       pull_request, no toJSON   -> ran
+      #   #107 ci.yml,       pull_request, toJSON      -> action_required
+      #
+      # An unapproved run reads as "not passing" and blocks the merge queue,
+      # and POST /actions/runs/:id/approve refuses it ("not from a fork pull
+      # request"). So on a PR the check cannot run at all, and pretending
+      # otherwise would ship the decoration this repo exists to delete.
+      #
+      # It therefore lives in audit-health.yml's DAILY run, which is scheduled
+      # and not gated, and which pushes a Telegram when it bites. A phantom
+      # secret introduced by a PR is caught within a day rather than at merge.
+      # That is a real gate on a slower clock, which beats a fake one on a fast
+      # clock.
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.
