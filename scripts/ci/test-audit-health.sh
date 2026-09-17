@@ -267,6 +267,30 @@ grep -q "UNREADABLE" <<<"$out" && ok "reported honestly as unreadable" || bad "o
 
 # =============================================================================
 echo
+echo "audit-health — --static judges the DIFF, never the world"
+# A red audit plus a clean secret list: --static must stay quiet, because a red
+# elsewhere in the fleet is not this branch's doing. Gating a PR on it blocked
+# every unrelated PR in the repo on someone else's outage.
+d=$(new_case)
+mkwf "$d" world.yml '17 6 * * 1'
+echo '{"workflows":[{"id":1,"path":".github/workflows/world.yml","name":"W","state":"active"}]}' > "$d/spec/WFLIST"
+runrow failure 1 > "$d/spec/RUNS_1"
+out=$( cd "$d" && PATH="$d/bin:$PATH" GH_SPEC="$d/spec" OWNER=acme REPO=widget bash "$AUDIT" --static 2>&1 ); rc=$?
+[ $rc -eq 0 ] && ok "a RED audit does not fail --static" || bad "--static gated the branch on the world's state"
+grep -q "RED" <<<"$out" && bad "--static rendered the live verdict anyway" || ok "--static does not even report the live verdict"
+
+# ...but a phantom secret IS the diff's doing, so --static must still bite.
+d=$(new_case)
+mkwf "$d" world2.yml '17 6 * * 1' "        env:
+          GH_TOKEN: \${{ secrets.GHOST || secrets.GITHUB_TOKEN }}"
+echo '{"workflows":[{"id":1,"path":".github/workflows/world2.yml","name":"W2","state":"active"}]}' > "$d/spec/WFLIST"
+runrow success 1 > "$d/spec/RUNS_1"
+out=$( cd "$d" && PATH="$d/bin:$PATH" GH_SPEC="$d/spec" OWNER=acme REPO=widget bash "$AUDIT" --static 2>&1 ); rc=$?
+[ $rc -eq 1 ] && ok "--static still bites on a phantom secret" || bad "--static missed a phantom"
+grep -q "GHOST" <<<"$out" && ok "names it" || bad "phantom not named in --static"
+
+# =============================================================================
+echo
 echo "audit-health — non-audit workflows are excluded"
 d=$(new_case)
 mkwf "$d" ci.yml '17 6 * * 1'

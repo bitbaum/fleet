@@ -232,8 +232,15 @@ while IFS=$'\t' read -r name branch is_fork; do
   # printcraft — that verify skipped all three gates. It skipped none; the gates
   # live in app/package.json. Fetching the sub-manifest turns a confident wrong
   # answer into the real one.
+  # `--dir` and `-C` are pnpm's spellings of npm's `--prefix`. Matching only
+  # `--prefix` is why the comment above named printcraft as the repo this
+  # follower fixed while printcraft went on being charged for all three gates:
+  # its verify is `pnpm --dir app run verify`, the gates live in
+  # app/package.json exactly as described, and the regex never reached them.
+  # A follower that handles one package manager's flag is a follower for one
+  # package manager, and the fleet is on pnpm.
   for pair in $(printf '%s' "$verify" \
-                  | grep -oE -- '--prefix[[:space:]]+[A-Za-z0-9._/-]+[[:space:]]+(run[[:space:]]+)?[A-Za-z0-9:_-]+|cd[[:space:]]+[A-Za-z0-9._/-]+[[:space:]]*&&[[:space:]]*(npm|pnpm|yarn)([[:space:]]+run)?[[:space:]]+[A-Za-z0-9:_-]+' \
+                  | grep -oE -- '(--prefix|--dir|-C)[[:space:]]+[A-Za-z0-9._/-]+[[:space:]]+(run[[:space:]]+)?[A-Za-z0-9:_-]+|cd[[:space:]]+[A-Za-z0-9._/-]+[[:space:]]*&&[[:space:]]*(npm|pnpm|yarn)([[:space:]]+run)?[[:space:]]+[A-Za-z0-9:_-]+' \
                   | tr -s ' ' '|' | sort -u); do
     sub_dir=$(printf '%s' "$pair" | awk -F'|' '{print $2}')
     sub_script=$(printf '%s' "$pair" | awk -F'|' '{print $NF}')

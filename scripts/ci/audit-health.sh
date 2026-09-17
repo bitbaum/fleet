@@ -59,10 +59,22 @@ set -uo pipefail
 OWNER="${OWNER:-bitbaum}"
 REPO="${REPO:-fleet}"
 MODE="report"
+# --static answers only the questions a DIFF controls: does every secret a
+# workflow names exist, and is each workflow a file GitHub will accept. It
+# deliberately does NOT ask whether the fleet's audits are currently green,
+# because that is a fact about the world and not about the change under review.
+#
+# The first version of this script did not draw that line, and its pull_request
+# run failed on the four audits that were red for reasons predating the branch
+# — blocking every unrelated PR in the repo on someone else's outage. A gate
+# that goes red for something the author cannot fix is how a team learns to
+# merge past red, which costs more than the gate ever returns.
+STATIC=no
 case "${1:-}" in
   --check) MODE="check" ;;
+  --static) MODE="check"; STATIC=yes ;;
   "") ;;
-  *) echo "usage: $0 [--check]" >&2; exit 2 ;;
+  *) echo "usage: $0 [--check|--static]" >&2; exit 2 ;;
 esac
 
 # Workflows that are not audits. Each needs a reason, because "it was noisy"
@@ -137,10 +149,17 @@ if s=$(gh api "orgs/$OWNER/actions/secrets" --jq '.secrets[].name' 2>/dev/null);
   known_secrets+=$'\n'"$s"
 fi
 
-printf "%-26s %-9s %-12s %s\n" WORKFLOW LAST AGE VERDICT
-printf -- '-%.0s' {1..70}; echo
+if [ "$STATIC" = yes ]; then
+  echo "static mode: checking only what this diff controls (secrets that exist)."
+  echo "The live red/stale verdict belongs to the scheduled run."
+  echo
+fi
+
+[ "$STATIC" = no ] && printf "%-26s %-9s %-12s %s\n" WORKFLOW LAST AGE VERDICT
+[ "$STATIC" = no ] && { printf -- '-%.0s' {1..70}; echo; }
 
 while IFS=$'\t' read -r wf_id wf_path wf_name wf_state; do
+  [ "$STATIC" = yes ] && continue
   file="${wf_path##*/}"
   is_not_an_audit "$file" && continue
   [ -f "$wf_path" ] || continue     # only workflows on THIS checkout
@@ -206,8 +225,7 @@ for f in .github/workflows/*.yml; do
   done
 done
 
-echo
-echo "audits green: $ok_count"
+[ "$STATIC" = no ] && { echo; echo "audits green: $ok_count"; }
 
 [ ${#red[@]} -gt 0 ] && { echo; echo "✗ RED — an audit failed and nobody read it:"; printf '    %s\n' "${red[@]}"; }
 [ ${#stale[@]} -gt 0 ] && { echo; echo "✗ STALE — an audit has stopped firing:"; printf '    %s\n' "${stale[@]}"; }
@@ -225,6 +243,15 @@ echo "audits green: $ok_count"
 }
 
 if [ "$MODE" = "check" ]; then
+  if [ "$STATIC" = yes ]; then
+    if [ ${#phantom[@]} -gt 0 ]; then
+      echo
+      echo "audit-health: ${#phantom[@]} workflow(s) name a secret that does not exist"
+      exit 1
+    fi
+    echo "✓ every secret these workflows name exists"
+    exit 0
+  fi
   n=$(( ${#red[@]} + ${#stale[@]} + ${#never[@]} + ${#phantom[@]} ))
   if [ "$n" -gt 0 ]; then
     echo

@@ -321,6 +321,26 @@ positive after `ivy-portal` and `aoz-begleitung`, with the same cause each
 time — **the rule encoding the first example it was written from rather than
 the property that example illustrated.**
 
+#### A follower that knows one package manager's flag
+
+The sub-package follower in `verify-floor-audit.sh` carries a comment naming
+`printcraft` as the repo it was written to fix — and `printcraft` went on being
+charged for **all three gates** in every sweep after it shipped. Its verify is
+`pnpm --dir app run verify`; the gates live in `app/package.json` exactly as
+that comment describes; and the regex matched only npm's `--prefix`.
+
+`--dir` and `-C` are pnpm's spellings of the same flag, **and the fleet is on
+pnpm**. So the follower was written for the package manager the fleet does not
+use, tested against the one it does not have, and its own documentation
+asserted a repair that never happened. `printcraft` was reported as
+`▲ FIXABLE — verify omits a gate the repo already has: lint typecheck test`
+while its CI ran lint, typecheck, vitest, three Python pipeline tests, a build
+and a standalone-output contract on every PR.
+
+Generalisation worth carrying: **a comment claiming a bug is fixed is not
+evidence that it is.** The cheapest check is to re-run the audit against the
+repo the comment names and confirm it moved.
+
 #### Proven by mutation, including on itself
 
 `test-audit-health.sh` stubs `gh` and pairs every "bites" case with a quiet
