@@ -341,6 +341,49 @@ Generalisation worth carrying: **a comment claiming a bug is fixed is not
 evidence that it is.** The cheapest check is to re-run the audit against the
 repo the comment names and confirm it moved.
 
+#### The audit's own worst bug, committed again by the script that reports it
+
+The phantom-secret check went to CI and produced **twenty-one findings against
+secrets that all exist** — `FLEET_PAT`, `TELEGRAM_BOT_TOKEN`, every one of
+them. Listing secrets needs a scope the workflow token does not have, both
+listings failed, and the code read the resulting empty set as *"no secrets
+exist"*.
+
+That is the same `2>/dev/null`-turns-an-outage-into-a-lie defect this file
+already documents at length, in the script written to report that class of
+defect, on its first live run. The rule it broke is the one stated three
+sections above: **silence is not data.**
+
+The fix is the same third state. Both listings must *succeed* before any
+verdict is drawn; if either cannot be read the check is withheld out loud, and
+never partially — a half-read listing charges every secret defined in the half
+you could not see. `test-audit-health.sh` stubs a token that may not list
+secrets and pins all three properties: nothing is charged, the withholding is
+said aloud, and the run does not fail on an outage.
+
+**A new rule's first finding deserves more suspicion than its hundredth.**
+Twenty-one findings arriving at once, against a fleet that had none the day
+before, was the tell — and the same arithmetic tell as the audit that inspected
+24 repos in one run and 22 in the next.
+
+#### The golden floor nobody could adopt
+
+`ci-pnpm.yml` carried `version: 11` on `pnpm/action-setup@v4`. Every pnpm repo
+checked — solon, ai-kit, threadkit, limitkit, bip-kit, sitekit, truthseeker —
+had quietly dropped that line, because `packageManager` in package.json sets
+the same thing and action-setup **hard-errors when both are present**, before
+any step runs.
+
+So the template could not be copied verbatim into a single fleet repo. Seven
+adopters each fixed it locally and none fixed the source, which is how a
+template stops being a template: the floor was the one shape nobody could
+actually stand on. It surfaced only because listkit adopted it literally and
+CI died in five seconds.
+
+Worth generalising: **a template with no adopter that matches it is not a
+source of truth, it is a fork with better branding.** Diff the template
+against a repo that copied it whenever you touch either.
+
 #### Proven by mutation, including on itself
 
 `test-audit-health.sh` stubs `gh` and pairs every "bites" case with a quiet

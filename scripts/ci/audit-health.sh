@@ -141,12 +141,29 @@ if [ $? -ne 0 ]; then
 fi
 
 # Secrets that exist, plus the ones GitHub always provides.
+#
+# LISTING SECRETS NEEDS A SCOPE MOST TOKENS DO NOT HAVE, and an empty listing
+# from a token that may not look is indistinguishable from a repo with no
+# secrets. Reading it as the latter is the audit's own worst bug — a failed
+# fetch reported as a finding — which this script was partly written to report
+# and then committed verbatim: its first CI run could read neither listing,
+# concluded the set of existing secrets was empty, and produced TWENTY-ONE
+# findings against secrets that all exist, FLEET_PAT and TELEGRAM_* included.
+#
+# So both listings must SUCCEED before any verdict is drawn. If either cannot
+# be read the phantom check is withheld entirely, because a partial listing
+# charges every secret defined in the half we could not see.
 known_secrets=$'GITHUB_TOKEN\ntoken'
+secrets_readable=yes
 if s=$(gh secret list -R "$OWNER/$REPO" --json name --jq '.[].name' 2>/dev/null); then
   known_secrets+=$'\n'"$s"
+else
+  secrets_readable=no
 fi
 if s=$(gh api "orgs/$OWNER/actions/secrets" --jq '.secrets[].name' 2>/dev/null); then
   known_secrets+=$'\n'"$s"
+else
+  secrets_readable=no
 fi
 
 if [ "$STATIC" = yes ]; then
@@ -212,6 +229,7 @@ allowed=""
 [ -f "$allow_file" ] && allowed=$(grep -vE '^\s*(#|$)' "$allow_file" | awk '{print $1}')
 
 for f in .github/workflows/*.yml; do
+  [ "$secrets_readable" = no ] && break     # withheld; see above
   [ -f "$f" ] || continue
   # Names declared by a reusable workflow's own `secrets:` block are inputs,
   # not repo secrets. auto-merge-sweep.yml is why: its `secrets.token` is a
@@ -241,6 +259,15 @@ done
   echo "? UNREADABLE — could not look; withheld, NOT counted against the audit:"
   printf '    %s\n' "${unreadable[@]}"
 }
+
+if [ "$secrets_readable" = no ]; then
+  echo
+  echo "? SECRET LISTING UNREADABLE — the phantom-secret check is WITHHELD."
+  echo "  Listing secrets needs a scope this token lacks. An empty listing from"
+  echo "  a token that may not look is not the same as a repo with no secrets,"
+  echo "  and reading it as one produced 21 false findings on this script's"
+  echo "  first CI run. Run it locally, or grant the token secrets:read."
+fi
 
 if [ "$MODE" = "check" ]; then
   if [ "$STATIC" = yes ]; then

@@ -34,11 +34,24 @@ jobs:
       - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
-        with:
-          # Match the pnpm major the repo uses locally. pnpm 9 errors "packages
-          # field missing or empty" on a settings-only pnpm-workspace.yaml (no
-          # `packages:` key); pnpm 10+ treats `packages` as optional.
-          version: 11
+        # NO `version:` INPUT ON PURPOSE. package.json `packageManager`
+        # (pnpm@11.25.0 across the fleet) is the single source for the pnpm
+        # version, and action-setup@v4 reads it. Setting BOTH is not a
+        # redundancy, it is a hard error before a single step runs:
+        #
+        #   Error: Multiple versions of pnpm specified:
+        #     - version 11 in the GitHub Action config with the key "version"
+        #     - version pnpm@11.25.0 in the package.json with "packageManager"
+        #
+        # This template carried `version: 11` until 2026-09-17 while all seven
+        # pnpm repos checked had quietly dropped it — so the template could not
+        # be copied into any fleet repo without failing, and the golden floor
+        # was the one shape nobody could actually adopt. listkit adopting it
+        # verbatim is how that surfaced.
+        #
+        # (Why 11 at all: pnpm 9 errors "packages field missing or empty" on a
+        # settings-only pnpm-workspace.yaml; pnpm 10+ treats it as optional.
+        # Pin it in package.json, once.)
 
       - uses: actions/setup-node@v7
         with:

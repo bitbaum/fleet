@@ -265,6 +265,41 @@ out=$(run_case "$d"); rc=$?
 [ $rc -eq 0 ] && ok "a 502 is not a finding (three-state read)" || bad "an outage was reported as a finding — the audit's own worst bug"
 grep -q "UNREADABLE" <<<"$out" && ok "reported honestly as unreadable" || bad "outage silently swallowed"
 
+# THE BUG THIS SCRIPT SHIPPED AND EXISTS TO REPORT.
+# Listing secrets needs a scope most tokens lack. Its first CI run could read
+# neither listing, concluded the set of existing secrets was empty, and charged
+# 21 workflows for secrets that all exist — FLEET_PAT and TELEGRAM_* included.
+# A failed fetch reported as a finding, in the script written to report it.
+d=$(new_case)
+mkwf "$d" blind.yml '17 6 * * 1' "        env:
+          GH_TOKEN: \${{ secrets.REALLY_EXISTS }}"
+echo '{"workflows":[{"id":1,"path":".github/workflows/blind.yml","name":"B","state":"active"}]}' > "$d/spec/WFLIST"
+runrow success 1 > "$d/spec/RUNS_1"
+# No SECRETS/ORGSECRETS fixture and a stub that FAILS the listing → cannot look.
+cat > "$d/bin/gh" <<'BLIND'
+#!/usr/bin/env bash
+spec="$GH_SPEC"
+case "$1 $2" in
+  "secret list") echo "gh: insufficient scope" >&2; exit 1 ;;
+esac
+if [ "$1" = "api" ]; then
+  case "$2" in
+    *"actions/secrets") echo "gh: HTTP 403" >&2; exit 1 ;;
+    *"/actions/workflows") cat "$spec/WFLIST"; exit 0 ;;
+    *"/actions/workflows/"*"/runs"*)
+      id=$(sed -E 's|.*/workflows/([0-9]+)/runs.*|\1|' <<<"$2")
+      [ -f "$spec/RUNS_$id" ] && { cat "$spec/RUNS_$id"; exit 0; }
+      echo '{"workflow_runs":[]}'; exit 0 ;;
+  esac
+fi
+exit 0
+BLIND
+chmod +x "$d/bin/gh"
+out=$(run_case "$d"); rc=$?
+grep -q "REALLY_EXISTS" <<<"$out" && bad "charged a secret while unable to list secrets — the 21-false-findings bug" || ok "an unreadable secret listing charges nothing"
+grep -q "WITHHELD" <<<"$out" && ok "says the check was withheld" || bad "silently skipped instead of withholding out loud"
+[ $rc -eq 0 ] && ok "does not fail the run on an outage" || bad "an outage failed the check (exit $rc)"
+
 # =============================================================================
 echo
 echo "audit-health — --static judges the DIFF, never the world"
