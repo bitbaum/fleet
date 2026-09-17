@@ -366,6 +366,35 @@ Twenty-one findings arriving at once, against a fleet that had none the day
 before, was the tell — and the same arithmetic tell as the audit that inspected
 24 repos in one run and 22 in the next.
 
+#### `toJSON(secrets)` under `pull_request` is held for manual approval
+
+The phantom check needs the names of the secrets that exist. The API listing
+needs a scope no token in this repo has, so the only source is
+`${{ toJSON(secrets) }}` — whose keys are exactly those names.
+
+A workflow that references the secrets context **under a `pull_request`
+trigger** is held by GitHub: the run completes `action_required` with **zero
+jobs** and nothing executes. Measured four times, and the factor is precisely
+that, on same-repo branches throughout:
+
+| PR | workflow | `pull_request` + `toJSON(secrets)` | outcome |
+|---|---|---|---|
+| #105 | audit-health | no | ran |
+| #106 | audit-health | **yes** | `action_required`, 0 jobs |
+| #106 | ci | no | ran |
+| #107 | ci | **yes** | `action_required`, 0 jobs |
+
+`POST /actions/runs/:id/approve` refuses these ("not from a fork pull
+request"), and an unapproved run reads as *not passing*, so it also blocks the
+merge queue. **A check that needs a button pressed is not a gate**, and one
+that cannot run at all is the decoration this file exists to delete.
+
+So the phantom check lives in `audit-health.yml`'s **daily scheduled** run,
+which is not gated and which pushes on failure. A phantom introduced by a PR is
+caught within a day instead of at merge. **A real gate on a slower clock beats
+a fake one on a fast clock** — and the zero-jobs signature is worth memorising,
+because it is the same tell as a workflow GitHub refuses to parse.
+
 #### The golden floor nobody could adopt
 
 `ci-pnpm.yml` carried `version: 11` on `pnpm/action-setup@v4`. Every pnpm repo

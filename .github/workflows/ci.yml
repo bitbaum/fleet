@@ -227,32 +227,30 @@ jobs:
       - name: The audit-health rules bite, and stay quiet on conforming shapes
         run: bash scripts/ci/test-audit-health.sh
 
-      # The PR-time half of audit-health. It lives HERE and not in
-      # audit-health.yml because that workflow's pull_request runs came back
-      # `action_required` every time — GitHub holding them for manual approval
-      # on a same-repo branch while this workflow ran normally on the same
-      # commit. A check nobody can see without pressing a button is not a gate.
+      # NO phantom-secret check here, and the reason is worth the paragraph.
       #
-      # Only what the DIFF controls: does every secret these workflows name
-      # exist. NOT whether the fleet's audits are currently green — that is a
-      # fact about the world, and failing a branch on it blocks every unrelated
-      # PR on someone else's outage.
+      # The check needs the names of the secrets that exist. The API listing
+      # needs a scope no token in this repo has, so the only way to get them is
+      # `toJSON(secrets)` — and a workflow that references the secrets context
+      # UNDER A `pull_request` TRIGGER is held by GitHub for manual approval:
+      # the run completes `action_required` with ZERO JOBS, and nothing
+      # executes. Measured four times, and the factor is exactly that:
       #
-      # `toJSON(secrets)` gives the run its own secrets context, whose KEYS are
-      # the names available to it. Listing secrets through the API needs a
-      # scope no token here has, so without this the check could only ever
-      # WITHHOLD — honest and useless. Passed by env var rather than
-      # interpolated into the script body (no secret material is shell-quoted)
-      # and reduced to keys before anything is printed.
-      - name: Every secret these workflows name exists
-        env:
-          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
-          SECRETS_CONTEXT: ${{ toJSON(secrets) }}
-        run: |
-          set -uo pipefail
-          SECRET_NAMES=$(printf '%s' "$SECRETS_CONTEXT" | jq -r 'keys[]')
-          export SECRET_NAMES
-          bash scripts/ci/audit-health.sh --static
+      #   #105 audit-health, pull_request, no toJSON   -> ran
+      #   #106 audit-health, pull_request, toJSON      -> action_required
+      #   #106 ci.yml,       pull_request, no toJSON   -> ran
+      #   #107 ci.yml,       pull_request, toJSON      -> action_required
+      #
+      # An unapproved run reads as "not passing" and blocks the merge queue,
+      # and POST /actions/runs/:id/approve refuses it ("not from a fork pull
+      # request"). So on a PR the check cannot run at all, and pretending
+      # otherwise would ship the decoration this repo exists to delete.
+      #
+      # It therefore lives in audit-health.yml's DAILY run, which is scheduled
+      # and not gated, and which pushes a Telegram when it bites. A phantom
+      # secret introduced by a PR is caught within a day rather than at merge.
+      # That is a real gate on a slower clock, which beats a fake one on a fast
+      # clock.
 
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
