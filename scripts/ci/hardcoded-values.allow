@@ -24,6 +24,7 @@ evig|src/config/changelog.ts|retired-value|changelog entries describe the site a
 evig|public/presentations/*|retired-value|stakeholder presentations preserved as they were delivered, under the name the organisation had then
 hirnli|src/lib/db/migrations/*.sql|consumer-email|an executed migration: the value lives in the database now, and a migration must not change after it has run
 bitbaum|site/map.snapshot.json|retired-value|a cached fetch of loki.orangecat.ch/api/fleet/map, refreshed by the build — editing the cache is overwritten and the fix belongs at the source
+bitbaum|site/map.snapshot.json|consumer-email|same cached fetch: the address appears inside a run summary Loki recorded, so the fix belongs at the source, not in a file the next build overwrites
 
 # ── correct today, and the audit would make it worse ─────────────────────────
 bitbaum|site/overrides.json|retired-value|keyed by the slug Loki's map currently emits for that project; changing the key would silently drop the card's name, stage, tags and ordering
