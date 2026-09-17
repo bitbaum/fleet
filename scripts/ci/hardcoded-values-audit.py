@@ -91,7 +91,8 @@ CONNECTS = re.compile(r"ssh|scp|rsync|curl|wget|keyscan|ping\b|host|BOX|DEPLOY|S
 # as findings. Service accounts are excluded too: /home/ubuntu and /home/fcrunner
 # ARE the box, and _box-env.sh owns those paths. The finding is ONE PERSON's
 # machine appearing in code other people run.
-SERVICE_USERS = {"ubuntu", "root", "runner", "node", "www-data", "fcrunner", "linuxbrew", "you"}
+SERVICE_USERS = {"ubuntu", "root", "runner", "node", "nextjs", "www-data", "fcrunner",
+                 "linuxbrew", "app", "you"}
 # The path may END at the user (`default_cwd "/home/g"`), so a trailing slash
 # cannot be required — demanding one lost exactly that line. A segment carrying
 # a dot is a FILE, not a user: `/home/value-added-tax.html` and
