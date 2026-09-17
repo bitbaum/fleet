@@ -46,7 +46,7 @@ jobs:
           # default token reads public repos only, so private ones are silently
           # omitted. The audit prints how many repos it swept — a drop in that
           # number is the tell. Set FLEET_READ_TOKEN to cover all of them.
-          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
           mkdir -p "$RUNNER_TEMP/dev"

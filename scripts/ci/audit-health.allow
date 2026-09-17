@@ -1,0 +1,21 @@
+# Secrets a workflow may reference that are DELIBERATELY absent.
+#
+# The PHANTOM SECRET check exists because `${{ secrets.ABSENT || secrets.GITHUB_TOKEN }}`
+# is not an error — it silently degrades to the repo-scoped default token, and
+# an audit sweeping the fleet with a token that can see one repo reports a
+# clean fleet. Seven workflows here were shipping exactly that.
+#
+# But the property is "its absence silently weakens a gate", not "it is
+# absent". A secret that is optional BY DESIGN — where the workflow works
+# correctly without it and merely goes slower — is a conforming shape, and a
+# rule that flags it is the third false positive this repo's audits would have
+# shipped after ivy-portal and aoz-begleitung. Same cause each time: the rule
+# encoding the first example it was written from rather than the property that
+# example illustrated.
+#
+# One name per line, with the reason. An entry here is a human decision on the
+# record — if a secret is absent by accident, FIX IT, do not list it.
+
+# Lifts the Software Heritage save-code-now limit from 10/h to 1200/h. The
+# proof chain is archived either way; without it the run is merely slower.
+SWH_TOKEN

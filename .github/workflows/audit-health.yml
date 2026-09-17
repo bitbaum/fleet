@@ -1,0 +1,120 @@
+# The gate on the gates.
+#
+# This repo runs twenty-one fleet-wide audits. Until now nothing checked
+# whether THEY ran, went green, or could see past this repo. On 2026-09-17
+# four of them were not doing their job and no signal existed anywhere:
+# email-canary red that same day with a real finding about every app's
+# outbound mail, bus-factor and dependabot-alerts red for days, and
+# hosted-supabase CANCELLED — so it had audited nothing since the 14th and
+# its silence was indistinguishable from a clean sweep.
+#
+# WHY THIS ONE PUSHES AND THE OTHERS DO NOT.
+#
+# Every other audit here reports into a job summary, which is the right
+# design: a human goes and looks when they want the answer. That design is
+# exactly what failed — nobody went and looked, for days, at four red audits.
+# This workflow cannot use it without inheriting the defect it exists to fix,
+# because a scheduled workflow that nobody reads is the problem, not the
+# solution. So it is the one audit in the fleet that pushes, and it pushes
+# ONE message per run (see one-message-per-subject: a detector that alerted
+# per item once sent a hundred Telegrams in a single run).
+#
+# Daily, not weekly. The audits below it are weekly, so a daily check means a
+# red is seen within a day of appearing rather than up to a week later. It is
+# ~2 API calls per audited workflow plus two secret listings — cheap enough
+# that a tighter cadence buys nothing and a looser one is how this started.
+
+name: Audit health
+
+on:
+  schedule:
+    - cron: '41 5 * * *'
+  workflow_dispatch:
+  # Run on any change to the audit layer itself: a workflow edited into a
+  # state GitHub refuses (the dotfiles duplicate-key incident) stops firing
+  # silently, and the next scheduled tick is the earliest anything would say
+  # so. This catches it on the PR instead.
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/ci/audit-health.sh'
+      - 'scripts/ci/test-audit-health.sh'
+
+permissions:
+  contents: read
+
+concurrency:
+  # Superseding a report is safe — the newer run reads the same live state.
+  group: audit-health-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: The rules bite, in both directions
+        # Runs BEFORE the live audit on purpose. A checker that cries wolf gets
+        # ignored, which is the same end state as no checker reached more
+        # expensively — so the fixtures must pass before the verdict is worth
+        # reading. This suite is also where the live audit's own worst bug was
+        # caught: word-splitting a cron expression globbed its `*` fields
+        # against the working directory and staleness silently never fired.
+        run: bash scripts/ci/test-audit-health.sh
+
+      # On a PR, only what the DIFF controls. The live red/stale verdict is a
+      # fact about the world: gating a branch on it would have blocked every
+      # unrelated PR in this repo on four audits that were already red before
+      # the branch existed. A gate that goes red for something its author
+      # cannot fix teaches people to merge past red.
+      - name: Every secret these workflows name exists
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: bash scripts/ci/audit-health.sh --static
+
+      - name: Is the layer that watches everything else awake
+        if: github.event_name != 'pull_request'
+        env:
+          # FLEET_PAT is the only cross-repo token that exists. Naming a
+          # secret that does not exist is not an error in Actions — the `||`
+          # chain quietly falls through to the repo-scoped default token and
+          # the audit then sweeps the fleet able to see one repo. That is the
+          # PHANTOM SECRET class this very script reports, and seven workflows
+          # in this repo were shipping it.
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Audit health'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          bash scripts/ci/audit-health.sh --check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+      - name: Tell someone
+        # Only on a real failure, and only from the schedule — a PR that turns
+        # this red is already visible to whoever opened it, and pushing there
+        # would train the recipient to ignore the channel.
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          set -euo pipefail
+          # An alert that reaches nobody defeats the workflow's whole purpose:
+          # missing secrets or a Telegram 4xx must make THIS step red too, so
+          # the broken alert path is itself visible.
+          [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || { echo "TELEGRAM_* secrets missing — alert undeliverable" >&2; exit 1; }
+          curl -sS --fail --max-time 20 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -d chat_id="${TG_CHAT}" \
+            -d text="🔍 Fleet AUDIT HEALTH failed — one or more of the audits that gate every repo is red, stale, or blind. The fleet's clean reports cannot be trusted until this is read. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            >/dev/null
+          echo "telegram alerted"

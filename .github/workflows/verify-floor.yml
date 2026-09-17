@@ -45,7 +45,7 @@ jobs:
           # That is a real gap, stated rather than hidden: the script prints
           # how many repos it inspected, so a drop is visible. Set a
           # FLEET_READ_TOKEN secret with `repo` scope to cover all 34.
-          GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
           flag=--warn-only

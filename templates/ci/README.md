@@ -248,6 +248,158 @@ scripts/ci/cicd-hygiene-audit.sh --check    # exit 1 if a count rose
 scripts/ci/cicd-hygiene-audit.sh --update   # move the baseline, in a PR
 ```
 
+## Rung 6 — and who watches the watchers (`audit-health.sh`)
+
+Everything above this line gates the repos. Until 2026-09-17, **nothing gated
+the gates.** This repo runs twenty-one fleet-wide audits; a survey that day
+found four of them not doing their job, with no signal anywhere:
+
+| Audit | State | For how long |
+|---|---|---|
+| `email-canary` | RED — a **real finding**: the Resend sender domain every app sends through read unverified | that day, unread |
+| `bus-factor` | RED — passes locally, not reproducible | 2 days |
+| `dependabot-alerts` | RED — passes locally | 3 days |
+| `hosted-supabase` | **CANCELLED** — so it audited nothing at all | 3 days |
+
+Rung 4 says a gate that runs, reports success and means nothing is worse than
+no gate, because it produces a ✓. **A gate that runs, reports FAILURE and is
+never read is the same defect wearing the other colour** — the signal exists
+and reaches nobody. A cancelled audit is the purest form: it did not look, and
+its silence is shaped exactly like a clean sweep.
+
+```bash
+scripts/ci/audit-health.sh            # report
+scripts/ci/audit-health.sh --check    # exit 1 if the watching layer is broken
+```
+
+It asks four questions per audit workflow: has it **ever run** (a workflow
+GitHub refused parses as "no runs" — the dotfiles duplicate-key incident); was
+its last run **green** (cancelled and timed-out are not); did it run **recently
+enough for its own cron**; and does every `secrets.NAME` it references
+**actually exist**.
+
+**The staleness threshold is derived from each workflow's own `cron:`, never
+configured here.** A table of cadences in the checker would be a second copy of
+a fact the workflow already states — Ground Truth #2 violated by the script
+that enforces it — and it would drift the first time someone changed a
+schedule.
+
+**This is the one audit that pushes.** Every other one reports into a job
+summary, which is right: a human looks when they want the answer. That design
+is precisely what failed here — nobody looked, for days, at four red audits. A
+scheduled workflow nobody reads *is* the problem, so this one sends a single
+Telegram per run (never per finding — see the detector that once sent a hundred
+in one run), and the alert step goes red itself if the message is undeliverable.
+
+#### The phantom secret: how an audit goes blind without failing
+
+The fourth question is in this script rather than its own because a phantom
+secret is *the mechanism* by which an audit lies. This is not an error in
+Actions:
+
+```yaml
+GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+```
+
+If `FLEET_READ_TOKEN` does not exist, the chain silently falls through to the
+repo-scoped default token — which can see **one repo** — and the audit then
+sweeps the fleet and reports it clean. `FLEET_READ_TOKEN` and
+`FLEET_ADMIN_TOKEN` were referenced by **seven workflows here and have never
+existed**; only `FLEET_PAT` does. That is the proven cause of the
+`dependabot-alerts` red: with the default token, `repos/*/vulnerability-alerts`
+is unreadable for every repo but this one.
+
+It is the same family as the `2>/dev/null` bug documented above — *silence is
+not data* — reached through configuration instead of code. Both let a check
+stop checking while still reporting.
+
+Secrets that are absent **on purpose** live in `scripts/ci/audit-health.allow`
+with their reason, because the property is "its absence silently weakens a
+gate", not "it is absent". `SWH_TOKEN` is the conforming case: optional, and
+only lifts a rate limit. Flagging it would have been this repo's third false
+positive after `ivy-portal` and `aoz-begleitung`, with the same cause each
+time — **the rule encoding the first example it was written from rather than
+the property that example illustrated.**
+
+#### A follower that knows one package manager's flag
+
+The sub-package follower in `verify-floor-audit.sh` carries a comment naming
+`printcraft` as the repo it was written to fix — and `printcraft` went on being
+charged for **all three gates** in every sweep after it shipped. Its verify is
+`pnpm --dir app run verify`; the gates live in `app/package.json` exactly as
+that comment describes; and the regex matched only npm's `--prefix`.
+
+`--dir` and `-C` are pnpm's spellings of the same flag, **and the fleet is on
+pnpm**. So the follower was written for the package manager the fleet does not
+use, tested against the one it does not have, and its own documentation
+asserted a repair that never happened. `printcraft` was reported as
+`▲ FIXABLE — verify omits a gate the repo already has: lint typecheck test`
+while its CI ran lint, typecheck, vitest, three Python pipeline tests, a build
+and a standalone-output contract on every PR.
+
+Generalisation worth carrying: **a comment claiming a bug is fixed is not
+evidence that it is.** The cheapest check is to re-run the audit against the
+repo the comment names and confirm it moved.
+
+#### The audit's own worst bug, committed again by the script that reports it
+
+The phantom-secret check went to CI and produced **twenty-one findings against
+secrets that all exist** — `FLEET_PAT`, `TELEGRAM_BOT_TOKEN`, every one of
+them. Listing secrets needs a scope the workflow token does not have, both
+listings failed, and the code read the resulting empty set as *"no secrets
+exist"*.
+
+That is the same `2>/dev/null`-turns-an-outage-into-a-lie defect this file
+already documents at length, in the script written to report that class of
+defect, on its first live run. The rule it broke is the one stated three
+sections above: **silence is not data.**
+
+The fix is the same third state. Both listings must *succeed* before any
+verdict is drawn; if either cannot be read the check is withheld out loud, and
+never partially — a half-read listing charges every secret defined in the half
+you could not see. `test-audit-health.sh` stubs a token that may not list
+secrets and pins all three properties: nothing is charged, the withholding is
+said aloud, and the run does not fail on an outage.
+
+**A new rule's first finding deserves more suspicion than its hundredth.**
+Twenty-one findings arriving at once, against a fleet that had none the day
+before, was the tell — and the same arithmetic tell as the audit that inspected
+24 repos in one run and 22 in the next.
+
+#### The golden floor nobody could adopt
+
+`ci-pnpm.yml` carried `version: 11` on `pnpm/action-setup@v4`. Every pnpm repo
+checked — solon, ai-kit, threadkit, limitkit, bip-kit, sitekit, truthseeker —
+had quietly dropped that line, because `packageManager` in package.json sets
+the same thing and action-setup **hard-errors when both are present**, before
+any step runs.
+
+So the template could not be copied verbatim into a single fleet repo. Seven
+adopters each fixed it locally and none fixed the source, which is how a
+template stops being a template: the floor was the one shape nobody could
+actually stand on. It surfaced only because listkit adopted it literally and
+CI died in five seconds.
+
+Worth generalising: **a template with no adopter that matches it is not a
+source of truth, it is a fork with better branding.** Diff the template
+against a repo that copied it whenever you touch either.
+
+#### Proven by mutation, including on itself
+
+`test-audit-health.sh` stubs `gh` and pairs every "bites" case with a quiet
+case that shares its surface shape: red bites / healthy is silent; a *weekly*
+audit silent for 20 days is stale / the same gap on a *monthly* cron is not; a
+phantom bites / an org-level secret and a `workflow_call` secret **input** do
+not; a 502 is withheld rather than charged as a finding.
+
+That suite immediately earned itself. The live audit's staleness check **never
+fired**, because splitting a cron expression with `set -- $cron` also *globs*
+it — the `*` fields expand against the working directory, so `17 6 * * 1` was
+read as a file listing and the day-of-week field came from whatever sorted
+last. It passed a live run against the real fleet (nothing was stale that day)
+and would have shipped as a column that could never go red: the exact shape
+this file exists to find, in the file that finds it.
+
 ## Auto-merge: call it, never copy it
 
 A green, non-draft PR merges and deploys itself. The policy is
