@@ -153,8 +153,20 @@ fi
 # So both listings must SUCCEED before any verdict is drawn. If either cannot
 # be read the phantom check is withheld entirely, because a partial listing
 # charges every secret defined in the half we could not see.
+#
+# IN ACTIONS there is a way that needs no scope at all: `toJSON(secrets)` hands
+# the workflow its own secrets context, whose KEYS are the names available to
+# that run. The caller passes those names in SECRET_NAMES (one per line) via an
+# env var, never inline and never printed — Actions masks the values anyway,
+# but nothing here ever holds one. When SECRET_NAMES is set it is authoritative
+# and the API listings are not consulted, which is what lets this check bite on
+# a PR instead of withholding forever. A check that can only ever withhold is
+# decoration, and decoration is the thing this file exists to delete.
 known_secrets=$'GITHUB_TOKEN\ntoken'
 secrets_readable=yes
+if [ -n "${SECRET_NAMES:-}" ]; then
+  known_secrets+=$'\n'"$SECRET_NAMES"
+else
 if s=$(gh secret list -R "$OWNER/$REPO" --json name --jq '.[].name' 2>/dev/null); then
   known_secrets+=$'\n'"$s"
 else
@@ -164,6 +176,7 @@ if s=$(gh api "orgs/$OWNER/actions/secrets" --jq '.secrets[].name' 2>/dev/null);
   known_secrets+=$'\n'"$s"
 else
   secrets_readable=no
+fi
 fi
 
 if [ "$STATIC" = yes ]; then
