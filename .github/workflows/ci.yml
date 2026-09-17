@@ -145,6 +145,12 @@ jobs:
       - name: The entity-drift audit still detects, and still stays quiet
         run: python3 scripts/ci/test_entity_drift.py
 
+      # The rendered half. Its first version reported every page clean because
+      # the markdown rules cannot see a <div> card grid — a false negative that
+      # only a browser found. CARD_GRID in the fixtures is that real page shape.
+      - name: The rendered-page drift rules still detect, and still stay quiet
+        run: python3 scripts/ci/test_entity_drift_html.py
+
       # The readings are a public statement of the numbers the bet rests on,
       # so the test is about not lying: a favour is not a paying client, '-'
       # is unknown not zero, our own products are not clients, a package npm

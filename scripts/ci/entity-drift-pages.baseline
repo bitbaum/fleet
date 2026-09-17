@@ -1,0 +1,17 @@
+# Rendered pages that present the entity list, and why each is allowed.
+#
+# Format: <url>   # why this one is allowed
+#
+# A page here is NOT automatically wrong. A page GENERATED from the producer is
+# the producer rendered, and that is the correct way to show the list to a
+# person. What this sweep catches is the other kind — a list typed by hand into
+# a marketing page, which nothing updates when a type is added or renamed.
+#
+# The two cannot be told apart from the outside: generated HTML and copied HTML
+# look identical. So each allowed page states WHICH it is and where it derives
+# from, and that sentence is the thing a reviewer checks.
+#
+# This list may FALL or hold. It may never RISE without a human deciding so in
+# the same PR that adds the page.
+
+https://orangecat.ch/docs  # generated: src/app/(public)/docs/page.tsx maps ENTITY_TYPES from the registry, filtering only `wallet` as infrastructure. Verified 2026-09-17 — it renders 14 names and the registry has 15.
