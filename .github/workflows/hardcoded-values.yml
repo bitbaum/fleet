@@ -1,0 +1,44 @@
+# A value copied into code that already has one home.
+#
+# The sweep this gate came from found 495 such literals across 16 repos,
+# including a retired product name serving on a public footer and a seed script
+# that would have written two retired hosts into the database. None of them
+# broke loudly, which is the whole problem: a retired host answers 308 and a
+# renamed repo redirects, so every copy looks healthy until it isn't.
+#
+# The guards are proven BEFORE the run that judges the fleet, not after — a
+# detector that never fires is indistinguishable from a clean fleet, and this
+# one reported `arbitrary-hex 0` across 44 repos on its first pass.
+#
+# On the schedule: GitHub does not honour `schedule:` reliably here — measured
+# 2026-09-15, deploy-freshness.yml fired at neither of its first two hourly
+# slots and every run either it or the reconciler had was a manual dispatch.
+# So the cron below is a free second chance, not the clock. Dispatch it by hand,
+# or tick it from the box the way fleet-reconciler.timer ticks the reconciler.
+name: Hardcoded values
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prove the rules, both directions
+        run: python3 scripts/ci/test-hardcoded-values-audit.py
+
+      - name: Sweep every default branch
+        env:
+          # Reading PRIVATE repos needs the org PAT; GITHUB_TOKEN sees only this
+          # one. A sweep that silently skipped the private repos would report a
+          # smaller fleet as a clean one.
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: python3 scripts/ci/hardcoded-values-audit.py --check | tee -a "$GITHUB_STEP_SUMMARY"

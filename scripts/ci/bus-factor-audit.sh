@@ -40,18 +40,24 @@
 # Usage:
 #   bus-factor-audit.sh            report
 #   bus-factor-audit.sh --check    exit 1 if the env-example count rose above the baseline
-#   bus-factor-audit.sh --box      add the ssh checks (needs BOX, default ubuntu@167.233.22.31)
+#   bus-factor-audit.sh --box      add the ssh checks (needs BOX or HETZNER_IP)
 #   bus-factor-audit.sh --emit-baseline   write the current count to the baseline file
 #
 # Env: ORG (bitbaum), APPS_CONF_REPO (bitbaum/loki), APPS_CONF_PATH,
-#      BOX (ubuntu@167.233.22.31), BACKUP_MAX_HOURS (36), BASELINE (path).
+#      BOX or HETZNER_IP (no default), BACKUP_MAX_HOURS (36), BASELINE (path).
 
 set -uo pipefail
 
 ORG="${ORG:-bitbaum}"
 APPS_CONF_REPO="${APPS_CONF_REPO:-bitbaum/loki}"
 APPS_CONF_PATH="${APPS_CONF_PATH:-scripts/hetzner/apps.conf}"
-BOX="${BOX:-ubuntu@167.233.22.31}"
+# The box address has ONE home: loki scripts/hetzner/_box-env.sh. In Actions the
+# value arrives as the org variable HETZNER_IP; locally, source that file if the
+# checkout is there. Either way this file does not keep a copy of the number.
+_box_env="${DEV_ROOT:-$HOME/dev}/loki/scripts/hetzner/_box-env.sh"
+# shellcheck source=/dev/null
+[ -f "$_box_env" ] && . "$_box_env"
+BOX="${BOX:-${BOX_UBUNTU:-${HETZNER_IP:+ubuntu@${HETZNER_IP}}}}"
 BACKUP_MAX_HOURS="${BACKUP_MAX_HOURS:-36}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 BASELINE="${BASELINE:-$HERE/bus-factor.baseline}"
@@ -122,6 +128,15 @@ echo "live apps whose secrets are not named in the repo: ${missing}${missing_nam
 # ── the box half ───────────────────────────────────────────────────────────
 box_failures=0
 if [ "$DO_BOX" -eq 1 ]; then
+  # Only --box needs an address, so only --box requires one. There is no
+  # literal default: the box address lives once, in loki
+  # scripts/hetzner/_box-env.sh (sourced above when that checkout is present)
+  # and as the org Actions variable HETZNER_IP.
+  if [ -z "$BOX" ]; then
+    echo "bus-factor --box: no box address. Set BOX or HETZNER_IP, or run where" >&2
+    echo "  \${DEV_ROOT:-\$HOME/dev}/loki/scripts/hetzner/_box-env.sh exists." >&2
+    exit 1
+  fi
   echo
   echo "box (${BOX})"
   # One ssh round-trip: the release symlink per app, the newest dump per db,

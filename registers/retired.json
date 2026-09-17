@@ -100,6 +100,14 @@
       "since": "2026-09-15",
       "why": "The last place the product was still called Housing. The name row below retired 'AOZ Housing' as the PRODUCT name on 2026-09-10, but the repo kept it, and the repo is public — so the retired name stayed on the org page, in every clone URL and in ~40 references across the fleet. The deploy name `aoz-wohnen` is deliberately NOT renamed with it: it is an infrastructure identifier (systemd unit, /opt path, database), nothing keys on the repo name, and moving it would touch a live site for no visible gain.",
       "verified": "gh repo view bitbaum/aoz-begleitung returns the repo and bitbaum/aoz-housing redirects to it; https://aoz.orangecat.ch still 200 and aoz-wohnen-app active across the rename."
+    },
+    {
+      "kind": "account",
+      "from": "maonakamoto",
+      "to": "catomean",
+      "since": "2026-08-27",
+      "why": "The GitHub account was renamed and the old login now 404s, but redirects kept every REST call and clone URL working, so references to it survive in code that still runs. Recording it here lets one audit find them instead of each detector carrying its own copy of the handle.",
+      "verified": "The REST endpoint for users/maonakamoto returns 404; users/catomean returns the live account created 2018-07-13, and the laptop CLI is authenticated as it."
     }
   ]
 }

@@ -253,7 +253,12 @@ export function reposWithDeploy(owner, limit) {
         gh(["api", `repos/${owner}/${r.name}/contents/.github/workflows`, "--jq", "[.[].name]"]),
       );
       const deployFiles = files
-        .filter((f) => /deploy/i.test(f))
+        // `cd.yml` is a deploy workflow by any reading, and matching only
+        // /deploy/i never saw it — so orangecat, the largest repo in the org,
+        // was silently outside this audit from the day it was written. It was
+        // not reported clean; it was never looked at. Found 2026-09-17, while
+        // its main had not reached the box since 483cb9e0.
+        .filter((f) => /deploy|^cd\.ya?ml$/i.test(f))
         .filter((f) => isDeployWorkflow(owner, r.name, f));
       if (deployFiles.length) out.push({ name: r.name, branch, deployFiles });
     } catch {

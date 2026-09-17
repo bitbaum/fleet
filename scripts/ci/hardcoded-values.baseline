@@ -1,0 +1,7 @@
+# Runtime findings per category. A RATCHET: it may fall, never rise.
+# Regenerate deliberately with --emit-baseline, in the PR that lowers it.
+retired-value 9
+public-ip 11
+home-path 11
+consumer-email 317
+arbitrary-hex 0
