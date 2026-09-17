@@ -208,10 +208,24 @@ while IFS=$'\t' read -r wf_id wf_path wf_name wf_state; do
   # name, and every such workflow has zero runs. Both tells, reported together.
   if [ -z "$created" ]; then
     if [ "$wf_name" = "$wf_path" ] || [ "$wf_name" = "$file" ]; then
+      # A refused file is a defect at any age — no grace below applies.
       never+=("$file (GitHub lists it by PATH — the file was refused, probably a duplicate key)")
-    else
-      never+=("$file")
+      printf "%-26s %-9s %-12s %s\n" "$file" "never" "-" "NEVER RUN — file refused"
+      continue
     fi
+    # A workflow YOUNGER THAN ITS OWN CADENCE cannot have run yet, and saying
+    # it "has never run" is a statement about the calendar, not the workflow.
+    # entity-drift.yml is why: added at 07:22 on a `41 6 * * *` cron, so its
+    # tick that day had already passed, and this rule charged it seven hours
+    # later for not having done the impossible. First finding of a new rule,
+    # and wrong — the same shape as ivy-portal and aoz-begleitung before it.
+    grace=$(threshold_for "$wf_path")
+    added=$(git log --diff-filter=A --format=%ct -1 -- "$wf_path" 2>/dev/null | head -1)
+    if [ -n "$added" ] && [ "$grace" -gt 0 ] && [ $((now - added)) -lt "$grace" ]; then
+      printf "%-26s %-9s %-12s %s\n" "$file" "never" "-" "too new to have run — not counted"
+      continue
+    fi
+    never+=("$file")
     printf "%-26s %-9s %-12s %s\n" "$file" "never" "-" "NEVER RUN"
     continue
   fi
