@@ -259,6 +259,22 @@ jobs:
       # That is a real gate on a slower clock, which beats a fake one on a fast
       # clock.
 
+      # Rung 5's detector — the one that finds credential material in a
+      # RESPONSE rather than a pattern in code. It shipped 2026-09-15 with this
+      # suite and a real cross-account disclosure to its name, and nothing ran
+      # either of them until 2026-09-17. Both directions: a bcrypt digest in a
+      # flight payload must fire, a correctly projected response and a by-design
+      # share token must not.
+      - name: The secret-in-response detector bites, and stays quiet when it should
+        run: python3 scripts/audit/test-secret-in-response.py
+
+      # And the sweep on top of it, which answers a different question: does one
+      # app's finding reach exit 1, and is a host we could not reach withheld
+      # rather than counted clean. It caught the sweep announcing a clean fleet
+      # when every host was unreachable.
+      - name: The secret-in-response sweep aggregates honestly
+        run: bash scripts/audit/test-secret-in-response-sweep.sh
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.
