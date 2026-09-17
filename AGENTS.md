@@ -68,6 +68,17 @@ lost. That is the same bug as a private copy: put it where the readers are.
 - Repeating behavior: one package, one job. A package does not store names or
   hosts. Do not merge kits to make a wiki.
 - Design: `@bitbaum/design-tokens`. A site is data rendered by `sitekit`.
+- What an ENTITY is, and which types exist:
+  `orangecat/src/config/entity-registry.ts`. An entity is anything that can hold
+  a wallet and is better for holding one — a test, not a list, so the list is
+  open in principle and a new type earns its place by answering it. Every type
+  there carries `wallet: { holds, why }`, and
+  `__tests__/unit/config/entity-admission.test.ts` enforces it. The same entity
+  sits on three planes: OrangeCat is its economy, **Solon** its governance (its
+  decisions can be put to a signed vote), **Loki** its engineering (it can be
+  built and shipped by agents). Do not restate the list anywhere: three copies
+  of it lived in orangecat's own agent-read docs, and all three had drifted —
+  one named `organization`, which has never been a type.
 
 ## Names agents must share
 
