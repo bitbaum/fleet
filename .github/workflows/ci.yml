@@ -138,6 +138,13 @@ jobs:
       - name: The bus-factor audit still detects, and still stays quiet
         run: bash scripts/ci/test-bus-factor-audit.sh
 
+      # The entity-drift detector, both directions. Its first version counted
+      # type names and its only finding across the org was the sentence that
+      # FIXES the problem, so the fixtures here are the real historical text:
+      # three copies that must fire, two false positives that must not.
+      - name: The entity-drift audit still detects, and still stays quiet
+        run: python3 scripts/ci/test_entity_drift.py
+
       # The readings are a public statement of the numbers the bet rests on,
       # so the test is about not lying: a favour is not a paying client, '-'
       # is unknown not zero, our own products are not clients, a package npm

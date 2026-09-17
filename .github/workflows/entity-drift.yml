@@ -1,0 +1,45 @@
+# A doc that RESTATES the entity list instead of pointing at its producer.
+#
+# An entity is anything that can hold a wallet and is better for holding one.
+# The list of types has one producer, orangecat/src/config/entity-registry.ts.
+# On 2026-09-17 THREE copies of it lived in orangecat's own agent-read docs and
+# all three disagreed: one named `organization`, which has never been a type,
+# another omitted six that are. Nothing broke loudly — a wrong list in a doc
+# just teaches every coding agent that reads it, quietly, for months.
+#
+# The rules are proven BEFORE the run that judges the fleet. The first version
+# of this detector counted type names, and its only finding across the whole
+# org was the SENTENCE THAT FIXES THE PROBLEM — so the self-test pins the real
+# historical text of all three copies and both of those false positives.
+# A detector whose first finding is its own remedy trains people to ignore it.
+#
+# On the schedule: GitHub does not honour `schedule:` reliably here, so the
+# cron below is a free second chance rather than the clock. Dispatch it by hand
+# when the answer matters.
+name: Entity drift
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '41 6 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prove the rules, both directions
+        run: python3 scripts/ci/test_entity_drift.py
+
+      - name: Sweep every default branch
+        env:
+          # Reading PRIVATE repos needs the org PAT; GITHUB_TOKEN sees only this
+          # one. A sweep that silently skipped the private repos would report a
+          # smaller fleet as a clean one.
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: python3 scripts/ci/entity-drift-audit.py --check | tee -a "$GITHUB_STEP_SUMMARY"
