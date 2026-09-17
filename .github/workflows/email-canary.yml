@@ -21,6 +21,25 @@ jobs:
   canary:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # THE SENDER DOMAIN IS WRITTEN ONCE. It used to appear twice — in the
+    # /domains assertion and in the canary's own From address — and the
+    # FleetCrown->Loki rename (#65) changed ONE of them. From then on the
+    # canary asserted `loki.orangecat.ch` was verified and then sent from
+    # `@fleetcrown.orangecat.ch`: it checked a domain that does not exist in
+    # Resend while using one that does, and went red daily saying "every app's
+    # sender just broke" when nothing had broken at all.
+    #
+    # Measured 2026-09-17: Resend holds `fleetcrown.orangecat.ch` (verified)
+    # and no `loki.orangecat.ch`, and all twelve apps on the box send from
+    # @fleetcrown.orangecat.ch. So the value below is the one that is real.
+    #
+    # WHEN THE RENAME FINISHES, THE ORDER IS: create + verify
+    # loki.orangecat.ch in Resend, move the apps' MAIL_FROM to it, THEN change
+    # this line. Renaming the assertion first is what produced a week of false
+    # alarm — and a canary that cries wolf is worse than no canary, because the
+    # next real outage arrives in a channel everyone has learned to ignore.
+    env:
+      SENDER_DOMAIN: fleetcrown.orangecat.ch
     steps:
       - name: Key + sender-domain check
         env:
@@ -36,12 +55,22 @@ jobs:
             echo "Resend /domains returned $code — key dead or API down" >&2
             exit 1
           fi
-          status=$(echo "$json" | jq -r '.data[] | select(.name=="loki.orangecat.ch") | .status')
-          if [ "$status" != "verified" ]; then
-            echo "loki.orangecat.ch is '$status', not verified — every app's sender just broke" >&2
+          status=$(echo "$json" | jq -r --arg d "$SENDER_DOMAIN" \
+                     '.data[] | select(.name==$d) | .status')
+          # An empty status means the domain is not in the account AT ALL, which
+          # is a different failure from one that exists and is unverified. Saying
+          # so distinguishes "DNS broke" from "this canary is pointed at a
+          # domain nobody created" — the second is what actually happened here.
+          if [ -z "$status" ]; then
+            echo "$SENDER_DOMAIN is not in the Resend account at all — the canary is pointed at a domain that does not exist" >&2
+            echo "domains present: $(echo "$json" | jq -r '[.data[].name] | join(", ")')" >&2
             exit 1
           fi
-          echo "key valid, sender domain verified"
+          if [ "$status" != "verified" ]; then
+            echo "$SENDER_DOMAIN is '$status', not verified — every app's sender just broke" >&2
+            exit 1
+          fi
+          echo "key valid, sender domain $SENDER_DOMAIN verified"
 
       - name: Weekly real-delivery send (Mondays; always on manual dispatch)
         env:
@@ -53,12 +82,18 @@ jobs:
           if [ "$(date -u +%u)" != "1" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             echo "not Monday — skipping the real send"; exit 0
           fi
+          # Built with jq, not string-spliced into JSON: the From address now
+          # carries a variable, and hand-quoting a variable inside a JSON
+          # literal is how you ship a payload that is valid on the day you
+          # write it and malformed the day the value gains a character.
+          payload=$(jq -n --arg from "Fleet Canary <canary@${SENDER_DOMAIN}>" \
+            '{from: $from,
+              to: ["georgy.butaev+canary@revamp-it.ch"],
+              subject: "Fleet email canary — weekly delivery proof",
+              text: "The shared Resend account delivered this on schedule. If these stop arriving on Mondays, the fleet has an email problem the API probe cannot see. No action needed."}')
           resp=$(curl -sS --max-time 20 -w '\n%{http_code}' -X POST https://api.resend.com/emails \
             -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" \
-            -d '{"from":"Fleet Canary <canary@fleetcrown.orangecat.ch>",
-                 "to":["georgy.butaev+canary@revamp-it.ch"],
-                 "subject":"Fleet email canary — weekly delivery proof",
-                 "text":"The shared Resend account delivered this on schedule. If these stop arriving on Mondays, the fleet has an email problem the API probe cannot see. No action needed."}')
+            -d "$payload")
           code=${resp##*$'\n'}
           if [ "$code" != "200" ]; then
             echo "canary send failed: $resp" >&2
