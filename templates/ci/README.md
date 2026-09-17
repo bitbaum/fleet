@@ -366,7 +366,11 @@ Twenty-one findings arriving at once, against a fleet that had none the day
 before, was the tell — and the same arithmetic tell as the audit that inspected
 24 repos in one run and 22 in the next.
 
-#### `toJSON(secrets)` under `pull_request` is held for manual approval
+#### `toJSON(secrets)` is held for manual approval under EVERY trigger
+
+*(The first version of this section said "under `pull_request`". That was wrong,
+and the run that was supposed to confirm the fix is what disproved it — see the
+end of the section.)*
 
 The phantom check needs the names of the secrets that exist. The API listing
 needs a scope no token in this repo has, so the only source is
@@ -389,11 +393,34 @@ request"), and an unapproved run reads as *not passing*, so it also blocks the
 merge queue. **A check that needs a button pressed is not a gate**, and one
 that cannot run at all is the decoration this file exists to delete.
 
-So the phantom check lives in `audit-health.yml`'s **daily scheduled** run,
-which is not gated and which pushes on failure. A phantom introduced by a PR is
-caught within a day instead of at merge. **A real gate on a slower clock beats
-a fake one on a fast clock** — and the zero-jobs signature is worth memorising,
-because it is the same tell as a workflow GitHub refuses to parse.
+On that evidence the check was moved to `audit-health.yml`'s **daily scheduled**
+run — "not gated, so it will work there." Then the dispatch on `main` meant to
+*confirm* that fix came back the same way:
+
+```
+workflow_dispatch + toJSON(secrets)  ->  action_required, 0 jobs
+```
+
+**The trigger was never the variable. `toJSON(secrets)` is.** A run that
+references the secrets context is held for approval whatever fired it, so the
+"fix" had shipped a daily watchdog that could never execute — a worse failure
+than the one it was built to catch, and invisible until something dispatched it.
+
+The check therefore **withholds in CI** and bites only when run locally with a
+token that can list secrets. Said plainly rather than dressed up: it already
+earned its keep by finding the fifteen phantoms once, and the **red/stale
+verdict needs no secrets at all**, so the workflow's reason for existing is
+unaffected.
+
+Three lessons, all cheap to reuse:
+
+- **The zero-jobs signature** — `action_required`/`failure` with `jobs: []` —
+  means GitHub declined to run the workflow. Same tell as a file it refuses to
+  parse. Read the job count before reading the logs; there are none.
+- **A fix is not verified until the fixed thing has actually run.** Two PRs
+  merged on the strength of a theory that a single dispatch destroyed.
+- **Run the thing on the branch it will live on.** Every wrong conclusion here
+  came from reasoning about a run instead of triggering one.
 
 #### The golden floor nobody could adopt
 
