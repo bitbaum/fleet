@@ -248,6 +248,95 @@ scripts/ci/cicd-hygiene-audit.sh --check    # exit 1 if a count rose
 scripts/ci/cicd-hygiene-audit.sh --update   # move the baseline, in a PR
 ```
 
+## Rung 6 — and who watches the watchers (`audit-health.sh`)
+
+Everything above this line gates the repos. Until 2026-09-17, **nothing gated
+the gates.** This repo runs twenty-one fleet-wide audits; a survey that day
+found four of them not doing their job, with no signal anywhere:
+
+| Audit | State | For how long |
+|---|---|---|
+| `email-canary` | RED — a **real finding**: the Resend sender domain every app sends through read unverified | that day, unread |
+| `bus-factor` | RED — passes locally, not reproducible | 2 days |
+| `dependabot-alerts` | RED — passes locally | 3 days |
+| `hosted-supabase` | **CANCELLED** — so it audited nothing at all | 3 days |
+
+Rung 4 says a gate that runs, reports success and means nothing is worse than
+no gate, because it produces a ✓. **A gate that runs, reports FAILURE and is
+never read is the same defect wearing the other colour** — the signal exists
+and reaches nobody. A cancelled audit is the purest form: it did not look, and
+its silence is shaped exactly like a clean sweep.
+
+```bash
+scripts/ci/audit-health.sh            # report
+scripts/ci/audit-health.sh --check    # exit 1 if the watching layer is broken
+```
+
+It asks four questions per audit workflow: has it **ever run** (a workflow
+GitHub refused parses as "no runs" — the dotfiles duplicate-key incident); was
+its last run **green** (cancelled and timed-out are not); did it run **recently
+enough for its own cron**; and does every `secrets.NAME` it references
+**actually exist**.
+
+**The staleness threshold is derived from each workflow's own `cron:`, never
+configured here.** A table of cadences in the checker would be a second copy of
+a fact the workflow already states — Ground Truth #2 violated by the script
+that enforces it — and it would drift the first time someone changed a
+schedule.
+
+**This is the one audit that pushes.** Every other one reports into a job
+summary, which is right: a human looks when they want the answer. That design
+is precisely what failed here — nobody looked, for days, at four red audits. A
+scheduled workflow nobody reads *is* the problem, so this one sends a single
+Telegram per run (never per finding — see the detector that once sent a hundred
+in one run), and the alert step goes red itself if the message is undeliverable.
+
+#### The phantom secret: how an audit goes blind without failing
+
+The fourth question is in this script rather than its own because a phantom
+secret is *the mechanism* by which an audit lies. This is not an error in
+Actions:
+
+```yaml
+GH_TOKEN: ${{ secrets.FLEET_READ_TOKEN || secrets.GITHUB_TOKEN }}
+```
+
+If `FLEET_READ_TOKEN` does not exist, the chain silently falls through to the
+repo-scoped default token — which can see **one repo** — and the audit then
+sweeps the fleet and reports it clean. `FLEET_READ_TOKEN` and
+`FLEET_ADMIN_TOKEN` were referenced by **seven workflows here and have never
+existed**; only `FLEET_PAT` does. That is the proven cause of the
+`dependabot-alerts` red: with the default token, `repos/*/vulnerability-alerts`
+is unreadable for every repo but this one.
+
+It is the same family as the `2>/dev/null` bug documented above — *silence is
+not data* — reached through configuration instead of code. Both let a check
+stop checking while still reporting.
+
+Secrets that are absent **on purpose** live in `scripts/ci/audit-health.allow`
+with their reason, because the property is "its absence silently weakens a
+gate", not "it is absent". `SWH_TOKEN` is the conforming case: optional, and
+only lifts a rate limit. Flagging it would have been this repo's third false
+positive after `ivy-portal` and `aoz-begleitung`, with the same cause each
+time — **the rule encoding the first example it was written from rather than
+the property that example illustrated.**
+
+#### Proven by mutation, including on itself
+
+`test-audit-health.sh` stubs `gh` and pairs every "bites" case with a quiet
+case that shares its surface shape: red bites / healthy is silent; a *weekly*
+audit silent for 20 days is stale / the same gap on a *monthly* cron is not; a
+phantom bites / an org-level secret and a `workflow_call` secret **input** do
+not; a 502 is withheld rather than charged as a finding.
+
+That suite immediately earned itself. The live audit's staleness check **never
+fired**, because splitting a cron expression with `set -- $cron` also *globs*
+it — the `*` fields expand against the working directory, so `17 6 * * 1` was
+read as a file listing and the day-of-week field came from whatever sorted
+last. It passed a live run against the real fleet (nothing was stale that day)
+and would have shipped as a column that could never go red: the exact shape
+this file exists to find, in the file that finds it.
+
 ## Auto-merge: call it, never copy it
 
 A green, non-draft PR merges and deploys itself. The policy is

@@ -219,6 +219,14 @@ jobs:
       - name: The ephemeral-repo pruner selects only what is marked
         run: bash scripts/ci/test-prune-ephemeral-repos.sh
 
+      # The gate on the gates. Twenty-one audits here police every repo and
+      # nothing policed them: on 2026-09-17 four were red, stale or cancelled
+      # for days with no signal anywhere. Its own worst bug was caught by this
+      # suite before it shipped — word-splitting a cron expression globs the
+      # `*` fields against the working directory, so staleness never fired.
+      - name: The audit-health rules bite, and stay quiet on conforming shapes
+        run: bash scripts/ci/test-audit-health.sh
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.
