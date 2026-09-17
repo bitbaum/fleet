@@ -1,0 +1,15 @@
+# Docs that restate the entity list instead of pointing at its producer.
+#
+# Format: <repo>/<path>   # why this one is allowed
+#
+# This list may FALL or hold. It may never RISE without a human deciding so in
+# the same PR that adds the line.
+#
+# It is EMPTY, and that is a measured state rather than an aspiration. Three
+# copies existed on 2026-09-17 — all in orangecat's agent-read docs, all
+# disagreeing with each other; one named `organization`, which has never been
+# an entity type, and another omitted six that are. All three were replaced
+# with pointers (bitbaum/orangecat#1071), and a sweep of every default branch
+# in the org found no others.
+#
+# So the first line added here is a regression, not a backlog item.
