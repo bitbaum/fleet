@@ -200,6 +200,46 @@ the field leaks, the identity is spoofed, or the scope is dropped. Until a repo
 has that, "verify is green" means the code compiles and behaves, not that it is
 safe.
 
+#### The first third of it is now wired — and had been sitting dead
+
+`scripts/audit/secret-in-response.py` reads **what actually crossed the wire**
+and reports credential material in it. It needs no knowledge of any app's
+schema, ORM or framework, which is exactly why it catches what a code-level
+grep cannot: it found `GET /api/admin/patients` in vitareba returning every
+patient's bcrypt digest — a **cross-account** disclosure the code sweep missed,
+because that route reads `findMany()` with no projection and a grep for
+`json(user)` shapes does not match `json({ success, data })`.
+
+It shipped 2026-09-15 with nine test cases and a README ending *"Exit code is 1
+if anything CRITICAL or HIGH was found, so it can gate CI"*.
+
+**Nothing ran it.** Not a workflow, not `ci.yml`, not even its test. For two
+days the highest-value gate in this repo was the `⊗ UNCALLED` shape the floor
+audit exists to report, in the rung that catches the only defects that have
+actually cost money here.
+
+Now: `secret-in-response.yml` daily across every **live** app from
+`loki:scripts/hetzner/apps.conf`, with both suites run before the verdict and a
+Telegram on failure. First live sweep: 12/12 apps, 0 findings.
+
+**What it proves and what it does not.** Unauthenticated only. The README is
+explicit that the authenticated pass is the real test — most interesting routes
+401 without a session — and that half needs a live session cookie per app held
+as a rotating secret. *A gate needing twelve of those is a gate that stops
+running*, so it stays manual and the workflow says so, rather than letting a
+green run imply more than it proves. What it does cover is strictly worse:
+credential material reachable **with no login at all**.
+
+Still unbuilt: the other two thirds — identity taken from the request body, and
+a query missing its tenant filter. Both are per-repo assertions; neither has a
+fleet-level detector yet.
+
+> And a fourth instance of the same bug, in the sweep written to close the
+> third: with every host unreachable it announced a clean fleet, having read
+> zero responses. Its own fixtures caught it. **A verdict may only be claimed
+> over what was actually read** — it now reports `scanned N/M` and refuses to
+> pass when N is zero.
+
 ## The shape around the gates (Rung 5 — audited by `cicd-hygiene-audit.sh`)
 
 The four gates above say *what* must run. They say nothing about the pipeline
