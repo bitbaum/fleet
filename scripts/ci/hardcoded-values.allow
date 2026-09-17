@@ -33,3 +33,6 @@ evig|src/config/org.ts|consumer-email|a documented live decision: evig.ch is not
 loki|home/projects.ts|home-path|inline selfTest() fixture modelling a laptop dispatch path; not reachable at runtime
 loki|home/render.ts|home-path|inline selfTest() fixture; not reachable at runtime
 dotfiles|.config/zellij/config.kdl|home-path|zellij's KDL config does not expand environment variables; personal machine config
+
+# ── the audit's own account of why it exists ─────────────────────────────────
+fleet|scripts/ci/hardcoded-values-audit.py|retired-value|the module docstring names the rename that motivated this audit. A Python docstring is a runtime string, not a comment, so the rule sees it — and the explanation is worth more than the silence
