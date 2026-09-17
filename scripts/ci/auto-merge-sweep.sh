@@ -130,6 +130,34 @@ pick_base_run() {
         // $runs[0] ) // empty'
 }
 
+# Is another run for this SHA still in flight?
+#
+# A cancelled run with a live sibling on the same commit was SUPERSEDED, not
+# left un-judged, and re-running it is actively harmful: both runs share the
+# workflow's concurrency group, so the re-run cancels the sibling, which the
+# next sweep then sees as un-judged and re-runs, cancelling the first. The two
+# take turns until the rerun attempt cap stops them — it terminates by
+# exhaustion, not by resolving.
+#
+# Measured on bitbaum/solon 2026-09-17 across two merges. Six sweeps a minute
+# apart alternated between the same two ci.yml runs on 2667beb — one `push`,
+# one `workflow_dispatch` — ending at n=341 attempt 3 cancelled and n=342
+# attempt 3 success, with the Deploy gate failing on a docs-only change each
+# time because it sampled a cancelled tip. Found by the loki session, whose
+# sweep logs named the path; the post-merge re-arm block, which looks like the
+# obvious culprit, is double-gated and had re-armed nothing.
+#
+# ci-gate.sh already draws exactly this cancelled-vs-superseded distinction
+# (its exit 3). The correct behaviour was written down one directory away.
+sibling_run_in_flight() {
+  printf '%s' "$1" | jq -e --arg sha "$2" --arg id "$3" '
+    (if type == "array" then . else [.] end)
+    | [ .[] | select(.headSha == $sha
+                     and ((.databaseId | tostring) != $id)
+                     and .status != "completed") ]
+    | length > 0' >/dev/null 2>&1
+}
+
 run_conclusion_is_non_verdict() {
   case "$1" in
     cancelled) return 0 ;;
@@ -175,8 +203,9 @@ base_sha=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha')
 # to name the failing jobs), then any completed run, then the newest. Only if
 # no run belongs to the sha at all does the newest run of ALL come back, which
 # is what keeps the "CI has not caught up" check below able to fire.
-base_ci=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 20 \
-  --json databaseId,status,conclusion,headSha | pick_base_run "$base_sha")
+base_runs_json=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 20 \
+  --json databaseId,status,conclusion,headSha)
+base_ci=$(printf '%s' "$base_runs_json" | pick_base_run "$base_sha")
 
 # Declared before the branch that can skip it: `set -u` is on and the merge
 # site below always reads it. A base branch with no CI history takes the
@@ -222,7 +251,13 @@ else
     # that ended without a verdict strands every open PR until a human notices,
     # and nothing signals that they should.
     if run_conclusion_is_non_verdict "$base_conclusion" "$base_run_id"; then
-      rerun_non_verdict_run "$base_run_id" "${BASE_BRANCH}" || true
+      # Superseded, not un-judged — the live sibling will produce the verdict,
+      # and re-running this one would cancel it. See sibling_run_in_flight.
+      if sibling_run_in_flight "$base_runs_json" "$base_sha" "$base_run_id"; then
+        echo "[auto-merge] ${BASE_BRANCH} run ${base_run_id} was superseded — another run for ${base_sha:0:8} is still in flight; waiting for it rather than re-running"
+      else
+        rerun_non_verdict_run "$base_run_id" "${BASE_BRANCH}" || true
+      fi
       echo "[auto-merge] deferring to the next sweep to judge ${BASE_BRANCH}"
       exit 0
     fi
