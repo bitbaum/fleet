@@ -428,3 +428,46 @@ cancelled_then_success="[$(printf "$run" 1 cancelled tip),$(printf "$run" 2 succ
 [ "$(printf '%s' "[$(printf "$run" 1 success older)]" | pick_base_run tip | jq -r .headSha)" = older ] \
   && ok 'with no run for the tip, the newest run is returned so the catch-up check fires' \
   || no 'with no run for the tip, the newest run is returned so the catch-up check fires'
+
+# ── Superseded is not un-judged ────────────────────────────────────────────
+# A cancelled run with a LIVE sibling on the same commit was superseded by it.
+# Re-running it cancels that sibling (same concurrency group), the next sweep
+# calls the sibling un-judged and re-runs it, cancelling the first — the two
+# take turns until the attempt cap. Measured on bitbaum/solon 2026-09-17: six
+# sweeps a minute apart alternating between two ci.yml runs on 2667beb, ending
+# at attempt 3 on both, with the Deploy gate failing on a docs-only change each
+# time. It terminates by exhaustion, not by resolving.
+eval "$(awk '/^sibling_run_in_flight\(\) \{/,/^\}/' "$SWEEP")"
+
+grep -q 'sibling_run_in_flight "$base_runs_json"' "$SWEEP" \
+  || no 'the sweep consults sibling_run_in_flight before re-running the base'
+
+live='{"databaseId":%s,"status":"in_progress","conclusion":null,"headSha":"%s"}'
+both="[$(printf "$run" 1 cancelled tip),$(printf "$live" 2 tip)]"
+sibling_run_in_flight "$both" tip 1 \
+  && ok 'a cancelled run with a live sibling on the same sha is superseded' \
+  || no 'a cancelled run with a live sibling on the same sha is superseded'
+
+# ...and the guard must NOT swallow the case the rerun path exists for.
+lone="[$(printf "$run" 1 cancelled tip)]"
+sibling_run_in_flight "$lone" tip 1 \
+  && no 'a LONE cancelled run must still be re-run, not treated as superseded' \
+  || ok 'a lone cancelled run is not superseded, so the rerun path keeps working'
+
+# a live run on a DIFFERENT commit is not this commit's sibling
+other="[$(printf "$run" 1 cancelled tip),$(printf "$live" 2 older)]"
+sibling_run_in_flight "$other" tip 1 \
+  && no 'a live run on another sha must not count as a sibling' \
+  || ok 'a live run on another sha is not a sibling'
+
+# a COMPLETED sibling is not in flight — nothing will arrive from it
+done_sib="[$(printf "$run" 1 cancelled tip),$(printf "$run" 2 cancelled tip)]"
+sibling_run_in_flight "$done_sib" tip 1 \
+  && no 'two completed cancelled runs must not read as in flight' \
+  || ok 'a completed sibling does not count as in flight'
+
+# the run must not be its own sibling
+self="[$(printf "$live" 1 tip)]"
+sibling_run_in_flight "$self" tip 1 \
+  && no 'a run must not be its own in-flight sibling' \
+  || ok 'a run is not its own sibling'
