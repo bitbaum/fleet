@@ -51,7 +51,13 @@ set -uo pipefail
 ORG="${ORG:-bitbaum}"
 APPS_CONF_REPO="${APPS_CONF_REPO:-bitbaum/loki}"
 APPS_CONF_PATH="${APPS_CONF_PATH:-scripts/hetzner/apps.conf}"
-BOX="${BOX:-ubuntu@167.233.22.31}"
+# The box address has ONE home: loki scripts/hetzner/_box-env.sh. In Actions the
+# value arrives as the org variable HETZNER_IP; locally, source that file if the
+# checkout is there. Either way this file does not keep a copy of the number.
+_box_env="${DEV_ROOT:-$HOME/dev}/loki/scripts/hetzner/_box-env.sh"
+# shellcheck source=/dev/null
+[ -f "$_box_env" ] && . "$_box_env"
+BOX="${BOX:-${BOX_UBUNTU:-ubuntu@${HETZNER_IP:?set BOX or HETZNER_IP — the address lives in loki scripts/hetzner/_box-env.sh}}}"
 BACKUP_MAX_HOURS="${BACKUP_MAX_HOURS:-36}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 BASELINE="${BASELINE:-$HERE/bus-factor.baseline}"

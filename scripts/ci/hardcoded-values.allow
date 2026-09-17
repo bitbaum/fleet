@@ -1,0 +1,35 @@
+# Literals that look copied and are deliberate.  repo|path|category|REASON
+#
+# Every entry needs a reason a reader can judge, not a label. An entry that
+# matches nothing is reported by the audit and must be deleted: an allowlist
+# that cannot shrink is a ratchet that cannot fall.
+#
+# `path` may be a glob. Categories: retired-value, public-ip, home-path,
+# consumer-email, arbitrary-hex.
+
+# ── the mechanisms that make a rename survivable ─────────────────────────────
+loki|src/lib/register/build.ts|retired-value|the alias map that translates retired slugs into current ones — the mechanism that makes a rename safe, not an instance of drift
+loki|scripts/ci/fleet-refs-audit.mjs|retired-value|the detector for retired GitHub handles has to name the handle it hunts
+loki|.github/workflows/fleet-refs-audit.yml|retired-value|configuration of that same detector
+loki|scripts/hetzner/install-fleet-refs-audit.sh|retired-value|installs that detector with its handle list
+
+# ── infrastructure identifiers, deliberately not renamed ─────────────────────
+loki|scripts/hetzner/apps.conf|retired-value|revampit.orangecat.ch is still SERVED as an alias domain of evig, and `revampit` is the database identifier — infrastructure names, like aoz_wohnen, never published copy
+aoz-begleitung|src/lib/auth/constants.ts|retired-value|JWT_ISSUER is a live auth value, not a name: changing it invalidates every signed-in session
+
+# ── records of what was true when they were written ──────────────────────────
+fleet|proofs/origin/*.json|retired-value|hash-chained, append-only origin proofs: a past proof naming the old repo is correct history, and rewriting one breaks the chain
+loki|scripts/db/retire-stale-projects.ts|retired-value|an executed migration; its data row records the project names the database actually held when it ran
+evig|src/config/changelog.ts|retired-value|changelog entries describe the site as it stood when they shipped
+evig|public/presentations/*|retired-value|stakeholder presentations preserved as they were delivered, under the name the organisation had then
+hirnli|src/lib/db/migrations/*.sql|consumer-email|an executed migration: the value lives in the database now, and a migration must not change after it has run
+bitbaum|site/map.snapshot.json|retired-value|a cached fetch of loki.orangecat.ch/api/fleet/map, refreshed by the build — editing the cache is overwritten and the fix belongs at the source
+
+# ── correct today, and the audit would make it worse ─────────────────────────
+bitbaum|site/overrides.json|retired-value|keyed by the slug Loki's map currently emits for that project; changing the key would silently drop the card's name, stage, tags and ordering
+evig|src/config/org.ts|consumer-email|a documented live decision: evig.ch is not registered and publishes no MX, so the previous address bounced for every would-be buyer. The comment above it says to change this ONE line when the domain is registered and authenticated
+
+# ── one machine on purpose ───────────────────────────────────────────────────
+loki|home/projects.ts|home-path|inline selfTest() fixture modelling a laptop dispatch path; not reachable at runtime
+loki|home/render.ts|home-path|inline selfTest() fixture; not reachable at runtime
+dotfiles|.config/zellij/config.kdl|home-path|zellij's KDL config does not expand environment variables; personal machine config
