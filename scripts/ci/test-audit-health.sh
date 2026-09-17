@@ -300,6 +300,41 @@ grep -q "REALLY_EXISTS" <<<"$out" && bad "charged a secret while unable to list 
 grep -q "WITHHELD" <<<"$out" && ok "says the check was withheld" || bad "silently skipped instead of withholding out loud"
 [ $rc -eq 0 ] && ok "does not fail the run on an outage" || bad "an outage failed the check (exit $rc)"
 
+# SECRET_NAMES (from toJSON(secrets) in Actions) is authoritative when set, so
+# the check BITES in CI instead of withholding forever. Same blind stub as
+# above — the API listings fail — but the names arrive by env var.
+d=$(new_case)
+mkwf "$d" ctx.yml '17 6 * * 1' "        env:
+          A: \${{ secrets.PROVIDED }}
+          B: \${{ secrets.ABSENT_ONE }}"
+echo '{"workflows":[{"id":1,"path":".github/workflows/ctx.yml","name":"C","state":"active"}]}' > "$d/spec/WFLIST"
+runrow success 1 > "$d/spec/RUNS_1"
+cat > "$d/bin/gh" <<'BLIND2'
+#!/usr/bin/env bash
+spec="$GH_SPEC"
+case "$1 $2" in
+  "secret list") echo "gh: insufficient scope" >&2; exit 1 ;;
+esac
+if [ "$1" = "api" ]; then
+  case "$2" in
+    *"actions/secrets") echo "gh: HTTP 403" >&2; exit 1 ;;
+    *"/actions/workflows") cat "$spec/WFLIST"; exit 0 ;;
+    *"/actions/workflows/"*"/runs"*)
+      id=$(sed -E 's|.*/workflows/([0-9]+)/runs.*|\1|' <<<"$2")
+      [ -f "$spec/RUNS_$id" ] && { cat "$spec/RUNS_$id"; exit 0; }
+      echo '{"workflow_runs":[]}'; exit 0 ;;
+  esac
+fi
+exit 0
+BLIND2
+chmod +x "$d/bin/gh"
+out=$( cd "$d" && PATH="$d/bin:$PATH" GH_SPEC="$d/spec" OWNER=acme REPO=widget \
+       SECRET_NAMES=$'PROVIDED\nOTHER' bash "$AUDIT" --static 2>&1 ); rc=$?
+grep -q "PROVIDED" <<<"$out" && bad "charged a secret the context says exists" || ok "SECRET_NAMES satisfies a referenced secret"
+grep -q "ABSENT_ONE" <<<"$out" && ok "still bites on one the context does NOT list" || bad "SECRET_NAMES suppressed a real phantom"
+[ $rc -eq 1 ] && ok "the check BITES in CI rather than withholding forever" || bad "withheld despite having the names (exit $rc)"
+grep -q "WITHHELD" <<<"$out" && bad "withheld even though SECRET_NAMES was supplied" || ok "does not withhold when the names are supplied"
+
 # =============================================================================
 echo
 echo "audit-health — --static judges the DIFF, never the world"
