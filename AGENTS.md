@@ -113,9 +113,20 @@ repo doing it right, and is the pattern to copy.
 has a Loki project (how it gets built), an OrangeCat profile (how it is funded
 and found) and a Solon organisation (how it is governed). All three are joined
 by repo slug and published at `/api/fleet/register`; the six themselves ride on
-`/api/fleet/map`, which is what the audit reads. Of the 16 projects that have
-shipped, on 2026-09-15: **roadmap missing on 14**, a Solon organisation on 11,
-an OrangeCat profile on 10.
+`/api/fleet/map`, which is what the audit reads. Of the 17 projects that have
+shipped, on 2026-09-17: roadmap and changelog **0 missing** (both were the worst
+fields two days earlier), a Solon organisation missing on **12**, an OrangeCat
+profile on **9**.
+
+**How the two remaining columns get filled.** An OrangeCat profile is the
+per-project publish button in Loki. A Solon organisation is a HANDOFF, not a
+publish, and the difference is not a detail: founding one needs a signature from
+the owner's own Bitcoin wallet, which Loki never holds. From a project page,
+"Govern" opens `solon.orangecat.ch/orgs/new` pre-filled, carrying a short-lived
+grant Loki signs for that owner's OrangeCat identity. Solon records the
+organisation as governing the project **only** on that grant — never because the
+names match, because founding is open to anyone and otherwise whoever founds
+`loki` would appear here to govern Loki.
 
     fleet: node scripts/ci/product-identity-audit.mjs          # report
     fleet: node scripts/ci/product-identity-audit.mjs --check  # ratchet
