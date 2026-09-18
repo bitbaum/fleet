@@ -275,6 +275,41 @@ jobs:
       - name: The secret-in-response sweep aggregates honestly
         run: bash scripts/audit/test-secret-in-response-sweep.sh
 
+      # A workflow that COMMITS TO MAIN must re-arm CI, or it stalls the queue.
+      #
+      # A push made with GITHUB_TOKEN triggers no workflows, so main gets no CI
+      # run for that commit and the auto-merge sweep refuses everything with
+      # "main is at <tip> but the newest CI run is for <older>" until a human
+      # dispatches CI by hand — which nothing tells them to do. Hit four times
+      # in two days (readings, then origin proof) before it was named, each
+      # time silently holding every open PR in the repo.
+      #
+      # The sweep already re-arms after its OWN merges for exactly this reason.
+      # The three workflows that commit to main simply never got the same line,
+      # and nothing noticed because each one looks fine in isolation.
+      #
+      # Inline like the other one-invariant gates here. Proven by mutation:
+      # deleting any of the three re-arms turns this red.
+      - name: Every workflow that pushes to main re-arms CI
+        run: |
+          set -euo pipefail
+          bad=0; checked=0
+          for f in .github/workflows/*.yml; do
+            grep -q 'git push' "$f" || continue
+            checked=$((checked + 1))
+            if ! grep -q 'gh workflow run ci.yml' "$f"; then
+              echo "✗ ${f##*/} pushes to main but never re-arms CI — it will stall the merge queue" >&2
+              bad=1
+            fi
+            if ! grep -q 'actions: write' "$f"; then
+              echo "✗ ${f##*/} re-arms CI but lacks 'actions: write' — the dispatch will be refused" >&2
+              bad=1
+            fi
+          done
+          [ "$checked" -gt 0 ] || { echo "no pushing workflows found — did they move?" >&2; exit 1; }
+          [ "$bad" -eq 0 ] || exit 1
+          echo "pushers re-arm CI: ok ($checked workflow(s) checked)"
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.
