@@ -25,6 +25,8 @@ permissions:
   # of a graph that changes underneath it is exactly the drift this repo exists
   # to prevent, and a page that types the portfolio is forbidden by AGENTS.md.
   contents: write
+  # dispatch ci.yml on the commit this workflow pushes — see the re-arm below.
+  actions: write
 
 jobs:
   inventory:
@@ -94,6 +96,13 @@ jobs:
           git add registers/packages.json
           git commit -m "chore(registers): refresh derived package registry"
           git push
+          # Re-arm CI on the commit just pushed: a GITHUB_TOKEN push triggers
+          # nothing, so main gets no CI run and the auto-merge sweep blocks on
+          # "waiting for CI to catch up" until someone dispatches it by hand.
+          # Full reasoning in origin-proof.yml, which had the same hole.
+          # Never fatal — the commit is already pushed.
+          GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh workflow run ci.yml --ref main \
+            || echo "could not re-arm ci.yml — the sweep will block until it is dispatched" >&2
 
       # ── the ratchets, last and INDEPENDENT ─────────────────────────────────
       #

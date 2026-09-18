@@ -15,6 +15,8 @@ on:
 
 permissions:
   contents: write
+  # dispatch ci.yml on the commit this workflow pushes — see the re-arm below.
+  actions: write
 
 concurrency:
   group: readings
@@ -44,3 +46,10 @@ jobs:
           git config user.email "noreply@bitbaum.invalid"
           git commit -m "chore(registers): readings $(date -u +%F)"
           git push
+          # Re-arm CI on the commit just pushed: a GITHUB_TOKEN push triggers
+          # nothing, so main gets no CI run and the auto-merge sweep blocks on
+          # "waiting for CI to catch up" until someone dispatches it by hand.
+          # Full reasoning in origin-proof.yml, which had the same hole.
+          # Never fatal — the commit is already pushed.
+          GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh workflow run ci.yml --ref main \
+            || echo "could not re-arm ci.yml — the sweep will block until it is dispatched" >&2

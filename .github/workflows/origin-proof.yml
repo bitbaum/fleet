@@ -44,6 +44,10 @@ permissions:
   # write, only to commit proofs/origin — the derived record this workflow
   # exists to produce. Same pattern as the register refresh in shared-inventory.
   contents: write
+  # dispatch ci.yml on the commit this workflow pushes. Without it the push
+  # lands with no CI run of its own and the auto-merge sweep blocks on
+  # "waiting for CI to catch up" — see the re-arm at the end of the job.
+  actions: write
 
 concurrency:
   group: origin-proof
@@ -112,3 +116,26 @@ jobs:
           git config user.email "noreply@bitbaum.invalid"
           git commit -m "chore(proofs): origin proof $(date -u +%F)"
           git push
+          # RE-ARM CI ON THE COMMIT WE JUST PUSHED.
+          #
+          # A push made with GITHUB_TOKEN triggers no workflows, so main's CI
+          # never runs for this commit — and the auto-merge sweep refuses to
+          # merge anything while "main is at <tip> but the newest CI run is for
+          # <older>". Every bot commit therefore STALLS THE MERGE QUEUE until a
+          # human dispatches CI by hand, which nothing tells them to do.
+          #
+          # Hit four times in two days before anyone named it. It is the same
+          # re-arm the sweep already performs after its own merges, for exactly
+          # the same reason; the three workflows that commit to main just never
+          # got it.
+          #
+          # GITHUB_TOKEN deliberately, not FLEET_PAT: this run only needs a CI
+          # run to EXIST for the tip, and the sweep's schedule will pick it up.
+          # A PAT dispatch would additionally emit workflow_run and wake the
+          # sweep immediately — the cascade documented in loki CLAUDE.md, which
+          # is not wanted here.
+          #
+          # Never fatal: the commit is already pushed, and failing the step
+          # after that would report a proof as unwritten when it is written.
+          GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh workflow run ci.yml --ref main \
+            || echo "could not re-arm ci.yml — the sweep will block until it is dispatched" >&2
