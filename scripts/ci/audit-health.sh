@@ -312,7 +312,36 @@ if [ "$MODE" = "check" ]; then
     echo "audit-health: $n problem(s) in the layer that watches everything else"
     exit 1
   fi
+
+  # A verdict may only be claimed over what was actually READ.
+  #
+  # This said "every fleet audit ran recently, went green" regardless of how
+  # many it had failed to read — observed 2026-09-18 announcing exactly that
+  # with two workflows sitting under UNREADABLE three lines above it. Withheld
+  # is correctly not a finding, but it is not a pass either, and the sentence
+  # claimed both audits it had read and audits it had not.
+  #
+  # Same overstatement, same fix as secret-in-response-sweep.sh, which says
+  # "the N app(s) reached" rather than "the fleet". Writing the rule in one
+  # script does not apply it to its sibling.
+  # Only when we TRIED and failed. `ok_count` is also 0 in a repo whose every
+  # workflow is excluded as a non-audit — that is "nothing to audit", not "I
+  # was blind", and the two must not share a verdict. Caught by the fixture
+  # that feeds this script nothing but ci.yml.
+  if [ "$ok_count" -eq 0 ] && [ "${#unreadable[@]}" -gt 0 ]; then
+    echo
+    echo "✗ read NOTHING — every audit was unreadable. That is not a clean"
+    echo "  watching layer, it is an absent one: a blind watchdog reporting"
+    echo "  green is the exact failure this script exists to end."
+    exit 2
+  fi
+
   echo
-  echo "✓ every fleet audit ran recently, went green, and has a token that exists"
+  if [ "${#unreadable[@]}" -gt 0 ]; then
+    echo "✓ the ${ok_count} audit(s) READ ran recently, went green, and have a token that exists"
+    echo "  ${#unreadable[@]} could not be read — this verdict says nothing about them"
+  else
+    echo "✓ every fleet audit ran recently, went green, and has a token that exists"
+  fi
 fi
 exit 0

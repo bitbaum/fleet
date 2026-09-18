@@ -298,8 +298,31 @@ mkwf "$d" flaky.yml '17 6 * * 1'
 echo '{"workflows":[{"id":1,"path":".github/workflows/flaky.yml","name":"F","state":"active"}]}' > "$d/spec/WFLIST"
 touch "$d/spec/UNREADABLE_1"
 out=$(run_case "$d"); rc=$?
-[ $rc -eq 0 ] && ok "a 502 is not a finding (three-state read)" || bad "an outage was reported as a finding — the audit's own worst bug"
+grep -q "problem(s) in the layer" <<<"$out" && bad "an outage was charged as a finding — the audit's own worst bug" \
+  || ok "a 502 is not a finding (three-state read)"
 grep -q "UNREADABLE" <<<"$out" && ok "reported honestly as unreadable" || bad "outage silently swallowed"
+# ...and with NOTHING readable it must not pass either. Withheld is not a
+# finding, but it is not a clean bill of health: a blind watchdog reporting
+# green is the failure this script exists to end.
+[ $rc -eq 2 ] && ok "every audit unreadable -> exit 2, neither finding nor pass" \
+  || bad "a wholly blind run exited $rc (want 2)"
+grep -q "read NOTHING" <<<"$out" && ok "says it read nothing" || bad "no refusal message"
+
+# A PARTIAL outage is different: what was read is still worth reporting, but
+# the sentence must cover only that. Observed 2026-09-18 claiming "every fleet
+# audit ... went green" with two workflows under UNREADABLE three lines above.
+d=$(new_case)
+mkwf "$d" seen.yml '17 6 * * 1'
+mkwf "$d" blind.yml '17 6 * * 1'
+echo '{"workflows":[{"id":1,"path":".github/workflows/seen.yml","name":"S","state":"active"},{"id":2,"path":".github/workflows/blind.yml","name":"B","state":"active"}]}' > "$d/spec/WFLIST"
+runrow success 1 > "$d/spec/RUNS_1"
+touch "$d/spec/UNREADABLE_2"
+out=$(run_case "$d"); rc=$?
+[ $rc -eq 0 ] && ok "one readable and green -> still a pass" || bad "a partial outage failed the check (exit $rc)"
+grep -q "every fleet audit" <<<"$out" && bad "claimed EVERY audit while one was unreadable" \
+  || ok "does not say 'every' when one could not be read"
+grep -q "1 audit(s) READ" <<<"$out" && ok "scopes the verdict to what it read" || bad "verdict not scoped: $out"
+grep -q "says nothing about them" <<<"$out" && ok "names the gap out loud" || bad "gap not stated"
 
 # THE BUG THIS SCRIPT SHIPPED AND EXISTS TO REPORT.
 # Listing secrets needs a scope most tokens lack. Its first CI run could read
