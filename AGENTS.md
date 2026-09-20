@@ -156,6 +156,45 @@ resolves a project with a live URL and no hosting row as live.
 Adding a field is one row in that audit's `FIELDS` table. Adding a seventh
 *thing* is a conversation, not a commit.
 
+## No dead ends
+
+A gate records; it never blocks. Anything that stops a person shows the way
+forward on the same screen. This is a product rule for all three planes and it
+has one statement, here; a repo's agent file may name its own instances and
+must point here for the rule.
+
+What it means, concretely:
+
+- **A default carries its consequence, and one tap changes it.** Solon's
+  proposal form defaults to the cheapest category and states beside it what
+  that commits the proposer to — electorate, bar, window — read from the
+  table that binds them, never a paraphrase. Nobody is asked to choose before
+  they can see what choosing means.
+- **A skip lands where the old path landed.** Loki's interview before a
+  kickoff asks five questions; every one is skippable and "Skip the rest"
+  produces exactly the build the one-click button used to. An improvement to
+  the path is never a new condition on it.
+- **An error state has a button, never a wall.** If the interview's questions
+  fail to load, "Skip to the build" is on the same card as the error.
+- **Context that arrives in a link survives the detours.** A link carrying
+  `?from=orangecat&entity_type=…&title=…` keeps that context through sign-in
+  and through `/join`, and lands on a form that already names the thing the
+  person came about. Measured 2026-09-20: OrangeCat's "Govern it with Solon"
+  button had sent exactly that query to Solon's dashboard for months, and
+  nothing on the far side read it — a person who pressed the right button
+  arrived somewhere that had forgotten why.
+- **A rule that exists is a rule that can be changed in one tap.** When CI
+  finds a change to Solon's constitution with no decision behind it, it does
+  not fail the job; it warns in the PR with a pre-filled ratification
+  proposal. A rules change without a decision is a fact the record must show,
+  not a build failure, and nobody should be stuck in CI over a governance
+  question.
+
+The test for a new gate: after it fires, can the person still get to what they
+came for without leaving the screen, and does the record still say what
+happened? If either answer is no, it is not a gate — it is a dead end, and it
+is a bug.
+
 ## Packages
 
 Use a package when the same behavior must exist in more than one product:
