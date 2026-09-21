@@ -302,25 +302,24 @@ jobs:
       #
       # Inline like the other one-invariant gates here. Proven by mutation:
       # deleting any of the three re-arms turns this red.
+      # Moved out of this file 2026-09-21 and narrowed, after it produced its
+      # first false positive: it keyed on `grep -q 'git push'`, which is
+      # coarser than the invariant its own name states, and demanded that a
+      # workflow pushing a FEATURE branch to ANOTHER repository dispatch
+      # fleet's CI. The gate was not wrong — it indexed more than it was
+      # trusted to cover — and the remedy is the one this file keeps reaching
+      # for: narrow it to the invariant, and put it where fixtures can reach
+      # it, exactly as the verify-contract rules live in verify-predicates.sh.
       - name: Every workflow that pushes to main re-arms CI
-        run: |
-          set -euo pipefail
-          bad=0; checked=0
-          for f in .github/workflows/*.yml; do
-            grep -q 'git push' "$f" || continue
-            checked=$((checked + 1))
-            if ! grep -q 'gh workflow run ci.yml' "$f"; then
-              echo "✗ ${f##*/} pushes to main but never re-arms CI — it will stall the merge queue" >&2
-              bad=1
-            fi
-            if ! grep -q 'actions: write' "$f"; then
-              echo "✗ ${f##*/} re-arms CI but lacks 'actions: write' — the dispatch will be refused" >&2
-              bad=1
-            fi
-          done
-          [ "$checked" -gt 0 ] || { echo "no pushing workflows found — did they move?" >&2; exit 1; }
-          [ "$bad" -eq 0 ] || exit 1
-          echo "pushers re-arm CI: ok ($checked workflow(s) checked)"
+        run: bash scripts/ci/check-rearm.sh
+
+      # The narrowing is the change that most needs pinning from both sides: a
+      # gate loosened until it stops complaining and a gate that cries wolf end
+      # in the same place. Eleven fixtures, no network — the bare push, the
+      # explicit `origin main`, `HEAD:main`, and the doorway a variable target
+      # would otherwise open when the file sets it to main.
+      - name: The re-arm gate still bites, and stays quiet when it should
+        run: bash scripts/ci/test-check-rearm.sh
 
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
