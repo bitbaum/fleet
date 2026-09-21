@@ -19,10 +19,16 @@
  *     kivvi (packages/ai) ^0.15.0 · sbb-fundbuero ^0.15.0
  *     datacat (backend)   ^0.13.0
  *
- * Eleven of fourteen are behind. Ten of those eleven are on MAJOR 1, so
- * `gapsFor()` reports **nothing at all** about them — the ratchet is green
+ * THIRTEEN of fourteen are behind — only heidi is current. Ten of those
+ * thirteen are on MAJOR 1, so `gapsFor()` reports **nothing at all** about
+ * them; the other three are the 0.x strandings below. The ratchet is green
  * while the fleet spans seven minor versions of the package that owns model
  * ids, failover, the three kinds of 429 and now vision routing.
+ *
+ * (This block first said "eleven of fourteen", which was arithmetic that
+ * contradicted its own next sentence: ten on major 1 plus three stranded is
+ * thirteen. The first live run counted 13 and tripped a cap set from the wrong
+ * number — see MAX_PRS. Corrected against the run, not re-derived by hand.)
  *
  * This is not a flaw in that audit. We ship features in minors, so for our own
  * packages the minor IS the event, and an instrument tuned for `react` cannot
@@ -81,8 +87,19 @@ export const INTERNAL_SCOPE = "@bitbaum/";
  * explanation is a bug in the predicate than forty genuinely stale repos —
  * and forty wrong PRs across the org is expensive to undo. Over the cap it
  * prints the plan and opens nothing.
+ *
+ * RAISED 12 → 20, from a measurement rather than a feeling. The first live
+ * run swept 43 repos and found 13 wanting a bump; 12 was set from a docblock
+ * that had miscounted the same fleet as eleven. So the cap fired on its very
+ * first run against a plan that was entirely correct — the right behaviour for
+ * the wrong reason, and exactly the false positive that teaches people to
+ * raise a cap without reading it.
+ *
+ * 20 keeps the guard meaningful: it is well under the 43 repos swept, so "the
+ * whole fleet at once" still refuses, while 13 known-genuine bumps pass. Raise
+ * it again only against another run's output, and say which run.
  */
-export const MAX_PRS = 12;
+export const MAX_PRS = 20;
 
 /**
  * Split a registry range into its operator and its floor version.
