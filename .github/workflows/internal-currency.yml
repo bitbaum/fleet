@@ -1,0 +1,224 @@
+# Our own packages, kept current by machinery rather than by memory.
+#
+# WHY THIS EXISTS, AND WHY version-currency.yml DOES NOT COVER IT
+#
+# That workflow judges a dependency by its MAJOR, which is the right
+# instrument for `next` and `react` and the wrong one for us: we ship features
+# in minors. Measured 2026-09-21, `@bitbaum/ai-kit` was published at 1.10.0 and
+# ten of its fourteen consumers sat on major 1 but an older minor — so the
+# ratchet was green while the fleet spanned seven minor versions of the package
+# that owns model ids, failover and the three kinds of 429. A fix published for
+# everyone reached two repos.
+#
+# WHY IT OPENS PULL REQUESTS INSTEAD OF REPORTING
+#
+# Because reporting is the thing that already failed. SHARED.md has said
+# "version spread is the metric to watch" and "getting a repo current is the
+# cheapest work in this file and nobody schedules it" since before the spread
+# was measured. Both sentences were true. Neither moved a version.
+#
+# Everything downstream of a PR already works and needs no human:
+#
+#     this workflow → branch + PR → the repo's CI → auto-merge-sweep → CD → box
+#
+# A green bump merges and deploys itself. A red bump sits as an open PR naming
+# the repo that cannot take the new version — which is the most useful thing a
+# package author can be told, and nothing tells them today.
+#
+# WHY `pnpm update` AND NOT A PATCHED package.json
+#
+# Because every repo here installs with a frozen lockfile. Editing the manifest
+# through the API without the lockfile beside it produces a PR that fails CI in
+# every repo, every week, for a reason that has nothing to do with the bump —
+# and a bot whose PRs are always red gets muted, taking the real signal with it.
+# So this checks the repo out and lets the package manager write both files.
+name: Internal package currency
+
+on:
+  schedule:
+    # Weekly, and deliberately not on the hour — a cron at :00 competes with
+    # everything else in the org for the same scheduler slot. See
+    # deploy-reconciler.yml for why nothing here may DEPEND on this firing;
+    # workflow_dispatch is the reliable trigger and the box can tick it.
+    - cron: '41 7 * * 2'
+  workflow_dispatch:
+    inputs:
+      go:
+        description: 'Actually open the pull requests (false = print the plan only).'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      any: ${{ steps.plan.outputs.any }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # The deciding half is pure and network-free, so it is proved before it
+      # is trusted — same practice as every other audit in this directory.
+      - name: Self-test the reconciler first
+        run: node scripts/ci/test-currency-reconciler.mjs
+
+      - name: What is behind?
+        id: plan
+        env:
+          # The default token reads public repos only. A private repo would
+          # land in UNCHECKED — named, never counted as current.
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## Internal package currency'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          node scripts/ci/currency-reconciler.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          matrix=$(node scripts/ci/currency-reconciler.mjs --json)
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          # An empty plan must not start a matrix job with nothing in it — and
+          # over the cap the script emits [] deliberately, which lands here too.
+          if [ "$matrix" = "[]" ]; then
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  bump:
+    needs: plan
+    if: ${{ needs.plan.outputs.any == 'true' && inputs.go != false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # One repo failing to bump must not stop the others. A repo whose install
+    # is broken today is exactly the repo that has been stranded longest.
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        target: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - name: Check out ${{ matrix.target.repo }}
+        uses: actions/checkout@v7
+        with:
+          repository: bitbaum/${{ matrix.target.repo }}
+          # Needs push. The default GITHUB_TOKEN is scoped to THIS repo and
+          # cannot write to a sibling — and a PAT-pushed branch is also what
+          # makes the target's CI actually run on it, which a GITHUB_TOKEN push
+          # would not (see the no-cascade rule in loki's CLAUDE.md).
+          token: ${{ secrets.FLEET_PAT }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Raise the floor and let pnpm write the lockfile
+        env:
+          BUMPS: ${{ toJSON(matrix.target.bumps) }}
+        run: |
+          set -euo pipefail
+
+          # Raise each manifest's floor, then let the package manager resolve.
+          # `pnpm update --latest` alone would NOT move a `^0.15.0` consumer:
+          # a caret on 0.x pins the minor, which is the precise reason those
+          # repos have been stranded for months.
+          echo "$BUMPS" | node -e '
+            const fs = require("node:fs");
+            const bumps = JSON.parse(fs.readFileSync(0, "utf8"));
+            for (const b of bumps) {
+              const pkg = JSON.parse(fs.readFileSync(b.path, "utf8"));
+              for (const field of ["dependencies", "devDependencies"]) {
+                if (pkg[field]?.[b.name]) pkg[field][b.name] = b.to;
+              }
+              fs.writeFileSync(b.path, JSON.stringify(pkg, null, 2) + "\n");
+              console.log(`${b.path}: ${b.name} ${b.from} -> ${b.to}`);
+            }
+          '
+
+          # No --frozen-lockfile: writing the lockfile is the point. Scripts are
+          # left enabled because some of these packages build on `prepare`, and
+          # a lockfile produced with them off is not the one CI will install.
+          pnpm install --no-frozen-lockfile
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT }}
+          REPO: ${{ matrix.target.repo }}
+          BRANCH: fleet/internal-currency
+        run: |
+          set -euo pipefail
+
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Nothing changed after install — already current in the lockfile. Skipping."
+            exit 0
+          fi
+
+          git config user.name  "fleet-reconciler"
+          git config user.email "fleet@bitbaum.invalid"
+
+          # One stable branch, force-pushed. A weekly bot that opens a new
+          # branch per run accumulates a drawer of near-identical PRs, and a
+          # drawer like that is what gets a bot muted.
+          git checkout -B "$BRANCH"
+          git add -A
+          git commit -m "chore(deps): raise @bitbaum/* to the published version
+
+Opened by bitbaum/fleet .github/workflows/internal-currency.yml.
+
+The fleet's own packages ship features in MINORS, so version-currency.mjs
+— which judges by major — reports nothing while consumers drift. This is
+the instrument that sees it, and it opens the fix rather than reporting it.
+
+If this PR is red, that is the useful outcome: it names a repo that cannot
+take the new version, which nothing else in the fleet would have told us."
+
+          git push --force-with-lease origin "$BRANCH"
+
+          if gh pr view "$BRANCH" --repo "bitbaum/$REPO" --json number >/dev/null 2>&1; then
+            echo "PR already open for $BRANCH — the force-push updated it."
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "bitbaum/$REPO" \
+            --base "$(gh repo view "bitbaum/$REPO" --json defaultBranchRef --jq .defaultBranchRef.name)" \
+            --head "$BRANCH" \
+            --title "chore(deps): raise @bitbaum/* to the published version" \
+            --body "$(cat <<'BODY'
+Raises this repo's floor on the fleet's own packages to what is published.
+
+**Why a bot and not a person.** `version-currency.mjs` judges dependencies by
+their MAJOR, which is right for `next` and `react` and wrong for us — we ship
+features in minors. Measured 2026-09-21, `@bitbaum/ai-kit` was at 1.10.0 with
+ten of fourteen consumers on major 1 but an older minor, so the ratchet was
+green while a fix published for everyone reached two repos.
+
+**Why now and not "later".** Getting a repo current is the cheapest work in
+`SHARED.md` and nobody has ever scheduled it. Adoption in this fleet has only
+ever moved as a side effect of repairing an outage.
+
+**If CI is red here, do not just close this.** It means this repo cannot take
+the published version — the most useful thing a package author can be told, and
+nothing else in the fleet would have said it. Fix it here or open an issue on
+the package.
+
+Lockfile written by `pnpm install`, not hand-patched.
+
+---
+_Generated by [Claude Code](https://claude.ai/code)_
+BODY
+)"

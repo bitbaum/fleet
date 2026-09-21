@@ -1,6 +1,6 @@
 {
   "_comment": [
-    "The fleet's blessed MAJOR version per key package — the SSOT the",
+    "The fleet's blessed MAJOR version per key package \u2014 the SSOT the",
     "version-currency audit measures every repo against. Raise a number here",
     "(in a PR) when the fleet decides a new major is the standard; the audit",
     "then reports every repo below it as a gap. Majors only: 0.x packages",
@@ -13,12 +13,13 @@
     "(^0.15.0 pins the MINOR) while the package was at 1.4.1, and no gate said",
     "so. A version-tracking exemption must be re-read when the version moves.",
     "next-auth is deliberately absent while v5 is",
-    "beta — which is exactly why it stopped being the blessed auth library on",
+    "beta \u2014 which is exactly why it stopped being the blessed auth library on",
     "2026-09-11: a choice this audit cannot measure is a choice that drifts.",
     "better-auth has a real major and is listed below. internal_tags: the git tag every consumer of an internal package",
-    "must pin until the package is on npm — a package graduates by deleting",
+    "must pin until the package is on npm \u2014 a package graduates by deleting",
     "its entry here (ai-kit did 2026-09: on npm as @bitbaum/ai-kit, 0.x, so",
-    "untracked like the other 0.x packages)."
+    "untracked like the other 0.x packages).",
+    "MAJORS ONLY, and for @bitbaum/* that is not enough -- we ship features in MINORS. On 2026-09-21 ai-kit was published at 1.10.0 with ten of its fourteen consumers on major 1 but an older minor, so this file said they were all current and a fix published for everyone reached two repos. Raising the number here would not have caught it either: they were not behind on the major. scripts/ci/currency-reconciler.mjs is the instrument that sees a minor gap, and it OPENS THE PR rather than reporting -- see the central-audits table in SHARED.md. Keep @bitbaum/ai-kit listed below anyway: it is what catches the three repos genuinely stranded on 0.x (kivvi packages/ai, datacat backend, sbb-fundbuero), where a caret pins the MINOR and no ordinary update can move them."
   ],
   "majors": {
     "next": 16,
