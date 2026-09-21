@@ -165,7 +165,13 @@ check("npm failing is null, never a bump", latestOf(AI_KIT, { run: () => { throw
 check("npm answering garbage is null, never a bump", latestOf(AI_KIT, { run: () => "not-a-version" }) === null);
 
 // ── the cap ──────────────────────────────────────────────────────────────────
-check("the cap is small enough to be a real guard", MAX_PRS > 0 && MAX_PRS <= 20);
+check("the cap is small enough to be a real guard", MAX_PRS > 0 && MAX_PRS <= 25);
+// The cap must clear the fleet's REAL size or it fires on every correct run,
+// which is how a guard gets raised unread. 13 is what the first live run
+// counted across 43 repos on 2026-09-21; 12 was set from a miscount and
+// tripped immediately.
+check("the cap clears the 13 the first live run actually found", MAX_PRS >= 13);
+check("but still refuses a whole-fleet sweep (43 repos)", MAX_PRS < 43);
 
 console.log();
 if (failures) {
