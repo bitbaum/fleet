@@ -197,7 +197,7 @@ function gh(args) {
  * currency action is SYNCING, which this audit cannot ratchet. Exempted forks
  * are printed by name so the exemption is visible, never silent.
  */
-function listRepos(owner, limit) {
+export function listRepos(owner, limit) {
   const raw = gh(["repo", "list", owner, "--limit", String(limit), "--json", "name,isArchived,isFork"]);
   const all = JSON.parse(raw).filter((r) => !r.isArchived);
   return {
@@ -206,7 +206,7 @@ function listRepos(owner, limit) {
   };
 }
 
-function fetchManifest(owner, repo, path = "package.json") {
+export function fetchManifest(owner, repo, path = "package.json") {
   try {
     const raw = gh(["api", `repos/${owner}/${repo}/contents/${path}`, "--jq", ".content"]);
     return JSON.parse(Buffer.from(raw.trim(), "base64").toString("utf8"));
@@ -216,7 +216,7 @@ function fetchManifest(owner, repo, path = "package.json") {
 }
 
 /** Names in a directory, or null if it could not be listed at all. */
-function listDir(owner, repo, path = "") {
+export function listDir(owner, repo, path = "") {
   try {
     const raw = gh(["api", `repos/${owner}/${repo}/contents/${path}`, "--jq", "[.[].name]"]);
     return JSON.parse(raw);
@@ -230,7 +230,7 @@ function listDir(owner, repo, path = "") {
  * member and sub-app. Each is confirmed present by a LISTING before it is
  * fetched.
  */
-function manifestPaths(owner, repo, rootNames) {
+export function manifestPaths(owner, repo, rootNames) {
   const paths = rootNames.includes("package.json") ? ["package.json"] : [];
   const { containers, subapps } = dirsToExplore(rootNames);
 
