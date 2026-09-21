@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-09-15T13:06:30.871Z",
+  "generatedAt": "2026-09-21T13:20:56.306Z",
   "packages": [
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.9.0",
+      "version": "1.11.0",
       "install": {
         "source": "npm",
         "command": "pnpm add @bitbaum/ai-kit"
@@ -59,7 +59,7 @@
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
       "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
-      "version": "0.2.8",
+      "version": "0.3.0",
       "install": {
         "source": "npm",
         "command": "pnpm add bip-kit"
@@ -120,6 +120,41 @@
       ]
     },
     {
+      "slug": "threadkit",
+      "name": "threadkit",
+      "repo": "https://github.com/bitbaum/threadkit",
+      "description": "Headless multi-participant message threads. Permission is participation, unread is per-person, and an AI can be a participant subject to the same visibility rules as everyone else.",
+      "version": "0.1.1",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add threadkit"
+      },
+      "adopters": 4,
+      "adopterNames": [
+        "heidi",
+        "orangecat",
+        "substrata",
+        "vitareba"
+      ]
+    },
+    {
+      "slug": "design-tokens",
+      "name": "@bitbaum/design-tokens",
+      "repo": "https://github.com/bitbaum/design-tokens",
+      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
+      "version": "1.1.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/design-tokens"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "bitbaum",
+        "loki",
+        "solon"
+      ]
+    },
+    {
       "slug": "listkit",
       "name": "listkit",
       "repo": "https://github.com/bitbaum/listkit",
@@ -134,39 +169,6 @@
         "hirnli",
         "loki",
         "substrata"
-      ]
-    },
-    {
-      "slug": "threadkit",
-      "name": "threadkit",
-      "repo": "https://github.com/bitbaum/threadkit",
-      "description": "Headless multi-participant message threads. Permission is participation, unread is per-person, and an AI can be a participant subject to the same visibility rules as everyone else.",
-      "version": "0.1.1",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add threadkit"
-      },
-      "adopters": 3,
-      "adopterNames": [
-        "heidi",
-        "orangecat",
-        "vitareba"
-      ]
-    },
-    {
-      "slug": "design-tokens",
-      "name": "@bitbaum/design-tokens",
-      "repo": "https://github.com/bitbaum/design-tokens",
-      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
-      "version": "1.1.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/design-tokens"
-      },
-      "adopters": 2,
-      "adopterNames": [
-        "loki",
-        "solon"
       ]
     },
     {
