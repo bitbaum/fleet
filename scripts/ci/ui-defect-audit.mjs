@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Fleet audit: two rendered defects that no unit test, type check or lint rule
- * can see, because nothing is wrong until the page is painted.
+ * Fleet audit: rendered defects that no unit test, type check or lint rule
+ * can see, because nothing is wrong until the page is painted — and, since
+ * 2026-09-21, painted at more than one width.
  *
  *   1. INVISIBLE ACTIONS — an interactive label below its WCAG AA contrast
  *      floor. On loki/control the only route to a feedback report's
@@ -28,6 +29,15 @@
  * is audited the day it is linked, and a retired one stops being audited,
  * without anyone editing this file.
  *
+ *   3. CONTROLS OFF THE SCREEN — a nav or header control with part of itself
+ *      past the viewport edge, and a page that scrolls sideways. Both only
+ *      exist at a width, and for its first year this audit rendered exactly
+ *      one (1440). substrata's mobile menu opened 22rem off the LEFT of a
+ *      390px screen for months with every other rule green; the first
+ *      three-width sweep found the same class live on surf-your-life (93px),
+ *      vitareba (19px) and kivvi (15px, plus 15px of sideways scroll), every
+ *      one of them clean at 1440.
+ *
  * SCOPE — what this does NOT prove. It renders each site's PUBLIC entry page
  * only, unauthenticated. Defects behind a login are invisible here; for those,
  * run the per-repo authed audits (loki: `npm run audit:contrast`). It
@@ -39,6 +49,7 @@
  *   node scripts/ci/ui-defect-audit.mjs                 # audit, exit 1 on defects
  *   node scripts/ci/ui-defect-audit.mjs --warn-only     # report, always exit 0
  *   SITES="https://a.example,https://b.example" node scripts/ci/ui-defect-audit.mjs
+ *   VIEWPORTS="390x844,1440x1000" node scripts/ci/ui-defect-audit.mjs
  *
  * Needs playwright. dotfiles has no package.json on purpose, so the browser is
  * resolved from a fleet repo that already installs it (override with
@@ -57,6 +68,39 @@ const AA_LARGE = 3.0;
  *  10–16px plus a gap; 24 covers them with headroom and excludes real nesting. */
 const MAX_ACCIDENTAL_INDENT_PX = 24;
 const DISCOVERY_URL = process.env.DISCOVERY_URL ?? "https://loki.orangecat.ch/";
+
+/**
+ * The widths every site is rendered at.
+ *
+ * This audit ran at 1440 only until 2026-09-21, and that was the hole it could
+ * not see through. substrata's header shipped a mobile menu whose panel was
+ * positioned against a button in the middle of the bar, so at 390px it opened
+ * 22rem to the LEFT of that button — the search field and every link label
+ * painted off the side of the screen. Every rule here passed: the links had
+ * boxes, they cleared 44px, the current page carried aria-current. They were
+ * simply not on the screen, and nothing rendered the screen they were missing
+ * from. The same header hid its whole nav between 768 and 1099px.
+ *
+ * Three widths, because each is a different layout branch in this fleet's CSS:
+ * a phone below every breakpoint, a tablet in the gap where `md:` has fired and
+ * `lg:` has not (where both of substrata's defects lived), and the desktop this
+ * audit already covered.
+ */
+const DEFAULT_VIEWPORTS = "390x844,834x1112,1440x1000";
+
+export function parseViewports(spec = process.env.VIEWPORTS) {
+  return (spec?.trim() || DEFAULT_VIEWPORTS)
+    .split(",")
+    .map((pair) => pair.trim())
+    .filter(Boolean)
+    .map((pair) => {
+      const [w, h] = pair.split("x").map((n) => Number.parseInt(n, 10));
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) {
+        throw new Error(`bad viewport "${pair}" — expected WIDTHxHEIGHT, e.g. 390x844`);
+      }
+      return { width: w, height: h, label: String(w) };
+    });
+}
 
 export function loadPlaywright() {
   const candidates = [
@@ -93,6 +137,32 @@ async function discoverSites() {
   found.add("https://loki.orangecat.ch");
   return [...found].sort();
 }
+
+/**
+ * Open what the nav hides, before measuring it.
+ *
+ * A menu panel is closed on arrival, so a panel that paints off the side of the
+ * screen is invisible to a detector that only measures what is already open —
+ * which is exactly how substrata's shipped for months. `<details>` is opened by
+ * setting the property rather than clicking it: no event fires, so nothing can
+ * navigate, and there is no state for a click handler to get wrong.
+ *
+ * Buttons are NOT touched here; `main()` clicks those with a URL guard,
+ * because a `button[aria-expanded]` in this fleet may be anything at all.
+ *
+ * Returns how many it opened, so a run can say whether it saw any panel.
+ */
+export const DISCLOSE = String.raw`(() => {
+  var opened = 0;
+  var roots = document.querySelectorAll('nav, [role="navigation"], header');
+  for (var i = 0; i < roots.length; i++) {
+    var ds = roots[i].querySelectorAll("details");
+    for (var j = 0; j < ds.length; j++) {
+      if (!ds[j].open) { ds[j].open = true; opened++; }
+    }
+  }
+  return opened;
+})()`;
 
 /**
  * Passed to the page as a STRING, not a function: a bundler that injects a
@@ -343,6 +413,7 @@ export const MEASURE = String.raw`(() => {
   var navMissingCurrent = [];
   var navSmallTargets = [];
   var navDeadLabels = [];
+  var navOffViewport = [];
 
   var navRoots = document.querySelectorAll('nav, [role="navigation"]');
   var here = location.pathname.replace(/\/+$/, "") || "/";
@@ -422,107 +493,283 @@ export const MEASURE = String.raw`(() => {
     }
   }
 
+  // ── a control half off the screen ─────────────────────────────────────────
+  // Added 2026-09-21 after substrata's mobile menu shipped a panel anchored to
+  // a button in the middle of the header: position:absolute with right:0
+  // measured from THERE put 22rem of panel off the LEFT edge of a 390px
+  // screen. Every rule above passed — the links had boxes, cleared 44px and
+  // marked the current page. They were simply not on the screen.
+  //
+  // Its own root set, wider than the three rules above, and that is the
+  // finding rather than a convenience: substrata's mobile menu is NOT inside
+  // a <nav>. It is a <details> sitting beside one in the header, which is
+  // where a menu button usually lives. A rule that only looked inside <nav>
+  // would have missed the exact defect it was written for.
+  //
+  // CROSSING the edge is the defect, not being past it. A closed drawer parked
+  // at translateX(-100%) is entirely outside the viewport and is correct; a
+  // panel with half its width off the side is not. Requiring part in and part
+  // out separates them with no list of exceptions.
+  var chromeRoots = document.querySelectorAll('nav, [role="navigation"], header');
+  var offSeen = [];
+  for (var cr2 = 0; cr2 < chromeRoots.length; cr2++) {
+    var croot = chromeRoots[cr2];
+    if (!croot.getBoundingClientRect().width) continue;
+    var cctl = croot.querySelectorAll('a[href], button, [role="button"], summary');
+    for (var o = 0; o < cctl.length; o++) {
+      var oc = cctl[o];
+      if (offSeen.indexOf(oc) !== -1) continue;   // nested roots see it twice
+      offSeen.push(oc);
+      var or = oc.getBoundingClientRect();
+      if (or.width === 0 || or.height === 0) continue;
+      var ocs = getComputedStyle(oc);
+      if (ocs.visibility === "hidden" || ocs.opacity === "0") continue;
+      if (oc.closest('[aria-hidden="true"], [inert]')) continue;
+      // 4px, not 1: the first fleet sweep found loki's "Get started" one pixel
+      // past the edge at 834, which is sub-pixel rounding rather than a button
+      // anybody sees clipped. The three real ones that run — 15px, 19px, 93px —
+      // are nowhere near this floor.
+      var off = 0, side = "";
+      if (or.left < -4 && or.right > 4) { off = Math.round(-or.left); side = "left"; }
+      else if (or.right > innerWidth + 4 && or.left < innerWidth - 4) {
+        off = Math.round(or.right - innerWidth); side = "right";
+      }
+      if (off > 4) {
+        navOffViewport.push({
+          side: side, off: off,
+          w: Math.round(or.width), h: Math.round(or.height),
+          tag: oc.tagName.toLowerCase(),
+          href: oc.getAttribute("href") || "",
+          text: (oc.innerText || oc.getAttribute("aria-label") || "").trim().slice(0, 30).replace(/\s+/g, " ")
+        });
+      }
+    }
+  }
+
   return {
     contrast: contrast, ragged: ragged, wrapped: wrapped, stacksSeen: seen,
     navMissingCurrent: navMissingCurrent,
     navSmallTargets: navSmallTargets,
     navDeadLabels: navDeadLabels,
-    navsSeen: navRoots.length
+    navOffViewport: navOffViewport,
+    navsSeen: navRoots.length,
+    // Sideways scroll on the page itself. Cheap, objective, and a different
+    // failure from the one above: content past the RIGHT edge extends
+    // scrollWidth, content past the left does not. Over 2px, because a 1px
+    // rounding difference is not a page a reader can scroll.
+    pageOverflow: (function () {
+      var over = Math.round(document.documentElement.scrollWidth - innerWidth);
+      return over > 2 ? over : 0;
+    })(),
+    viewportWidth: innerWidth
   };
 })()`;
+
+/**
+ * One nav disclosure that only a click opens.
+ *
+ * `DISCLOSE` handles `<details>` without firing an event. A React menu behind
+ * `button[aria-expanded]` needs the click, and a click in this fleet may do
+ * anything — so the URL is checked afterwards and a navigation ends the pass
+ * rather than auditing whatever page it landed on.
+ */
+async function openButtonMenus(page) {
+  const before = page.url();
+  let opened = 0;
+  const buttons = await page.$$(
+    'nav button[aria-expanded="false"], [role="navigation"] button[aria-expanded="false"], header button[aria-expanded="false"]',
+  );
+  for (const btn of buttons.slice(0, 6)) {
+    try {
+      if (!(await btn.isVisible())) continue;
+      await btn.click({ timeout: 2000, noWaitAfter: true });
+      await page.waitForTimeout(150);
+      if (page.url() !== before) return opened; // it navigated; stop touching things
+      opened += 1;
+    } catch {
+      /* a control that will not open is not a finding this audit makes */
+    }
+  }
+  return opened;
+}
+
+/** A finding's identity, so the same decision seen at three widths prints once. */
+function keyOf(kind, f) {
+  switch (kind) {
+    case "badContrast": return `${kind}|${f.tag}|${f.text}|${f.value}`;
+    // NOT the edges: the same crooked stack sits at a different absolute x at
+    // every width, so keying on coordinates prints one decision three times.
+    // Its shape — how many rows, how far apart, which lines — is what is wrong.
+    // NOT the edges, and not the sample verbatim: the same crooked stack sits
+    // at a different absolute x at every width, and each sample line is
+    // prefixed with that x ("90:Research desk" / "574:Research desk"), so both
+    // print one decision three times. Its shape — how many rows, how far
+    // apart, which lines — is what is wrong.
+    case "ragged":
+      return `${kind}|${f.rows}|${f.spread}|` +
+        (f.sample ?? []).map((line) => String(line).replace(/^\s*-?\d+\s*:/, "")).join("~");
+    case "wrapped": return `${kind}|${f.tag}|${f.text}`;
+    case "navMissingCurrent": return `${kind}|${f.href}|${f.navLabel}`;
+    case "navSmallTargets": return `${kind}|${f.w}x${f.h}|${f.tag}|${f.text}`;
+    case "navDeadLabels": return `${kind}|${f.label}`;
+    case "navOffViewport": return `${kind}|${f.side}|${f.tag}|${f.text}|${f.href}`;
+    default: return `${kind}|${JSON.stringify(f)}`;
+  }
+}
+
+const KINDS = [
+  "badContrast", "ragged", "wrapped",
+  "navMissingCurrent", "navSmallTargets", "navDeadLabels", "navOffViewport",
+];
 
 async function main() {
   const { chromium } = loadPlaywright();
   const sites = await discoverSites();
-  console.log(`fleet UI audit — ${sites.length} site(s)\n`);
+  const viewports = parseViewports();
+  console.log(
+    `fleet UI audit — ${sites.length} site(s) x ${viewports.length} width(s) ` +
+    `(${viewports.map((v) => v.label).join(", ")})\n`,
+  );
 
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
-  const report = [];
-
-  for (const site of sites) {
-    const page = await ctx.newPage();
-    try {
-      // NOT networkidle: a page holding an SSE stream or a poll never goes
-      // idle, so the wait resolves on a timeout and measures the server-rendered
-      // shell — a clean ✓ over a page never actually examined.
-      await page.goto(site, { waitUntil: "domcontentloaded", timeout: 60000 });
-      await page.waitForTimeout(4000);
-      const r = await page.evaluate(MEASURE);
-      const badContrast = r.contrast.filter((c) => c.value < c.floor);
-      report.push({ site, ...r, badContrast });
-      const navTotal =
-        r.navMissingCurrent.length + r.navSmallTargets.length + r.navDeadLabels.length;
-      console.log(
-        `${site}\n  ${r.contrast.length} actions (${badContrast.length} below AA) · ` +
-        `${r.stacksSeen} stacks (${r.ragged.length} ragged) · ${r.wrapped.length} unaligned wraps · ` +
-        `${r.navsSeen} navs (${navTotal} nav defects)`
-      );
-    } catch (e) {
-      console.log(`${site}\n  ! ${e.message}`);
-      report.push({
-        site, error: e.message, contrast: [], ragged: [], wrapped: [], badContrast: [],
-        navMissingCurrent: [], navSmallTargets: [], navDeadLabels: [], navsSeen: 0,
+  // Findings merge per site across widths: one decision is one line, annotated
+  // with every width it was seen at. Rendering three times must not treble a
+  // report that a human has to read.
+  const merged = new Map();
+  const siteOf = (site) => {
+    if (!merged.has(site)) {
+      merged.set(site, {
+        site, errors: [], widths: [], navsSeen: 0, stacksSeen: 0, overflow: [],
+        found: new Map(),
       });
-    } finally {
-      await page.close();
     }
+    return merged.get(site);
+  };
+
+  for (const vp of viewports) {
+    const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+    for (const site of sites) {
+      const entry = siteOf(site);
+      const page = await ctx.newPage();
+      try {
+        // NOT networkidle: a page holding an SSE stream or a poll never goes
+        // idle, so the wait resolves on a timeout and measures the server-rendered
+        // shell — a clean ✓ over a page never actually examined.
+        await page.goto(site, { waitUntil: "domcontentloaded", timeout: 60000 });
+        await page.waitForTimeout(4000);
+        await page.evaluate(DISCLOSE);
+        await openButtonMenus(page);
+        await page.waitForTimeout(250);
+        const r = await page.evaluate(MEASURE);
+        entry.widths.push(vp.label);
+        entry.navsSeen = Math.max(entry.navsSeen, r.navsSeen);
+        entry.stacksSeen = Math.max(entry.stacksSeen, r.stacksSeen);
+        if (r.pageOverflow > 0) entry.overflow.push({ at: vp.label, px: r.pageOverflow });
+        const findings = { ...r, badContrast: r.contrast.filter((c) => c.value < c.floor) };
+        let here = 0;
+        for (const kind of KINDS) {
+          for (const f of findings[kind] ?? []) {
+            here += 1;
+            const k = keyOf(kind, f);
+            const seen = entry.found.get(k);
+            if (seen) seen.at.push(vp.label);
+            else entry.found.set(k, { kind, f, at: [vp.label] });
+          }
+        }
+        console.log(
+          `${site} @${vp.label}\n  ${r.contrast.length} actions (${findings.badContrast.length} below AA) · ` +
+          `${r.navsSeen} navs · ${here} finding(s)` +
+          (r.pageOverflow > 0 ? ` · scrolls sideways by ${r.pageOverflow}px` : ""),
+        );
+      } catch (e) {
+        console.log(`${site} @${vp.label}\n  ! ${e.message}`);
+        entry.errors.push(`${vp.label}: ${e.message}`);
+      } finally {
+        await page.close();
+      }
+    }
+    await ctx.close();
   }
   await browser.close();
 
-  const countOf = (r) =>
-    r.badContrast.length + r.ragged.length + r.wrapped.length +
-    r.navMissingCurrent.length + r.navSmallTargets.length + r.navDeadLabels.length;
-
+  const at = (widths) => `[${[...new Set(widths)].join("/")}px]`;
   let defects = 0;
-  for (const r of report) {
-    const total = countOf(r);
+
+  for (const entry of merged.values()) {
+    const total = entry.found.size + entry.overflow.length;
     if (!total) continue;
     defects += total;
-    console.log(`\n── ${r.site} ──`);
-    for (const c of r.badContrast.sort((a, b) => a.value - b.value)) {
+    console.log(`\n── ${entry.site} ──`);
+
+    const of = (kind) => [...entry.found.values()].filter((x) => x.kind === kind);
+
+    for (const o of entry.overflow) {
+      console.log(`  ${at([o.at])} page scrolls sideways by ${o.px}px`);
+    }
+    for (const { f, at: w } of of("badContrast").sort((a, b) => a.f.value - b.f.value)) {
       console.log(
-        `  contrast ${String(c.value).padStart(5)}:1 (needs ${c.floor})  <${c.tag}> ${c.fontSize}px  "${c.text}"`
+        `  ${at(w)} contrast ${String(f.value).padStart(5)}:1 (needs ${f.floor})  <${f.tag}> ${f.fontSize}px  "${f.text}"`,
       );
     }
-    for (const g of r.ragged) {
-      console.log(`  ragged stack: ${g.rows} rows, ${g.spread}px spread, edges ${g.edges.join("/")}`);
-      for (const s of g.sample) console.log(`      ${s}`);
+    for (const { f, at: w } of of("ragged")) {
+      console.log(`  ${at(w)} ragged stack: ${f.rows} rows, ${f.spread}px spread, edges ${f.edges.join("/")}`);
+      for (const line of f.sample) console.log(`      ${line}`);
     }
-    for (const w of r.wrapped) {
-      console.log(`  wrapped line off by ${w.delta}px  <${w.tag}>  "${w.text}"`);
+    for (const { f, at: w } of of("wrapped")) {
+      console.log(`  ${at(w)} wrapped line off by ${f.delta}px  <${f.tag}>  "${f.text}"`);
     }
-    for (const m of r.navMissingCurrent) {
+    for (const { f, at: w } of of("navMissingCurrent")) {
       console.log(
-        `  nav: current page unmarked — "${m.label}" (${m.href}) in [${m.navLabel}] has no aria-current`
+        `  ${at(w)} nav: current page unmarked — "${f.label}" (${f.href}) in [${f.navLabel}] has no aria-current`,
+      );
+    }
+    for (const { f, at: w } of of("navOffViewport")) {
+      console.log(
+        `  ${at(w)} nav: "${f.text || f.href}" crosses the ${f.side} edge by ${f.off}px ` +
+        `(<${f.tag}> ${f.w}x${f.h}) — part of it is off the screen`,
       );
     }
     // One line per distinct SIZE, not per element: a nav of twelve identical
     // 32px links is one decision, and twelve lines of it buries everything else.
     const bySize = new Map();
-    for (const t of r.navSmallTargets) {
-      const k = `${t.w}x${t.h} <${t.tag}>`;
-      if (!bySize.has(k)) bySize.set(k, []);
-      bySize.get(k).push(t.text);
+    for (const { f, at: w } of of("navSmallTargets")) {
+      const k = `${f.w}x${f.h} <${f.tag}>`;
+      if (!bySize.has(k)) bySize.set(k, { texts: [], widths: [] });
+      bySize.get(k).texts.push(f.text);
+      bySize.get(k).widths.push(...w);
     }
-    for (const [k, texts] of bySize) {
+    for (const [k, { texts, widths }] of bySize) {
       console.log(
-        `  nav: ${texts.length} target(s) under 44px at ${k} — e.g. "${texts[0]}"` +
-        (texts.length > 1 ? ` (+${texts.length - 1} more)` : "")
+        `  ${at(widths)} nav: ${texts.length} target(s) under 44px at ${k} — e.g. "${texts[0]}"` +
+        (texts.length > 1 ? ` (+${texts.length - 1} more)` : ""),
       );
     }
-    for (const d of r.navDeadLabels) {
+    for (const { f, at: w } of of("navDeadLabels")) {
       console.log(
-        `  nav: "${d.label}" looks like a control but is not — only the ${d.control} icon beside it is clickable`
+        `  ${at(w)} nav: "${f.label}" looks like a control but is not — only the ${f.control} icon beside it is clickable`,
       );
     }
   }
 
+  const failed = [...merged.values()].filter((e) => e.errors.length && !e.widths.length);
+  for (const e of failed) console.log(`\n── ${e.site} ──\n  ! unreachable: ${e.errors.join("; ")}`);
+
+  const dirty = [...merged.values()].filter((e) => e.found.size + e.overflow.length > 0).length;
   console.log(
     defects === 0
       ? "\n✓ no rendered UI defects found"
-      : `\n${defects} rendered UI defect(s) across ${report.filter((r) => countOf(r) > 0).length} site(s)`
+      : `\n${defects} rendered UI defect(s) across ${dirty} site(s)`,
   );
+  // A site nothing could render is not a clean site, and saying so was this
+  // script's own stated fear: "a clean report from a broken detector is worse
+  // than no report at all". It is not counted as a defect — it is not one —
+  // but it is never folded into the ✓ either.
+  if (failed.length) {
+    console.log(
+      `! ${failed.length} site(s) could not be rendered at any width and were NOT audited: ` +
+      failed.map((e) => e.site).join(", "),
+    );
+  }
   process.exit(defects && !WARN_ONLY ? 1 : 0);
 }
 

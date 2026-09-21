@@ -15,7 +15,7 @@
  *
  * Fixtures are inline data: URLs — no network, no fleet, no auth.
  */
-import { loadPlaywright, MEASURE } from "./ui-defect-audit.mjs";
+import { DISCLOSE, MEASURE, loadPlaywright, parseViewports } from "./ui-defect-audit.mjs";
 
 const FIXTURES = {
   // ── navigation fixtures ───────────────────────────────────────────────────
@@ -201,6 +201,51 @@ const FIXTURES = {
         <p style="margin:0">Kein Konto nötig.</p>
       </div>
     </div>`,
+
+  // substrata's mobile menu as it shipped. The <details> sits in the middle of
+  // the header, so `right: 0` on an absolutely positioned panel measures from
+  // THERE — and a 320px panel lands mostly off the left of a 390px screen.
+  // Every existing rule passes on this markup; the links simply are not on it.
+  navPanelOffLeft: `
+    <div style="background:#000;color:#fff;font:14px sans-serif">
+      <header style="display:flex;align-items:center;gap:16px;padding:10px 16px">
+        <span style="font-weight:700">Substrata</span>
+        <details style="position:relative">
+          <summary style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;list-style:none">Menu</summary>
+          <div style="position:absolute;top:100%;right:0;width:320px;background:#111;border:1px solid #333">
+            <a href="/bottlenecks" style="display:flex;min-height:44px;align-items:center;padding:0 12px;color:#fff">Bottlenecks</a>
+            <a href="/markets" style="display:flex;min-height:44px;align-items:center;padding:0 12px;color:#fff">Markets</a>
+          </div>
+        </details>
+      </header>
+    </div>`,
+
+  // The same menu anchored to the header instead of to the button — the fix.
+  // It must stay silent, or the rule cannot tell a bug from its own remedy.
+  navPanelAnchored: `
+    <div style="background:#000;color:#fff;font:14px sans-serif">
+      <header style="position:relative;display:flex;align-items:center;gap:16px;padding:10px 16px">
+        <span style="font-weight:700">Substrata</span>
+        <details>
+          <summary style="display:inline-flex;min-width:44px;min-height:44px;align-items:center;list-style:none">Menu</summary>
+          <div style="position:absolute;top:100%;left:0;right:0;background:#111;border:1px solid #333">
+            <a href="/bottlenecks" style="display:flex;min-height:44px;align-items:center;padding:0 12px;color:#fff">Bottlenecks</a>
+            <a href="/markets" style="display:flex;min-height:44px;align-items:center;padding:0 12px;color:#fff">Markets</a>
+          </div>
+        </details>
+      </header>
+    </div>`,
+
+  // A closed slide-in drawer, parked entirely off the left. This is CORRECT —
+  // it is how every drawer in this fleet waits — and reporting it would make
+  // the rule fire on reparaturbonus-zh and anything else with one.
+  navClosedDrawer: `
+    <div style="background:#fff;color:#111;font:14px sans-serif;overflow:hidden">
+      <nav aria-label="Drawer" style="position:fixed;top:0;left:0;width:280px;height:100%;transform:translateX(-100%);background:#eee">
+        <a href="/a" style="display:flex;min-height:44px;align-items:center;padding:0 12px">Alpha</a>
+        <a href="/b" style="display:flex;min-height:44px;align-items:center;padding:0 12px">Beta</a>
+      </nav>
+    </div>`,
 };
 
 function assert(cond, msg) {
@@ -237,6 +282,19 @@ async function main() {
     const r = await page.evaluate(MEASURE);
     await page.unroute("https://fixture.test/**");
     return r;
+  };
+
+  // The off-viewport rule only exists at a narrow width with the panel OPEN,
+  // so it needs its own page: a 1440px context cannot reach the defect, and
+  // measuring a closed <details> cannot either.
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const phonePage = await phone.newPage();
+  const measurePhone = async (html) => {
+    await phonePage.setContent(`<!doctype html><meta charset="utf-8">${html}`, { waitUntil: "load" });
+    await phonePage.waitForTimeout(120);
+    await phonePage.evaluate(DISCLOSE);
+    await phonePage.waitForTimeout(80);
+    return phonePage.evaluate(MEASURE);
   };
 
   let passed = 0;
@@ -396,6 +454,58 @@ async function main() {
       r.navSmallTargets.length === 0,
       `44px targets are fine, got ${JSON.stringify(r.navSmallTargets)}`,
     );
+  });
+
+  await check("opens a closed <details> before measuring it", async () => {
+    // Without this the panel rule can never fire on a real site, because a menu
+    // is closed on arrival. Pinned separately so a regression here is not
+    // mistaken for the fleet suddenly being clean.
+    await phonePage.setContent(
+      `<!doctype html><meta charset="utf-8"><header><details><summary>Menu</summary><a href="/a">A</a></details></header>`,
+      { waitUntil: "load" },
+    );
+    const opened = await phonePage.evaluate(DISCLOSE);
+    assert(opened === 1, `DISCLOSE must open the one closed panel, got ${opened}`);
+  });
+
+  await check("catches a menu panel painted off the side of the screen", async () => {
+    const r = await measurePhone(FIXTURES.navPanelOffLeft);
+    assert(
+      r.navOffViewport.length >= 1,
+      `substrata's off-left panel must be reported, got ${JSON.stringify(r.navOffViewport)}`,
+    );
+    assert(
+      r.navOffViewport.every((f) => f.side === "left"),
+      `the overflow is off the LEFT edge, got ${JSON.stringify(r.navOffViewport)}`,
+    );
+  });
+
+  await check("stays silent once the panel is anchored to the header", async () => {
+    const r = await measurePhone(FIXTURES.navPanelAnchored);
+    assert(
+      r.navOffViewport.length === 0,
+      `the fixed panel is on screen, got ${JSON.stringify(r.navOffViewport)}`,
+    );
+  });
+
+  await check("does NOT flag a closed drawer parked off-screen", async () => {
+    // A drawer entirely outside the viewport is how a drawer waits. Only a
+    // control CROSSING the edge — part on, part off — is the defect.
+    const r = await measurePhone(FIXTURES.navClosedDrawer);
+    assert(
+      r.navOffViewport.length === 0,
+      `a closed drawer is correct, got ${JSON.stringify(r.navOffViewport)}`,
+    );
+  });
+
+  await check("parses viewports, and refuses a malformed one", async () => {
+    assert(parseViewports("390x844").length === 1, "one pair parses");
+    const three = parseViewports("390x844,834x1112,1440x1000");
+    assert(three.length === 3 && three[0].label === "390", `got ${JSON.stringify(three)}`);
+    assert(parseViewports("").length === 3, "empty falls back to the default three");
+    let threw = false;
+    try { parseViewports("wide"); } catch { threw = true; }
+    assert(threw, "a viewport with no WIDTHxHEIGHT must throw rather than silently skip");
   });
 
   await browser.close();

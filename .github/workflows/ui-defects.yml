@@ -1,13 +1,18 @@
-# Two defect classes that only exist once a page is painted, so no unit test,
+# Defect classes that only exist once a page is painted, so no unit test,
 # type check or lint rule in any repo can see them:
 #
 #   - an interactive label below its WCAG AA contrast floor (an action nobody
 #     can find is a feature that does not exist)
 #   - a stack whose rows start at different x, or a wrapped line that does not
 #     align with the line above it
+#   - a nav or header control with part of itself off the screen, or a page
+#     that scrolls sideways (contract rules 7 and 8)
 #
-# Both were reported by the operator in plain language — "i dont see it" and
-# "this area looks bad. not aligned" — after every gate in the repo was green.
+# The first two were reported by the operator in plain language — "i dont see
+# it" and "this area looks bad. not aligned" — after every gate in the repo was
+# green. The third needed a width this job did not render: it swept 1440 only
+# until 2026-09-21, and three live sites were crossing the right edge at 834
+# while reporting clean.
 #
 # A rule nothing enforces is a suggestion. This runs on a schedule and reports
 # into the job summary, where a human actually looks.
@@ -28,6 +33,10 @@ on:
         description: 'Comma-separated URLs (default: discovered from the fleet footer)'
         type: string
         default: ''
+      viewports:
+        description: 'Comma-separated WIDTHxHEIGHT (default: 390x844,834x1112,1440x1000)'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -35,7 +44,9 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Three widths is three times the page loads it used to make, and each one
+    # holds a 4s settle. 14 sites x 3 widths ran in ~8 min locally.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
@@ -66,6 +77,7 @@ jobs:
         env:
           PLAYWRIGHT_FROM: ${{ runner.temp }}/pw
           SITES: ${{ inputs.sites }}
+          VIEWPORTS: ${{ inputs.viewports }}
         run: |
           set -uo pipefail
           flag=--warn-only
