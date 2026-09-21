@@ -182,6 +182,18 @@ jobs:
       - name: The version-currency audit still detects, and still stays quiet
         run: node scripts/ci/test-version-currency.mjs
 
+      # The audit above judges MAJORS, which is the wrong instrument for our own
+      # packages — we ship features in minors, so ten repos can be six minors
+      # behind ai-kit while it reports zero gaps. This one sees that, and OPENS
+      # the PR rather than reporting it. Its decisions are pure, so they are
+      # proved here before a scheduled run is trusted to push a branch to
+      # thirteen repositories. Both sides pinned: the same-major drift is
+      # caught, a current repo stays silent, and `workspace:*` or a git pin
+      # comes back untouched — quietly rewriting a range somebody chose is the
+      # worst thing this script could do.
+      - name: The currency reconciler bumps what it should, and nothing else
+        run: node scripts/ci/test-currency-reconciler.mjs
+
       # This one guards a fix that ALREADY reverted once: petvity's
       # NEXTAUTH_URL was fixed in Aug and was wrong again in Sep, advertising
       # https://localhost:4013 in public JSON for weeks. So the detector's own
