@@ -48,6 +48,23 @@ jobs:
           [ "$found" -gt 0 ] || { echo "no CI templates found — did they move?" >&2; exit 1; }
           echo "templates parse: ok ($found template(s))"
 
+      # And THIS repo's own workflows, which nothing checked until 2026-09-21 —
+      # when `internal-currency.yml` merged to main as invalid YAML. The
+      # failure mode is why it matters: a workflow GitHub cannot parse does not
+      # go red, it is registered with its file PATH where its name belongs and
+      # simply never runs, on dispatch or on schedule. A silence that reads
+      # exactly like health.
+      #
+      # Two halves, because they fail independently: the file must parse and
+      # keep `name:`/`on:`, and every `run:` block must be valid shell once
+      # YAML has stripped its indentation. The second is what catches the
+      # flush-left heredoc that ends a block scalar mid-command.
+      - name: This repo's workflows parse, and their shell is shell
+        run: bash scripts/ci/check-workflows.sh
+
+      - name: The workflow checker still bites, and stays quiet when it should
+        run: bash scripts/ci/test-check-workflows.sh
+
       # The template's whole premise is that "verified" is defined ONCE, in
       # package.json `verify`, and CI calls it verbatim. If a template stops
       # doing that, the premise is gone and nobody would notice.
