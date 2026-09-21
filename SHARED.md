@@ -405,8 +405,9 @@ Stated explicitly, because "share everything" is its own failure:
 
 ## The navigation contract
 
-Six rules, each one a defect found in the 2026-08-29 audit, each mechanically
-checkable. This is the nav answer to "centralize the rule, assert it locally".
+Eight rules, each one a defect actually found — six in the 2026-08-29 audit,
+two in the 2026-09-21 multi-width sweep — and each mechanically checkable. This
+is the nav answer to "centralize the rule, assert it locally".
 
 1. The active link of every nav surface carries `aria-current`.
 2. Every toggle controlling a panel carries `aria-expanded`.
@@ -414,11 +415,52 @@ checkable. This is the nav answer to "centralize the rule, assert it locally".
 4. The label lives **inside** the control, never beside it.
 5. Persisted UI state distinguishes `null` from empty.
 6. Every internal href comes from a routes constant.
+7. No nav or header control crosses the edge of the viewport, at any width.
+8. No page scrolls sideways, at any width.
+
+**7 and 8 were added 2026-09-21, and the reason they are new is the reason they
+matter: this audit only ever rendered 1440×1000.** substrata shipped a mobile
+menu whose panel was positioned against a button in the middle of the header,
+so at 390px `right: 0` measured from there put 22rem of panel off the **left**
+edge of the screen — the search field and every link label painted where
+nobody could see them. Rules 1–6 all passed on it. The links had boxes, cleared
+44px, and marked the current page. They were simply not on the screen, and
+nothing in this fleet rendered the screen they were missing from. The same
+header hid its entire nav between 768 and 1099px, so an iPad got a lone "MENU"
+in an empty bar for months.
+
+The first three-width sweep (390 / 834 / 1440) found the same class live on
+**three more sites, every one of them clean at 1440**:
+
+| Site | At 834px |
+| --- | --- |
+| surf-your-life | "Jetzt starten" crosses the right edge by 93px |
+| vitareba | "ANMELDEN" crosses the right edge by 19px |
+| kivvi | "Demo anfragen" crosses by 15px, and the page scrolls sideways 15px |
+
+Rule 3 changes with width too, which is the quieter half of the same finding:
+petvity is clean at 390 and has three sub-44px targets at 834; datacat has
+three at 390 and seven at 834; botsmann is clean at both and has six at 1440.
+One width was never a sample of the layout, only of one branch of it.
+
+**Crossing the edge is the defect, not being past it.** A closed drawer parked
+at `translateX(-100%)` is entirely outside the viewport and is correct — that
+is how every drawer in this fleet waits. Only a control with part of itself on
+screen and part off is reported, which separates the two with no list of
+exceptions to maintain. The floor is 4px: the first sweep found loki's "Get
+started" one pixel past the edge, which is sub-pixel rounding rather than a
+clipped button.
 
 **Enforced in three places, because they cover disjoint surfaces.**
-`scripts/ci/ui-defect-audit.mjs` checks 1, 3 and 4 by **rendering** each live
-site — which is the only thing that spans Next apps, CSS modules, Tailwind and
-wild-spirit's no-framework generator alike. But it renders **public entry pages
+`scripts/ci/ui-defect-audit.mjs` checks 1, 3, 4, 7 and 8 by **rendering** each
+live site at three widths — which is the only thing that spans Next apps, CSS
+modules, Tailwind and wild-spirit's no-framework generator alike. It opens every
+`<details>` in a nav or header before measuring (by setting the property, so no
+event fires and nothing can navigate) and clicks up to six
+`button[aria-expanded="false"]` with a URL guard, because a menu panel is
+closed on arrival and a closed panel cannot be measured. Findings merge across
+widths and print once, annotated with every width they were seen at, so
+rendering three times does not treble a report a human has to read. But it renders **public entry pages
 only**, so it structurally cannot see a sidebar behind a login. `nav-contract.yml`
 / `scripts/ci/nav-contract-audit.sh` closes exactly that gap for rule 1: a
 weekly, central, source-level sweep of every repo's default branch (public and
@@ -433,12 +475,18 @@ where the fleet sweep only reports weekly.
 `ui-defect-audit.mjs` discovers sites from `FLEET_SITES` in loki's
 public footer — a deliberately hand-maintained editorial list, "each site's
 own words," not something to auto-expand. As of 2026-08-31 four public sites
-are outside it: s-ink (sinktattoo.com, genuinely off the `orangecat.ch`
-pattern) and substrata / camille-boulangerie / wild-spirit (all on
-`*.orangecat.ch`, but not yet linked from the footer that drives discovery).
-`nav-contract-audit.sh` still sees all four, because it reads source rather
-than a curated link list. Adding the missing three to `FLEET_SITES` is a
+were outside it. **Two have since been added** (checked against loki's
+`src/config/fleet-sites.ts` on 2026-09-21): s-ink, on sinktattoo.com and
+genuinely off the `orangecat.ch` pattern, and substrata. **camille-boulangerie
+and wild-spirit are still absent**, so nothing renders them.
+`nav-contract-audit.sh` sees all four, because it reads source rather
+than a curated link list. Adding the remaining two to `FLEET_SITES` is a
 one-line-each product decision for a human, not folded into this sweep.
+
+Substrata's addition is the worked example of why the gap costs something: it
+became discoverable, and the very next widened sweep is the one that would have
+caught the header it had been shipping broken. A site outside the list is a
+site whose defects nobody is looking for.
 
 **Deliberately NOT on the ratchet.** The ratchet counts concerns that should
 converge on ONE implementation, and nav is the opposite: every repo is supposed
