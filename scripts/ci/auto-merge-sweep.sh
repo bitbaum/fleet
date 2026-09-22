@@ -221,7 +221,41 @@ else
   base_ci_sha=$(printf '%s' "$base_ci" | jq -r '.headSha')
 
   if [ "$base_ci_sha" != "$base_sha" ]; then
-    echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8} but the newest CI run is for ${base_ci_sha:0:8} — waiting for CI to catch up"
+    # THE DEADLOCK THIS GUARD BUILDS FOR ITSELF.
+    #
+    # "Wait for CI to catch up" assumes CI is coming. For an automated merge it
+    # never is: a push made with GITHUB_TOKEN emits no workflow events, so the
+    # merges this script performs land on the base and produce NO CI run. The
+    # base tip then has no verdict, `pick_base_run` falls through to its last
+    # resort — the newest run of all, belonging to some older commit — and the
+    # sha comparison above fails. Forever.
+    #
+    # The re-arm at the bottom of this script is exactly the cure, and it is
+    # unreachable from here: it is gated on `merged_any`, and nothing can merge
+    # while this guard holds. The block sits upstream of its own remedy.
+    #
+    # Measured on bitbaum/loki 2026-09-22: base CI history stopped on 09-13,
+    # every sweep since exited in ~7s reporting success, and FOUR non-draft
+    # green PRs sat unmerged for up to fifteen days — the oldest from 09-07.
+    # A stall that exits 0 is indistinguishable from "nothing to merge", which
+    # is the fourth time that shape has cost this fleet real time.
+    #
+    # The fix does NOT relax the guard — merging onto an unverified base stays
+    # refused. It supplies the missing evidence: dispatch CI for the tip so the
+    # next sweep has a real verdict to judge. Self-healing, and it fails safe —
+    # if that run comes back red, the red-base path below handles it properly
+    # instead of this branch hiding it.
+    base_in_flight=$(printf '%s' "$base_runs_json" | jq -r '
+      [ (if type == "array" then . else [.] end)[]
+        | select(.status != "completed") ] | length' 2>/dev/null || echo 0)
+    if [ "${base_in_flight:-0}" -gt 0 ]; then
+      echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8} but the newest CI run is for ${base_ci_sha:0:8} — waiting for CI to catch up"
+      exit 0
+    fi
+    echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}, no CI run exists for it and none is in flight — an automated merge emits no workflow events, so nothing will ever produce one" >&2
+    echo "[auto-merge] dispatching ${CI_WORKFLOW} on ${BASE_BRANCH} so the next sweep has a verdict instead of deferring forever" >&2
+    gh workflow run "$CI_WORKFLOW" --repo "$REPO" --ref "$BASE_BRANCH" \
+      || echo "[auto-merge] could not dispatch ${CI_WORKFLOW} on ${BASE_BRANCH} — is workflow_dispatch declared?" >&2
     exit 0
   fi
   if [ "$base_status" != "completed" ]; then

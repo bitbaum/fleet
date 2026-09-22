@@ -338,6 +338,15 @@ jobs:
       - name: The re-arm gate still bites, and stays quiet when it should
         run: bash scripts/ci/test-check-rearm.sh
 
+      # The sweep's own logic had no test at all — only `bash -n` — and it
+      # deadlocked bitbaum/loki for fifteen days while exiting 0 every ten
+      # minutes. Drives the real script against a stubbed gh: it must dispatch
+      # CI when the base tip has no run and none is coming, must NOT dispatch
+      # when CI is genuinely in flight (that caused a cancellation storm), and
+      # must still refuse to merge onto a base it has no verdict for.
+      - name: The sweep cannot deadlock waiting for CI that will never run
+        run: bash scripts/test/auto-merge-sweep-no-base-ci.sh
+
       # Org-drift guard: a new contradiction in public docs fails the check.
       # Uses gh CLI to scan bitbaum org repos. The baseline holds existing
       # violations; new ones cannot land.
