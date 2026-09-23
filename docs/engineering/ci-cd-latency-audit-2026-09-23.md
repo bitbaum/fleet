@@ -85,19 +85,27 @@ reuse where build environments match and shorten the work after CI turns green.
    passed, then CD [35911006344](https://github.com/bitbaum/orangecat/actions/runs/35911006344)
    deployed SHA `f91c44d` from its standalone artifact. The public health check
    returned 200 at 19:42:44 UTC, so both package updates are live in OrangeCat.
-3. Port the no-wait CI-to-deploy contract to Heidi, AOZ, and evig through one
-   Fleet-owned reusable workflow. Keep their current rollback and health checks.
-4. Move the reusable self-host workflow to Fleet and update the stale
-   `fleetcrown` references. Pin the shared workflow revision and automate
-   consumer updates.
-5. Reconcile Bitbaum's deployment signal and decide whether package pages should
-   expose current npm versions/changelog/roadmap links. The current page already
-   lists paykit; the missing release version is a presentation/data-contract
-   gap, not evidence that paykit failed to deploy.
+3. The CI-success handoff is now live in Heidi and AOZ through the shared Loki
+   reusable workflow: [Heidi PR #100](https://github.com/bitbaum/heidi/pull/100),
+   [AOZ PR #249](https://github.com/bitbaum/aoz-begleitung/pull/249). Both
+   workflow_run deploys received the exact CI SHA and passed public health
+   verification. Heidi's first post-merge CI completed in 5m08s; its deploy
+   completed in 1m30s. AOZ's post-merge deploy completed in 1m54s. This removes
+   deploy runners waiting beside CI; it does not remove CI runtime from merge-to-live.
+4. evig now uses the same contract in [PR #505](https://github.com/bitbaum/evig/pull/505):
+   post-CI workflow_run, exact SHA checkout, successful-CI validation, supersede
+   protection, and its existing post-deploy smoke. Its required CI checks passed
+   before merge. The reusable Loki workflow gained `git-ref` support in
+   [Loki PR #867](https://github.com/bitbaum/loki/pull/867), with caller guidance
+   in [Loki PR #868](https://github.com/bitbaum/loki/pull/868).
+5. Remaining architectural work: move the shared self-host workflow from Loki
+   to Fleet, replace stale `fleetcrown` references, pin shared workflow revisions,
+   and automate consumer updates. Package-version visibility and Bitbaum's site
+   deployment signal were addressed separately; keep measuring live freshness.
 6. Measure merge-to-live (successful CI, deploy start, deploy health check) over
-   representative runs before setting latency targets. The data here supports
-   cutting billed wait and reusing build artifacts, but not promising a
-   universal 4–5 minute result.
+   representative runs before setting latency targets. The evidence supports
+   removing billed wait and duplicate builds, but does not support a universal
+   4–5 minute promise.
 
 ## Answers to the proposed design
 
