@@ -36,7 +36,7 @@ the inventory underneath it is **generated**, and the number it produces is a
 | [`bip-kit`](https://github.com/bitbaum/bip-kit) | `pnpm add bip-kit` (on npm since 2026-09-06) | **blog / roadmap / changelog on a product site** — otherwise a markdown pipeline, a renderer and a security review per repo. A zero-dependency parser turning repo-authored markdown into typed blocks, plus `bip-kit/react`, an RSC-first reference renderer emitting semantic `bp-*` classes with every colour a CSS variable — shared vocabulary, your tokens on top. `shiki`/`katex`/`mermaid` are OPTIONAL peers that degrade rather than throw. **Eight adopters, third-most-used package in this registry after `ai-kit` and `mail-kit` — and it was absent from this table until 2026-09-12**, present only in the extraction-candidate list below as a *source* of slug-helper duplication. That is this file's own failure mode rather than a clerical one: the instruction at the top ("check this file; if it is here, install it") is exactly as true as the table under it, and a package nobody can find here is a package the next agent rebuilds. |
 | [`design-tokens`](https://github.com/bitbaum/design-tokens) | `"@bitbaum/design-tokens": "github:bitbaum/design-tokens#v1.1.0"` | the **brand** SSOT for OrangeCat, Loki and Solon: one `tokens.css` holding every colour, face, weight, tracking and radius the three share, a Tailwind preset that maps them, and self-hosted faces. Import it BEFORE the app's own `globals.css` — the app keeps its file, this supplies the primitives it used to hand-copy. It exists because they *were* hand-copied and drifted: Solon's `globals.css` carried a comment claiming its tokens matched OrangeCat's while sharing **zero** names or values with it, so one company's three products looked like three companies. Retheming all three is an edit to the `▼▼▼ THE KNOBS ▼▼▼` block plus a tag. **This is a deliberate exception to "each app owns its design tokens" below, and the line is OWNERSHIP, not taste:** these are one company's own products and are *supposed* to look alike. A client's site is not, and must never install this — a retheme would repaint somebody else's brand. |
 
-**Adopted:** `listkit` — loki (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count).
+**Adopted:** `listkit` — loki (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count); bitbaum (2026-09-24: package catalogue and studio work grid now share query parsing, URL state, facet counts, search and sorting instead of carrying separate hand-written codecs).
 
 **Considered and declined, with the reason — read these before surveying a repo again.** Both cost a full survey to reach, and the survey is the expensive part.
 
@@ -48,9 +48,10 @@ The rule both produced: **a shared package earns a dependency when it removes a 
 And never behind a security boundary: listkit's core sentinel is *empty selection filters nothing*, which is precisely the wrong default for a visibility gate. orangecat's public-surface predicates (`getOpenDemand`, `searchPlatform`, `fetchDiscoverCounts`, pinned by `__tests__/unit/public-surface-filtering.test.ts`) serve the public internet through the admin client with RLS bypassed. An in-memory array filter has no business there.
 `threadkit` — vitareba, orangecat (2026-09-06).
 `ai-forms` — loki, evig, aoz-begleitung, surf-your-life, kivvi.
-`bip-kit` — loki, orangecat, evig, aoz-begleitung, botsmann, kivvi, petvity,
-datacat (frontend only; its backend is the `ai-kit` consumer). **Eight.**
-`design-tokens` — loki, solon. **Two, not the three its own README names.**
+`bip-kit` — loki, orangecat, evig, aoz-begleitung, botsmann, heidi, kivvi,
+petvity, datacat (frontend only; its backend is the `ai-kit` consumer),
+substrata. **Ten.**
+`design-tokens` — bitbaum, loki, solon. **Three.**
 
 **Both counts above were read from each repo's `origin/main`, and the first
 attempt at them — read from the working checkouts in `~/dev` — was wrong in
