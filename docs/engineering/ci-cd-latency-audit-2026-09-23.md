@@ -129,6 +129,13 @@ reuse where build environments match and shorten the work after CI turns green.
    versioned tag from a moving branch. Bitbaum's catalogue displays published
    npm versions and maintainer profiles linking README/API and release history;
    it derives adoption from the registry and does not label paykit as adopted.
+   Its first expanded run surfaced a pre-existing automation defect: the
+   cross-repository job committed on the checked-out default branch, then tried
+   to push a local `fleet/internal-currency` branch that did not exist. The
+   matrix was cancelled before any consumer branch or PR was created. The
+   workflow now pushes `HEAD` to the stable remote branch with an explicit lease
+   and finds open PRs by head branch; the ref update is also covered with a
+   local bare-remote test.
 9. Measure merge-to-live (successful CI, deploy start, deploy health check) over
    representative runs before setting latency targets. The evidence supports
    removing billed wait and duplicate builds, but does not support a universal

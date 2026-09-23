@@ -48,6 +48,10 @@ on:
         type: boolean
         default: true
 
+concurrency:
+  group: internal-package-currency
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -201,9 +205,17 @@ jobs:
           # One stable branch, force-pushed. A weekly bot that opens a new
           # branch per run accumulates a drawer of near-identical PRs, and a
           # drawer like that is what gets a bot muted.
-          git push --force-with-lease origin "$BRANCH"
+          # Checkout leaves this cross-repo worktree on its default branch;
+          # push HEAD to the explicit remote ref. A lease tied to the live
+          # remote SHA protects concurrent writers without requiring a local
+          # branch named fleet/internal-currency.
+          remote_oid="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          git push --force-with-lease="refs/heads/$BRANCH:$remote_oid" \
+            origin "HEAD:refs/heads/$BRANCH"
 
-          if gh pr view "$BRANCH" --repo "bitbaum/$REPO" --json number >/dev/null 2>&1; then
+          open_pr="$(gh pr list --repo "bitbaum/$REPO" --head "$BRANCH" \
+            --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$open_pr" ]; then
             echo "PR already open for $BRANCH — the force-push updated it."
             exit 0
           fi
