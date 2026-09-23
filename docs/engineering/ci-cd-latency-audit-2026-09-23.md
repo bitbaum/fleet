@@ -95,14 +95,25 @@ reuse where build environments match and shorten the work after CI turns green.
 4. evig now uses the same contract in [PR #505](https://github.com/bitbaum/evig/pull/505):
    post-CI workflow_run, exact SHA checkout, successful-CI validation, supersede
    protection, and its existing post-deploy smoke. Its required CI checks passed
-   before merge. The reusable Loki workflow gained `git-ref` support in
-   [Loki PR #867](https://github.com/bitbaum/loki/pull/867), with caller guidance
-   in [Loki PR #868](https://github.com/bitbaum/loki/pull/868).
+   before merge. Main SHA `cd5dec1` then deployed successfully in 4m32s through
+   workflow_run, and the read-only prod smoke passed. The reusable Loki workflow
+   gained `git-ref` support in [Loki PR #867](https://github.com/bitbaum/loki/pull/867),
+   with caller guidance in [Loki PR #868](https://github.com/bitbaum/loki/pull/868).
+   A stale CI completion was correctly skipped as superseded. A second queued
+   workflow_run for the same SHA was canceled after the first deployment passed;
+   overlapping push and workflow_dispatch CI runs can still create duplicate
+   deploy events and should be deduplicated at the shared handoff/re-arm policy.
 5. Remaining architectural work: move the shared self-host workflow from Loki
    to Fleet, replace stale `fleetcrown` references, pin shared workflow revisions,
    and automate consumer updates. Package-version visibility and Bitbaum's site
    deployment signal were addressed separately; keep measuring live freshness.
-6. Measure merge-to-live (successful CI, deploy start, deploy health check) over
+6. Remove duplicate main CI/deploy triggers where Fleet's re-arm races a push
+   run. The supersede guard prevented stale shipping, but several evig workflow_run
+   jobs were created for older/equivalent CI events in this rollout. Also update
+   Heidi's `actions/checkout@v4` smoke step and any remaining Node.js 20 actions;
+   GitHub warned that these are being forced to Node 24. These are maintenance
+   follow-ups, not deployment failures.
+7. Measure merge-to-live (successful CI, deploy start, deploy health check) over
    representative runs before setting latency targets. The evidence supports
    removing billed wait and duplicate builds, but does not support a universal
    4–5 minute promise.
