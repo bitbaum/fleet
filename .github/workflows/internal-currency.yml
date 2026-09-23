@@ -153,10 +153,33 @@ jobs:
             }
           '
 
-          # No --frozen-lockfile: writing the lockfile is the point. Scripts are
-          # left enabled because some of these packages build on `prepare`, and
-          # a lockfile produced with them off is not the one CI will install.
-          pnpm install --no-frozen-lockfile
+          # Regenerate the lockfile at the nearest pnpm project root for every
+          # changed manifest. Monorepos can have an independent nested lockfile
+          # (DataCat's frontend is one); a root-only install leaves it stale and
+          # the target's frozen-lockfile CI then correctly rejects the PR.
+          mapfile -t INSTALL_ROOTS < <(echo "$BUMPS" | node -e '
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const bumps = JSON.parse(fs.readFileSync(0, "utf8"));
+            const roots = new Set();
+            for (const bump of bumps) {
+              let dir = path.dirname(bump.path);
+              for (;;) {
+                if (fs.existsSync(path.join(dir, "pnpm-lock.yaml"))) {
+                  roots.add(dir);
+                  break;
+                }
+                const parent = path.dirname(dir);
+                if (parent === dir) throw new Error(`No pnpm lockfile for ${bump.path}`);
+                dir = parent;
+              }
+            }
+            for (const dir of [...roots].sort()) console.log(dir);
+          ')
+          for root in "${INSTALL_ROOTS[@]}"; do
+            echo "Regenerating pnpm lockfile in $root"
+            (cd "$root" && pnpm install --no-frozen-lockfile)
+          done
 
       - name: Open or update the pull request
         env:
