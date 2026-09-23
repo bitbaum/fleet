@@ -14,7 +14,7 @@ import {
   firstLine,
   canonical, depCandidates, ownedPackages, countAdopters,
   registryEntries, findGaps, ADOPTER_THRESHOLD,
-  installFor, specifiersFor, buildPackagesJson,
+  installFor, specifiersFor, buildPackagesJson, publishedNpmVersions,
 } from "./shared-registry-audit.mjs";
 
 let pass = 0, fail = 0;
@@ -263,6 +263,34 @@ eq(installFor("@bitbaum/lonely", []),
 
 console.log();
 
+
+// -- publishedNpmVersions ---------------------------------------------------
+{
+  const urls = [];
+  const versions = await publishedNpmVersions([
+    { slug: "ai-kit", name: "@bitbaum/ai-kit", install: { source: "npm" } },
+    { slug: "listkit", name: "listkit", install: { source: "git" } },
+  ], async (url) => {
+    urls.push(url);
+    return { ok: true, json: async () => ({ "dist-tags": { latest: "1.11.0" } }) };
+  });
+  eq(urls, ["https://registry.npmjs.org/%40bitbaum%2Fai-kit"],
+     "only npm packages query the registry, with scoped names URL-encoded");
+  eq([...versions], [["ai-kit", "1.11.0"]],
+     "the published latest dist-tag is the consumer-facing version");
+  let rejectedMissingTag = false;
+  try {
+    await publishedNpmVersions([
+      { slug: "kit", name: "kit", install: { source: "npm" } },
+    ], async () => ({ ok: true, json: async () => ({ "dist-tags": {} }) }));
+  } catch (error) {
+    rejectedMissingTag = /no latest dist-tag/.test(error.message);
+  }
+  rejectedMissingTag ? ok("missing npm publication metadata fails closed")
+                     : bad("missing npm publication metadata must fail closed");
+}
+
+console.log();
 
 // ── could-not-look vs not-there ─────────────────────────────────────────────
 // The distinction this file exists to protect: an unreadable manifest must

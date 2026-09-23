@@ -22,9 +22,11 @@
  *
  * WHAT IT DELIBERATELY DOES NOT DO
  *
- * It does not judge the CONTENT of a row — whether the prose is accurate or
- * the install line current. A gate that guesses at prose gets muted. It checks
- * the one mechanical claim: a package with real adopters is findable here.
+ * It does not judge the CONTENT of a row or compatibility between releases.
+ * Install commands are derived from consumer manifests; npm versions are read
+ * from the registry's latest dist-tag when publishing the generated index.
+ * A gate that guesses at prose gets muted. It checks whether adopted packages
+ * are findable and reports versions that can actually be installed.
  *
  *   node scripts/ci/shared-registry-audit.mjs           # report
  *   node scripts/ci/shared-registry-audit.mjs --check   # exit 1 if a row is missing
@@ -205,6 +207,36 @@ export function buildPackagesJson({ listed, owned, adopters, specifiers, manifes
   return { generatedAt, packages };
 }
 
+/** Public consumers need the npm version, which may lag the package repo's manifest. */
+export async function publishedNpmVersions(packages, fetchImpl = fetch) {
+  const npmPackages = packages.filter((pkg) => pkg.install?.source === "npm");
+  const resolved = await Promise.all(npmPackages.map(async (pkg) => {
+    const url = `https://registry.npmjs.org/${encodeURIComponent(pkg.name)}`;
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await fetchImpl(url, { signal: AbortSignal.timeout(10000) });
+        if (response.ok) {
+          const metadata = await response.json();
+          const version = metadata?.["dist-tags"]?.latest;
+          if (typeof version !== "string" || !version.trim()) {
+            throw new Error(`npm registry has no latest dist-tag for ${pkg.name}`);
+          }
+          return [pkg.slug, version];
+        }
+        lastError = new Error(`npm registry returned HTTP ${response.status} for ${pkg.name}`);
+        if (response.status !== 429 && response.status < 500) throw lastError;
+      } catch (error) {
+        lastError = error;
+        if (/no latest dist-tag|HTTP 4\d\d/.test(String(error?.message))) throw error;
+      }
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+    }
+    throw lastError;
+  }));
+  return new Map(resolved);
+}
+
 /** The finding: owned packages with real adopters and no registry row. */
 export function findGaps({ adopters, listed, owned, threshold = ADOPTER_THRESHOLD }) {
   const gaps = [];
@@ -281,7 +313,7 @@ export function firstLine(err) {
   return text.split("\n")[0].slice(0, 120);
 }
 
-function main() {
+async function main() {
   const owner = process.env.GH_OWNER || "bitbaum";
   const limit = Number(process.env.GH_LIMIT || 200);
   const check = process.argv.includes("--check");
@@ -321,6 +353,10 @@ function main() {
       manifestByRepo,
       generatedAt: new Date().toISOString(),
     });
+    const publishedVersions = await publishedNpmVersions(payload.packages);
+    for (const pkg of payload.packages) {
+      if (publishedVersions.has(pkg.slug)) pkg.version = publishedVersions.get(pkg.slug);
+    }
     // A timestamp that moves on every run makes the file differ on every run,
     // so "commit only when something changed" commits every week and says
     // nothing. Measured within an hour of shipping the first version: the
