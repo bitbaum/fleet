@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T13:20:56.306Z",
+  "generatedAt": "2026-09-23T20:30:05.185Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -58,8 +58,8 @@
       "slug": "bip-kit",
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
-      "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
-      "version": "0.3.0",
+      "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) \u2014 blog, roadmap, changelog on your product site, bring your own design tokens.",
+      "version": "0.3.1",
       "install": {
         "source": "npm",
         "command": "pnpm add bip-kit"
@@ -141,7 +141,7 @@
       "slug": "design-tokens",
       "name": "@bitbaum/design-tokens",
       "repo": "https://github.com/bitbaum/design-tokens",
-      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
+      "description": "Design SSOT for OrangeCat, Loki and Solon \u2014 tokens, self-hosted faces, and the Tailwind preset that maps them.",
       "version": "1.1.0",
       "install": {
         "source": "npm",
@@ -186,6 +186,19 @@
         "camille-boulangerie",
         "substrata"
       ]
+    },
+    {
+      "slug": "paykit",
+      "name": "@bitbaum/paykit",
+      "repo": "https://github.com/bitbaum/paykit",
+      "description": "Let a website get paid without holding the money. Classify a pasted Bitcoin receive string, and record a shown code (Twint, another currency) the visitor pays in their own app.",
+      "version": "0.1.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/paykit"
+      },
+      "adopters": 0,
+      "adopterNames": []
     }
   ]
 }
