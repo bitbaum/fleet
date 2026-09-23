@@ -135,7 +135,10 @@ reuse where build environments match and shorten the work after CI turns green.
    matrix was cancelled before any consumer branch or PR was created. The
    workflow now pushes `HEAD` to the stable remote branch with an explicit lease
    and finds open PRs by head branch; the ref update is also covered with a
-   local bare-remote test.
+   local bare-remote test. On the first corrected run, 13 PRs opened and Loki's
+   last job hit a Husky pre-push mtime guard even after `pnpm install` completed.
+   The reconciler now skips that workstation-only hook on the PR branch push;
+   each target repository's CI remains the required merge gate.
 9. Measure merge-to-live (successful CI, deploy start, deploy health check) over
    representative runs before setting latency targets. The evidence supports
    removing billed wait and duplicate builds, but does not support a universal

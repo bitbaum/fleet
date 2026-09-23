@@ -210,7 +210,11 @@ jobs:
           # remote SHA protects concurrent writers without requiring a local
           # branch named fleet/internal-currency.
           remote_oid="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
-          git push --force-with-lease="refs/heads/$BRANCH:$remote_oid" \
+          # pnpm install above produced the package-manager lockfile. Skip
+          # the workstation-only Husky pre-push preview here: target CI runs
+          # the required checks on this PR, and Loki's mtime guard falsely
+          # rejected the just-installed lockfile on the first live run.
+          HUSKY=0 git push --force-with-lease="refs/heads/$BRANCH:$remote_oid" \
             origin "HEAD:refs/heads/$BRANCH"
 
           open_pr="$(gh pr list --repo "bitbaum/$REPO" --head "$BRANCH" \
