@@ -81,8 +81,10 @@ reuse where build environments match and shorten the work after CI turns green.
 2. The published shared-kit releases are now also in OrangeCat through
    [PR #1129](https://github.com/bitbaum/orangecat/pull/1129): ai-kit 1.11.0 and
    bip-kit 0.3.1 replace the stale 1.6.0 and 0.2.7 resolutions. The PR merged
-   at 19:33 UTC; its new main CI/CD run should be checked before calling those
-   package changes live.
+   at 19:33 UTC. Main CI [35910159596](https://github.com/bitbaum/orangecat/actions/runs/35910159596)
+   passed, then CD [35911006344](https://github.com/bitbaum/orangecat/actions/runs/35911006344)
+   deployed SHA `f91c44d` from its standalone artifact. The public health check
+   returned 200 at 19:42:44 UTC, so both package updates are live in OrangeCat.
 3. Port the no-wait CI-to-deploy contract to Heidi, AOZ, and evig through one
    Fleet-owned reusable workflow. Keep their current rollback and health checks.
 4. Move the reusable self-host workflow to Fleet and update the stale
