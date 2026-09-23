@@ -4,7 +4,8 @@ This audit checks the current workflows and recent GitHub Actions runs for
 OrangeCat, Loki, Bitbaum, Heidi, AOZ Begleitung, and evig. Timings below are
 elapsed workflow/job wall time from GitHub's run metadata, not a claim that every
 minute is CPU time. The observations are tied to the run links so they can be
-rechecked as the pipelines change.
+rechecked as the pipelines change. Follow-up results from later on Sep 23 are
+included below where they changed the status.
 
 ## Findings
 
@@ -12,10 +13,25 @@ rechecked as the pipelines change.
 | --- | --- | --- | --- |
 | OrangeCat | Main CI builds, tests, and uploads the standalone artifact; its `post-main` job dispatches CD with that CI run ID and SHA. CD downloads and deploys the exact artifact. | [CI 35900693365](https://github.com/bitbaum/orangecat/actions/runs/35900693365), [successful CD 35900652349](https://github.com/bitbaum/orangecat/actions/runs/35900652349) | The direct CI-to-CD handoff was already merged in PR #1121. A later dispatch for the same main SHA, [CD 35901401437](https://github.com/bitbaum/orangecat/actions/runs/35901401437), failed in the handoff-validation step because GitHub's Actions API returned HTTP 502. It failed before SSH/deploy; the same main SHA had already deployed successfully. This is transient API fragility plus a noisy duplicate/reconciler dispatch, not a failed production deployment. |
 | Loki | CI completes, then the deployment workflow starts from the successful CI event. Recent successful deploy jobs take about 2m50s end to end. | [Deploy 35881210263](https://github.com/bitbaum/loki/actions/runs/35881210263), [Deploy 35880777412](https://github.com/bitbaum/loki/actions/runs/35880777412) | Best current reference for short feedback. The same SHA also had a duplicate manually dispatched deploy cancelled when the event-driven deploy won. Keep one normal handoff and retain reconciliation as recovery. |
-| Heidi | `push: main` starts CI and the reusable deploy workflow together; deploy installs, then polls for green CI before building and shipping. | [CI 35777671753](https://github.com/bitbaum/heidi/actions/runs/35777671753), [Deploy 35777672504](https://github.com/bitbaum/heidi/actions/runs/35777672504) | CI took 5m15s; deploy took 6m31s at the job level and the workflow took 7m12s. The runner is alive during the CI gate. The app shim still references `bitbaum/fleetcrown`, which GitHub currently redirects to `bitbaum/loki`; this works today but is a stale canonical name. |
+| Heidi | `push: main` starts CI and the reusable deploy workflow together; deploy installs, then polls for green CI before building and shipping. | [CI 35777671753](https://github.com/bitbaum/heidi/actions/runs/35777671753), [Deploy 35777672504](https://github.com/bitbaum/heidi/actions/runs/35777672504) | CI took 5m15s; the deploy job took 6m29s and the workflow took 7m12s. The deploy continued about 1m18s after CI turned green. The runner is alive during the CI gate. The app shim still references `bitbaum/fleetcrown`, which GitHub currently redirects to `bitbaum/loki`; this works today but is a stale canonical name. |
 | AOZ Begleitung | `master` push starts CI and deploy concurrently; the deploy calls the reusable self-host workflow and waits for CI. | [CI 35228130848](https://github.com/bitbaum/aoz-begleitung/actions/runs/35228130848), [Deploy 35228131587](https://github.com/bitbaum/aoz-begleitung/actions/runs/35228131587) | The last production deploy took 12m08s on Sep 17; CI took 9m43s. The default branch is `master`, and the deploy shim correctly targets it. No later mainline change appears in the current run history, so this is an old-but-current deployment rather than evidence of a missed newer commit. Its shim also uses the redirected `bitbaum/fleetcrown` name. |
 | evig | Push starts a standalone deploy workflow that installs and builds, then polls GitHub every 20 seconds for up to 90 attempts (30 minutes) before deploying. | [Deploy 35228314282](https://github.com/bitbaum/evig/actions/runs/35228314282), [CI Pipeline 35859650505](https://github.com/bitbaum/evig/actions/runs/35859650505) | The Sep 17 deploy took 16m51s, including a custom polling gate; its Sep 23 CI run took 8m32s. The code at the latest observed main SHA has not changed since the last deploy, so the elapsed deploy is a structural latency risk, not a confirmed stale production build. The custom deploy logic duplicates the Fleet/Loki reusable path. |
 | Bitbaum site | Static HTML is generated from Loki's fleet map and Fleet's package register, with committed snapshots for offline builds. Hetzner/Caddy serves `/opt/bitbaum/app`; this is separate from the GitHub Pages workflow. | [site source and deployment notes](https://github.com/bitbaum/bitbaum/tree/main/site), [Pages run 34321390698](https://github.com/bitbaum/bitbaum/actions/runs/34321390698) | At audit time the live `/packages/` response had `Last-Modified: 2026-09-23 14:20:22 UTC` and included a paykit card. The repository's Pages workflow last ran Sep 9, but that is not the deployment signal for the Hetzner custom domain. The site shows package names/install commands, not the current npm release version; package freshness is therefore not visible to visitors. |
+
+## Wall time versus runner time
+
+The poll gates are expensive in runner minutes, but their full duration is not
+added to merge-to-live time: deploy and CI start together, so most waiting
+overlaps verification. In the measured runs, Heidi's CI passed at 20:07:49 UTC
+and its deploy job completed at 20:09:07 (about 1m18s later); AOZ's CI passed
+9m43s after start and deploy completed 2m25s later. For evig, the CI run for the
+deployed SHA passed at 13:51:28 UTC and production deploy plus smoke completed
+at 13:55:01 (3m33s later), although the deploy workflow itself ran for 16m51s.
+The gate still holds a runner for 5–13 minutes, consumes capacity, and adds
+poll/API failure points. Replacing it with a post-CI trigger primarily saves
+that runner time; it does not by itself guarantee faster live updates and may
+move setup work onto the critical path. To cut wall time, prioritize artifact
+reuse where build environments match and shorten the work after CI turns green.
 
 ## What to change
 
@@ -42,8 +58,8 @@ rechecked as the pipelines change.
    shared self-host workflow pulls runtime environment from the box before
    building other apps; those apps cannot reuse a CI artifact until required
    build-time configuration and secret handling are explicit. First remove
-   idle waits; then standardize artifact contracts where they are actually
-   compatible.
+   idle waits to save runner capacity; standardize artifact contracts where
+   compatible to cut post-CI wall time.
 5. **Make workflow upgrades reviewable.** Avoid floating shared workflows at
    `@main` for production callers. Publish or record a tested Fleet workflow
    revision, pin callers to it, and have Dependabot/open PRs advance consumers.
@@ -56,22 +72,30 @@ rechecked as the pipelines change.
 
 ## Recommended sequence
 
-1. Merge OrangeCat's in-flight [workflow-only PR #1127](https://github.com/bitbaum/orangecat/pull/1127) after CI passes. It caches only
-   the Chromium browser this repo tests, makes recovery reuse a retained
-   standalone artifact (and rebuild only if recovery has no retained artifact),
-   and retries transient Actions API errors observed in production.
-2. Port the no-wait CI-to-deploy contract to Heidi, AOZ, and evig through one
+1. OrangeCat's [PR #1127](https://github.com/bitbaum/orangecat/pull/1127) has
+   merged with all CI checks green. It caches the tested Chromium browser,
+   reuses a retained standalone artifact for recovery (and rebuilds when none
+   remains), and retries the transient Actions API errors observed in
+   production. Its main SHA `4174f53` then passed CI and deployed that artifact;
+   CD completed in 1m34s and the live `/api/health` check returned 200.
+2. The published shared-kit releases are now also in OrangeCat through
+   [PR #1129](https://github.com/bitbaum/orangecat/pull/1129): ai-kit 1.11.0 and
+   bip-kit 0.3.1 replace the stale 1.6.0 and 0.2.7 resolutions. The PR merged
+   at 19:33 UTC; its new main CI/CD run should be checked before calling those
+   package changes live.
+3. Port the no-wait CI-to-deploy contract to Heidi, AOZ, and evig through one
    Fleet-owned reusable workflow. Keep their current rollback and health checks.
-3. Move the reusable self-host workflow to Fleet and update the stale
+4. Move the reusable self-host workflow to Fleet and update the stale
    `fleetcrown` references. Pin the shared workflow revision and automate
    consumer updates.
-4. Reconcile Bitbaum's deployment signal and decide whether package pages should
+5. Reconcile Bitbaum's deployment signal and decide whether package pages should
    expose current npm versions/changelog/roadmap links. The current page already
    lists paykit; the missing release version is a presentation/data-contract
    gap, not evidence that paykit failed to deploy.
-5. Measure merge-to-live (successful CI, deploy start, deploy health check) over
+6. Measure merge-to-live (successful CI, deploy start, deploy health check) over
    representative runs before setting latency targets. The data here supports
-   cutting the CI wait loop, but not promising a universal 4–5 minute result.
+   cutting billed wait and reusing build artifacts, but not promising a
+   universal 4–5 minute result.
 
 ## Answers to the proposed design
 
