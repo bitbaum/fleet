@@ -181,7 +181,7 @@ jobs:
           # heredoc bodies and their terminators arrive at column 0 as bash
           # requires.
           cat >/tmp/commit-msg.txt <<'MSG'
-          chore(deps): raise @bitbaum/* to the published version
+          chore(deps): raise shared package floors to published versions
 
           Opened by bitbaum/fleet .github/workflows/internal-currency.yml.
 
@@ -209,7 +209,7 @@ jobs:
           fi
 
           cat >/tmp/pr-body.md <<'BODY'
-          Raises this repo's floor on the fleet's own packages to what is published.
+          Raises this repo's floor on Bitbaum-owned npm packages to their published versions.
 
           **Why a bot and not a person.** `version-currency.mjs` judges dependencies
           by their MAJOR, which is right for `next` and `react` and wrong for us —
@@ -236,5 +236,5 @@ jobs:
             --repo "bitbaum/$REPO" \
             --base "$(gh repo view "bitbaum/$REPO" --json defaultBranchRef --jq .defaultBranchRef.name)" \
             --head "$BRANCH" \
-            --title "chore(deps): raise @bitbaum/* to the published version" \
+            --title "chore(deps): raise shared package floors to published versions" \
             --body-file /tmp/pr-body.md

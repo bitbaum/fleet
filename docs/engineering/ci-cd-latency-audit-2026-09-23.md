@@ -120,18 +120,15 @@ reuse where build environments match and shorten the work after CI turns green.
    query, with tests that preserve the distinction between a genuinely missing
    manifest (404) and an unreadable/failed request. The audit must continue to
    fail closed rather than publish partial adoption facts.
-8. Internal package currency coverage is incomplete. Fleet's currency
-   reconciler opens updates for scoped `@bitbaum/*` npm dependencies, but
-   several shared packages are unscoped (`bip-kit`, `ai-forms`, `limitkit`,
-   `threadkit`) and others are Git-tagged (`listkit`). Define package release
-   metadata in the shared registry, then teach the reconciler to handle npm
-   aliases/unscoped package names and Git tags with reviewable PRs. Do not
-   rewrite dependency declarations automatically until it can distinguish
-   package identity, current version, and supported release channel.
-   Bitbaum's catalogue now displays published npm versions and maintainer
-   profiles linking README/API and release history; it derives adoption from
-   the registry and does not label paykit as adopted. Keep this as a presentation
-   of canonical package metadata rather than a parallel source of release truth.
+8. Internal package currency coverage: the reconciler now gets allowed package
+   identities from Fleet's curated registry, so it can update both scoped
+   `@bitbaum/*` and unscoped npm dependencies such as `bip-kit`; it resolves
+   `npm:` aliases while preserving the manifest alias key. Third-party npm
+   dependencies stay with the separate major-version audit. Git-tag packages
+   such as listkit remain out until release metadata can distinguish a stable
+   versioned tag from a moving branch. Bitbaum's catalogue displays published
+   npm versions and maintainer profiles linking README/API and release history;
+   it derives adoption from the registry and does not label paykit as adopted.
 9. Measure merge-to-live (successful CI, deploy start, deploy health check) over
    representative runs before setting latency targets. The evidence supports
    removing billed wait and duplicate builds, but does not support a universal

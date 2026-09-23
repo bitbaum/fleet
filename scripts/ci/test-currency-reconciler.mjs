@@ -20,6 +20,8 @@ import {
   behind,
   bumpRange,
   internalDepsOf,
+  internalDependency,
+  npmInternalNames,
   planForManifest,
   byRepo,
   latestOf,
@@ -129,6 +131,23 @@ check("never touches react", !("react" in internal));
 check("never touches typescript", !("typescript" in internal));
 check("the scope is the whole rule", Object.keys(internal).every((n) => n.startsWith(INTERNAL_SCOPE)));
 
+// The curated Fleet register is the authority for additional internal npm
+// names. This lets unscoped packages participate without treating arbitrary
+// third-party packages as ours; Git-tagged packages remain out of this sweep.
+const registeredNames = npmInternalNames({ packages: [
+  { name: "bip-kit", version: "0.3.1", install: { source: "npm" } },
+  { name: "listkit", version: "0.1.0", install: { source: "git" } },
+  { name: "unpublished-kit", install: { source: "npm" } },
+] });
+check("the register admits a published unscoped npm package", registeredNames.has("bip-kit"));
+check("Git-tagged packages stay outside the npm updater", !registeredNames.has("listkit"));
+check("unpublished packages without versions stay outside", !registeredNames.has("unpublished-kit"));
+check("ordinary third-party packages stay outside", !registeredNames.has("react"));
+check("recognises a registered unscoped dependency", internalDependency("bip-kit", "^0.2.7", registeredNames)?.packageName === "bip-kit");
+check("recognises an npm alias to an internal unscoped package", internalDependency("studio-bip", "npm:bip-kit@^0.2.7", registeredNames)?.packageName === "bip-kit");
+check("preserves an alias whose target is a scoped internal package", internalDependency("model-kit", "npm:@bitbaum/ai-kit@^1.9.0", registeredNames)?.packageName === AI_KIT);
+check("does not treat an alias to a third-party npm package as internal", internalDependency("other", "npm:react@^18.0.0", registeredNames) === null);
+
 // ── planning ─────────────────────────────────────────────────────────────────
 const plan = planForManifest("loki", "package.json", mixed, {
   ...LATEST,
@@ -139,6 +158,14 @@ check("a current internal dep produces no row", !plan.some((r) => r.name === "@b
 
 const unpublished = planForManifest("x", "package.json", { dependencies: { "@bitbaum/nope": "^1.0.0" } }, {});
 check("a package npm could not be asked about is SKIPPED, never bumped to nothing", unpublished.length === 0);
+
+const broaderPlan = planForManifest("x", "package.json", {
+  dependencies: { "bip-kit": "^0.2.7", "studio-bip": "npm:bip-kit@^0.2.7", react: "^18.0.0" },
+}, { "bip-kit": "0.3.1" }, registeredNames);
+check("plans the registered unscoped package and the npm alias only", broaderPlan.length === 2);
+check("bumps a direct unscoped package floor", broaderPlan.find((r) => r.name === "bip-kit")?.to === "^0.3.1");
+check("bumps the target range while preserving the npm alias", broaderPlan.find((r) => r.name === "studio-bip")?.to === "npm:bip-kit@^0.3.1");
+check("the plan keeps manifest key and canonical package identity separate", broaderPlan.find((r) => r.name === "studio-bip")?.packageName === "bip-kit");
 
 // A monorepo consumer must be seen. kivvi and datacat install in packages/ai
 // and backend/, and being invisible there is how they stayed on 0.x.
