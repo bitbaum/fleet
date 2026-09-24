@@ -275,7 +275,7 @@ if [ "$USE_LOCAL" = "1" ]; then
         case "$path" in *README.md|*readme.md) ;; *) continue ;; esac
         
         for domain in "${!doors[@]}"; do
-          if echo "$rest" | grep -qF "$domain"; then
+          if grep -qF "$domain" <<<"$rest"; then
             expected_repo="${doors[$domain]}"
             if [ "$repo" != "$expected_repo" ]; then
               key="$repo/$path"
@@ -322,7 +322,7 @@ else
       # Check for door disagreements in READMEs
       if [ ${#doors[@]} -gt 0 ] && [ "$file" = "README.md" ]; then
         for domain in "${!doors[@]}"; do
-          if echo "$content" | grep -qF "$domain"; then
+          if grep -qF "$domain" <<<"$content"; then
             expected_repo="${doors[$domain]}"
             if [ "$repo" != "$expected_repo" ]; then
               key="$repo/$path"

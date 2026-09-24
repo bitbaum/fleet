@@ -74,7 +74,7 @@ export function Nav({ pathname }) {
 }
 '
 out="$(run_audit "$d")"
-if echo "$out" | grep -q "EXIT:1" && echo "$out" | grep -q "broken-repo"; then
+if grep -q "EXIT:1" <<<"$out" && grep -q "broken-repo" <<<"$out"; then
   ok "catches a repo that styles the current page and never announces it"
 else
   no "should have failed and named broken-repo, got: $out"
@@ -93,7 +93,7 @@ export function Footer() {
 }
 '
 out="$(run_audit "$d")"
-if echo "$out" | grep -q "EXIT:0"; then
+if grep -q "EXIT:0" <<<"$out"; then
   ok "stays quiet on a nav with no active-state computation (nothing to announce)"
 else
   no "should have passed, got: $out"
@@ -115,7 +115,7 @@ export function Nav({ pathname }) {
 }
 '
 out="$(run_audit "$d")"
-if echo "$out" | grep -q "EXIT:0"; then
+if grep -q "EXIT:0" <<<"$out"; then
   ok "stays quiet on a repo that already sets aria-current"
 else
   no "should have passed, got: $out"
@@ -138,7 +138,7 @@ export function AnalyseTabs({ activeTab }) {
 }
 '
 out="$(run_audit "$d")"
-if echo "$out" | grep -q "EXIT:0"; then
+if grep -q "EXIT:0" <<<"$out"; then
   ok "does NOT demand aria-current from a tab list using aria-selected"
 else
   no "should have passed (tab list is exempt), got: $out"
@@ -156,7 +156,7 @@ export function Nav({ pathname }) {
 }
 '
 bad="$(NAV_CONTRACT_BASELINE=/nonexistent run_audit "$d")"
-if echo "$bad" | grep -q "EXIT:1"; then
+if grep -q "EXIT:1" <<<"$bad"; then
   ok "fails without a baseline entry (sanity check before testing suppression)"
 else
   no "sanity check itself failed, got: $bad"
@@ -165,7 +165,7 @@ fi
 baseline="$SCRATCH/case5.baseline"
 printf 'exempt-repo   # test fixture\n' > "$baseline"
 good="$(NAV_CONTRACT_BASELINE="$baseline" run_audit "$d")"
-if echo "$good" | grep -q "EXIT:0"; then
+if grep -q "EXIT:0" <<<"$good"; then
   ok "a baseline entry suppresses a named repo"
 else
   no "baseline should have suppressed exempt-repo, got: $good"

@@ -127,10 +127,10 @@ sets_cancel_true() {
 ci_can_strand_a_commit() {
   local body group
   body=$(sed 's/#.*//' "$1")
-  printf '%s' "$body" | grep -qE 'cancel-in-progress:[[:space:]]*true' || return 1
+  grep -qE 'cancel-in-progress:[[:space:]]*true' <<<"$body" || return 1
   group=$(printf '%s' "$body" | grep -A2 '^concurrency:' | grep 'group:' | head -1)
   [ -n "$group" ] || return 1
-  printf '%s' "$group" | grep -q 'github\.sha' && return 1
+  grep -q 'github\.sha' <<<"$group" && return 1
   return 0
 }
 
@@ -289,10 +289,10 @@ else
     d="$TMP/$name"; mkdir -p "$d/workflows"
     # Marker: does this repo depend on next? package.json at the root is enough
     # — a repo with Next nested deeper is not one this check can reason about.
-    if printf '%s\n' "$paths" | grep -qx 'package.json'; then
+    if grep -qx 'package.json' <<<"$paths"; then
       pj=$(gh api "repos/$OWNER/$name/contents/package.json?ref=$branch" \
              --jq '.content' 2>/dev/null | base64 -d 2>/dev/null)
-      printf '%s' "$pj" | grep -q '"next"[[:space:]]*:' && : > "$d/.is-next"
+      grep -q '"next"[[:space:]]*:' <<<"$pj" && : > "$d/.is-next"
     fi
 
     got=0

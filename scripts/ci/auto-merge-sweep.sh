@@ -568,7 +568,7 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     uncovered=""
     while IFS= read -r job; do
       [ -z "$job" ] && continue
-      printf '%s\n' "$pr_green" | grep -Fxq "$job" || uncovered="${uncovered}${job}; "
+      grep -Fxq "$job" <<<"$pr_green" || uncovered="${uncovered}${job}; "
     done <<INNER_EOF
 ${base_red_jobs}
 INNER_EOF
