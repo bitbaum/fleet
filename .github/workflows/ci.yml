@@ -72,6 +72,12 @@ jobs:
       - name: No shell script pipes a writer into grep -q
         run: bash scripts/ci/test-no-grep-q-in-a-pipe.sh
 
+      # A bash script exits with its LAST command's status. The sweep suite's
+      # verdict sat mid-file with ~70 lines of tests after it, so it exited 0
+      # while printing "1 failed" and a stale test hid on main.
+      - name: Every test suite's verdict is its last command
+        run: bash scripts/ci/test-verdict-is-last.sh
+
       # The template's whole premise is that "verified" is defined ONCE, in
       # package.json `verify`, and CI calls it verbatim. If a template stops
       # doing that, the premise is gone and nobody would notice.

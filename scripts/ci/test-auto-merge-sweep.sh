@@ -221,6 +221,7 @@ echo "auto-merge sweep — coverage ported from orangecat"
 # the two commits.
 
 merges() { grep -c '^pr merge' "$GH_LOG" 2>/dev/null; }
+rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
 
 # 12. A base run still in progress is not a verdict either way — defer, and do
 #     NOT re-run it (re-running an in-flight run would cancel it).
@@ -234,11 +235,25 @@ fi
 
 # 13. The newest base CI run belonging to an OLDER commit means the current tip
 #     is unjudged. Merging on that green would batch unverified commits — the
-#     exact thing one-car-per-sweep exists to prevent.
+#     exact thing one-car-per-sweep exists to prevent. Never merge here.
+#
+#     Two cases since the deadlock fix (see "THE DEADLOCK THIS GUARD BUILDS FOR
+#     ITSELF" in the sweep). This test was written before it, asserted "wait"
+#     for BOTH, and went stale unseen because the suite's verdict was
+#     discarded (see the end of this file).
+#
+#   13a. A run IS in flight: CI is coming — wait for it, dispatch nothing.
+if RS_STATUS=in_progress RS_HEADSHA=oldsha000 run_sweep success '' 1; then
+  grep -q 'waiting for CI to catch up' <<<"$SWEEP_OUT" && [ "$(merges)" -eq 0 ] && [ "$(rearms)" -eq 0 ] \
+    && ok 'waits, without dispatching, while a run for an older commit is still in flight' \
+    || no 'waits, without dispatching, while a run for an older commit is still in flight'
+fi
+#   13b. Nothing in flight: nothing will ever judge the tip (an automated
+#        merge emits no workflow events), so dispatch CI — and still not merge.
 if RS_HEADSHA=oldsha000 run_sweep success '' 1; then
-  grep -q 'waiting for CI to catch up' <<<"$SWEEP_OUT" \
-    && ok 'waits when the newest base run belongs to an older commit' \
-    || no 'waits when the newest base run belongs to an older commit'
+  [ "$(merges)" -eq 0 ] && [ "$(rearms)" -ge 1 ] \
+    && ok 'dispatches CI, and does not merge, when the tip has no run and none is in flight' \
+    || no 'dispatches CI, and does not merge, when the tip has no run and none is in flight'
 fi
 
 # A PR fixture generator for the red-base carve-out. The rollup names decide
@@ -293,7 +308,6 @@ fi
 #     put two runs on one ref and the concurrency group cancelled one — under a
 #     burst of merges main's CI cancelled itself repeatedly (loki,
 #     2026-09-10). When a run for the new tip exists, no re-arm.
-rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
 if RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 0 ] \
     && ok 'does not re-arm CI when a run for the new tip already exists' \
@@ -396,8 +410,10 @@ if REQUIRE_DCO=0 RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 121212124444
     || no 'REQUIRE_DCO=0 still requires a maintainer review for an outside PR'
 fi
 
-printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
-[ "$FAIL" -eq 0 ]
+# (The verdict used to sit HERE, with ~70 lines of tests appended after it.
+# A script's exit status is its LAST command's, so `[ "$FAIL" -eq 0 ]` was
+# discarded and this suite exited 0 while printing "27 passed, 1 failed" —
+# which is how test 13 below sat stale on main unseen. It lives at the end now.)
 
 # ── The base run that speaks for the commit ────────────────────────────────
 # A duplicate run on the same ref is cancelled by the concurrency group. When
@@ -471,3 +487,7 @@ self="[$(printf "$live" 1 tip)]"
 sibling_run_in_flight "$self" tip 1 \
   && no 'a run must not be its own in-flight sibling' \
   || ok 'a run is not its own sibling'
+
+# ── Verdict: LAST, so it counts every test above and IS the exit status ──────
+printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
+[ "$FAIL" -eq 0 ]
