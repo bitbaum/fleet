@@ -72,10 +72,10 @@ fx_archived='[
   {"name":"factory-sep11-0040","isArchived":false,"repositoryTopics":[{"name":"fleet-ephemeral"}]}
 ]'
 rows=$(select_rows "$fx_archived")
-printf '%s' "$rows" | grep -q '^velokiosk-sep10	archived$' \
+grep -q '^velokiosk-sep10	archived$' <<<"$rows" \
   && ok "an archived marked repo is kept and labelled 'archived'" \
   || bad "archived repo missing or mislabelled: $(printf '%s' "$rows" | tr '\n' '|')"
-printf '%s' "$rows" | grep -q '^factory-sep11-0040	live$' \
+grep -q '^factory-sep11-0040	live$' <<<"$rows" \
   && ok "a live marked repo is labelled 'live'" \
   || bad "live repo missing or mislabelled"
 

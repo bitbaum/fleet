@@ -225,7 +225,7 @@ merges() { grep -c '^pr merge' "$GH_LOG" 2>/dev/null; }
 # 12. A base run still in progress is not a verdict either way — defer, and do
 #     NOT re-run it (re-running an in-flight run would cancel it).
 if RS_STATUS=in_progress run_sweep '' '' 1; then
-  if printf '%s' "$SWEEP_OUT" | grep -q 'still running' && [ "$(reruns)" -eq 0 ]; then
+  if grep -q 'still running' <<<"$SWEEP_OUT" && [ "$(reruns)" -eq 0 ]; then
     ok 'defers while the base run is still going, without re-running it'
   else
     no 'defers while the base run is still going, without re-running it'
@@ -236,7 +236,7 @@ fi
 #     is unjudged. Merging on that green would batch unverified commits — the
 #     exact thing one-car-per-sweep exists to prevent.
 if RS_HEADSHA=oldsha000 run_sweep success '' 1; then
-  printf '%s' "$SWEEP_OUT" | grep -q 'waiting for CI to catch up' \
+  grep -q 'waiting for CI to catch up' <<<"$SWEEP_OUT" \
     && ok 'waits when the newest base run belongs to an older commit' \
     || no 'waits when the newest base run belongs to an older commit'
 fi
@@ -317,7 +317,7 @@ approval() { printf '[{"state":"APPROVED","commit_id":"%s","author_association":
 #     sweep says which commit, so the contributor knows what to add.
 if RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(unsigned aaaaaaaa11111111)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'without a Signed-off-by.*aaaaaaaa' \
+  [ "$(merges)" -eq 0 ] && grep -q 'without a Signed-off-by.*aaaaaaaa' <<<"$SWEEP_OUT" \
     && ok 'an outside PR without a sign-off is not merged, and the commit is named' \
     || no 'an outside PR without a sign-off is not merged, and the commit is named'
 fi
@@ -325,7 +325,7 @@ fi
 # 20. One signed commit does not cover an unsigned one: EVERY commit certifies.
 if RS_ASSOC=FIRST_TIME_CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed bbbbbbbb22222222),$(unsigned cccccccc33333333)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'cccccccc' && ! printf '%s' "$SWEEP_OUT" | grep -q 'bbbbbbbb' \
+  [ "$(merges)" -eq 0 ] && grep -q 'cccccccc' <<<"$SWEEP_OUT" && ! grep -q 'bbbbbbbb' <<<"$SWEEP_OUT" \
     && ok 'a partly signed outside PR is held, naming only the unsigned commit' \
     || no 'a partly signed outside PR is held, naming only the unsigned commit'
 fi
@@ -365,7 +365,7 @@ echo "auto-merge sweep — outside PRs need a maintainer's review"
 #     sweep serves deploys on merge.
 if RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed abababab11111111)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'no approving review' \
+  [ "$(merges)" -eq 0 ] && grep -q 'no approving review' <<<"$SWEEP_OUT" \
     && ok 'a signed-off outside PR with no review is held, and says why' \
     || no 'a signed-off outside PR with no review is held, and says why'
 fi
