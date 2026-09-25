@@ -221,8 +221,29 @@ base_sha=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha')
 # to name the failing jobs), then any completed run, then the newest. Only if
 # no run belongs to the sha at all does the newest run of ALL come back, which
 # is what keeps the "CI has not caught up" check below able to fire.
-base_runs_json=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 20 \
-  --json databaseId,status,conclusion,headSha)
+#
+# NO `--branch` FILTER, on any run query in this file. GitHub answers a
+# branch-filtered run list from an index that can be weeks stale, and does so
+# intermittently: on bitbaum/loki 2026-09-25 the same call returned a run from
+# 08-31 on one request and today's on the next. Every stale answer read as "no
+# CI run for the tip and none in flight", so each sweep dispatched CI, which
+# cancelled the run in flight, whose completion woke the next sweep (FLEET_PAT)
+# — a loop that ran CI and Deploy every ~3 minutes. The unfiltered list is
+# fresh; filter the branch here instead, over enough runs that PR runs cannot
+# push the base's out of the window.
+all_runs_json=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --limit 50 \
+  --json databaseId,status,conclusion,headSha,headBranch)
+base_runs_json=$(printf '%s' "$all_runs_json" | jq -c --arg b "$BASE_BRANCH" \
+  '[ (if type == "array" then . else [.] end)[] | select((.headBranch // $b) == $b) ]')
+# Runs exist but none on the base: the window is all PR runs. That is NOT "no
+# CI history" — reading it so would merge onto a base nothing has judged.
+if [ "$base_runs_json" = "[]" ] \
+   && [ "$(printf '%s' "$all_runs_json" | jq '(if type == "array" then . else [.] end) | length')" -gt 0 ]; then
+  echo "[auto-merge] no ${CI_WORKFLOW} run on ${BASE_BRANCH} among the latest 50 — dispatching one so the next sweep has a verdict" >&2
+  gh workflow run "$CI_WORKFLOW" --repo "$REPO" --ref "$BASE_BRANCH" \
+    || echo "[auto-merge] could not dispatch ${CI_WORKFLOW} on ${BASE_BRANCH} — is workflow_dispatch declared?" >&2
+  exit 0
+fi
 base_ci=$(printf '%s' "$base_runs_json" | pick_base_run "$base_sha")
 
 # Declared before the branch that can skip it: `set -u` is on and the merge
@@ -376,8 +397,10 @@ if [ -n "$DEPLOY_WORKFLOW" ] && [ -n "${base_ci:-}" ] && [ -z "${base_red_jobs}"
     fi
   else
     deployed_source="last run label"
-    deployed_sha=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" --branch "$BASE_BRANCH" \
-      --status success --limit 1 --json headSha --jq '.[0].headSha // ""' 2>/dev/null || echo "")
+    # No --branch: see base_runs_json above.
+    deployed_sha=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" \
+      --status success --limit 20 --json headSha,headBranch \
+      --jq "[.[] | select(.headBranch == \"${BASE_BRANCH}\")][0].headSha // \"\"" 2>/dev/null || echo "")
   fi
   deployed_short="${deployed_sha:0:8}"
   echo "[auto-merge] deployed commit source: ${deployed_source} → ${deployed_short:-unknown}"
@@ -636,8 +659,9 @@ if [ "$merged_any" -eq 1 ]; then
   # tip exists.
   tip=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha' 2>/dev/null || true)
   for wf in $REARM_WORKFLOWS; do
-    if [ -n "$tip" ] && gh run list --repo "$REPO" --workflow "$wf" --branch "$BASE_BRANCH" --limit 10 \
-         --json headSha --jq '.[].headSha' 2>/dev/null | grep -qx "$tip"; then
+    # No --branch: see base_runs_json above.
+    if [ -n "$tip" ] && gh run list --repo "$REPO" --workflow "$wf" --limit 30 \
+         --json headSha,headBranch --jq ".[] | select(.headBranch == \"${BASE_BRANCH}\") | .headSha" 2>/dev/null | grep -qx "$tip"; then
       echo "[auto-merge] ${wf} already running for ${tip:0:8} (push-triggered) — no re-arm needed"
       continue
     fi
