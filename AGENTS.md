@@ -204,6 +204,11 @@ signed-in user, a model, or a public changelog.
 
 A page that types the portfolio is a copy. Generate it, or do not ship it.
 
+## Chats
+
+Never write a chat, assistant or composer from scratch. Start from the
+reference and meet the checklist, both in `SHARED.md` → "Chat — the standard".
+
 ## Repos you create
 
 The fleet creates repos automatically now — Loki provisions one per
