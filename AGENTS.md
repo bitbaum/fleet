@@ -206,8 +206,8 @@ A page that types the portfolio is a copy. Generate it, or do not ship it.
 
 ## Chats
 
-Never write a chat, assistant or composer from scratch. Start from the
-reference and meet the checklist, both in `SHARED.md` → "Chat — the standard".
+Every chat is `@bitbaum/chatkit`; fix chat bugs there, never in an app. The
+checklist it enforces is `SHARED.md` → "Chat — the standard".
 
 ## Repos you create
 

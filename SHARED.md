@@ -35,6 +35,7 @@ the inventory underneath it is **generated**, and the number it produces is a
 | [`listkit`](https://github.com/bitbaum/listkit) | `pnpm add github:bitbaum/listkit#v0.1.0` | the fleet's **twelve incompatible filter-state shapes** — no two alike — plus ~34 hand-built URL builders (four of them carrying live bugs: a preset that wiped the reader's search, a date range that stranded them past the end, a builder that preserved three params by name, a debounced box using `push` so the back button walked every spelling of the word), ~25 copies of toggle-a-value-in-a-set in two encodings, ~11 debounces at five delays, ~11 copies of `Math.ceil(total / pageSize)`, and the four-of-seven repos that put a reader's text into a SQL `LIKE` without escaping `%` or `_`. Ships the DECISIONS: five facet kinds with the empty selection as the only sentinel (one repo used its *translated label* as the all-value, making filter identity depend on the reader's language), a URL codec that copies rather than rebuilds and drops `page` when the result set changes, a comparator that puts missing values last in **both** directions, page arithmetic that cannot produce a negative offset. **No markup, no tokens, no React, no search engine** — nine token vocabularies and six chip treatments were found among those repos, several different on purpose. |
 | [`bip-kit`](https://github.com/bitbaum/bip-kit) | `pnpm add bip-kit` (on npm since 2026-09-06) | **blog / roadmap / changelog on a product site** — otherwise a markdown pipeline, a renderer and a security review per repo. A zero-dependency parser turning repo-authored markdown into typed blocks, plus `bip-kit/react`, an RSC-first reference renderer emitting semantic `bp-*` classes with every colour a CSS variable — shared vocabulary, your tokens on top. `shiki`/`katex`/`mermaid` are OPTIONAL peers that degrade rather than throw. **Eight adopters, third-most-used package in this registry after `ai-kit` and `mail-kit` — and it was absent from this table until 2026-09-12**, present only in the extraction-candidate list below as a *source* of slug-helper duplication. That is this file's own failure mode rather than a clerical one: the instruction at the top ("check this file; if it is here, install it") is exactly as true as the table under it, and a package nobody can find here is a package the next agent rebuilds. |
 | [`design-tokens`](https://github.com/bitbaum/design-tokens) | `"@bitbaum/design-tokens": "github:bitbaum/design-tokens#v1.1.0"` | the **brand** SSOT for OrangeCat, Loki and Solon: one `tokens.css` holding every colour, face, weight, tracking and radius the three share, a Tailwind preset that maps them, and self-hosted faces. Import it BEFORE the app's own `globals.css` — the app keeps its file, this supplies the primitives it used to hand-copy. It exists because they *were* hand-copied and drifted: Solon's `globals.css` carried a comment claiming its tokens matched OrangeCat's while sharing **zero** names or values with it, so one company's three products looked like three companies. Retheming all three is an edit to the `▼▼▼ THE KNOBS ▼▼▼` block plus a tag. **This is a deliberate exception to "each app owns its design tokens" below, and the line is OWNERSHIP, not taste:** these are one company's own products and are *supposed* to look alike. A client's site is not, and must never install this — a retheme would repaint somebody else's brand. |
+| [`chatkit`](https://github.com/bitbaum/chatkit) | `pnpm add github:bitbaum/chatkit#v0.1.0` (dist committed — no `allowBuilds` entry needed; npm once the first publish is bootstrapped) | **the one chat** — composer, thread, messages, markdown, attachments, and a microphone that is never a dead button (browser recogniser first; missing or SILENT, the same press records and a server transcribes — heidi's measured failure, now a browser test). Replaces **13 chats in 10 repos** (2026-09-25), each written from scratch and each missing what another had fixed: the mic, 16px text, the soft keyboard, Stop, Retry, stick-to-bottom, markdown without leaked `**`. Behaviour is fixed; the look follows the app through `--ck-*` variables (defaults read `@bitbaum/design-tokens`; loki maps its OKLCH tokens once in `globals.css`). Its `verify` drives Chromium at 390px and desktop, light and dark, and speaks a sentence through a fake mic — so the standard below is enforced, not described. **Fix chat bugs HERE, never in the app.** Adopted: loki (2026-09-25, every composer via one adapter). |
 
 **Adopted:** `listkit` — loki (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count); bitbaum (2026-09-24: package catalogue and studio work grid now share query parsing, URL state, facet counts, search and sorting instead of carrying separate hand-written codecs).
 
@@ -385,23 +386,19 @@ microphone) and ask again. The widget chat added to loki on 2026-09-24 (#879)
 did exactly this: written fresh, it shipped without a mic, with small text and a
 composer bolted under the panel, while three repos had already solved all three.
 
-**The rule.** Before writing any chat UI: open the reference below, carry its
-*behaviour* over, and meet every item of the checklist. Markup may still differ
-per app ("UI markup for chat and forms" below stands — tokens are per app), but
-**behaviour may not**: a person who learned one of our chats has learned all of
-them. OrangeCat, Loki, Solon and bitbaum share `@bitbaum/design-tokens`, so
-between those four the markup should match too.
+**The rule.** Every chat, assistant and composer is
+[`@bitbaum/chatkit`](https://github.com/bitbaum/chatkit). App-specific parts go
+in its slots (`tools`, `header`, `footer`, `renderFooter`, `renderLink`); a bug,
+a gap or a missing slot is fixed IN chatkit, with the check that would have
+caught it, and released — never patched in one app, which is how there came to
+be thirteen. Markup follows each app's tokens through `--ck-*`; **behaviour may
+not differ.** A surface that cannot run React (loki's embeddable widget) meets
+the checklist by hand and is the one exception.
 
-**The reference: loki `/loki`** — `src/components/loki/Composer.tsx`,
-`Thread.tsx`, `MessageTurn.tsx`, `StartScreen.tsx`, `src/hooks/use-voice-input.ts`.
-The only one with Stop in the send slot, Retry, Copy, paste/pick attachments,
-stick-to-bottom with a jump button, starters that disappear mid-thread, markdown
-with citations, a 16px auto-growing input and a recording bar with
-cancel/confirm. **Its four known gaps are part of the standard, not exceptions
-to it:** answer text is 14px (must be 16px), no `visualViewport` fallback (port
-orangecat's `ViewportHeightSync`), `voice.error` is never rendered, and voice is
-MediaRecorder-only (port heidi's Web-Speech-first `use-dictation.ts`, server leg
-through ai-kit `transcribe()`).
+chatkit was extracted from loki `/loki` (the most complete chat on 2026-09-25)
+and closed that chat's four gaps while at it: 16px answers, the
+`visualViewport` keyboard fix (`useViewportHeight`), mic failures shown in
+words, and the Web-Speech-first fallback from heidi.
 
 ### The checklist — each line is a bug somebody already fixed once
 
@@ -443,9 +440,9 @@ real sentence spoken into the mic, before the chat is called finished.
 
 | Repo · surface | Missing against the checklist |
 |---|---|
-| loki `/loki` (reference) | the four gaps above |
+| loki `/loki` | composer is chatkit (2026-09-25); the thread is still loki's own (14px answers, no `visualViewport` fix) until it moves to `ChatThread` |
 | loki `AskLokiButton` | voice, streaming, stop, markdown, copy |
-| loki widget Chat (`widget/chat.ts`) | voice (the widget already has `voice.ts` for Report), 16px, composer integration, streaming, stop, markdown, copy |
+| loki widget Chat (`widget/chat.ts`) | cannot use chatkit (vanilla, runs on other people's sites) — must meet the checklist by hand: voice (it already has `voice.ts` for Report), 16px, composer integration, streaming, stop, markdown, copy |
 | orangecat Cat (`ModernChatPanel`, `ChatInput`) | attachments, 16px input (iOS zooms), retry on the last turn — best keyboard handling in the fleet |
 | orangecat companions `TalkRoom` | streaming (by design), retry |
 | heidi chat | stop, markdown — best voice and font size |
