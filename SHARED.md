@@ -375,6 +375,88 @@ Two traps it encodes, both measured rather than argued:
   — so strip comments *correctly*, and give the stripper its own two-way
   self-check: it must drop what it must drop AND keep what it must keep.
 
+## Chat — the standard every chat meets
+
+**Never start a chat, assistant or composer from scratch.** Measured
+2026-09-25: **13 chat implementations in 10 repos**, none packaged, and every
+one of them re-learned — or never learned — the same lessons. The cost lands on
+George, who has to open each product, find what this one forgot (usually the
+microphone) and ask again. The widget chat added to loki on 2026-09-24 (#879)
+did exactly this: written fresh, it shipped without a mic, with small text and a
+composer bolted under the panel, while three repos had already solved all three.
+
+**The rule.** Before writing any chat UI: open the reference below, carry its
+*behaviour* over, and meet every item of the checklist. Markup may still differ
+per app ("UI markup for chat and forms" below stands — tokens are per app), but
+**behaviour may not**: a person who learned one of our chats has learned all of
+them. OrangeCat, Loki, Solon and bitbaum share `@bitbaum/design-tokens`, so
+between those four the markup should match too.
+
+**The reference: loki `/loki`** — `src/components/loki/Composer.tsx`,
+`Thread.tsx`, `MessageTurn.tsx`, `StartScreen.tsx`, `src/hooks/use-voice-input.ts`.
+The only one with Stop in the send slot, Retry, Copy, paste/pick attachments,
+stick-to-bottom with a jump button, starters that disappear mid-thread, markdown
+with citations, a 16px auto-growing input and a recording bar with
+cancel/confirm. **Its four known gaps are part of the standard, not exceptions
+to it:** answer text is 14px (must be 16px), no `visualViewport` fallback (port
+orangecat's `ViewportHeightSync`), `voice.error` is never rendered, and voice is
+MediaRecorder-only (port heidi's Web-Speech-first `use-dictation.ts`, server leg
+through ai-kit `transcribe()`).
+
+### The checklist — each line is a bug somebody already fixed once
+
+1. **A microphone in the composer, always.** Web Speech first; if it is missing
+   **or silent** (Chromium without Google speech accepts `start()` and never
+   fires — heidi `use-dictation.ts`, measured 9 s / 0 events), the same button
+   records and sends audio to a server transcription route (ai-kit
+   `transcribe()`). Recording is visible (timer, cancel, confirm) and a mic
+   failure is shown, never swallowed.
+2. **16px or larger** for message text and the input. Under 16px iOS zooms the
+   whole page on focus (loki `globals.css`, "`text-base` is not a style choice").
+3. **The composer is part of the conversation surface**, not a form field under
+   it: an auto-growing `<textarea>` (never `<input>` — it silently drops the
+   newlines of a pasted prompt, loki `AskLokiButton.tsx`), Enter sends,
+   Shift+Enter breaks the line, IME `isComposing` respected, and it stays above
+   the soft keyboard and the safe area (orangecat `ViewportHeightSync.tsx`:
+   "100dvh does not shrink when the Android soft keyboard opens").
+4. **Streams, and can be stopped.** Server side `completeStream()` + `ai-kit/sse`
+   (a reader without a carry buffer drops frames — kivvi, aoz). Stop lives in
+   the send slot: "a turn you cannot cancel is the thing that makes a slow
+   answer feel broken" (loki `Composer.tsx`).
+5. **Fails visibly, with Retry** — a failure bubble, never a silent nothing
+   (heidi `use-conversation.ts`: the rewrite "had no retry and no failure
+   bubble").
+6. **Scroll sticks to the bottom only when the reader is already there**, with a
+   jump-down button (loki `Thread.tsx`).
+7. **Markdown rendered** (no literal `**`), links clickable, **Copy** on every
+   answer.
+8. **An empty state that starts the conversation** — starter prompts that
+   disappear once it has begun; and when more than one agent can answer, each
+   message says **who** is speaking.
+9. **Works at 320px** with no horizontal scroll (`min-w-0` on the composer row —
+   heidi `composer.tsx`).
+
+**Done means looked at:** a screenshot at 390px and at desktop width, and one
+real sentence spoken into the mic, before the chat is called finished.
+
+### Where each chat stands (2026-09-25, working checkouts)
+
+| Repo · surface | Missing against the checklist |
+|---|---|
+| loki `/loki` (reference) | the four gaps above |
+| loki `AskLokiButton` | voice, streaming, stop, markdown, copy |
+| loki widget Chat (`widget/chat.ts`) | voice (the widget already has `voice.ts` for Report), 16px, composer integration, streaming, stop, markdown, copy |
+| orangecat Cat (`ModernChatPanel`, `ChatInput`) | attachments, 16px input (iOS zooms), retry on the last turn — best keyboard handling in the fleet |
+| orangecat companions `TalkRoom` | streaming (by design), retry |
+| heidi chat | stop, markdown — best voice and font size |
+| substrata `/ask` | auto-grow, mic fallback (Web Speech only, silently dead where unsupported), retry, copy, keyboard |
+| kivvi, evig (×3), aoz, botsmann (×4), surf-your-life, vitareba | nearly everything: no voice; single-line inputs or no Shift+Enter; kivvi and aoz drop SSE frames |
+
+The ratchet (`shared-inventory.sh`, concern `chat-composer`) counts files named
+as a composer — **6 in 5 repos** on 2026-09-25 (heidi, kivvi, loki ×2,
+orangecat, substrata) — so a NEW one fails `--check`. It cannot see chats whose input is
+inline in a page (most of the last row) — this section is the guard for those.
+
 ## What is worth extracting next
 
 Ranked by (copies × how identical the logic is). Counts from
