@@ -37,6 +37,7 @@ no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 #   RS_PRS       JSON array for pr list (default [])
 #   RS_VIEW      JSON for pr view       (default MERGEABLE/CLEAN)
 #   RS_BASESHA   the base branch tip    (default basesha000000)
+#   RS_HEADBRANCH  base run's headBranch (default: field absent)
 #   RS_LIVE      body the LIVE_COMMIT_URL answers; the literal UNREACHABLE makes
 #                curl fail. Unset = LIVE_COMMIT_URL is not set at all.
 #
@@ -48,6 +49,8 @@ run_sweep() {
   local base_sha="${RS_BASESHA:-basesha000000}"
   local head_field="${RS_HEADSHA:-$base_sha}"
   local live_url=""
+  local branch_field=""
+  [ -n "${RS_HEADBRANCH:-}" ] && branch_field=",\"headBranch\":\"$RS_HEADBRANCH\""
   local dir; dir="$(mktemp -d)"
   GH_LOG="$dir/gh-calls.log"
   : > "$GH_LOG"
@@ -74,7 +77,7 @@ cat "$dir/live.json"
 CURL
     chmod +x "$dir/curl"
   fi
-  RS_BASESHA=""; RS_LIVE=""
+  RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
   RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""
 
   cat > "$dir/gh" <<FAKE
@@ -89,7 +92,7 @@ case "\$ARGS" in
   "run list"*"--status success"*)   printf '%s\n' '$deployed_sha' ;;
   # Re-arm guard: the CI runs already on the base tip (push-triggered).
   "run list"*"--json headSha"*)     printf '%s\n' '$rearm_seen' ;;
-  "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"}' ;;
+  "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"$branch_field}' ;;
   *"/actions/runs/"*"/jobs"*)       printf '%s\n' '$failed_steps' ;;
   "run rerun"*)                     echo "rerun dispatched" ;;
   *"/actions/runs/"*)               printf '%s\n' '$attempt' ;;
@@ -331,6 +334,25 @@ if RS_HEADSHA=oldsha000 run_sweep success '' 1; then
   [ "$(merges)" -eq 0 ] && [ "$(rearms)" -ge 1 ] \
     && ok 'dispatches CI, and does not merge, when the tip has no run and none is in flight' \
     || no 'dispatches CI, and does not merge, when the tip has no run and none is in flight'
+fi
+
+#   13c. A run for the tip's sha on ANOTHER branch (a PR's run) is not the
+#        base's verdict. The sweep filters the branch itself because it may
+#        not ask GitHub to (see 13d).
+if RS_HEADBRANCH=some-pr-branch run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && [ "$(rearms)" -ge 1 ] \
+    && ok 'a run for the tip on another branch does not count as the base verdict' \
+    || no 'a run for the tip on another branch does not count as the base verdict'
+fi
+#   13d. No run query may pass --branch. GitHub serves branch-filtered run
+#        lists from an intermittently weeks-stale index; on loki 2026-09-25
+#        that made every sweep dispatch CI, cancelling the run in flight, in
+#        a ~3-minute loop. The unfiltered list is fresh.
+if RS_HEADBRANCH=main RS_PRS="$(printf '[{"number":7,"title":"t","isDraft":false,"mergeable":"MERGEABLE","mergeStateStatus":"CLEAN","labels":[],"createdAt":"2026-01-01T00:00:00Z","statusCheckRollup":[{"status":"COMPLETED","conclusion":"SUCCESS","name":"lint"}]}]')" \
+   run_sweep success '' 1 deploy.yml oldsha00 0; then
+  [ "$(grep -c '^run list.*--branch' "$GH_LOG")" -eq 0 ] && [ "$(merges)" -ge 1 ] \
+    && ok 'no run list call filters by --branch, and a base run on main still merges' \
+    || no 'no run list call filters by --branch, and a base run on main still merges'
 fi
 
 # A PR fixture generator for the red-base carve-out. The rollup names decide
