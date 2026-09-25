@@ -573,7 +573,7 @@ export const MEASURE = String.raw`(() => {
  * anything — so the URL is checked afterwards and a navigation ends the pass
  * rather than auditing whatever page it landed on.
  */
-async function openButtonMenus(page) {
+export async function openButtonMenus(page) {
   const before = page.url();
   let opened = 0;
   const buttons = await page.$$(

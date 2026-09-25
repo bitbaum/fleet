@@ -614,6 +614,39 @@ group: near-spotless fleet-wide, because they got a convention **plus a gate**
 
 ---
 
+## Rendered layout — the render sweep and the widget's host contract
+
+Two classes that no repo's `verify` can see, each owned ONCE, centrally:
+
+**Layout defects on the painted page** — `scripts/ci/render-sweep.mjs`
+(`render-sweep.yml`, weekly + on demand). Renders home + key pages of every
+served site (loki `apps.conf` rows + `extraSites`; pages in
+`render-sweep.pages.json`) at 390 / 834 / 1440 and counts, per site: nav
+contract rules 3/7/8 (reusing `ui-defect-audit.mjs`'s MEASURE, not a second
+copy), other controls crossing the viewport, fixed/sticky controls on top of
+each other (incl. the Loki launcher), empty headings (and caps labels whose
+next heading opens a different section), numbers split across lines in table
+cells/stats, and uncaught page errors. `render-sweep.baseline` is a ratchet:
+a site x check count may fall, never rise. Public GET pages only (DENY refuses
+api/admin/auth/cron/job paths before any request); no AI calls. Self-tested
+(`test-render-sweep.mjs`, every check pinned firing and silent, mutation-proven)
+before each sweep. **Client sites are swept and baselined, never fixed from
+here.** To lower a count: fix the site, then `--emit-baseline` in the PR.
+
+**The feedback launcher sitting on host UI** — fixed in the widget itself
+(loki `widget/`), so all ~20 embedding sites get it without touching them. The
+launcher hit-tests candidate slots and never sits on a control; it hides
+rather than cover one. What heuristics cannot see, a host declares:
+
+| attribute | where | effect |
+|---|---|---|
+| `data-fc-avoid` | any element | never overlap it |
+| `data-fc-place="left"` / `"right"` | `<html>` or a rendered region | keep the launcher on that side |
+| `data-fc-place="hidden"` | `<html>` or a rendered region | no launcher while that region is rendered |
+
+Full contract: loki `widget/README.md`. Do not add per-site offsets
+(`data-fc-bottom`, CSS padding for the launcher) — declare the region instead.
+
 ## The process
 
 **1. Rule of three.** First time, write it. Second time, notice. **Third time is
