@@ -56,6 +56,11 @@ jobs:
       # sweep instead of leaving a commit merged-but-not-live.
       # Delete the line if the repo does not deploy.
       deploy_workflow: deploy.yml # CHANGEME or delete
+      # What the reconciler compares against. A run's headSha is GitHub's
+      # label, and for a workflow_run-triggered deploy it names the branch tip
+      # at trigger time, not what shipped — so point it at the app's own answer
+      # (JSON with a 40-char `commit`). Delete if the app has no such route.
+      live_commit_url: https://CHANGEME.orangecat.ch/api/health # CHANGEME or delete
     secrets:
       # Org secret, every bitbaum repo. A dispatch made with a PAT emits
       # workflow_run, so after each merge the next PR's sweep fires at CI speed

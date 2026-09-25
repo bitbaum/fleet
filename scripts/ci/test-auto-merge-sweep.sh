@@ -36,13 +36,18 @@ no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 #   RS_HEADSHA   base run's headSha     (default the branch tip)
 #   RS_PRS       JSON array for pr list (default [])
 #   RS_VIEW      JSON for pr view       (default MERGEABLE/CLEAN)
+#   RS_BASESHA   the base branch tip    (default basesha000000)
+#   RS_LIVE      body the LIVE_COMMIT_URL answers; the literal UNREACHABLE makes
+#                curl fail. Unset = LIVE_COMMIT_URL is not set at all.
 #
 # Emits the sweep's combined output; records gh calls in $GH_LOG.
 run_sweep() {
   local conclusion="$1" failed_steps="${2:-}" attempt="${3:-1}"
   local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}" rearm_seen="${RS_REARM_SEEN:-}"
   local status_field="${RS_STATUS:-completed}"
-  local head_field="${RS_HEADSHA:-basesha000000}"
+  local base_sha="${RS_BASESHA:-basesha000000}"
+  local head_field="${RS_HEADSHA:-$base_sha}"
+  local live_url=""
   local dir; dir="$(mktemp -d)"
   GH_LOG="$dir/gh-calls.log"
   : > "$GH_LOG"
@@ -57,6 +62,19 @@ run_sweep() {
   local commits="${RS_COMMITS:-}"
   [ -n "$commits" ] || commits='{"commits":[]}'
   printf '%s\n' "$commits" > "$dir/commits.json"
+  if [ -n "${RS_LIVE:-}" ]; then
+    live_url="https://fixture.invalid/api/health"
+    printf '%s\n' "$RS_LIVE" > "$dir/live.json"
+    # A fake curl, like the fake gh: the sweep must never reach the network,
+    # and "unreachable" has to be a state the test can put it in.
+    cat > "$dir/curl" <<CURL
+#!/usr/bin/env bash
+if [ "\$(cat "$dir/live.json")" = UNREACHABLE ]; then echo "curl: (28) timed out" >&2; exit 28; fi
+cat "$dir/live.json"
+CURL
+    chmod +x "$dir/curl"
+  fi
+  RS_BASESHA=""; RS_LIVE=""
   RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""
 
   cat > "$dir/gh" <<FAKE
@@ -64,7 +82,7 @@ run_sweep() {
 ARGS="\$*"
 echo "\$ARGS" >> "$GH_LOG"
 case "\$ARGS" in
-  *"/commits/"*)                    echo "basesha000000" ;;
+  *"/commits/"*)                    echo "$base_sha" ;;
   # Deploy-reconciler queries, matched BEFORE the generic CI one — ordering is
   # the only thing separating them, since all three start with "run list".
   "run list"*"--json status"*)      printf '%s\n' '$deploy_running' ;;
@@ -97,7 +115,7 @@ FAKE
 
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
-        DEPLOY_WORKFLOW="$deploy_wf" \
+        DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" \
         bash "$SWEEP" 2>&1)
   status=$?
   SWEEP_OUT="$out"
@@ -212,6 +230,65 @@ if run_sweep failure 'Run tests' 1 deploy.yml oldsha00 0; then
   [ "$(deploys)" -eq 0 ] \
     && ok 'NEVER ships a red base, even though the sweep continues past one' \
     || no 'NEVER ships a red base, even though the sweep continues past one'
+fi
+
+echo "auto-merge sweep — deploy reconciler, live commit"
+# A run's headSha is GitHub's LABEL, not what shipped: a workflow_run-triggered
+# Deploy is labelled with the default branch's tip at trigger time. On loki
+# 2026-09-25 run 36135832127 shipped f2f6206 but read 4622869, and the
+# reconciler, trusting the label, never dispatched. LIVE_COMMIT_URL asks the
+# app instead.
+TIP=4622869aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+OLD=f2f6206bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+# 11a. The app reports the tip -> already deployed, nothing dispatched.
+if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"$TIP\"}" run_sweep success '' 1 deploy.yml "$OLD" 0; then
+  [ "$(deploys)" -eq 0 ] && grep -q 'already deployed (live)' <<<"$SWEEP_OUT" \
+    && ok 'live commit == tip: already deployed, no dispatch, even when the run label is stale' \
+    || no 'live commit == tip: already deployed, no dispatch, even when the run label is stale'
+fi
+
+# 11b. THE INCIDENT. The run label claims the tip; the app serves the older
+#      commit. The label must lose.
+if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"$OLD\"}" run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -ge 1 ] && grep -q 'deployed commit source: live' <<<"$SWEEP_OUT" \
+    && ok 'ships when the app serves an older commit although the last run is LABELLED with the tip' \
+    || no 'ships when the app serves an older commit although the last run is LABELLED with the tip'
+fi
+
+# 11c. Unknown is not deployed: an unreachable app must not read as "current".
+if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -ge 1 ] && grep -q 'live commit UNKNOWN' <<<"$SWEEP_OUT" \
+    && ok 'an unreachable live URL counts as not deployed, and dispatches' \
+    || no 'an unreachable live URL counts as not deployed, and dispatches'
+fi
+
+# 11d. A short or missing commit is unknown too: a prefix is not proof.
+if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"${TIP:0:7}\"}" run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -ge 1 ] \
+    && ok 'a non-40-hex live commit counts as not deployed' \
+    || no 'a non-40-hex live commit counts as not deployed'
+fi
+
+# 11e. Unknown still waits for a deploy in flight: not a licence to stack.
+if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep success '' 1 deploy.yml "$TIP" 1; then
+  [ "$(deploys)" -eq 0 ] \
+    && ok 'an unreachable live URL still does not dispatch over a deploy in flight' \
+    || no 'an unreachable live URL still does not dispatch over a deploy in flight'
+fi
+
+# 11f. Unknown never ships a red base.
+if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep failure 'Run tests' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -eq 0 ] \
+    && ok 'an unreachable live URL never ships a red base' \
+    || no 'an unreachable live URL never ships a red base'
+fi
+
+# 11g. Unset: the old behaviour exactly; the label decides.
+if RS_BASESHA=$TIP run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -eq 0 ] && grep -q 'source: last run label' <<<"$SWEEP_OUT" \
+    && ok 'unset LIVE_COMMIT_URL: the run label decides, as before' \
+    || no 'unset LIVE_COMMIT_URL: the run label decides, as before'
 fi
 
 echo "auto-merge sweep — coverage ported from orangecat"
