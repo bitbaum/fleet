@@ -1,0 +1,31 @@
+{
+  "_doc": "Public GET pages render-sweep.mjs renders per site: home + 2-3 key pages. Sites come from loki's apps.conf (served rows) plus extraSites (handcrafted services apps.conf omits). A site with no entry here gets '/' only. Paths matching render-sweep.mjs DENY (api/admin/auth/cron/jobs/account/...) are refused whatever this file says. Never list a page that needs a session, calls an AI on load, or mutates anything.",
+  "extraSites": {
+    "loki": { "url": "https://loki.orangecat.ch", "owner": "bitbaum", "kind": "product", "status": "live" },
+    "orangecat": { "url": "https://orangecat.ch", "owner": "bitbaum", "kind": "product", "status": "live" },
+    "bitbaum": { "url": "https://bitbaum.orangecat.ch", "owner": "bitbaum", "kind": "product", "status": "live" }
+  },
+  "pages": {
+    "substrata": ["/", "/atlas?view=world&country=in", "/bottlenecks", "/markets"],
+    "loki": ["/", "/thoughts", "/support"],
+    "orangecat": ["/", "/blog", "/support"],
+    "bitbaum": ["/", "/work/", "/hire/", "/packages/"],
+    "kivvi": ["/", "/how-it-works", "/contact"],
+    "datacat-web": ["/", "/about", "/blog"],
+    "aoz-wohnen": ["/", "/blog", "/willkommen"],
+    "surf-your-life": ["/de", "/de/faq", "/de/blog"],
+    "vitareba": ["/de", "/de/blog"],
+    "revamp-info": ["/", "/strategie", "/team"],
+    "petvity": ["/en", "/pricing", "/adopt"],
+    "botsmann": ["/", "/enterprise", "/professionals"],
+    "printcraft": ["/", "/projects"],
+    "sbb-fundbuero": ["/", "/how-it-works", "/research"],
+    "reparaturbonus-zh": ["/", "/shops", "/how-it-works"],
+    "solon": ["/", "/hire"],
+    "sink": ["/en"],
+    "camille-boulangerie": ["/", "/catering", "/about"],
+    "heidi": ["/de", "/de/situations", "/de/grammar"],
+    "evig": ["/", "/about", "/services"],
+    "skif": ["/", "/roadmap", "/changelog"]
+  }
+}
