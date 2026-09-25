@@ -85,6 +85,24 @@ REARM_WORKFLOWS="${REARM_WORKFLOWS:-$CI_WORKFLOW}"
 # deploys in repos that never asked for one.
 DEPLOY_WORKFLOW="${DEPLOY_WORKFLOW:-}"
 
+# URL that reports the commit ACTUALLY SERVING, as JSON with a `.commit` field
+# (e.g. https://loki.orangecat.ch/api/health). EMPTY = the reconciler reads the
+# last successful Deploy run's headSha instead, which is the old behaviour.
+#
+# Why a run's label is not enough: GitHub labels a workflow_run-triggered run
+# with the default branch's CURRENT tip, not the commit it was triggered for.
+# Observed on loki 2026-09-25: Deploy run 36135832127 was triggered by CI for
+# f2f6206 (#912), checked out and shipped f2f6206 — the box served f2f6206 —
+# but its headSha read 4622869 (#913, merged meanwhile). The reconciler took
+# the label as the truth, believed 4622869 was live, and never dispatched:
+# merged-but-not-live, invisible to the one mechanism meant to catch it.
+#
+# The live answer is the state; a run is only a wrapper around it. A missing,
+# malformed or unreachable answer is UNKNOWN, and unknown is treated as not
+# deployed — dispatch, still behind the in-flight and green-base guards. A
+# spurious deploy of the tip costs a few minutes; a missed one strands a merge.
+LIVE_COMMIT_URL="${LIVE_COMMIT_URL:-}"
+
 # A PR wearing any of these is never merged automatically.
 HOLD_LABELS='["hold","no-automerge","do-not-merge","wip"]'
 
@@ -348,15 +366,28 @@ fi
 if [ -n "$DEPLOY_WORKFLOW" ] && [ -n "${base_ci:-}" ] && [ -z "${base_red_jobs}" ]; then
   deploy_running=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" --limit 5 \
     --json status --jq '[.[] | select(.status != "completed")] | length' 2>/dev/null || echo 0)
-  deployed_sha=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" --branch "$BASE_BRANCH" \
-    --status success --limit 1 --json headSha --jq '.[0].headSha // ""' 2>/dev/null || echo "")
+  if [ -n "$LIVE_COMMIT_URL" ]; then
+    deployed_source="live"
+    deployed_sha=$(curl -fsS --max-time 10 "$LIVE_COMMIT_URL" 2>/dev/null \
+      | jq -r '.commit // ""' 2>/dev/null || true)
+    if ! [[ "$deployed_sha" =~ ^[0-9a-f]{40}$ ]]; then
+      echo "[auto-merge] ${LIVE_COMMIT_URL} gave no full commit sha (got '${deployed_sha:0:40}') — live commit UNKNOWN, treating as not deployed" >&2
+      deployed_sha=""
+    fi
+  else
+    deployed_source="last run label"
+    deployed_sha=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" --branch "$BASE_BRANCH" \
+      --status success --limit 1 --json headSha --jq '.[0].headSha // ""' 2>/dev/null || echo "")
+  fi
+  deployed_short="${deployed_sha:0:8}"
+  echo "[auto-merge] deployed commit source: ${deployed_source} → ${deployed_short:-unknown}"
 
   if [ "${deploy_running:-0}" -gt 0 ]; then
     echo "[auto-merge] a deploy is already in flight — not dispatching another"
   elif [ "$deployed_sha" = "$base_sha" ]; then
-    echo "[auto-merge] ${BASE_BRANCH} ${base_sha:0:8} is already deployed"
+    echo "[auto-merge] ${BASE_BRANCH} ${base_sha:0:8} is already deployed (${deployed_source})"
   else
-    echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}; last successful deploy was ${deployed_sha:0:8}${deployed_sha:+ } — shipping"
+    echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}; deployed (${deployed_source}) is ${deployed_short:-unknown} — shipping"
     gh workflow run "$DEPLOY_WORKFLOW" --repo "$REPO" --ref "$BASE_BRANCH" \
       || echo "[auto-merge] could not dispatch ${DEPLOY_WORKFLOW} — is workflow_dispatch declared?" >&2
   fi

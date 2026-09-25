@@ -530,6 +530,7 @@ is a question, not a customisation.
 | `ci_workflow` | the workflow file whose green run gates a merge | PRs wait forever |
 | `rearm_workflows` | dispatched after a merge, because a `GITHUB_TOKEN` push triggers nothing | a comma instead of a space: one bogus token, nothing ships, sweep still green |
 | `deploy_workflow` | compared against the base tip each sweep and re-dispatched when behind | omitted on a repo that deploys: merged-but-not-live until someone notices |
+| `live_commit_url` | the app's own JSON `commit` (e.g. `/api/health`) — what the reconciler treats as live instead of the last deploy run's label | omitted: a workflow_run-triggered deploy's headSha names the tip at trigger time, so a commit can read as deployed while the box serves an older one |
 | `token` | `FLEET_PAT` (org secret); a PAT-made dispatch emits `workflow_run`, so the queue drains at CI speed | unset falls back to `github.token` — merges, but only at the throttled schedule |
 
 Verified 2026-09-15 from every repo's **default branch via the API**: 33 repos
