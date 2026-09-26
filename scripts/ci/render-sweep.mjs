@@ -565,6 +565,9 @@ function readAppsConf() {
 
 /** Render one page at one width. Returns {findings, consoleErrors} or {why}. */
 export async function renderPage(ctx, url) {
+  // newPage is OUTSIDE the try below on purpose: if it throws, the context or
+  // the browser is gone, and the caller must rebuild it rather than record
+  // the page as merely unmeasured.
   const page = await ctx.newPage();
   const pageErrors = [];
   let consoleErrors = 0;
@@ -585,7 +588,27 @@ export async function renderPage(ctx, url) {
   } catch (e) {
     return { why: e.message.split("\n")[0] };
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
+  }
+}
+
+/**
+ * renderPage, surviving a dead browser. One crashed renderer (seen 2026-09-26
+ * under load: "Target page, context or browser has been closed") used to throw
+ * out of main() and lose the whole sweep - every site already measured, no
+ * report. Now the browser and context are rebuilt and the page is tried once
+ * more; a second failure is recorded as unmeasured, never as clean.
+ */
+export async function renderWithRecovery(env, url) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await renderPage(env.ctx, url);
+    } catch (e) {
+      const why = e.message.split("\n")[0];
+      if (attempt === 1) return { why: `browser lost twice: ${why}` };
+      console.log(`  ~ rebuilding the browser after: ${why}`);
+      await env.rebuild();
+    }
   }
 }
 
@@ -601,22 +624,28 @@ async function main() {
   const { chromium } = loadPlaywright();
   console.log(`render sweep — ${sites.length} site(s) x ${viewports.map((v) => v.label).join("/")}px\n`);
 
-  const browser = await chromium.launch();
+  let browser = await chromium.launch();
   const records = [];
   const unmeasured = [];
   const consoleErrors = {};
   const measuredSites = new Set();
   for (const vp of viewports) {
-    const ctx = await browser.newContext({
+    const newCtx = () => browser.newContext({
       viewport: { width: vp.width, height: vp.height },
       isMobile: vp.width < 600,
       hasTouch: vp.width < 600,
       userAgent: undefined,
     });
+    const env = { ctx: await newCtx() };
+    env.rebuild = async () => {
+      await env.ctx.close().catch(() => {});
+      if (!browser.isConnected()) browser = await chromium.launch();
+      env.ctx = await newCtx();
+    };
     for (const s of sites) {
       for (const path of s.paths) {
         const url = new URL(path, s.url).toString();
-        const r = await renderPage(ctx, url);
+        const r = await renderWithRecovery(env, url);
         if (r.why) {
           unmeasured.push({ site: s.name, path, width: vp.label, why: r.why });
           console.log(`  ! ${s.name} ${path} @${vp.label}: ${r.why}`);
@@ -628,7 +657,7 @@ async function main() {
         console.log(`  ${s.name} ${path} @${vp.label}: ${r.findings.length} finding(s)`);
       }
     }
-    await ctx.close();
+    await env.ctx.close().catch(() => {});
   }
   await browser.close();
 

@@ -23,6 +23,7 @@ import {
   parseAppsConf,
   readBaseline,
   regressions,
+  renderWithRecovery,
   resolveSites,
   tally,
 } from "./render-sweep.mjs";
@@ -39,6 +40,21 @@ const ok = (cond, label) => {
 };
 
 // ── pure ─────────────────────────────────────────────────────────────────────
+{
+  // A dead context (newPage throws) is rebuilt and the page retried once; a
+  // second loss is UNMEASURED, never a crash of the whole sweep and never clean.
+  const deadCtx = { newPage: async () => { throw new Error("Target page, context or browser has been closed"); } };
+  const goodCtx = { newPage: async () => ({
+    on() {}, goto: async () => ({ status: () => 404 }), url: () => "https://x.test/", close: async () => {},
+  }) };
+  let rebuilt = 0;
+  const env = { ctx: deadCtx, rebuild: async () => { rebuilt++; env.ctx = goodCtx; } };
+  const r1 = await renderWithRecovery(env, "https://x.test/");
+  ok(rebuilt === 1 && r1.why === "HTTP 404", `a lost browser is rebuilt and the page retried, got ${JSON.stringify(r1)} after ${rebuilt} rebuild(s)`);
+  const env2 = { ctx: deadCtx, rebuild: async () => { env2.ctx = deadCtx; } };
+  const r2 = await renderWithRecovery(env2, "https://x.test/");
+  ok(/browser lost twice/.test(r2.why ?? ""), `a second loss is reported unmeasured, got ${JSON.stringify(r2)}`);
+}
 {
   const conf = [
     "# comment",
