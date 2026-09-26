@@ -57,7 +57,10 @@ run_sweep() {
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  printf '{"author_association":"%s","head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  printf '{"author_association":"%s","user":{"login":"author1"},"head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  # The author's permission on the repo, as the real gh --jq '.permission'
+  # would print it. Default "read": an outside PR stays outside.
+  printf '%s\n' "${RS_PERM:-read}" > "$dir/perm.txt"
   local reviews="${RS_REVIEWS:-}"
   [ -n "$reviews" ] || reviews='[]'
   printf '%s\n' "$reviews" > "$dir/reviews.json"
@@ -78,7 +81,7 @@ CURL
     chmod +x "$dir/curl"
   fi
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -105,6 +108,7 @@ case "\$ARGS" in
   # The DCO gate: who opened the PR, and what its commits say.
   # The review list, matched BEFORE the pull itself: both paths start the same.
   "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
+  "api repos/"*"/collaborators/"*"/permission"*) cat "$dir/perm.txt" ;;
   "api repos/"*"/pulls/"*)          cat "$dir/assoc.txt" ;;
   "pr view"*"--json commits"*)      cat "$dir/commits.json" ;;
   "pr view"*)                       cat "$dir/view.json" ;;
@@ -508,6 +512,25 @@ if REQUIRE_DCO=0 RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 121212124444
     && ok 'REQUIRE_DCO=0 still requires a maintainer review for an outside PR' \
     || no 'REQUIRE_DCO=0 still requires a maintainer review for an outside PR'
 fi
+
+# 28. A private repo's sweep runs on the default token, which cannot see
+#     PRIVATE org membership, so the owner's own agent reads as CONTRIBUTOR
+#     (bitbaum/farmhouse#2, 2026-09-26). Write access to the repo is the
+#     real question, and it answers yes: merge, no review of oneself.
+if RS_PERM=admin RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(unsigned 9a9a9a9a55555555)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 1 ] && grep -q 'has admin access' <<<"$SWEEP_OUT" \
+    && ok 'an author with write access is not an outside PR, whatever the association says' \
+    || no 'an author with write access is not an outside PR, whatever the association says'
+fi
+for p in read none ''; do
+  if RS_PERM="$p" RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed 8b8b8b8b66666666)]}" \
+     RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+    [ "$(merges)" -eq 0 ] \
+      && ok "permission '${p:-unreadable}' leaves an outside PR outside" \
+      || no "permission '${p:-unreadable}' let an outside PR merge unreviewed"
+  fi
+done
 
 # (The verdict used to sit HERE, with ~70 lines of tests appended after it.
 # A script's exit status is its LAST command's, so `[ "$FAIL" -eq 0 ]` was
