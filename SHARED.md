@@ -557,7 +557,13 @@ is how every drawer in this fleet waits. Only a control with part of itself on
 screen and part off is reported, which separates the two with no list of
 exceptions to maintain. The floor is 4px: the first sweep found loki's "Get
 started" one pixel past the edge, which is sub-pixel rounding rather than a
-clipped button.
+clipped button. A link inside a nav that **scrolls** sideways (`overflow-x:
+auto|scroll`) is not reported while that scroller is itself on screen: its clip
+stops the link painting past the edge and a swipe reaches it, the same
+exemption the render sweep gives a carousel. camille's sitekit masthead was
+reported "95px off" for exactly that on 2026-09-26; what was real there — a
+third section showing as a lone "Ü" — was fixed in sitekit (#25), not by the
+exemption. An `overflow: hidden` clip stays reported: nothing scrolls it back.
 
 **Enforced in three places, because they cover disjoint surfaces.**
 `scripts/ci/ui-defect-audit.mjs` checks 1, 3, 4, 7 and 8 by **rendering** each

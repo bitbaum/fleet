@@ -534,6 +534,22 @@ export const MEASURE = String.raw`(() => {
       else if (or.right > innerWidth + 4 && or.left < innerWidth - 4) {
         off = Math.round(or.right - innerWidth); side = "right";
       }
+      // A control inside a nav that SCROLLS sideways (overflow-x auto/scroll)
+      // is reachable by scrolling it, and that scroller's clip stops it
+      // painting past the edge — provided the scroller itself is on screen.
+      // The same exemption offscreen-control in render-sweep.mjs makes for a
+      // carousel. Found on camille-boulangerie 2026-09-26: a masthead nav
+      // clipped at 378px on a 390px screen was reported 95px "off the edge".
+      // An overflow:hidden clip is NOT exempt: nothing can scroll it back.
+      if (off > 4) {
+        for (var sa = oc.parentElement; sa && sa !== document.body && sa !== document.documentElement; sa = sa.parentElement) {
+          var sox = getComputedStyle(sa).overflowX;
+          if (sox !== "auto" && sox !== "scroll") continue;
+          var sr = sa.getBoundingClientRect();
+          if (sr.left >= -4 && sr.right <= innerWidth + 4) { off = 0; }
+          break;
+        }
+      }
       if (off > 4) {
         navOffViewport.push({
           side: side, off: off,
