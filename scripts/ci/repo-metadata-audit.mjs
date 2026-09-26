@@ -73,7 +73,14 @@ export function parseRegister(conf) {
     if (f.length !== 12) continue;
     const repo = f[3].replace(/\/+$/, "").split("/").pop();
     const domain = (f[2] || "").split(",")[0];
-    if (domain && domain !== "-") out.set(repo, { name: f[0], domain, status: f[8] });
+    if (!domain || domain === "-") continue;
+    // One repo can serve several rows (aoz-begleitung: aoz-wohnen in
+    // production AND aoz-demo since loki#922). The FIRST row is the one the
+    // detail names; the homepage may be any row's host. Letting the last row
+    // overwrite made the audit demand the demo host for the product repo.
+    const prev = out.get(repo);
+    if (prev) prev.domains.push(domain);
+    else out.set(repo, { name: f[0], domain, domains: [domain], status: f[8] });
   }
   return out;
 }
@@ -91,7 +98,7 @@ export function judge({ repos, register, allow }) {
       if (!homepage) {
         findings.push({ repo: r.name, kind: "homepage",
           detail: `no homepage; the register says it serves https://${reg.domain}` });
-      } else if (!homepage.includes(reg.domain)) {
+      } else if (!(reg.domains ?? [reg.domain]).some((d) => homepage.includes(d))) {
         findings.push({ repo: r.name, kind: "homepage",
           detail: `homepage ${homepage} is not the registered host https://${reg.domain}` });
       }

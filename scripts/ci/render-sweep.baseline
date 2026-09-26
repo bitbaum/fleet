@@ -3,9 +3,7 @@
 # that RAISES a line is a human deciding to accept a defect, and says why.
 aoz-wohnen rule3-small-target 3
 aoz-wohnen page-errors 1
-bitbaum rule3-small-target 44
 botsmann rule3-small-target 18
-camille-boulangerie rule7-nav-offscreen 3
 datacat-web rule3-small-target 21
 evig rule3-small-target 87
 evig fixed-overlap 3
