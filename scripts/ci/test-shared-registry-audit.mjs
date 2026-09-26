@@ -15,6 +15,7 @@ import {
   canonical, depCandidates, ownedPackages, countAdopters,
   registryEntries, findGaps, ADOPTER_THRESHOLD,
   installFor, specifiersFor, buildPackagesJson, publishedNpmVersions,
+  unreleasable, repoSlug,
 } from "./shared-registry-audit.mjs";
 
 let pass = 0, fail = 0;
@@ -26,6 +27,26 @@ const eq = (got, want, m) => {
 };
 
 console.log("test-shared-registry-audit");
+
+// ── unreleasable: an npm package with no tag-driven release ──────────────────
+{
+  const pkgs = [
+    { slug: "sitekit", install: { source: "npm" } },
+    { slug: "paykit", install: { source: "npm" } },
+    { slug: "listkit", install: { source: "git" } },
+    { slug: "limitkit", install: { source: "npm" } },
+  ];
+  const state = new Map([
+    ["sitekit", "present"], ["paykit", "absent"], ["listkit", "absent"], ["limitkit", "unreadable"],
+  ]);
+  eq(unreleasable(pkgs, state), ["paykit"],
+     "an npm package whose repo has no publish.yml is found; git-installed and could-not-look are not");
+  eq(unreleasable(pkgs, new Map([["paykit", "present"], ["sitekit", "present"]])), [],
+     "every npm package with a workflow: no finding");
+}
+eq(repoSlug("https://github.com/bitbaum/sitekit"), "bitbaum/sitekit", "a repo URL reduces to owner/name");
+eq(repoSlug("git+https://github.com/bitbaum/ai-kit.git"), "bitbaum/ai-kit", "a git+ URL with .git reduces too");
+eq(repoSlug(null), null, "no URL is null, not a crash");
 
 // ── canonical ────────────────────────────────────────────────────────────────
 eq(canonical("@bitbaum/ai-kit"), "ai-kit", "a scoped name canonicalises to its unscoped half");
