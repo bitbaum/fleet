@@ -82,4 +82,20 @@ const sparse = [{ name: "aoz-begleitung", archived: false }];
 is(judge({ repos: sparse, register: reg, allow }).length, 2,
    "absent homepage and description are findings, not undefined-shaped silence");
 
+// --- one repo, two rows: production first, then a demo -----------------------
+{
+  const two = parseRegister([
+    "aoz-wohnen|4008|aoz.orangecat.ch|/home/g/dev/aoz-begleitung|.|aoz_wohnen|AOZ|client-app|live|favour|0|2026-08-13",
+    "aoz-demo|4028|aoz-demo.orangecat.ch|/home/g/dev/aoz-begleitung|.|aoz_demo|bitbaum|demo|live|-|-|2026-09-25",
+  ].join("\n"));
+  is(two.get("aoz-begleitung")?.domain, "aoz.orangecat.ch", "a second row does not overwrite the first");
+  const repo = (homepage) => [{ name: "aoz-begleitung", archived: false, homepage, description: "d" }];
+  is(judge({ repos: repo("https://aoz.orangecat.ch"), register: two, allow }).length, 0,
+     "the production host is a registered host");
+  is(judge({ repos: repo("https://aoz-demo.orangecat.ch"), register: two, allow }).length, 0,
+     "so is the demo row's");
+  is(judge({ repos: repo("https://elsewhere.example"), register: two, allow }).length, 1,
+     "a host no row serves is still a finding");
+}
+
 console.log(`  ${pass} passed`);
