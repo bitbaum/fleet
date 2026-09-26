@@ -455,6 +455,74 @@ as a composer — **6 in 5 repos** on 2026-09-25 (heidi, kivvi, loki ×2,
 orangecat, substrata) — so a NEW one fails `--check`. It cannot see chats whose input is
 inline in a page (most of the last row) — this section is the guard for those.
 
+## Your own model — the standard every app meets
+
+**Anyone must be able to power an app with the strongest model they can
+reach, and entering a key must be the easy part.** Measured 2026-09-25: five
+apps took a reader's key and each did it differently — a hand-kept vendor list
+(no Anthropic, no Gemini), a free-text model box, a "Save" that stored a key
+nobody had checked, keys in PLAINTEXT columns sent back to the browser, and a
+check that could never pass (it read the wrong level of the response). The
+strongest model a reader had was usually the one they could not select.
+
+**The shared pieces — all `@bitbaum/ai-kit` ≥ 1.18.0; never a second copy:**
+
+- `ai-kit/byok` — `BYOK_VENDORS`, the CLOSED list (openrouter, openai,
+  anthropic, google, groq, mistral, deepseek, xai, together, cerebras). Never a
+  caller-supplied base URL: that is SSRF and key exfiltration in one field.
+  `byokChain(config)` → `{chain, env, extraHeaders}`; the key lives in a
+  per-call env (`BYOK_API_KEY`), never `process.env`. Its links are marked
+  `byok`, so day-capacity, cooldowns and health skip them (1.18.0) — one
+  reader's personal 429 must not cool a model for the whole site.
+- `ai-kit/byok-probe` (server only) — `probeByokKey(vendor, key)` →
+  `{ok, status, message, models, suggested}`. Failure in the vendor's own words
+  with the key redacted; `status: null` = "could not check", never "wrong key";
+  `suggested` = the strongest chat model that key can use, ranked without
+  naming any model. It knows the traps: OpenRouter's `/models` is public and
+  200s a DEAD key (checks `/key`), Anthropic wants `x-api-key` +
+  `anthropic-version`. **Never hand-roll a key check.**
+- `ai-kit/seal` — `sealSecret`/`openSecret` (AES-256-GCM) for keys at rest.
+
+**The flow.** Pick a provider (chips from `BYOK_VENDORS`) → "Get a key from X"
+→ paste → it is checked on its own (~600 ms after typing stops) → the models
+that key can use, the strongest **preselected** → one button. Free-text model
+entry only when the vendor returned no list.
+
+**The rules — each one a bug somebody shipped:**
+
+1. **The save route checks again**, server side, and refuses a model not in the
+   probed list. Never trust the client's "it worked".
+2. **Sealed at rest or kept in the browser** (the app's choice) — never a
+   plaintext column. **No API ever returns a key**, only a hint (`…abcd`).
+3. **An empty field keeps the saved key**; removing is explicit. A form that
+   no longer holds the key and still writes `key || null` wipes it on save.
+4. **Own-model calls are the reader's**: their key serves only their model, a
+   server key never flows to a reader-chosen model, and the app's free budget
+   and telemetry are not charged for them. Every "free budget used up" refusal
+   links to the settings deep link (loki: `/settings#ai`).
+5. **Subscriptions are never collected.** Claude Pro/Max, ChatGPT Plus and the
+   like sign in through the vendor's own flow (its CLI's login in a terminal the
+   user controls). No app stores, proxies or asks for a subscription credential
+   or session token. API keys with a spending cap are the path for anything
+   automated or multi-user.
+
+**Reference implementation:** loki #921 — `src/components/settings/OwnModelSettings.tsx`,
+`src/app/api/settings/model/{route,probe/route}.ts`, `src/lib/own-model.ts`,
+test `scripts/test/own-model.ts`.
+
+### Where each app stands (2026-09-26)
+
+| App | State |
+|---|---|
+| loki | the reference — live (#921) |
+| heidi | live (#138; ai-kit 1.18 in #140) — browser-only key by choice |
+| botsmann | #208 — keys were plaintext AND returned by `GET /api/settings`; now sealed, checked, hinted |
+| kivvi | #125 (draft, client app) — company key checked + encrypted with its integration-secrets helper |
+| substrata | in progress in its own session — saved without a check; free-text model |
+| orangecat | direct (non-OpenRouter) keys unlock no models in the picker, and "auto" on a direct key uses hardcoded defaults instead of the key's strongest model |
+| evig | provider key is admin-only (not reader BYOK) |
+| aoz-begleitung, datacat, hirnli, sbb-fundbuero, surf-your-life, truthseeker, vitareba | no reader keys yet — adopt this section when one is added |
+
 ## What is worth extracting next
 
 Ranked by (copies × how identical the logic is). Counts from
