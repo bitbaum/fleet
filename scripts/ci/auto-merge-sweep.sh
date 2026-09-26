@@ -537,6 +537,29 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     OWNER|MEMBER|COLLABORATOR) outside=0 ;;
     *) outside=1 ;;
   esac
+  # author_association is computed for the TOKEN asking, and GitHub hides
+  # PRIVATE org membership from a token that cannot read the org. A private
+  # repo on the Free plan gets no org secrets, so this sweep runs there on the
+  # default token — and the owner's own agent (MEMBER, private) reads as
+  # CONTRIBUTOR. Every agent PR on every private repo was then held for a
+  # "maintainer review" of the maintainer's own work (bitbaum/farmhouse#2,
+  # 2026-09-26). So ask the question the association stands in for: can this
+  # author already write to the repo? Push access means they could merge by
+  # hand; requiring a review from them of themselves protects nothing.
+  # Bots and strangers get 404 or "read"; an unreadable answer stays outside.
+  if [ "$outside" = "1" ]; then
+    author=$(printf '%s' "$pull_json" | jq -r '.user.login // ""' 2>/dev/null || echo "")
+    perm=""
+    if [ -n "$author" ]; then
+      perm=$(gh api "repos/${REPO}/collaborators/${author}/permission" --jq '.permission' 2>/dev/null || echo "")
+    fi
+    case "$perm" in
+      admin|maintain|write)
+        outside=0
+        echo "[auto-merge] #${number} author ${author} has ${perm} access to ${REPO}; not an outside PR (the API said ${association})"
+        ;;
+    esac
+  fi
 
   if [ "$outside" = "1" ] && [ "${REQUIRE_DCO:-1}" = "1" ]; then
     commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
