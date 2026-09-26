@@ -30,6 +30,18 @@ ignore red. Anything that needs infra (e2e against a real DB, prod smoke,
 migration replay) is an *upgrade* you add per-repo once the secrets exist. See
 the ladder below.
 
+## Releasing a package (copy `publish.yml`)
+
+A package that consumers install from npm must be releasable by a TAG, never by
+someone's laptop login — five were, and when that login went on 2026-09-26 none
+of them could ship a fix. Copy `publish.yml` to `.github/workflows/publish.yml`,
+replace `<repo>`, then do the one step only a human can (a passkey tap on
+npmjs.com → package → Settings → Trusted Publisher: GitHub Actions, org
+`bitbaum`, the repo, workflow `publish.yml`) and `gh variable set
+NPM_PUBLISHING -b on`. Release = bump `version`, merge, `git tag vX.Y.Z
+origin/main && git push origin vX.Y.Z`. `shared-registry-audit.mjs --check`
+fails while any npm-installed package in the registry lacks the workflow.
+
 ## How to adopt (copy, don't reinvent)
 
 - **pnpm repo** (every fleet repo since the 2026-09-04 pnpm sweep) → copy

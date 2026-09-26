@@ -248,6 +248,33 @@ export function findGaps({ adopters, listed, owned, threshold = ADOPTER_THRESHOL
   return gaps.sort((a, b) => b.adopters.length - a.adopters.length || a.pkg.localeCompare(b.pkg));
 }
 
+/**
+ * The workflow a package repo must carry to release without a person's laptop.
+ * Five packages were published by hand with a laptop npm login; when that
+ * login went (2026-09-26), sitekit's merged nav fix could not reach its
+ * consumer and nobody could release limitkit, design-tokens or paykit either.
+ */
+export const RELEASE_WORKFLOW = ".github/workflows/publish.yml";
+
+/**
+ * The finding: packages consumers install FROM NPM whose repo has no release
+ * workflow. `releaseState` maps slug -> "present" | "absent" | "unreadable";
+ * only "absent" is a finding — "could not look" is reported, never counted as
+ * either answer. Git-installed packages release by tagging, so they are exempt.
+ */
+export function unreleasable(packages, releaseState) {
+  return packages
+    .filter((pkg) => pkg.install?.source === "npm" && releaseState.get(pkg.slug) === "absent")
+    .map((pkg) => pkg.slug)
+    .sort();
+}
+
+/** "https://github.com/bitbaum/sitekit" -> "bitbaum/sitekit"; null for anything else. */
+export function repoSlug(url) {
+  const m = String(url ?? "").match(/github\.com[/:]([^/]+\/[^/.#]+)/);
+  return m ? m[1] : null;
+}
+
 // ── data collection (network) ────────────────────────────────────────────────
 
 function gh(args) {
@@ -305,6 +332,22 @@ function fetchManifests(owner, limit) {
     }
   }
   return { repos, manifests, unreadable };
+}
+
+function fetchReleaseState(packages) {
+  const state = new Map();
+  for (const pkg of packages) {
+    if (pkg.install?.source !== "npm") continue;
+    const slug = repoSlug(pkg.repo);
+    if (!slug) { state.set(pkg.slug, "unreadable"); continue; }
+    try {
+      gh(["api", `repos/${slug}/contents/${RELEASE_WORKFLOW}`, "--jq", ".name"]);
+      state.set(pkg.slug, "present");
+    } catch (err) {
+      state.set(pkg.slug, isMissing(err) ? "absent" : "unreadable");
+    }
+  }
+  return state;
 }
 
 /** The one line of an error worth showing next to a repo name. */
@@ -405,9 +448,33 @@ async function main() {
     console.log("  publishing question, not a registry defect, so it is not a finding.");
   }
 
+  // Every package consumers install from npm must be releasable by a tag, not
+  // by whoever still has an npm login on their laptop.
+  const manifestByRepoForRelease = new Map();
+  for (const m of manifests) if (m.path === "package.json") manifestByRepoForRelease.set(m.repo, m.pkg);
+  const { packages: registered } = buildPackagesJson({
+    listed, owned, adopters,
+    specifiers: specifiersFor(manifests, owned),
+    manifestByRepo: manifestByRepoForRelease,
+    generatedAt: null,
+  });
+  const releaseState = fetchReleaseState(registered);
+  const stuck = unreleasable(registered, releaseState);
+  const unknown = [...releaseState].filter(([, v]) => v === "unreadable").map(([k]) => k);
+  console.log();
+  if (unknown.length) console.log(`  ⚠ could not read ${RELEASE_WORKFLOW} for: ${unknown.join(", ")}`);
+  if (stuck.length) {
+    console.log(`✗ ${stuck.length} npm-installed package(s) have no ${RELEASE_WORKFLOW} — only a laptop login can release them:`);
+    for (const s of stuck) console.log(`    ${s}`);
+    console.log("  Copy fleet/templates/ci/publish.yml into the repo and add the npm Trusted Publisher.");
+  } else {
+    console.log(`✓ every npm-installed package releases from a tag (${RELEASE_WORKFLOW}).`);
+  }
+
   if (gaps.length === 0) {
     console.log();
     console.log(`✓ every fleet package with ${ADOPTER_THRESHOLD}+ adopters has a registry row.`);
+    if (check && stuck.length) process.exit(1);
     return;
   }
 
