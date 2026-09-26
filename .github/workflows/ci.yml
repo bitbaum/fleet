@@ -234,6 +234,15 @@ jobs:
       - name: The next-auth origin guard still detects, and still stays quiet
         run: node scripts/ci/test-nextauth-origin-audit.mjs
 
+      # STACK.md: our own products sign in via OrangeCat only. The rule lived in
+      # prose until 2026-09-24, when the live providers lists showed Loki offering
+      # seven ways in and four more products offering passwords. Pinned both
+      # sides: a new provider fails even beside a baselined one, a baselined
+      # provider that is gone fails until its row is deleted, a client's app is
+      # never judged. No network.
+      - name: The own-product sign-in gate still detects, and still stays quiet
+        run: node scripts/ci/test-own-product-signin-audit.mjs
+
       # Merged is not live. Most commits here never fire their own Deploy — they
       # ride the auto-merge reconciler — so the audit's common case is "covered
       # by a LATER successful deploy", and demanding an exact-SHA run would
