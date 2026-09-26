@@ -32,6 +32,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Package manager | pnpm 11 (fleet-wide since 2026-09-04; `packageManager` pinned per repo, corepack) | openclaw follows upstream; kivvi (already-pnpm before the sweep) still pins `pnpm@9` — bump pending |
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
+| Maps & globes | **`d3-geo` + `topojson-client`, drawn on Canvas 2D** (an orthographic globe, or any flat projection); country outlines from Natural Earth via `world-atlas`, built into the repo. Why: substrata already shipped its map on d3-geo, and a globe is one projection away — no second map stack. Canvas 2D rather than WebGL (three.js/globe.gl ~600 KB, MapLibre ~800 KB, cobe draws dots, not countries): 240 filled countries per frame fit a phone's frame budget, and it runs wherever the page runs, so there is no flat fallback to maintain. Tiles/street maps would be MapLibre — no repo needs them yet. | — |
 
 ## Identity (2026-09-11)
 
