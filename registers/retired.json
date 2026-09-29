@@ -108,6 +108,46 @@
       "since": "2026-08-27",
       "why": "The GitHub account was renamed and the old login now 404s, but redirects kept every REST call and clone URL working, so references to it survive in code that still runs. Recording it here lets one audit find them instead of each detector carrying its own copy of the handle.",
       "verified": "The REST endpoint for users/maonakamoto returns 404; users/catomean returns the live account created 2018-07-13, and the laptop CLI is authenticated as it."
+    },
+    {
+      "kind": "name",
+      "from": "Townsism",
+      "to": "nothing — the thesis is dropped; describe what Solon, OrangeCat or Loki does instead",
+      "since": "2026-09-29",
+      "why": "A manifesto framing that no product carries any more. Solon's /why page was removed in #90 and its docs/TOWNSISM.md in solon#205; a copy that survives reads as a live position.",
+      "verified": "loki.orangecat.ch/api/fleet/map lists no such project; git grep on every default branch finds it only in changelog history."
+    },
+    {
+      "kind": "name",
+      "from": "Deyville",
+      "to": "Solon",
+      "since": "2026-09-29",
+      "why": "The parked town-OS rebrand of Solon. Decided: Solon stays Solon (solon docs/design/2026-09-solon-constitution-engine.md, open question 7).",
+      "verified": "No repo, host or project profile carries the name."
+    },
+    {
+      "kind": "name",
+      "from": "Mightville",
+      "to": "nothing — the movement brand is dropped",
+      "since": "2026-09-29",
+      "why": "Movement brand layered on the dropped thesis; never built.",
+      "verified": "No repo, host or project profile carries the name."
+    },
+    {
+      "kind": "name",
+      "from": "Dayville",
+      "to": "nothing — the fictional world is dropped",
+      "since": "2026-09-29",
+      "why": "Worldbuilding for the dropped thesis; never built.",
+      "verified": "No repo, host or project profile carries the name."
+    },
+    {
+      "kind": "name",
+      "from": "Nightville",
+      "to": "nothing — the fictional world is dropped",
+      "since": "2026-09-29",
+      "why": "Worldbuilding for the dropped thesis; never built.",
+      "verified": "No repo, host or project profile carries the name."
     }
   ]
 }
