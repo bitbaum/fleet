@@ -46,6 +46,21 @@ on:
           leaving a commit merged-but-not-live.
         type: string
         default: ''
+      live_commit_url:
+        description: >
+          URL answering JSON with a full 40-char `commit` — the commit the box
+          is SERVING, e.g. https://<app>.orangecat.ch/api/health. Empty (the
+          default) keeps the reconciler reading the last successful deploy
+          run's headSha.
+
+          Set it wherever the app exposes one. GitHub labels a
+          workflow_run-triggered run with the default branch's CURRENT tip, not
+          the commit it shipped, so the run label can claim a commit that never
+          went live (loki, 2026-09-25: run 36135832127 shipped f2f6206 but read
+          4622869, and the reconciler never dispatched). An unreachable or
+          malformed answer is treated as not deployed.
+        type: string
+        default: ''
       max_run_attempts:
         description: 'How many times to re-run a run that produced no verdict.'
         type: string
@@ -97,5 +112,6 @@ jobs:
           CI_WORKFLOW: ${{ inputs.ci_workflow }}
           REARM_WORKFLOWS: ${{ inputs.rearm_workflows }}
           DEPLOY_WORKFLOW: ${{ inputs.deploy_workflow }}
+          LIVE_COMMIT_URL: ${{ inputs.live_commit_url }}
           MAX_RUN_ATTEMPTS: ${{ inputs.max_run_attempts }}
         run: bash scripts/ci/auto-merge-sweep.sh

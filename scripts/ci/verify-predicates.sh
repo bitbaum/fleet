@@ -69,7 +69,7 @@ gh_get() {
 # `run` and reported a conforming repo as broken, which is how a checker earns
 # being ignored. `\b` stops it matching a longer name like `verify-deploy`.
 ci_invokes_verify() {
-  printf '%s\n' "$1" | grep -qE '(npm|pnpm|yarn|bun)([[:space:]]+run)?[[:space:]]+verify([[:space:]]|$)'
+  grep -qE '(npm|pnpm|yarn|bun)([[:space:]]+run)?[[:space:]]+verify([[:space:]]|$)' <<<"$1"
 }
 
 # Is that invocation softened with --if-present?

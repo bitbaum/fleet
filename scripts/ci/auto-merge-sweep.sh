@@ -85,6 +85,24 @@ REARM_WORKFLOWS="${REARM_WORKFLOWS:-$CI_WORKFLOW}"
 # deploys in repos that never asked for one.
 DEPLOY_WORKFLOW="${DEPLOY_WORKFLOW:-}"
 
+# URL that reports the commit ACTUALLY SERVING, as JSON with a `.commit` field
+# (e.g. https://loki.orangecat.ch/api/health). EMPTY = the reconciler reads the
+# last successful Deploy run's headSha instead, which is the old behaviour.
+#
+# Why a run's label is not enough: GitHub labels a workflow_run-triggered run
+# with the default branch's CURRENT tip, not the commit it was triggered for.
+# Observed on loki 2026-09-25: Deploy run 36135832127 was triggered by CI for
+# f2f6206 (#912), checked out and shipped f2f6206 — the box served f2f6206 —
+# but its headSha read 4622869 (#913, merged meanwhile). The reconciler took
+# the label as the truth, believed 4622869 was live, and never dispatched:
+# merged-but-not-live, invisible to the one mechanism meant to catch it.
+#
+# The live answer is the state; a run is only a wrapper around it. A missing,
+# malformed or unreachable answer is UNKNOWN, and unknown is treated as not
+# deployed — dispatch, still behind the in-flight and green-base guards. A
+# spurious deploy of the tip costs a few minutes; a missed one strands a merge.
+LIVE_COMMIT_URL="${LIVE_COMMIT_URL:-}"
+
 # A PR wearing any of these is never merged automatically.
 HOLD_LABELS='["hold","no-automerge","do-not-merge","wip"]'
 
@@ -203,8 +221,29 @@ base_sha=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha')
 # to name the failing jobs), then any completed run, then the newest. Only if
 # no run belongs to the sha at all does the newest run of ALL come back, which
 # is what keeps the "CI has not caught up" check below able to fire.
-base_runs_json=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --branch "$BASE_BRANCH" --limit 20 \
-  --json databaseId,status,conclusion,headSha)
+#
+# NO `--branch` FILTER, on any run query in this file. GitHub answers a
+# branch-filtered run list from an index that can be weeks stale, and does so
+# intermittently: on bitbaum/loki 2026-09-25 the same call returned a run from
+# 08-31 on one request and today's on the next. Every stale answer read as "no
+# CI run for the tip and none in flight", so each sweep dispatched CI, which
+# cancelled the run in flight, whose completion woke the next sweep (FLEET_PAT)
+# — a loop that ran CI and Deploy every ~3 minutes. The unfiltered list is
+# fresh; filter the branch here instead, over enough runs that PR runs cannot
+# push the base's out of the window.
+all_runs_json=$(gh run list --repo "$REPO" --workflow "$CI_WORKFLOW" --limit 50 \
+  --json databaseId,status,conclusion,headSha,headBranch)
+base_runs_json=$(printf '%s' "$all_runs_json" | jq -c --arg b "$BASE_BRANCH" \
+  '[ (if type == "array" then . else [.] end)[] | select((.headBranch // $b) == $b) ]')
+# Runs exist but none on the base: the window is all PR runs. That is NOT "no
+# CI history" — reading it so would merge onto a base nothing has judged.
+if [ "$base_runs_json" = "[]" ] \
+   && [ "$(printf '%s' "$all_runs_json" | jq '(if type == "array" then . else [.] end) | length')" -gt 0 ]; then
+  echo "[auto-merge] no ${CI_WORKFLOW} run on ${BASE_BRANCH} among the latest 50 — dispatching one so the next sweep has a verdict" >&2
+  gh workflow run "$CI_WORKFLOW" --repo "$REPO" --ref "$BASE_BRANCH" \
+    || echo "[auto-merge] could not dispatch ${CI_WORKFLOW} on ${BASE_BRANCH} — is workflow_dispatch declared?" >&2
+  exit 0
+fi
 base_ci=$(printf '%s' "$base_runs_json" | pick_base_run "$base_sha")
 
 # Declared before the branch that can skip it: `set -u` is on and the merge
@@ -348,15 +387,30 @@ fi
 if [ -n "$DEPLOY_WORKFLOW" ] && [ -n "${base_ci:-}" ] && [ -z "${base_red_jobs}" ]; then
   deploy_running=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" --limit 5 \
     --json status --jq '[.[] | select(.status != "completed")] | length' 2>/dev/null || echo 0)
-  deployed_sha=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" --branch "$BASE_BRANCH" \
-    --status success --limit 1 --json headSha --jq '.[0].headSha // ""' 2>/dev/null || echo "")
+  if [ -n "$LIVE_COMMIT_URL" ]; then
+    deployed_source="live"
+    deployed_sha=$(curl -fsS --max-time 10 "$LIVE_COMMIT_URL" 2>/dev/null \
+      | jq -r '.commit // ""' 2>/dev/null || true)
+    if ! [[ "$deployed_sha" =~ ^[0-9a-f]{40}$ ]]; then
+      echo "[auto-merge] ${LIVE_COMMIT_URL} gave no full commit sha (got '${deployed_sha:0:40}') — live commit UNKNOWN, treating as not deployed" >&2
+      deployed_sha=""
+    fi
+  else
+    deployed_source="last run label"
+    # No --branch: see base_runs_json above.
+    deployed_sha=$(gh run list --repo "$REPO" --workflow "$DEPLOY_WORKFLOW" \
+      --status success --limit 20 --json headSha,headBranch \
+      --jq "[.[] | select(.headBranch == \"${BASE_BRANCH}\")][0].headSha // \"\"" 2>/dev/null || echo "")
+  fi
+  deployed_short="${deployed_sha:0:8}"
+  echo "[auto-merge] deployed commit source: ${deployed_source} → ${deployed_short:-unknown}"
 
   if [ "${deploy_running:-0}" -gt 0 ]; then
     echo "[auto-merge] a deploy is already in flight — not dispatching another"
   elif [ "$deployed_sha" = "$base_sha" ]; then
-    echo "[auto-merge] ${BASE_BRANCH} ${base_sha:0:8} is already deployed"
+    echo "[auto-merge] ${BASE_BRANCH} ${base_sha:0:8} is already deployed (${deployed_source})"
   else
-    echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}; last successful deploy was ${deployed_sha:0:8}${deployed_sha:+ } — shipping"
+    echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}; deployed (${deployed_source}) is ${deployed_short:-unknown} — shipping"
     gh workflow run "$DEPLOY_WORKFLOW" --repo "$REPO" --ref "$BASE_BRANCH" \
       || echo "[auto-merge] could not dispatch ${DEPLOY_WORKFLOW} — is workflow_dispatch declared?" >&2
   fi
@@ -483,6 +537,29 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     OWNER|MEMBER|COLLABORATOR) outside=0 ;;
     *) outside=1 ;;
   esac
+  # author_association is computed for the TOKEN asking, and GitHub hides
+  # PRIVATE org membership from a token that cannot read the org. A private
+  # repo on the Free plan gets no org secrets, so this sweep runs there on the
+  # default token — and the owner's own agent (MEMBER, private) reads as
+  # CONTRIBUTOR. Every agent PR on every private repo was then held for a
+  # "maintainer review" of the maintainer's own work (bitbaum/farmhouse#2,
+  # 2026-09-26). So ask the question the association stands in for: can this
+  # author already write to the repo? Push access means they could merge by
+  # hand; requiring a review from them of themselves protects nothing.
+  # Bots and strangers get 404 or "read"; an unreadable answer stays outside.
+  if [ "$outside" = "1" ]; then
+    author=$(printf '%s' "$pull_json" | jq -r '.user.login // ""' 2>/dev/null || echo "")
+    perm=""
+    if [ -n "$author" ]; then
+      perm=$(gh api "repos/${REPO}/collaborators/${author}/permission" --jq '.permission' 2>/dev/null || echo "")
+    fi
+    case "$perm" in
+      admin|maintain|write)
+        outside=0
+        echo "[auto-merge] #${number} author ${author} has ${perm} access to ${REPO}; not an outside PR (the API said ${association})"
+        ;;
+    esac
+  fi
 
   if [ "$outside" = "1" ] && [ "${REQUIRE_DCO:-1}" = "1" ]; then
     commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
@@ -568,7 +645,7 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     uncovered=""
     while IFS= read -r job; do
       [ -z "$job" ] && continue
-      printf '%s\n' "$pr_green" | grep -Fxq "$job" || uncovered="${uncovered}${job}; "
+      grep -Fxq "$job" <<<"$pr_green" || uncovered="${uncovered}${job}; "
     done <<INNER_EOF
 ${base_red_jobs}
 INNER_EOF
@@ -605,8 +682,9 @@ if [ "$merged_any" -eq 1 ]; then
   # tip exists.
   tip=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha' 2>/dev/null || true)
   for wf in $REARM_WORKFLOWS; do
-    if [ -n "$tip" ] && gh run list --repo "$REPO" --workflow "$wf" --branch "$BASE_BRANCH" --limit 10 \
-         --json headSha --jq '.[].headSha' 2>/dev/null | grep -qx "$tip"; then
+    # No --branch: see base_runs_json above.
+    if [ -n "$tip" ] && gh run list --repo "$REPO" --workflow "$wf" --limit 30 \
+         --json headSha,headBranch --jq ".[] | select(.headBranch == \"${BASE_BRANCH}\") | .headSha" 2>/dev/null | grep -qx "$tip"; then
       echo "[auto-merge] ${wf} already running for ${tip:0:8} (push-triggered) — no re-arm needed"
       continue
     fi

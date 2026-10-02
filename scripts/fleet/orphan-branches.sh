@@ -81,7 +81,7 @@ for repo in "$ROOT"/*/; do
     n="$(git -C "$repo" cherry "$base" "$b" 2>/dev/null | grep -c '^+')"
     [ "$n" -gt 0 ] || continue
     git -C "$repo" rev-parse --verify -q "refs/remotes/origin/$b" >/dev/null 2>&1 && continue
-    printf '%s\n' "$prs" | grep -qxF "$b" && continue
+    grep -qxF "$b" <<<"$prs" && continue
 
     when="$(git -C "$repo" log -1 --format=%ct "$b" 2>/dev/null)"
     [ -n "$when" ] || continue

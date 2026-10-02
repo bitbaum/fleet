@@ -239,6 +239,28 @@ const FIXTURES = {
   // A closed slide-in drawer, parked entirely off the left. This is CORRECT —
   // it is how every drawer in this fleet waits — and reporting it would make
   // the rule fire on reparaturbonus-zh and anything else with one.
+  // A masthead nav that scrolls sideways (sitekit's, on camille-boulangerie):
+  // the last link runs past the screen edge but is clipped by its own
+  // scroller, which sits inside the screen. Reachable by scrolling: silent.
+  navScrollerOnScreen: `
+    <header style="display:flex;padding:0 16px;font:12px monospace">
+      <nav aria-label="Sections" style="display:flex;flex-wrap:nowrap;overflow-x:auto;width:300px">
+        <a href="/a" style="display:inline-flex;flex-shrink:0;min-height:44px;align-items:center;padding:0 8px">WILLKOMMEN</a>
+        <a href="/b" style="display:inline-flex;flex-shrink:0;min-height:44px;align-items:center;padding:0 8px">EVENTS &amp; CATERING</a>
+        <a href="/c" style="display:inline-flex;flex-shrink:0;min-height:44px;align-items:center;padding:0 8px;width:160px">UEBER CAMILLE</a>
+      </nav>
+    </header>`,
+
+  // The same scroller, but the SCROLLER itself runs off the edge: its clip is
+  // off screen too, so the control really is painted across the edge.
+  navScrollerOffEdge: `
+    <header style="display:flex;padding:0 16px;font:12px monospace">
+      <nav aria-label="Sections" style="display:flex;flex-wrap:nowrap;overflow-x:auto;width:600px;flex-shrink:0">
+        <a href="/a" style="display:inline-flex;flex-shrink:0;min-height:44px;align-items:center;padding:0 8px;width:300px">WILLKOMMEN</a>
+        <a href="/b" style="display:inline-flex;flex-shrink:0;min-height:44px;align-items:center;padding:0 8px;width:200px">EVENTS</a>
+      </nav>
+    </header>`,
+
   navClosedDrawer: `
     <div style="background:#fff;color:#111;font:14px sans-serif;overflow:hidden">
       <nav aria-label="Drawer" style="position:fixed;top:0;left:0;width:280px;height:100%;transform:translateX(-100%);background:#eee">
@@ -495,6 +517,22 @@ async function main() {
     assert(
       r.navOffViewport.length === 0,
       `a closed drawer is correct, got ${JSON.stringify(r.navOffViewport)}`,
+    );
+  });
+
+  await check("does NOT flag a link clipped by an on-screen nav scroller", async () => {
+    const r = await measurePhone(FIXTURES.navScrollerOnScreen);
+    assert(
+      r.navOffViewport.length === 0,
+      `a scrolling nav clips its own overflow, got ${JSON.stringify(r.navOffViewport)}`,
+    );
+  });
+
+  await check("still catches a link whose scroller itself crosses the edge", async () => {
+    const r = await measurePhone(FIXTURES.navScrollerOffEdge);
+    assert(
+      r.navOffViewport.length >= 1 && r.navOffViewport.every((f) => f.side === "right"),
+      `a scroller painted past the edge must be reported, got ${JSON.stringify(r.navOffViewport)}`,
     );
   });
 

@@ -1,0 +1,77 @@
+# Rendered layout defects on every live site, ratcheted.
+#
+# Renders home + key pages of every served site (loki's apps.conf + the
+# handcrafted services in render-sweep.pages.json) at 390 / 834 / 1440 and
+# counts: nav-contract rules 3/7/8, controls crossing the viewport, fixed or
+# sticky controls on top of each other (incl. the Loki launcher), empty
+# headings, numbers split across lines in cells/stats, and uncaught page
+# errors. A site x check count above scripts/ci/render-sweep.baseline fails
+# the run — a count may fall, never rise.
+#
+# Public GET pages only. The script refuses api/admin/auth/cron/job paths
+# before requesting them and never makes an AI call.
+name: Render sweep
+
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      sites:
+        description: 'Comma-separated site names from apps.conf (default: all served)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    # ~24 sites x ~3 pages x 3 widths with a 4s settle each.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # No package.json here on purpose; same scratch install as ui-defects.yml.
+      - name: Install playwright
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund playwright >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+
+      # Before the sweep, deliberately: a detector that silently stopped firing
+      # reports a clean fleet. Every check is pinned firing AND silent.
+      - name: Self-test the sweep
+        env:
+          PLAYWRIGHT_FROM: ${{ runner.temp }}/pw
+        run: node scripts/ci/test-render-sweep.mjs
+
+      - name: Sweep the fleet
+        env:
+          PLAYWRIGHT_FROM: ${{ runner.temp }}/pw
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+          SITES: ${{ inputs.sites }}
+        run: |
+          set -uo pipefail
+          set +e
+          node scripts/ci/render-sweep.mjs --out render-sweep-report
+          status=$?
+          set -e
+          if [ -f render-sweep-report/render-sweep.md ]; then
+            cat render-sweep-report/render-sweep.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-sweep-report
+          path: render-sweep-report/
+          if-no-files-found: ignore

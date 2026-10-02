@@ -36,20 +36,31 @@ no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 #   RS_HEADSHA   base run's headSha     (default the branch tip)
 #   RS_PRS       JSON array for pr list (default [])
 #   RS_VIEW      JSON for pr view       (default MERGEABLE/CLEAN)
+#   RS_BASESHA   the base branch tip    (default basesha000000)
+#   RS_HEADBRANCH  base run's headBranch (default: field absent)
+#   RS_LIVE      body the LIVE_COMMIT_URL answers; the literal UNREACHABLE makes
+#                curl fail. Unset = LIVE_COMMIT_URL is not set at all.
 #
 # Emits the sweep's combined output; records gh calls in $GH_LOG.
 run_sweep() {
   local conclusion="$1" failed_steps="${2:-}" attempt="${3:-1}"
   local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}" rearm_seen="${RS_REARM_SEEN:-}"
   local status_field="${RS_STATUS:-completed}"
-  local head_field="${RS_HEADSHA:-basesha000000}"
+  local base_sha="${RS_BASESHA:-basesha000000}"
+  local head_field="${RS_HEADSHA:-$base_sha}"
+  local live_url=""
+  local branch_field=""
+  [ -n "${RS_HEADBRANCH:-}" ] && branch_field=",\"headBranch\":\"$RS_HEADBRANCH\""
   local dir; dir="$(mktemp -d)"
   GH_LOG="$dir/gh-calls.log"
   : > "$GH_LOG"
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  printf '{"author_association":"%s","head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  printf '{"author_association":"%s","user":{"login":"author1"},"head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  # The author's permission on the repo, as the real gh --jq '.permission'
+  # would print it. Default "read": an outside PR stays outside.
+  printf '%s\n' "${RS_PERM:-read}" > "$dir/perm.txt"
   local reviews="${RS_REVIEWS:-}"
   [ -n "$reviews" ] || reviews='[]'
   printf '%s\n' "$reviews" > "$dir/reviews.json"
@@ -57,21 +68,34 @@ run_sweep() {
   local commits="${RS_COMMITS:-}"
   [ -n "$commits" ] || commits='{"commits":[]}'
   printf '%s\n' "$commits" > "$dir/commits.json"
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""
+  if [ -n "${RS_LIVE:-}" ]; then
+    live_url="https://fixture.invalid/api/health"
+    printf '%s\n' "$RS_LIVE" > "$dir/live.json"
+    # A fake curl, like the fake gh: the sweep must never reach the network,
+    # and "unreachable" has to be a state the test can put it in.
+    cat > "$dir/curl" <<CURL
+#!/usr/bin/env bash
+if [ "\$(cat "$dir/live.json")" = UNREACHABLE ]; then echo "curl: (28) timed out" >&2; exit 28; fi
+cat "$dir/live.json"
+CURL
+    chmod +x "$dir/curl"
+  fi
+  RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
 ARGS="\$*"
 echo "\$ARGS" >> "$GH_LOG"
 case "\$ARGS" in
-  *"/commits/"*)                    echo "basesha000000" ;;
+  *"/commits/"*)                    echo "$base_sha" ;;
   # Deploy-reconciler queries, matched BEFORE the generic CI one — ordering is
   # the only thing separating them, since all three start with "run list".
   "run list"*"--json status"*)      printf '%s\n' '$deploy_running' ;;
   "run list"*"--status success"*)   printf '%s\n' '$deployed_sha' ;;
   # Re-arm guard: the CI runs already on the base tip (push-triggered).
   "run list"*"--json headSha"*)     printf '%s\n' '$rearm_seen' ;;
-  "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"}' ;;
+  "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"$branch_field}' ;;
   *"/actions/runs/"*"/jobs"*)       printf '%s\n' '$failed_steps' ;;
   "run rerun"*)                     echo "rerun dispatched" ;;
   *"/actions/runs/"*)               printf '%s\n' '$attempt' ;;
@@ -84,6 +108,7 @@ case "\$ARGS" in
   # The DCO gate: who opened the PR, and what its commits say.
   # The review list, matched BEFORE the pull itself: both paths start the same.
   "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
+  "api repos/"*"/collaborators/"*"/permission"*) cat "$dir/perm.txt" ;;
   "api repos/"*"/pulls/"*)          cat "$dir/assoc.txt" ;;
   "pr view"*"--json commits"*)      cat "$dir/commits.json" ;;
   "pr view"*)                       cat "$dir/view.json" ;;
@@ -97,7 +122,7 @@ FAKE
 
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
-        DEPLOY_WORKFLOW="$deploy_wf" \
+        DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" \
         bash "$SWEEP" 2>&1)
   status=$?
   SWEEP_OUT="$out"
@@ -214,6 +239,65 @@ if run_sweep failure 'Run tests' 1 deploy.yml oldsha00 0; then
     || no 'NEVER ships a red base, even though the sweep continues past one'
 fi
 
+echo "auto-merge sweep — deploy reconciler, live commit"
+# A run's headSha is GitHub's LABEL, not what shipped: a workflow_run-triggered
+# Deploy is labelled with the default branch's tip at trigger time. On loki
+# 2026-09-25 run 36135832127 shipped f2f6206 but read 4622869, and the
+# reconciler, trusting the label, never dispatched. LIVE_COMMIT_URL asks the
+# app instead.
+TIP=4622869aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+OLD=f2f6206bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+# 11a. The app reports the tip -> already deployed, nothing dispatched.
+if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"$TIP\"}" run_sweep success '' 1 deploy.yml "$OLD" 0; then
+  [ "$(deploys)" -eq 0 ] && grep -q 'already deployed (live)' <<<"$SWEEP_OUT" \
+    && ok 'live commit == tip: already deployed, no dispatch, even when the run label is stale' \
+    || no 'live commit == tip: already deployed, no dispatch, even when the run label is stale'
+fi
+
+# 11b. THE INCIDENT. The run label claims the tip; the app serves the older
+#      commit. The label must lose.
+if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"$OLD\"}" run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -ge 1 ] && grep -q 'deployed commit source: live' <<<"$SWEEP_OUT" \
+    && ok 'ships when the app serves an older commit although the last run is LABELLED with the tip' \
+    || no 'ships when the app serves an older commit although the last run is LABELLED with the tip'
+fi
+
+# 11c. Unknown is not deployed: an unreachable app must not read as "current".
+if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -ge 1 ] && grep -q 'live commit UNKNOWN' <<<"$SWEEP_OUT" \
+    && ok 'an unreachable live URL counts as not deployed, and dispatches' \
+    || no 'an unreachable live URL counts as not deployed, and dispatches'
+fi
+
+# 11d. A short or missing commit is unknown too: a prefix is not proof.
+if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"${TIP:0:7}\"}" run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -ge 1 ] \
+    && ok 'a non-40-hex live commit counts as not deployed' \
+    || no 'a non-40-hex live commit counts as not deployed'
+fi
+
+# 11e. Unknown still waits for a deploy in flight: not a licence to stack.
+if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep success '' 1 deploy.yml "$TIP" 1; then
+  [ "$(deploys)" -eq 0 ] \
+    && ok 'an unreachable live URL still does not dispatch over a deploy in flight' \
+    || no 'an unreachable live URL still does not dispatch over a deploy in flight'
+fi
+
+# 11f. Unknown never ships a red base.
+if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep failure 'Run tests' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -eq 0 ] \
+    && ok 'an unreachable live URL never ships a red base' \
+    || no 'an unreachable live URL never ships a red base'
+fi
+
+# 11g. Unset: the old behaviour exactly; the label decides.
+if RS_BASESHA=$TIP run_sweep success '' 1 deploy.yml "$TIP" 0; then
+  [ "$(deploys)" -eq 0 ] && grep -q 'source: last run label' <<<"$SWEEP_OUT" \
+    && ok 'unset LIVE_COMMIT_URL: the run label decides, as before' \
+    || no 'unset LIVE_COMMIT_URL: the run label decides, as before'
+fi
+
 echo "auto-merge sweep — coverage ported from orangecat"
 # orangecat was the other repo with sweep tests, and converting it to the
 # canonical deletes them. These are the cases its suite had that this one did
@@ -221,11 +305,12 @@ echo "auto-merge sweep — coverage ported from orangecat"
 # the two commits.
 
 merges() { grep -c '^pr merge' "$GH_LOG" 2>/dev/null; }
+rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
 
 # 12. A base run still in progress is not a verdict either way — defer, and do
 #     NOT re-run it (re-running an in-flight run would cancel it).
 if RS_STATUS=in_progress run_sweep '' '' 1; then
-  if printf '%s' "$SWEEP_OUT" | grep -q 'still running' && [ "$(reruns)" -eq 0 ]; then
+  if grep -q 'still running' <<<"$SWEEP_OUT" && [ "$(reruns)" -eq 0 ]; then
     ok 'defers while the base run is still going, without re-running it'
   else
     no 'defers while the base run is still going, without re-running it'
@@ -234,11 +319,44 @@ fi
 
 # 13. The newest base CI run belonging to an OLDER commit means the current tip
 #     is unjudged. Merging on that green would batch unverified commits — the
-#     exact thing one-car-per-sweep exists to prevent.
+#     exact thing one-car-per-sweep exists to prevent. Never merge here.
+#
+#     Two cases since the deadlock fix (see "THE DEADLOCK THIS GUARD BUILDS FOR
+#     ITSELF" in the sweep). This test was written before it, asserted "wait"
+#     for BOTH, and went stale unseen because the suite's verdict was
+#     discarded (see the end of this file).
+#
+#   13a. A run IS in flight: CI is coming — wait for it, dispatch nothing.
+if RS_STATUS=in_progress RS_HEADSHA=oldsha000 run_sweep success '' 1; then
+  grep -q 'waiting for CI to catch up' <<<"$SWEEP_OUT" && [ "$(merges)" -eq 0 ] && [ "$(rearms)" -eq 0 ] \
+    && ok 'waits, without dispatching, while a run for an older commit is still in flight' \
+    || no 'waits, without dispatching, while a run for an older commit is still in flight'
+fi
+#   13b. Nothing in flight: nothing will ever judge the tip (an automated
+#        merge emits no workflow events), so dispatch CI — and still not merge.
 if RS_HEADSHA=oldsha000 run_sweep success '' 1; then
-  printf '%s' "$SWEEP_OUT" | grep -q 'waiting for CI to catch up' \
-    && ok 'waits when the newest base run belongs to an older commit' \
-    || no 'waits when the newest base run belongs to an older commit'
+  [ "$(merges)" -eq 0 ] && [ "$(rearms)" -ge 1 ] \
+    && ok 'dispatches CI, and does not merge, when the tip has no run and none is in flight' \
+    || no 'dispatches CI, and does not merge, when the tip has no run and none is in flight'
+fi
+
+#   13c. A run for the tip's sha on ANOTHER branch (a PR's run) is not the
+#        base's verdict. The sweep filters the branch itself because it may
+#        not ask GitHub to (see 13d).
+if RS_HEADBRANCH=some-pr-branch run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && [ "$(rearms)" -ge 1 ] \
+    && ok 'a run for the tip on another branch does not count as the base verdict' \
+    || no 'a run for the tip on another branch does not count as the base verdict'
+fi
+#   13d. No run query may pass --branch. GitHub serves branch-filtered run
+#        lists from an intermittently weeks-stale index; on loki 2026-09-25
+#        that made every sweep dispatch CI, cancelling the run in flight, in
+#        a ~3-minute loop. The unfiltered list is fresh.
+if RS_HEADBRANCH=main RS_PRS="$(printf '[{"number":7,"title":"t","isDraft":false,"mergeable":"MERGEABLE","mergeStateStatus":"CLEAN","labels":[],"createdAt":"2026-01-01T00:00:00Z","statusCheckRollup":[{"status":"COMPLETED","conclusion":"SUCCESS","name":"lint"}]}]')" \
+   run_sweep success '' 1 deploy.yml oldsha00 0; then
+  [ "$(grep -c '^run list.*--branch' "$GH_LOG")" -eq 0 ] && [ "$(merges)" -ge 1 ] \
+    && ok 'no run list call filters by --branch, and a base run on main still merges' \
+    || no 'no run list call filters by --branch, and a base run on main still merges'
 fi
 
 # A PR fixture generator for the red-base carve-out. The rollup names decide
@@ -293,7 +411,6 @@ fi
 #     put two runs on one ref and the concurrency group cancelled one — under a
 #     burst of merges main's CI cancelled itself repeatedly (loki,
 #     2026-09-10). When a run for the new tip exists, no re-arm.
-rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
 if RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 0 ] \
     && ok 'does not re-arm CI when a run for the new tip already exists' \
@@ -317,7 +434,7 @@ approval() { printf '[{"state":"APPROVED","commit_id":"%s","author_association":
 #     sweep says which commit, so the contributor knows what to add.
 if RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(unsigned aaaaaaaa11111111)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'without a Signed-off-by.*aaaaaaaa' \
+  [ "$(merges)" -eq 0 ] && grep -q 'without a Signed-off-by.*aaaaaaaa' <<<"$SWEEP_OUT" \
     && ok 'an outside PR without a sign-off is not merged, and the commit is named' \
     || no 'an outside PR without a sign-off is not merged, and the commit is named'
 fi
@@ -325,7 +442,7 @@ fi
 # 20. One signed commit does not cover an unsigned one: EVERY commit certifies.
 if RS_ASSOC=FIRST_TIME_CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed bbbbbbbb22222222),$(unsigned cccccccc33333333)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'cccccccc' && ! printf '%s' "$SWEEP_OUT" | grep -q 'bbbbbbbb' \
+  [ "$(merges)" -eq 0 ] && grep -q 'cccccccc' <<<"$SWEEP_OUT" && ! grep -q 'bbbbbbbb' <<<"$SWEEP_OUT" \
     && ok 'a partly signed outside PR is held, naming only the unsigned commit' \
     || no 'a partly signed outside PR is held, naming only the unsigned commit'
 fi
@@ -365,7 +482,7 @@ echo "auto-merge sweep — outside PRs need a maintainer's review"
 #     sweep serves deploys on merge.
 if RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed abababab11111111)]}" \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -eq 0 ] && printf '%s' "$SWEEP_OUT" | grep -q 'no approving review' \
+  [ "$(merges)" -eq 0 ] && grep -q 'no approving review' <<<"$SWEEP_OUT" \
     && ok 'a signed-off outside PR with no review is held, and says why' \
     || no 'a signed-off outside PR with no review is held, and says why'
 fi
@@ -396,8 +513,29 @@ if REQUIRE_DCO=0 RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 121212124444
     || no 'REQUIRE_DCO=0 still requires a maintainer review for an outside PR'
 fi
 
-printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
-[ "$FAIL" -eq 0 ]
+# 28. A private repo's sweep runs on the default token, which cannot see
+#     PRIVATE org membership, so the owner's own agent reads as CONTRIBUTOR
+#     (bitbaum/farmhouse#2, 2026-09-26). Write access to the repo is the
+#     real question, and it answers yes: merge, no review of oneself.
+if RS_PERM=admin RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(unsigned 9a9a9a9a55555555)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 1 ] && grep -q 'has admin access' <<<"$SWEEP_OUT" \
+    && ok 'an author with write access is not an outside PR, whatever the association says' \
+    || no 'an author with write access is not an outside PR, whatever the association says'
+fi
+for p in read none ''; do
+  if RS_PERM="$p" RS_ASSOC=CONTRIBUTOR RS_COMMITS="{\"commits\":[$(signed 8b8b8b8b66666666)]}" \
+     RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+    [ "$(merges)" -eq 0 ] \
+      && ok "permission '${p:-unreadable}' leaves an outside PR outside" \
+      || no "permission '${p:-unreadable}' let an outside PR merge unreviewed"
+  fi
+done
+
+# (The verdict used to sit HERE, with ~70 lines of tests appended after it.
+# A script's exit status is its LAST command's, so `[ "$FAIL" -eq 0 ]` was
+# discarded and this suite exited 0 while printing "27 passed, 1 failed" —
+# which is how test 13 below sat stale on main unseen. It lives at the end now.)
 
 # ── The base run that speaks for the commit ────────────────────────────────
 # A duplicate run on the same ref is cancelled by the concurrency group. When
@@ -471,3 +609,7 @@ self="[$(printf "$live" 1 tip)]"
 sibling_run_in_flight "$self" tip 1 \
   && no 'a run must not be its own in-flight sibling' \
   || ok 'a run is not its own sibling'
+
+# ── Verdict: LAST, so it counts every test above and IS the exit status ──────
+printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
+[ "$FAIL" -eq 0 ]

@@ -19,8 +19,8 @@ PASS=0; FAIL=0
 ok() { printf '  ✓ %s\n' "$1"; PASS=$((PASS + 1)); }
 no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 eq() { [ "$1" = "$2" ] && ok "$3" || no "$3 (want '$1', got '$2')"; }
-matches()  { printf '%s' "$1" | grep -qE "$(forbidden_patterns | paste -sd'|' -)" && ok "$2" || no "$2 (should match)"; }
-no_match() { printf '%s' "$1" | grep -qE "$(forbidden_patterns | paste -sd'|' -)" && no "$2 (should NOT match)" || ok "$2"; }
+matches()  { grep -qE "$(forbidden_patterns | paste -sd'|' -)" <<<"$1" && ok "$2" || no "$2 (should match)"; }
+no_match() { grep -qE "$(forbidden_patterns | paste -sd'|' -)" <<<"$1" && no "$2 (should NOT match)" || ok "$2"; }
 
 export ORG_DRIFT_AUDIT_LIB_ONLY=1
 # shellcheck source=/dev/null
@@ -96,10 +96,10 @@ other|4002|multi.orangecat.ch,second.orangecat.ch|/home/g/dev/multi-repo|.|db|ow
 internal|4003|-|/home/g/dev/internal|.|db|owner|kind|status|-|-|-'
 
 result="$(echo "$APPS_CONF" | parse_apps_conf_doors)"
-printf '%s' "$result" | grep -q 'example.orangecat.ch|example-repo'     && ok "single domain extracted"  || no "single domain failed"
-printf '%s' "$result" | grep -q 'multi.orangecat.ch|multi-repo'         && ok "first multi-domain"       || no "first multi-domain failed"
-printf '%s' "$result" | grep -q 'second.orangecat.ch|multi-repo'        && ok "second multi-domain"      || no "second multi-domain failed"
-printf '%s' "$result" | grep -q -- '-|internal'                         && no "dash domain excluded"     || ok "dash correctly excluded"
+grep -q 'example.orangecat.ch|example-repo' <<<"$result"     && ok "single domain extracted"  || no "single domain failed"
+grep -q 'multi.orangecat.ch|multi-repo' <<<"$result"         && ok "first multi-domain"       || no "first multi-domain failed"
+grep -q 'second.orangecat.ch|multi-repo' <<<"$result"        && ok "second multi-domain"      || no "second multi-domain failed"
+grep -q -- '-|internal' <<<"$result"                         && no "dash domain excluded"     || ok "dash correctly excluded"
 
 echo
 echo "the sweep must never pass vacuously"
@@ -112,7 +112,7 @@ echo "the sweep must never pass vacuously"
 # as a reader that deletes the evidence.
 out="$(USE_LOCAL=1 DEV_ROOT=/nonexistent REGISTER=/dev/null INVENTORY="$(mktemp)" bash "$SCRIPT" --check 2>&1)"; rc=$?
 eq 0 "$rc" "no checkout exits 0"
-printf '%s' "$out" | grep -q 'SKIPPED' && ok "announces the skip" || no "must announce skip"
+grep -q 'SKIPPED' <<<"$out" && ok "announces the skip" || no "must announce skip"
 
 echo
 echo "retired names and hosts — registers/retired.json"
@@ -141,10 +141,10 @@ eq "old.example.ch|new.example.ch|2026-01-02|moved" "$(retired_entries | head -1
 # it names is a check nobody can reason about.
 pat="$(retired_patterns | head -1)"
 eq 'old\.example\.ch' "$pat" "regex metacharacters are escaped"
-printf '%s' "see oldXexampleYch here" | grep -qE "$pat" \
+grep -qE "$pat" <<<"see oldXexampleYch here" \
   && no "escaped pattern must not match a wildcard variant" \
   || ok "escaped pattern does not match a wildcard variant"
-printf '%s' "see old.example.ch here" | grep -qE "$pat" \
+grep -qE "$pat" <<<"see old.example.ch here" \
   && ok "escaped pattern still matches the real thing" \
   || no "escaped pattern stopped matching the real thing"
 
@@ -158,8 +158,8 @@ grep -qE "$amp" <<< "the Old & Busted thing" \
 
 hint="$(retired_hint 'we link old.example.ch in the readme')" && rc=0 || rc=1
 eq 0 "$rc" "a line using a retired form yields a hint"
-printf '%s' "$hint" | grep -q 'new.example.ch' && ok "the hint names the replacement" || no "hint must name the replacement"
-printf '%s' "$hint" | grep -q '2026-01-02' && ok "the hint dates the retirement" || no "hint must carry the date"
+grep -q 'new.example.ch' <<<"$hint" && ok "the hint names the replacement" || no "hint must name the replacement"
+grep -q '2026-01-02' <<<"$hint" && ok "the hint dates the retirement" || no "hint must carry the date"
 
 retired_hint 'this document is entirely current' >/dev/null 2>&1 \
   && no "a clean line must NOT yield a hint" \

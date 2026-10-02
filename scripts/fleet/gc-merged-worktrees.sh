@@ -97,7 +97,7 @@ for repo in "$ROOT"/*/; do
     fi
 
     dirty_n="$(git -C "$wt" status --porcelain 2>/dev/null | wc -l)"
-    printf '%s\n' "$LIVE" | grep -qxF "$wt" && in_use=yes || in_use=no
+    grep -qxF "$wt" <<<"$LIVE" && in_use=yes || in_use=no
 
     pr_state=""
     if [ "$pushed" = yes ] && [ "$dirty_n" -eq 0 ] && [ "$in_use" = no ]; then

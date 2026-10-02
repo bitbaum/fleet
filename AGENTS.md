@@ -204,6 +204,11 @@ signed-in user, a model, or a public changelog.
 
 A page that types the portfolio is a copy. Generate it, or do not ship it.
 
+## Chats
+
+Every chat is `@bitbaum/chatkit`; fix chat bugs there, never in an app. The
+checklist it enforces is `SHARED.md` → "Chat — the standard".
+
 ## Repos you create
 
 The fleet creates repos automatically now — Loki provisions one per

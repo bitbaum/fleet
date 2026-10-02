@@ -52,6 +52,12 @@ command -v jq >/dev/null 2>&1 || { echo "jq not found" >&2; exit 2; }
 # and UI markup are excluded on purpose: they are coupled to a framework, a
 # schema, or a design system, and "centralize everything" is how apps stop being
 # able to look or behave like themselves.
+#
+# chat-composer is the one UI entry, and it counts BEHAVIOUR, not looks: 13
+# chats in 10 repos (2026-09-25) each re-learned — or never learned — the mic,
+# 16px, the soft keyboard, stop and retry. SHARED.md "Chat — the standard"
+# holds the checklist; this line only stops a new composer file appearing
+# without anyone deciding it should.
 CONCERNS='
 automerge-script|scripts/ci/auto-merge-sweep\.sh$
 rate-limit|(lib|src|app|apps|packages)/.*rate-?limit(er)?\.(ts|js)$
@@ -64,6 +70,7 @@ date-utils|(lib|src)/.*(dates|date-utils)\.(ts|js)$
 ai-provider-client|(lib|src|packages|apps)/.*(provider|call-provider)s?\.(ts|js)$
 messaging-threads|(lib|src)/.*(message-utils|conversation-helpers|messages-view|thread-(utils|helpers))\.(ts|js)$
 list-query|(lib|src|hooks)/.*([uU]se-?[fF]ilter(s|ing)?|[uU]se-?[dD]ebounce|filter-?state|pagination)\.(ts|js)$
+chat-composer|(^|/)([cC]omposer|[cC]hat-?[iI]nput|chat-input)\.(tsx|ts|jsx|js)$
 '
 
 # ── Collect ──────────────────────────────────────────────────────────────────

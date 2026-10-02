@@ -30,6 +30,18 @@ ignore red. Anything that needs infra (e2e against a real DB, prod smoke,
 migration replay) is an *upgrade* you add per-repo once the secrets exist. See
 the ladder below.
 
+## Releasing a package (copy `publish.yml`)
+
+A package that consumers install from npm must be releasable by a TAG, never by
+someone's laptop login — five were, and when that login went on 2026-09-26 none
+of them could ship a fix. Copy `publish.yml` to `.github/workflows/publish.yml`,
+replace `<repo>`, then do the one step only a human can (a passkey tap on
+npmjs.com → package → Settings → Trusted Publisher: GitHub Actions, org
+`bitbaum`, the repo, workflow `publish.yml`) and `gh variable set
+NPM_PUBLISHING -b on`. Release = bump `version`, merge, `git tag vX.Y.Z
+origin/main && git push origin vX.Y.Z`. `shared-registry-audit.mjs --check`
+fails while any npm-installed package in the registry lacks the workflow.
+
 ## How to adopt (copy, don't reinvent)
 
 - **pnpm repo** (every fleet repo since the 2026-09-04 pnpm sweep) → copy
@@ -530,6 +542,7 @@ is a question, not a customisation.
 | `ci_workflow` | the workflow file whose green run gates a merge | PRs wait forever |
 | `rearm_workflows` | dispatched after a merge, because a `GITHUB_TOKEN` push triggers nothing | a comma instead of a space: one bogus token, nothing ships, sweep still green |
 | `deploy_workflow` | compared against the base tip each sweep and re-dispatched when behind | omitted on a repo that deploys: merged-but-not-live until someone notices |
+| `live_commit_url` | the app's own JSON `commit` (e.g. `/api/health`) — what the reconciler treats as live instead of the last deploy run's label | omitted: a workflow_run-triggered deploy's headSha names the tip at trigger time, so a commit can read as deployed while the box serves an older one |
 | `token` | `FLEET_PAT` (org secret); a PAT-made dispatch emits `workflow_run`, so the queue drains at CI speed | unset falls back to `github.token` — merges, but only at the throttled schedule |
 
 Verified 2026-09-15 from every repo's **default branch via the API**: 33 repos

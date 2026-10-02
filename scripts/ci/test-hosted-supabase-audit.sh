@@ -21,8 +21,8 @@ PASS=0; FAIL=0
 ok() { printf '  ✓ %s\n' "$1"; PASS=$((PASS + 1)); }
 no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 eq() { [ "$1" = "$2" ] && ok "$3" || no "$3 (want '$1', got '$2')"; }
-matches()  { printf '%s' "$1" | grep -qE "$(hosted_pattern)" && ok "$2" || no "$2 (should match)"; }
-no_match() { printf '%s' "$1" | grep -qE "$(hosted_pattern)" && no "$2 (should NOT match)" || ok "$2"; }
+matches()  { grep -qE "$(hosted_pattern)" <<<"$1" && ok "$2" || no "$2 (should match)"; }
+no_match() { grep -qE "$(hosted_pattern)" <<<"$1" && no "$2 (should NOT match)" || ok "$2"; }
 
 export HOSTED_SUPABASE_AUDIT_LIB_ONLY=1
 # shellcheck source=/dev/null
@@ -93,7 +93,7 @@ echo
 echo "the sweep must never pass vacuously"
 out="$(DEV_ROOT=/nonexistent bash "$SCRIPT" --check 2>&1)"; rc=$?
 eq 0 "$rc" "no checkout exits 0, so a runner without the fleet is not a red herring"
-printf '%s' "$out" | grep -q 'SKIPPED' && ok "but it says SKIPPED — a vacuous pass would read as coverage" \
+grep -q 'SKIPPED' <<<"$out" && ok "but it says SKIPPED — a vacuous pass would read as coverage" \
                                         || no "must announce the skip, not print a tick"
 
 echo

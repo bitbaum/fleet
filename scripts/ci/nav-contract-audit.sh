@@ -97,9 +97,9 @@ for gitdir in "$DEV_ROOT"/*/.git; do
     body="$(git -C "$repo" show "$ref:$f" 2>/dev/null || true)"
     [ -n "$body" ] || continue
     navfiles_scanned=$((navfiles_scanned + 1))
-    if printf '%s' "$body" | grep -qE "$TABS"; then continue; fi
-    if ! printf '%s' "$body" | grep -qE "$LINKS"; then continue; fi
-    if ! printf '%s' "$body" | grep -qE "$ACTIVE"; then continue; fi
+    if grep -qE "$TABS" <<<"$body"; then continue; fi
+    if ! grep -qE "$LINKS" <<<"$body"; then continue; fi
+    if ! grep -qE "$ACTIVE" <<<"$body"; then continue; fi
     hits+=("$f")
   done
 

@@ -362,10 +362,10 @@ $(printf '%s' "$sub_scripts" | jq -r 'to_entries[] | "\(.key) \(.value)"')"
     # Checked against the whole REACHABLE call graph, not just verify's own
     # text, so a gate named inside a sub-package (printcraft: app/package.json)
     # counts the same as one named directly.
-    if printf '%s' "$expanded" | grep -qE "(^|[^a-z:_-])(${gate}|type-check)([^a-z:_-]|$)"; then
+    if grep -qE "(^|[^a-z:_-])(${gate}|type-check)([^a-z:_-]|$)" <<<"$expanded"; then
       continue
     fi
-    if printf '%s' "$expanded" | grep -qE "$re"; then
+    if grep -qE "$re" <<<"$expanded"; then
       continue
     fi
 
@@ -381,7 +381,7 @@ $(printf '%s' "$sub_scripts" | jq -r 'to_entries[] | "\(.key) \(.value)"')"
               'if (.[$g] // "") != "" or ($g == "typecheck" and (."type-check" // "") != "")
                then "yes" else "no" end')
 
-    if [ "$named" = yes ] || printf '%s' "$all_bodies" | grep -qE "$re"; then
+    if [ "$named" = yes ] || grep -qE "$re" <<<"$all_bodies"; then
       # "The repo has a `test` script" is NOT the same as "the repo has a
       # hermetic test suite". datacat's is `npx playwright test`: it needs
       # browsers and a running server, so promoting it into `verify` would
@@ -390,8 +390,8 @@ $(printf '%s' "$sub_scripts" | jq -r 'to_entries[] | "\(.key) \(.value)"')"
       # an UPGRADE rung, not the floor — so this is real work (write a unit
       # suite), not a one-line verify edit.
       if [ "$gate" = test ] && \
-         printf '%s' "$test_body" | grep -qE 'playwright|cypress|puppeteer|webdriver' && \
-         ! printf '%s' "$test_body" | grep -qE 'vitest|jest|mocha|node --test|bun test|ava '; then
+         grep -qE 'playwright|cypress|puppeteer|webdriver' <<<"$test_body" && \
+         ! grep -qE 'vitest|jest|mocha|node --test|bun test|ava ' <<<"$test_body"; then
         absent="$absent test(e2e-only)"
       else
         gaps="$gaps $gate"          # repo owns it, verify just skips it

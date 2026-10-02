@@ -106,7 +106,7 @@ else
 fi
 
 # It must still refuse to merge onto a base it has no verdict for.
-if printf '%s' "$out" | grep -qi "merging\|merged #"; then
+if grep -qi "merging\|merged #" <<<"$out"; then
   fail "it still refuses to merge onto an unverified base" "it merged something"
 else
   pass "it still refuses to merge onto an unverified base"
@@ -125,7 +125,7 @@ if dispatched "ci.yml"; then
 else
   pass "CI genuinely in flight is waited for, not re-dispatched"
 fi
-if printf '%s' "$out" | grep -q "waiting for CI to catch up"; then
+if grep -q "waiting for CI to catch up" <<<"$out"; then
   pass "and it says so"
 else
   fail "and it says so" "expected 'waiting for CI to catch up', got: $(printf '%s' "$out" | tail -2 | tr '\n' ' ')"
@@ -141,7 +141,7 @@ if dispatched "ci.yml"; then
 else
   pass "a verified tip triggers no dispatch from the guard"
 fi
-if printf '%s' "$out" | grep -q "waiting for CI to catch up"; then
+if grep -q "waiting for CI to catch up" <<<"$out"; then
   fail "a verified tip is not deferred" "it deferred: $(printf '%s' "$out" | tail -2 | tr '\n' ' ')"
 else
   pass "a verified tip is not deferred"

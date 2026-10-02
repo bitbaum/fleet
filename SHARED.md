@@ -35,6 +35,8 @@ the inventory underneath it is **generated**, and the number it produces is a
 | [`listkit`](https://github.com/bitbaum/listkit) | `pnpm add github:bitbaum/listkit#v0.1.0` | the fleet's **twelve incompatible filter-state shapes** — no two alike — plus ~34 hand-built URL builders (four of them carrying live bugs: a preset that wiped the reader's search, a date range that stranded them past the end, a builder that preserved three params by name, a debounced box using `push` so the back button walked every spelling of the word), ~25 copies of toggle-a-value-in-a-set in two encodings, ~11 debounces at five delays, ~11 copies of `Math.ceil(total / pageSize)`, and the four-of-seven repos that put a reader's text into a SQL `LIKE` without escaping `%` or `_`. Ships the DECISIONS: five facet kinds with the empty selection as the only sentinel (one repo used its *translated label* as the all-value, making filter identity depend on the reader's language), a URL codec that copies rather than rebuilds and drops `page` when the result set changes, a comparator that puts missing values last in **both** directions, page arithmetic that cannot produce a negative offset. **No markup, no tokens, no React, no search engine** — nine token vocabularies and six chip treatments were found among those repos, several different on purpose. |
 | [`bip-kit`](https://github.com/bitbaum/bip-kit) | `pnpm add bip-kit` (on npm since 2026-09-06) | **blog / roadmap / changelog on a product site** — otherwise a markdown pipeline, a renderer and a security review per repo. A zero-dependency parser turning repo-authored markdown into typed blocks, plus `bip-kit/react`, an RSC-first reference renderer emitting semantic `bp-*` classes with every colour a CSS variable — shared vocabulary, your tokens on top. `shiki`/`katex`/`mermaid` are OPTIONAL peers that degrade rather than throw. **Eight adopters, third-most-used package in this registry after `ai-kit` and `mail-kit` — and it was absent from this table until 2026-09-12**, present only in the extraction-candidate list below as a *source* of slug-helper duplication. That is this file's own failure mode rather than a clerical one: the instruction at the top ("check this file; if it is here, install it") is exactly as true as the table under it, and a package nobody can find here is a package the next agent rebuilds. |
 | [`design-tokens`](https://github.com/bitbaum/design-tokens) | `"@bitbaum/design-tokens": "github:bitbaum/design-tokens#v1.1.0"` | the **brand** SSOT for OrangeCat, Loki and Solon: one `tokens.css` holding every colour, face, weight, tracking and radius the three share, a Tailwind preset that maps them, and self-hosted faces. Import it BEFORE the app's own `globals.css` — the app keeps its file, this supplies the primitives it used to hand-copy. It exists because they *were* hand-copied and drifted: Solon's `globals.css` carried a comment claiming its tokens matched OrangeCat's while sharing **zero** names or values with it, so one company's three products looked like three companies. Retheming all three is an edit to the `▼▼▼ THE KNOBS ▼▼▼` block plus a tag. **This is a deliberate exception to "each app owns its design tokens" below, and the line is OWNERSHIP, not taste:** these are one company's own products and are *supposed* to look alike. A client's site is not, and must never install this — a retheme would repaint somebody else's brand. |
+| [`chatkit`](https://github.com/bitbaum/chatkit) | `pnpm add github:bitbaum/chatkit#v0.1.0` (dist committed — no `allowBuilds` entry needed; npm once the first publish is bootstrapped) | **the one chat** — composer, thread, messages, markdown, attachments, and a microphone that is never a dead button (browser recogniser first; missing or SILENT, the same press records and a server transcribes — heidi's measured failure, now a browser test). Replaces **13 chats in 10 repos** (2026-09-25), each written from scratch and each missing what another had fixed: the mic, 16px text, the soft keyboard, Stop, Retry, stick-to-bottom, markdown without leaked `**`. Behaviour is fixed; the look follows the app through `--ck-*` variables (defaults read `@bitbaum/design-tokens`; loki maps its OKLCH tokens once in `globals.css`). Its `verify` drives Chromium at 390px and desktop, light and dark, and speaks a sentence through a fake mic — so the standard below is enforced, not described. **Fix chat bugs HERE, never in the app.** Adopted: loki (2026-09-25, every composer via one adapter). |
+| [`speechkit`](https://github.com/bitbaum/speechkit) | `pnpm add @bitbaum/speechkit` (on npm since 2026-09-25; exempt `@bitbaum/*` from `minimumReleaseAgeExclude` BY NAME) | **measuring how somebody SPOKE** — distinct from chatkit, which turns speech into a message. Pauses and runs from raw samples (works on a dialect nothing transcribes), the rule for when a transcript may be judged at all (`mayJudgeForm`: a recogniser that translates dialect into standard is never evidence about form), speech rate, **where a long pause fell** (signal pauses named by recogniser word timings — Whisper swallows silences into words, measured), and grammar a listener would notice from a **self-hosted** LanguageTool (spelling/casing/punctuation excluded: the recogniser decided those). No pronunciation score, by design and by test. Language-agnostic: every fact about a language is passed in. Pairs with ai-kit `transcribe({ words: true })` ≥ 1.16. Extracted from heidi 2026-09-25; adopted: heidi. |
 
 **Adopted:** `listkit` — loki (proving consumer, 2026-09-11: `/fleet`'s search, four facet rows and four sorts, every control a link or a GET form so the page filters with JavaScript off); hirnli (2026-09-11: 4 toggle copies replaced, plus a preset that rebuilt the URL from scratch and a filter missing from the active-count); bitbaum (2026-09-24: package catalogue and studio work grid now share query parsing, URL state, facet counts, search and sorting instead of carrying separate hand-written codecs).
 
@@ -376,6 +378,152 @@ Two traps it encodes, both measured rather than argued:
   — so strip comments *correctly*, and give the stripper its own two-way
   self-check: it must drop what it must drop AND keep what it must keep.
 
+## Chat — the standard every chat meets
+
+**Never start a chat, assistant or composer from scratch.** Measured
+2026-09-25: **13 chat implementations in 10 repos**, none packaged, and every
+one of them re-learned — or never learned — the same lessons. The cost lands on
+George, who has to open each product, find what this one forgot (usually the
+microphone) and ask again. The widget chat added to loki on 2026-09-24 (#879)
+did exactly this: written fresh, it shipped without a mic, with small text and a
+composer bolted under the panel, while three repos had already solved all three.
+
+**The rule.** Every chat, assistant and composer is
+[`@bitbaum/chatkit`](https://github.com/bitbaum/chatkit). App-specific parts go
+in its slots (`tools`, `header`, `footer`, `renderFooter`, `renderLink`); a bug,
+a gap or a missing slot is fixed IN chatkit, with the check that would have
+caught it, and released — never patched in one app, which is how there came to
+be thirteen. Markup follows each app's tokens through `--ck-*`; **behaviour may
+not differ.** A surface that cannot run React (loki's embeddable widget) meets
+the checklist by hand and is the one exception.
+
+chatkit was extracted from loki `/loki` (the most complete chat on 2026-09-25)
+and closed that chat's four gaps while at it: 16px answers, the
+`visualViewport` keyboard fix (`useViewportHeight`), mic failures shown in
+words, and the Web-Speech-first fallback from heidi.
+
+### The checklist — each line is a bug somebody already fixed once
+
+1. **A microphone in the composer, always.** Web Speech first; if it is missing
+   **or silent** (Chromium without Google speech accepts `start()` and never
+   fires — heidi `use-dictation.ts`, measured 9 s / 0 events), the same button
+   records and sends audio to a server transcription route (ai-kit
+   `transcribe()`). Recording is visible (timer, cancel, confirm) and a mic
+   failure is shown, never swallowed.
+2. **16px or larger** for message text and the input. Under 16px iOS zooms the
+   whole page on focus (loki `globals.css`, "`text-base` is not a style choice").
+3. **The composer is part of the conversation surface**, not a form field under
+   it: an auto-growing `<textarea>` (never `<input>` — it silently drops the
+   newlines of a pasted prompt, loki `AskLokiButton.tsx`), Enter sends,
+   Shift+Enter breaks the line, IME `isComposing` respected, and it stays above
+   the soft keyboard and the safe area (orangecat `ViewportHeightSync.tsx`:
+   "100dvh does not shrink when the Android soft keyboard opens").
+4. **Streams, and can be stopped.** Server side `completeStream()` + `ai-kit/sse`
+   (a reader without a carry buffer drops frames — kivvi, aoz). Stop lives in
+   the send slot: "a turn you cannot cancel is the thing that makes a slow
+   answer feel broken" (loki `Composer.tsx`).
+5. **Fails visibly, with Retry** — a failure bubble, never a silent nothing
+   (heidi `use-conversation.ts`: the rewrite "had no retry and no failure
+   bubble").
+6. **Scroll sticks to the bottom only when the reader is already there**, with a
+   jump-down button (loki `Thread.tsx`).
+7. **Markdown rendered** (no literal `**`), links clickable, **Copy** on every
+   answer.
+8. **An empty state that starts the conversation** — starter prompts that
+   disappear once it has begun; and when more than one agent can answer, each
+   message says **who** is speaking.
+9. **Works at 320px** with no horizontal scroll (`min-w-0` on the composer row —
+   heidi `composer.tsx`).
+
+**Done means looked at:** a screenshot at 390px and at desktop width, and one
+real sentence spoken into the mic, before the chat is called finished.
+
+### Where each chat stands (2026-09-25, working checkouts)
+
+| Repo · surface | Missing against the checklist |
+|---|---|
+| loki `/loki` | composer is chatkit (2026-09-25); the thread is still loki's own (14px answers, no `visualViewport` fix) until it moves to `ChatThread` |
+| loki `AskLokiButton` | voice, streaming, stop, markdown, copy |
+| loki widget Chat (`widget/chat.ts`) | cannot use chatkit (vanilla, runs on other people's sites) — must meet the checklist by hand: voice (it already has `voice.ts` for Report), 16px, composer integration, streaming, stop, markdown, copy |
+| orangecat Cat (`ModernChatPanel`, `ChatInput`) | attachments, 16px input (iOS zooms), retry on the last turn — best keyboard handling in the fleet |
+| orangecat companions `TalkRoom` | streaming (by design), retry |
+| heidi chat | stop, markdown — best voice and font size |
+| substrata `/ask` | auto-grow, mic fallback (Web Speech only, silently dead where unsupported), retry, copy, keyboard |
+| kivvi, evig (×3), aoz, botsmann (×4), surf-your-life, vitareba | nearly everything: no voice; single-line inputs or no Shift+Enter; kivvi and aoz drop SSE frames |
+
+The ratchet (`shared-inventory.sh`, concern `chat-composer`) counts files named
+as a composer — **6 in 5 repos** on 2026-09-25 (heidi, kivvi, loki ×2,
+orangecat, substrata) — so a NEW one fails `--check`. It cannot see chats whose input is
+inline in a page (most of the last row) — this section is the guard for those.
+
+## Your own model — the standard every app meets
+
+**Anyone must be able to power an app with the strongest model they can
+reach, and entering a key must be the easy part.** Measured 2026-09-25: five
+apps took a reader's key and each did it differently — a hand-kept vendor list
+(no Anthropic, no Gemini), a free-text model box, a "Save" that stored a key
+nobody had checked, keys in PLAINTEXT columns sent back to the browser, and a
+check that could never pass (it read the wrong level of the response). The
+strongest model a reader had was usually the one they could not select.
+
+**The shared pieces — all `@bitbaum/ai-kit` ≥ 1.18.0; never a second copy:**
+
+- `ai-kit/byok` — `BYOK_VENDORS`, the CLOSED list (openrouter, openai,
+  anthropic, google, groq, mistral, deepseek, xai, together, cerebras). Never a
+  caller-supplied base URL: that is SSRF and key exfiltration in one field.
+  `byokChain(config)` → `{chain, env, extraHeaders}`; the key lives in a
+  per-call env (`BYOK_API_KEY`), never `process.env`. Its links are marked
+  `byok`, so day-capacity, cooldowns and health skip them (1.18.0) — one
+  reader's personal 429 must not cool a model for the whole site.
+- `ai-kit/byok-probe` (server only) — `probeByokKey(vendor, key)` →
+  `{ok, status, message, models, suggested}`. Failure in the vendor's own words
+  with the key redacted; `status: null` = "could not check", never "wrong key";
+  `suggested` = the strongest chat model that key can use, ranked without
+  naming any model. It knows the traps: OpenRouter's `/models` is public and
+  200s a DEAD key (checks `/key`), Anthropic wants `x-api-key` +
+  `anthropic-version`. **Never hand-roll a key check.**
+- `ai-kit/seal` — `sealSecret`/`openSecret` (AES-256-GCM) for keys at rest.
+
+**The flow.** Pick a provider (chips from `BYOK_VENDORS`) → "Get a key from X"
+→ paste → it is checked on its own (~600 ms after typing stops) → the models
+that key can use, the strongest **preselected** → one button. Free-text model
+entry only when the vendor returned no list.
+
+**The rules — each one a bug somebody shipped:**
+
+1. **The save route checks again**, server side, and refuses a model not in the
+   probed list. Never trust the client's "it worked".
+2. **Sealed at rest or kept in the browser** (the app's choice) — never a
+   plaintext column. **No API ever returns a key**, only a hint (`…abcd`).
+3. **An empty field keeps the saved key**; removing is explicit. A form that
+   no longer holds the key and still writes `key || null` wipes it on save.
+4. **Own-model calls are the reader's**: their key serves only their model, a
+   server key never flows to a reader-chosen model, and the app's free budget
+   and telemetry are not charged for them. Every "free budget used up" refusal
+   links to the settings deep link (loki: `/settings#ai`).
+5. **Subscriptions are never collected.** Claude Pro/Max, ChatGPT Plus and the
+   like sign in through the vendor's own flow (its CLI's login in a terminal the
+   user controls). No app stores, proxies or asks for a subscription credential
+   or session token. API keys with a spending cap are the path for anything
+   automated or multi-user.
+
+**Reference implementation:** loki #921 — `src/components/settings/OwnModelSettings.tsx`,
+`src/app/api/settings/model/{route,probe/route}.ts`, `src/lib/own-model.ts`,
+test `scripts/test/own-model.ts`.
+
+### Where each app stands (2026-09-26)
+
+| App | State |
+|---|---|
+| loki | the reference — live (#921) |
+| heidi | live (#138; ai-kit 1.18 in #140) — browser-only key by choice |
+| botsmann | #208 — keys were plaintext AND returned by `GET /api/settings`; now sealed, checked, hinted |
+| kivvi | #125 (draft, client app) — company key checked + encrypted with its integration-secrets helper |
+| substrata | in progress in its own session — saved without a check; free-text model |
+| orangecat | direct (non-OpenRouter) keys unlock no models in the picker, and "auto" on a direct key uses hardcoded defaults instead of the key's strongest model |
+| evig | provider key is admin-only (not reader BYOK) |
+| aoz-begleitung, datacat, hirnli, sbb-fundbuero, surf-your-life, truthseeker, vitareba | no reader keys yet — adopt this section when one is added |
+
 ## What is worth extracting next
 
 Ranked by (copies × how identical the logic is). Counts from
@@ -478,7 +626,13 @@ is how every drawer in this fleet waits. Only a control with part of itself on
 screen and part off is reported, which separates the two with no list of
 exceptions to maintain. The floor is 4px: the first sweep found loki's "Get
 started" one pixel past the edge, which is sub-pixel rounding rather than a
-clipped button.
+clipped button. A link inside a nav that **scrolls** sideways (`overflow-x:
+auto|scroll`) is not reported while that scroller is itself on screen: its clip
+stops the link painting past the edge and a swipe reaches it, the same
+exemption the render sweep gives a carousel. camille's sitekit masthead was
+reported "95px off" for exactly that on 2026-09-26; what was real there — a
+third section showing as a lone "Ü" — was fixed in sitekit (#25), not by the
+exemption. An `overflow: hidden` clip stays reported: nothing scrolls it back.
 
 **Enforced in three places, because they cover disjoint surfaces.**
 `scripts/ci/ui-defect-audit.mjs` checks 1, 3, 4, 7 and 8 by **rendering** each
@@ -534,6 +688,39 @@ group: near-spotless fleet-wide, because they got a convention **plus a gate**
 (`check:accent-ink`) rather than a shared component library.
 
 ---
+
+## Rendered layout — the render sweep and the widget's host contract
+
+Two classes that no repo's `verify` can see, each owned ONCE, centrally:
+
+**Layout defects on the painted page** — `scripts/ci/render-sweep.mjs`
+(`render-sweep.yml`, weekly + on demand). Renders home + key pages of every
+served site (loki `apps.conf` rows + `extraSites`; pages in
+`render-sweep.pages.json`) at 390 / 834 / 1440 and counts, per site: nav
+contract rules 3/7/8 (reusing `ui-defect-audit.mjs`'s MEASURE, not a second
+copy), other controls crossing the viewport, fixed/sticky controls on top of
+each other (incl. the Loki launcher), empty headings (and caps labels whose
+next heading opens a different section), numbers split across lines in table
+cells/stats, and uncaught page errors. `render-sweep.baseline` is a ratchet:
+a site x check count may fall, never rise. Public GET pages only (DENY refuses
+api/admin/auth/cron/job paths before any request); no AI calls. Self-tested
+(`test-render-sweep.mjs`, every check pinned firing and silent, mutation-proven)
+before each sweep. **Client sites are swept and baselined, never fixed from
+here.** To lower a count: fix the site, then `--emit-baseline` in the PR.
+
+**The feedback launcher sitting on host UI** — fixed in the widget itself
+(loki `widget/`), so all ~20 embedding sites get it without touching them. The
+launcher hit-tests candidate slots and never sits on a control; it hides
+rather than cover one. What heuristics cannot see, a host declares:
+
+| attribute | where | effect |
+|---|---|---|
+| `data-fc-avoid` | any element | never overlap it |
+| `data-fc-place="left"` / `"right"` | `<html>` or a rendered region | keep the launcher on that side |
+| `data-fc-place="hidden"` | `<html>` or a rendered region | no launcher while that region is rendered |
+
+Full contract: loki `widget/README.md`. Do not add per-site offsets
+(`data-fc-bottom`, CSS padding for the launcher) — declare the region instead.
 
 ## The process
 
