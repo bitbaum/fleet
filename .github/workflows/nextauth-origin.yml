@@ -69,6 +69,32 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
 
+      # Same public endpoint, second question: which sign-in methods does each
+      # OWN product offer? STACK.md says OrangeCat only. Runs even when the
+      # origin audit above failed — they are independent findings, and one red
+      # step must not hide the other.
+      - name: Self-test the own-product sign-in gate
+        if: ${{ !cancelled() }}
+        run: node scripts/ci/test-own-product-signin-audit.mjs
+
+      - name: Own products sign in via OrangeCat only
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          {
+            echo '## own products: sign in via OrangeCat only'
+            echo
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          set +e
+          node scripts/ci/own-product-signin-audit.mjs 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          status=${PIPESTATUS[0]}
+          set -e
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
       - name: Alert Telegram on failure
         if: failure()
         env:
@@ -82,6 +108,6 @@ jobs:
           [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || { echo "TELEGRAM_* secrets missing — alert undeliverable" >&2; exit 1; }
           curl -sS --fail --max-time 20 "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -d chat_id="${TG_CHAT}" \
-            -d text="🚨 Fleet next-auth ORIGIN guard failed — an app advertises the wrong sign-in/callback origin (OAuth sign-in cannot complete, sign-out lands dead), or its /api/auth/providers is 5xx. Fix: pin NEXTAUTH_URL/AUTH_URL in the app's env on the box and restart. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            -d text="🚨 Fleet next-auth guard failed — either an app advertises the wrong sign-in/callback origin (fix: pin NEXTAUTH_URL/AUTH_URL on the box), or an own product now offers a sign-in other than OrangeCat (see own-product-signin.baseline). The job summary says which. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             >/dev/null
           echo "telegram alerted"

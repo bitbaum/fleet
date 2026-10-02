@@ -1,0 +1,16 @@
+# own-product-signin-audit.mjs — deviations TOLERATED today, per own product.
+#
+#   <app> <provider-id>[,<provider-id>...]    # why, and what ends it
+#
+# A RATCHET: rows may only be removed. A new provider on any own product fails
+# the build, and a row whose provider is gone also fails until it is deleted.
+# Rule: fleet STACK.md, "Auth — who the user is": own products federate to
+# OrangeCat and keep no sign-in of their own.
+
+# Recorded 2026-09-24 from each product's live /api/auth/providers — what is
+# DEPLOYED, not what a branch says. Remove a provider, then delete its id here.
+loki            email-password,github,google,local,user-password,x-1a   # GitHub is ALSO a connected account (repo tokens) — keep it as a link after OrangeCat sign-in, drop it as a way in
+datacat         credentials
+evig            credentials
+petvity         credentials,google
+surf-your-life  credentials,google

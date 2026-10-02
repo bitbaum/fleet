@@ -20,7 +20,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Validation | zod | — |
 | ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). loki runner & ivy-portal: better-sqlite3 for embedded local state. |
 | Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | loki runner/ivy: SQLite embedded |
-| Auth — **who the user is** | **Federate to OrangeCat** (OIDC, `openid profile email`). The app keeps NO users table. See "Identity" below. | orangecat itself IS the identity provider. Client-owned apps never federate — their users belong to the client. |
+| Auth — **who the user is** | **Federate to OrangeCat** (OIDC, `openid profile email`). The app keeps NO users table. See "Identity" below. **Enforced since 2026-09-24** by `scripts/ci/own-product-signin-audit.mjs` (daily; today’s deviations ratcheted in `own-product-signin.baseline`). | orangecat itself IS the identity provider. Client-owned apps never federate — their users belong to the client. |
 | Auth — **client-owned apps** | **`better-auth` 1.x** + Drizzle/Postgres, magic link via `@bitbaum/mail-kit` | aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) — all pre-date the decision; migrate on contact, not on a schedule |
 | Test runner (apps) | Vitest | loki: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
