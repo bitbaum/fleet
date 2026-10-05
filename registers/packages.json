@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-09-28T14:29:00.731Z",
+  "generatedAt": "2026-10-05T15:18:55.021Z",
   "packages": [
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.18.0",
+      "version": "1.20.1",
       "install": {
         "source": "npm",
         "command": "pnpm add @bitbaum/ai-kit"
@@ -35,14 +35,15 @@
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
       "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
-      "version": "0.4.0",
+      "version": "0.5.2",
       "install": {
         "source": "npm",
         "command": "pnpm add bip-kit"
       },
-      "adopters": 12,
+      "adopters": 13,
       "adopterNames": [
         "aoz-begleitung",
+        "bitbaum",
         "botsmann",
         "datacat",
         "evig",
@@ -135,8 +136,9 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/design-tokens"
       },
-      "adopters": 5,
+      "adopters": 6,
       "adopterNames": [
+        "accountkit",
         "bitbaum",
         "chatkit",
         "loki",
@@ -149,15 +151,35 @@
       "name": "listkit",
       "repo": "https://github.com/bitbaum/listkit",
       "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "install": {
         "source": "git",
         "command": "pnpm add github:bitbaum/listkit#v0.1.0"
       },
-      "adopters": 5,
+      "adopters": 6,
       "adopterNames": [
         "bitbaum",
         "hirnli",
+        "loki",
+        "orangecat",
+        "skif",
+        "substrata"
+      ]
+    },
+    {
+      "slug": "chatkit",
+      "name": "@bitbaum/chatkit",
+      "repo": "https://github.com/bitbaum/chatkit",
+      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
+      "version": "0.3.1",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chatkit#v0.1.0"
+      },
+      "adopters": 5,
+      "adopterNames": [
+        "bitbaum",
+        "heidi",
         "loki",
         "skif",
         "substrata"
@@ -183,20 +205,21 @@
       ]
     },
     {
-      "slug": "chatkit",
-      "name": "@bitbaum/chatkit",
-      "repo": "https://github.com/bitbaum/chatkit",
-      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.1.0",
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, and Sign in with OrangeCat (provider, session refresh, identity rules, error screen). Styled from @bitbaum/design-tokens.",
+      "version": "0.2.0",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/chatkit#v0.1.0"
+        "command": "pnpm add github:bitbaum/accountkit#v0.2.0"
       },
-      "adopters": 3,
+      "adopters": 4,
       "adopterNames": [
-        "bitbaum",
+        "heidi",
         "loki",
-        "skif"
+        "skif",
+        "solon"
       ]
     },
     {
@@ -204,7 +227,7 @@
       "name": "@bitbaum/sitekit",
       "repo": "https://github.com/bitbaum/sitekit",
       "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "install": {
         "source": "npm",
         "command": "pnpm add @bitbaum/sitekit"
