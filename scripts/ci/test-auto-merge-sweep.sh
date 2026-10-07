@@ -57,7 +57,7 @@ run_sweep() {
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  printf '{"author_association":"%s","user":{"login":"author1"},"head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  printf '{"author_association":"%s","user":{"login":"%s"},"head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" "${RS_LOGIN:-author1}" > "$dir/assoc.txt"
   # The author's permission on the repo, as the real gh --jq '.permission'
   # would print it. Default "read": an outside PR stays outside.
   printf '%s\n' "${RS_PERM:-read}" > "$dir/perm.txt"
@@ -81,7 +81,7 @@ CURL
     chmod +x "$dir/curl"
   fi
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_LOGIN=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -531,6 +531,31 @@ for p in read none ''; do
       || no "permission '${p:-unreadable}' let an outside PR merge unreviewed"
   fi
 done
+
+# 29. Dependabot ships on green CI: GitHub's own updater, unsigned commits,
+#     no review — the owner's call of 2026-10-07.
+if RS_LOGIN='dependabot[bot]' RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(unsigned 7c7c7c7c77777777)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 1 ] && grep -q 'TRUST_DEPENDABOT' <<<"$SWEEP_OUT" \
+    && ok 'a green Dependabot PR merges without a review or a sign-off' \
+    || no 'a green Dependabot PR merges without a review or a sign-off'
+fi
+
+# 30. ...and only Dependabot: a look-alike login stays outside.
+if RS_LOGIN='dependabot-fan' RS_ASSOC=NONE RS_COMMITS="{\"commits\":[$(signed 6d6d6d6d88888888)]}" \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'a look-alike login is still an outside PR' \
+    || no 'a look-alike login merged unreviewed'
+fi
+
+# 31. TRUST_DEPENDABOT=0 puts Dependabot back behind the review gate.
+if TRUST_DEPENDABOT=0 RS_LOGIN='dependabot[bot]' RS_ASSOC=NONE REQUIRE_DCO=0 \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && grep -q 'no approving review' <<<"$SWEEP_OUT" \
+    && ok 'TRUST_DEPENDABOT=0 holds Dependabot for review' \
+    || no 'TRUST_DEPENDABOT=0 holds Dependabot for review'
+fi
 
 # (The verdict used to sit HERE, with ~70 lines of tests appended after it.
 # A script's exit status is its LAST command's, so `[ "$FAIL" -eq 0 ]` was

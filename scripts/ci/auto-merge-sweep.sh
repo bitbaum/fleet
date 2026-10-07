@@ -561,6 +561,21 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     esac
   fi
 
+  # Dependabot is GitHub's own updater, not a stranger: it can only open a PR
+  # that bumps a dependency this repo already declares, and the bump passes
+  # the same green CI as any other PR. Holding it for a human review left ~60
+  # green updates (two of them security fixes) piling up across the fleet,
+  # because nobody was reviewing them — a gate nobody opens protects nothing
+  # and blocks the fixes. The owner decided on 2026-10-07 that dependency
+  # updates ship on green CI like the owner's own work, majors included.
+  # The login cannot be spoofed: it is GitHub's app identity, and anyone
+  # else pushing to a Dependabot branch already has write access.
+  # TRUST_DEPENDABOT=0 restores the review gate for a repo that wants it.
+  if [ "$outside" = "1" ] && [ "${TRUST_DEPENDABOT:-1}" = "1" ] && [ "${author:-}" = "dependabot[bot]" ]; then
+    outside=0
+    echo "[auto-merge] #${number} author dependabot[bot]: a dependency update, merged on green CI (TRUST_DEPENDABOT)"
+  fi
+
   if [ "$outside" = "1" ] && [ "${REQUIRE_DCO:-1}" = "1" ]; then
     commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
     unsigned=$(printf '%s' "$commits_json" \
