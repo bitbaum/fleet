@@ -561,6 +561,63 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     esac
   fi
 
+  # Dependabot's routine updates merge on green CI, like the owner's own PRs.
+  #
+  # The review rule above exists so a STRANGER's code cannot reach production
+  # unread. Dependabot is not that: it is GitHub's own bot, and it writes no
+  # code, only version numbers in manifests. Holding every one of its PRs for
+  # a human review meant none ever merged — orangecat had 26 open alerts, 2
+  # critical, while its fixes sat waiting (2026-10-08) — and the owner asked
+  # for that toil to go away. So it is trusted, narrowly, when ALL hold:
+  #   - the author IS the bot (login dependabot[bot] AND user type Bot), not a
+  #     person who picked a lookalike name;
+  #   - the PR touches ONLY dependency manifests/lockfiles — a workflow file is
+  #     not one (it runs with the repo's secrets), so Actions bumps still wait;
+  #   - no update in it crosses a major version (for 0.x, a minor), read from
+  #     the "Bumps/Updates X from A to B" lines Dependabot writes.
+  # A bad upstream release is the residual risk; pnpm's minimum release age
+  # already refuses versions too new to have been looked at. Majors — which
+  # break things — still wait for a person. DEPENDABOT_AUTOMERGE=0 turns this off.
+  if [ "$outside" = "1" ] && [ "${DEPENDABOT_AUTOMERGE:-1}" = "1" ] \
+     && [ "$(printf '%s' "$pull_json" | jq -r '"\(.user.login // "")/\(.user.type // "")"' 2>/dev/null)" = "dependabot[bot]/Bot" ]; then
+    why=""
+    files=$(gh api "repos/${REPO}/pulls/${number}/files?per_page=100" --jq '.[].filename' 2>/dev/null || echo "?unreadable")
+    other=$(printf '%s\n' "$files" | grep -vE '(^|/)(package\.json|package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|yarn\.lock|requirements[^/]*\.txt|poetry\.lock|Pipfile(\.lock)?|Cargo\.(toml|lock)|go\.(mod|sum)|Gemfile(\.lock)?)$' | grep -v '^$' | head -3 | tr '\n' ' ' || true)
+    # `|| true` above and `if` here, not `[ ] && x=`: under set -e + pipefail an
+    # empty grep or a false test is a fatal exit — and both are exactly what a
+    # CLEAN Dependabot PR produces.
+    if [ -z "$files" ]; then
+      other="?no files listed"
+    fi
+    if [ -n "$other" ]; then
+      why="touches more than dependency manifests (${other% })"
+    fi
+    if [ -z "$why" ]; then
+      bumps=$(printf '%s\n%s\n' "$(printf '%s' "$pull_json" | jq -r '.title // ""')" "$(printf '%s' "$pull_json" | jq -r '.body // ""')" \
+        | grep -E '^(deps: |chore\(deps\): |build\(deps\): )?([Bb]umps?|Updates) ' \
+        | grep -oE 'from v?[0-9][0-9A-Za-z.+-]* to v?[0-9][0-9A-Za-z.+-]*' | sort -u || true)
+      if [ -z "$bumps" ]; then
+        why="no 'from A to B' version line to check"
+      else
+        while read -r _ from _ to; do
+          fm=${from#v}; tm=${to#v}
+          f1=${fm%%.*}; t1=${tm%%.*}
+          f2=$(printf '%s' "$fm" | cut -d. -f2); t2=$(printf '%s' "$tm" | cut -d. -f2)
+          if [ "$f1" != "$t1" ] || { [ "$f1" = "0" ] && [ "$f2" != "$t2" ]; }; then
+            why="a breaking-version update (${from} → ${to})"
+            break
+          fi
+        done <<< "$bumps"
+      fi
+    fi
+    if [ -z "$why" ]; then
+      outside=0
+      echo "[auto-merge] #${number} Dependabot, manifests only, no major update — merges on green like our own"
+    else
+      echo "[auto-merge] #${number} Dependabot but ${why} — needs a maintainer's review"
+    fi
+  fi
+
   if [ "$outside" = "1" ] && [ "${REQUIRE_DCO:-1}" = "1" ]; then
     commits_json=$(gh pr view "$number" --repo "$REPO" --json commits)
     unsigned=$(printf '%s' "$commits_json" \
