@@ -166,6 +166,17 @@ if run_sweep failure 'Set up job' 1; then
     || no 're-runs a base run that FAILED before executing any of our code'
 fi
 
+# 2b. A run marked failure in which NO job failed: GitHub never created a job
+#     the workflow declares (orangecat 2026-10-07: CI's post-main hand-off was
+#     never scheduled, every real job green). Nothing of ours failed — re-run.
+#     The fake gh returns the --jq result directly; NO_FAILED_JOB is what the
+#     real jq prints when jobs are listed and none concluded failure.
+if run_sweep failure 'NO_FAILED_JOB' 1; then
+  [ "$(reruns)" -ge 1 ] \
+    && ok 're-runs a base run marked failure in which no job failed' \
+    || no 're-runs a base run marked failure in which no job failed'
+fi
+
 # 3. A genuine failure IS a verdict. It must block, and must NOT be re-run —
 #    retrying real failures is how a broken base gets merged onto anyway.
 if run_sweep failure 'Run tests' 1; then
