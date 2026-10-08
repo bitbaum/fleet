@@ -57,7 +57,13 @@ run_sweep() {
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
-  printf '{"author_association":"%s","user":{"login":"author1"},"head":{"sha":"headsha0001"}}\n' "${RS_ASSOC:-MEMBER}" > "$dir/assoc.txt"
+  # RS_AUTHOR "login/type" and RS_BODY shape the pull itself; RS_FILES (one
+  # path per line) is what the files endpoint lists.
+  local author_login="${RS_AUTHOR:-author1/User}"
+  jq -n --arg a "${RS_ASSOC:-MEMBER}" --arg l "${author_login%/*}" --arg t "${author_login#*/}" \
+        --arg title "${RS_TITLE:-the fix}" --arg body "${RS_BODY:-}" \
+        '{author_association:$a, user:{login:$l, type:$t}, head:{sha:"headsha0001"}, title:$title, body:$body}' > "$dir/assoc.txt"
+  printf '%s\n' "${RS_FILES:-package.json}" > "$dir/files.txt"
   # The author's permission on the repo, as the real gh --jq '.permission'
   # would print it. Default "read": an outside PR stays outside.
   printf '%s\n' "${RS_PERM:-read}" > "$dir/perm.txt"
@@ -81,7 +87,7 @@ CURL
     chmod +x "$dir/curl"
   fi
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -111,6 +117,7 @@ case "\$ARGS" in
   # The review list, matched BEFORE the pull itself: both paths start the same.
   "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
   "api repos/"*"/collaborators/"*"/permission"*) cat "$dir/perm.txt" ;;
+  "api repos/"*"/pulls/"*"/files"*)  cat "$dir/files.txt" ;;
   "api repos/"*"/pulls/"*)          cat "$dir/assoc.txt" ;;
   "pr view"*"--json commits"*)      cat "$dir/commits.json" ;;
   "pr view"*)                       cat "$dir/view.json" ;;
@@ -433,6 +440,71 @@ if RS_REARM_LATE=2 RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run
   [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 0 ] \
     && ok 'waits for a push-triggered run GitHub has not listed yet, and does not re-arm' \
     || no 'waits for a push-triggered run GitHub has not listed yet, and does not re-arm'
+fi
+
+echo "auto-merge sweep — Dependabot"
+
+# Dependabot is an outside author with no review. Its routine updates merge on
+# green; anything that could break or reach CI secrets still waits for a person.
+DB='dependabot[bot]/Bot'
+LOCKS=$'package.json\npnpm-lock.yaml'
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [hono](https://x) from 4.13.5 to 4.13.7.' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] \
+    && ok 'merges a Dependabot patch update with no review' \
+    || no 'merges a Dependabot patch update with no review'
+fi
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" \
+   RS_BODY=$'Bumps the npm group with 2 updates:\nUpdates `a` from 1.2.0 to 1.4.1\nUpdates `b` from 3.0.0 to 3.0.9' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] \
+    && ok 'merges a grouped Dependabot update when every member is non-major' \
+    || no 'merges a grouped Dependabot update when every member is non-major'
+fi
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [mermaid](https://x) from 11.17.2 to 12.1.0.' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && grep -q 'breaking-version update' <<<"$SWEEP_OUT" \
+    && ok 'holds a Dependabot MAJOR update for a person' \
+    || no 'holds a Dependabot MAJOR update for a person'
+fi
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" \
+   RS_BODY=$'Updates `a` from 1.0.0 to 1.0.1\nUpdates `b` from 2.4.0 to 3.0.0' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'holds a grouped update if any one member is a major' \
+    || no 'holds a grouped update if any one member is a major'
+fi
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [katex](https://x) from 0.16.47 to 0.18.2.' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'treats a 0.x minor as breaking and holds it' \
+    || no 'treats a 0.x minor as breaking and holds it'
+fi
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES=$'.github/workflows/ci.yml' RS_BODY='Bumps [actions/checkout](https://x) from 6.0.0 to 6.0.1.' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && grep -q 'more than dependency manifests' <<<"$SWEEP_OUT" \
+    && ok 'holds a Dependabot PR that touches a workflow (it runs with secrets)' \
+    || no 'holds a Dependabot PR that touches a workflow (it runs with secrets)'
+fi
+
+if RS_AUTHOR='dependabot[bot]/User' RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [hono](https://x) from 4.13.5 to 4.13.7.' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'a person using the name dependabot[bot] is not trusted' \
+    || no 'a person using the name dependabot[bot] is not trusted'
+fi
+
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Some manual change with no version line.' \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'holds a Dependabot PR whose versions cannot be read' \
+    || no 'holds a Dependabot PR whose versions cannot be read'
 fi
 
 echo "auto-merge sweep — the contributor gate"
