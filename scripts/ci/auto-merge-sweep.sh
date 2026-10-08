@@ -680,11 +680,32 @@ if [ "$merged_any" -eq 1 ]; then
   # merges in twenty minutes) main's CI cancelled itself over and over and
   # nothing deployed for half an hour. Re-arm only when no run for the new
   # tip exists.
+  #
+  # ...and LOOK FOR IT FOR A WHILE before concluding there is none. The check
+  # used to run once, seconds after the merge, before GitHub had registered the
+  # push-triggered run — so it found nothing, dispatched a second run, and the
+  # concurrency group cancelled the first. On orangecat that happened on 28 of
+  # 45 merges (2026-10-02..07): a cancelled run per merge, and the bare deploy
+  # reconcilers then read "no green CI for the tip" and left a red CD run.
+  # A GITHUB_TOKEN merge still gets its re-arm, just REARM_WAIT_SECONDS later.
   tip=$(gh api "repos/${REPO}/commits/${BASE_BRANCH}" --jq '.sha' 2>/dev/null || true)
+  rearm_poll="${REARM_POLL_SECONDS:-5}"
+  # How many times to look: one now, then one per poll across the wait.
+  rearm_looks=$(( ${REARM_WAIT_SECONDS:-45} / (rearm_poll > 0 ? rearm_poll : 1) + 1 ))
   for wf in $REARM_WORKFLOWS; do
-    # No --branch: see base_runs_json above.
-    if [ -n "$tip" ] && gh run list --repo "$REPO" --workflow "$wf" --limit 30 \
-         --json headSha,headBranch --jq ".[] | select(.headBranch == \"${BASE_BRANCH}\") | .headSha" 2>/dev/null | grep -qx "$tip"; then
+    seen=0
+    look=0
+    while [ -n "$tip" ] && [ "$look" -lt "$rearm_looks" ]; do
+      look=$((look + 1))
+      # No --branch: see base_runs_json above.
+      if gh run list --repo "$REPO" --workflow "$wf" --limit 30 \
+           --json headSha,headBranch --jq ".[] | select(.headBranch == \"${BASE_BRANCH}\") | .headSha" 2>/dev/null | grep -qx "$tip"; then
+        seen=1
+        break
+      fi
+      [ "$look" -lt "$rearm_looks" ] && sleep "$rearm_poll"
+    done
+    if [ "$seen" -eq 1 ]; then
       echo "[auto-merge] ${wf} already running for ${tip:0:8} (push-triggered) — no re-arm needed"
       continue
     fi

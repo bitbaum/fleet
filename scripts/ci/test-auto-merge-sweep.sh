@@ -44,7 +44,7 @@ no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 # Emits the sweep's combined output; records gh calls in $GH_LOG.
 run_sweep() {
   local conclusion="$1" failed_steps="${2:-}" attempt="${3:-1}"
-  local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}" rearm_seen="${RS_REARM_SEEN:-}"
+  local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}" rearm_seen="${RS_REARM_SEEN:-}" rearm_late="${RS_REARM_LATE:-0}"
   local status_field="${RS_STATUS:-completed}"
   local base_sha="${RS_BASESHA:-basesha000000}"
   local head_field="${RS_HEADSHA:-$base_sha}"
@@ -81,7 +81,7 @@ CURL
     chmod +x "$dir/curl"
   fi
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -94,7 +94,9 @@ case "\$ARGS" in
   "run list"*"--json status"*)      printf '%s\n' '$deploy_running' ;;
   "run list"*"--status success"*)   printf '%s\n' '$deployed_sha' ;;
   # Re-arm guard: the CI runs already on the base tip (push-triggered).
-  "run list"*"--json headSha"*)     printf '%s\n' '$rearm_seen' ;;
+  "run list"*"--json headSha"*)
+    n=\$(( \$(cat "$dir/rearm-looks" 2>/dev/null || echo 0) + 1 )); echo "\$n" > "$dir/rearm-looks"
+    if [ "\$n" -gt "$rearm_late" ]; then printf '%s\n' '$rearm_seen'; fi ;;
   "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"$branch_field}' ;;
   *"/actions/runs/"*"/jobs"*)       printf '%s\n' '$failed_steps' ;;
   "run rerun"*)                     echo "rerun dispatched" ;;
@@ -122,7 +124,7 @@ FAKE
 
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
-        DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" \
+        DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" REARM_POLL_SECONDS=0 \
         bash "$SWEEP" 2>&1)
   status=$?
   SWEEP_OUT="$out"
@@ -422,6 +424,15 @@ if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 1 ] \
     && ok 're-arms CI exactly once when no run for the new tip exists' \
     || no 're-arms CI exactly once when no run for the new tip exists'
+fi
+
+# 19b. The push-triggered run exists but GitHub has not listed it yet when the
+#      sweep first looks — the race behind a cancelled CI run on 28 of 45
+#      orangecat merges. Looking again must find it, and dispatch nothing.
+if RS_REARM_LATE=2 RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 0 ] \
+    && ok 'waits for a push-triggered run GitHub has not listed yet, and does not re-arm' \
+    || no 'waits for a push-triggered run GitHub has not listed yet, and does not re-arm'
 fi
 
 echo "auto-merge sweep — the contributor gate"
