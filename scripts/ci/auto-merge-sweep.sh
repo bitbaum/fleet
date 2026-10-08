@@ -123,13 +123,28 @@ MAX_RUN_ATTEMPTS="${MAX_RUN_ATTEMPTS:-3}"
 # ~14 hours. A genuine failure still blocks — that IS a verdict about the code.
 run_failure_is_infra() {
   run_failure_is_infra_id="$1"
+  # A run marked FAILURE in which no job failed is GitHub's doing, not the
+  # repo's: a job the workflow declares was never created. On orangecat
+  # (2026-10-07, twice in 45 merges) CI's post-main hand-off was never
+  # scheduled, every real job was green, and the run still read "failure". The
+  # guard below then refused every merge and nothing re-ran CI, so main sat
+  # un-deployed for ~25 minutes until something unrelated did. It is a
+  # non-verdict like "Set up job" — re-run it (bounded by MAX_RUN_ATTEMPTS).
+  # Only when jobs ARE listed and none failed: an empty list is the API saying
+  # nothing, and absence of evidence is not evidence of an incident (case 4).
   run_failure_is_infra_steps=$(gh api \
     "repos/${REPO}/actions/runs/${run_failure_is_infra_id}/jobs" --paginate \
-    --jq '[ .jobs[]
-            | select(.conclusion == "failure")
-            | [ .steps[]? | select(.conclusion == "failure") | .name ] ]
-          | flatten | unique | join("|")' 2>/dev/null) || return 1
+    --jq 'if (.jobs | length) > 0
+             and ([ .jobs[] | select(.conclusion == "failure") ] | length) == 0
+          then "NO_FAILED_JOB"
+          else [ .jobs[]
+                 | select(.conclusion == "failure")
+                 | [ .steps[]? | select(.conclusion == "failure") | .name ] ]
+               | flatten | unique | join("|") end' 2>/dev/null) || return 1
   [ -n "$run_failure_is_infra_steps" ] || return 1
+  if [ "$run_failure_is_infra_steps" = "NO_FAILED_JOB" ]; then
+    return 0
+  fi
   # ONLY when the sole failing step is GitHub's own runner setup. Anything else
   # is the repo's code failing and must keep blocking.
   [ "$run_failure_is_infra_steps" = "Set up job" ]
