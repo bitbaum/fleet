@@ -111,6 +111,11 @@ done
 [ -f "$APP/.github/dependabot.yml" ] && ok "ships a Dependabot config" || bad "no .github/dependabot.yml"
 grep -q 'sha256sum -c' "$APP/.github/workflows/secret-scan.yml" && ok "the secret scanner is checksum-pinned" \
   || bad "the secret scanner download is not verified"
+if grep -q 'useDefault = true' "$APP/.gitleaks.toml" 2>/dev/null; then
+  ok "gitleaks keeps its default rules (.gitleaks.toml only adds the NEXT_PUBLIC_ allowance)"
+else
+  bad ".gitleaks.toml missing or drops gitleaks' default rules"
+fi
 if grep -rhoE 'uses: actions/(checkout|setup-node)@v[1-6]\b' "$APP/.github/workflows"; then
   bad "a workflow pins a stale checkout/setup-node (the fleet is on v7)"
 else
