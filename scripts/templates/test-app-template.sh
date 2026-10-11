@@ -164,6 +164,16 @@ if [ "$FULL" = 1 ]; then
   else
     bad "verify failed:"; tail -60 "$WORK/verify.log" | sed 's/^/      /'
   fi
+  # drizzle/ must be exactly what lib/db/schema.ts generates: a schema edit
+  # without its migration would deploy code against tables that do not exist.
+  # This also runs drizzle-kit itself, so its toolchain is proven to work.
+  if gen="$(cd "$APP" && pnpm exec drizzle-kit generate --name drift-check 2>&1)" \
+     && grep -q 'No schema changes' <<<"$gen"; then
+    ok "drizzle/ is exactly what lib/db/schema.ts generates"
+  else
+    bad "lib/db/schema.ts and drizzle/ disagree (or drizzle-kit failed):"
+    printf '%s\n' "$gen" | tail -15 | sed 's/^/      /'
+  fi
   if [ -n "${DATABASE_URL:-}" ]; then
     if (cd "$APP" && pnpm run test:integration >"$WORK/integration.log" 2>&1); then
       ok "accounts end to end against Postgres (pnpm run test:integration)"
