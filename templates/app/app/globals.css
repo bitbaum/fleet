@@ -1,0 +1,23 @@
+@import "@bitbaum/design-tokens/tokens.css";
+@import "tailwindcss";
+@config "../tailwind.config.mjs";
+
+/*
+ * The product owns almost no design of its own. Every colour, face, weight,
+ * tracking and radius is @bitbaum/design-tokens (imported above), the brand
+ * SSOT OrangeCat, Loki and Solon share. Do not redefine a token here; only
+ * compositions of shared tokens belong below.
+ *
+ * A CLIENT-owned app replaces the import above and the preset in
+ * tailwind.config.mjs with the client's own tokens (fleet SHARED.md).
+ */
+
+html {
+  color-scheme: light;
+}
+
+/* The tokens' dark theme is the `.dark` class; layout.tsx sets it from the
+   reader's system preference before the first paint. */
+html.dark {
+  color-scheme: dark;
+}

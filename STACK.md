@@ -20,8 +20,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Validation | zod | — |
 | ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). loki runner & ivy-portal: better-sqlite3 for embedded local state. |
 | Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | loki runner/ivy: SQLite embedded |
-| Auth — **who the user is** | **Federate to OrangeCat** (OIDC, `openid profile email`). The app keeps NO users table. See "Identity" below. **Under revision 2026-10-02:** George wants every app to offer working sign-up and sign-in with email + password, Google, GitHub, X, Facebook/Meta and OrangeCat. The OrangeCat-only gate built from this row (fleet#139) was removed the same day; whether the methods live once at OrangeCat or in each app is being decided. | orangecat itself IS the identity provider. Client-owned apps never federate — their users belong to the client. |
-| Auth — **client-owned apps** | **`better-auth` 1.x** + Drizzle/Postgres, magic link via `@bitbaum/mail-kit` | aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) — all pre-date the decision; migrate on contact, not on a schedule |
+| Auth | **Every app owns its accounts** (decided 2026-10-11): **`better-auth` 1.x** on Drizzle + `pg`, offering every method — email + password with verification, magic link via `@bitbaum/mail-kit`, passkeys, TOTP 2FA, the shared bitbaum sign-in (Google, GitHub, X, Meta, Apple) and OrangeCat, both as OIDC. Roles live in the app's own users table. Wired once in `templates/app`. See "Identity". | orangecat itself is the identity provider (Supabase Auth). aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) pre-date better-auth — migrate on contact, not on a schedule |
 | Test runner (apps) | Vitest | loki: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
@@ -34,36 +33,44 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
 | Maps & globes | **`d3-geo` + `topojson-client`, drawn on Canvas 2D** (an orthographic globe, or any flat projection); country outlines from Natural Earth via `world-atlas`, built into the repo. Why: substrata already shipped its map on d3-geo, and a globe is one projection away — no second map stack. Canvas 2D rather than WebGL (three.js/globe.gl ~600 KB, MapLibre ~800 KB, cobe draws dots, not countries): 240 filled countries per frame fit a phone's frame budget, and it runs wherever the page runs, so there is no flat fallback to maintain. Tiles/street maps would be MapLibre — no repo needs them yet. | — |
 
-## Identity (2026-09-11)
+## Identity (2026-10-11)
 
-**There are two populations of user, and conflating them is the mistake this
-section exists to prevent.**
+**Every app owns its accounts and offers every way in.** A person can register
+in one product without any other; nothing is required of them elsewhere first.
+Supersedes the 2026-09-11 rule ("our products federate to OrangeCat and keep no
+users table"), reversed by the owner on 2026-10-11.
 
-**1. Our own products federate.** OrangeCat is the identity SSOT and has been
-since its OIDC provider shipped 2026-06-17 — discovery, authorize, token,
-userinfo, jwks, PKCE, refresh rotation. Loki federated 2026-07-02, Solon
-after, Heidi 2026-09-11. A federated app keeps **no users table, no password,
-no reset flow, no session table**. It reads `id_token.sub` — the actor id,
-never the email — and stops.
+- **Methods.** Email + password (with email verification when mail is
+  configured), a magic link sent through `@bitbaum/mail-kit`, passkeys, TOTP
+  2FA — all working with no external setup — plus two OIDC buttons, each shown
+  only when its env is set and hidden (never broken) otherwise:
+  - **the shared bitbaum sign-in** (`SIGNIN_ISSUER`, `SIGNIN_CLIENT_ID`,
+    `SIGNIN_CLIENT_SECRET`): one service that holds the Google, GitHub, X,
+    Meta and Apple credentials ONCE and speaks OIDC to every app, issuing a
+    per-app (pairwise) subject and creating no OrangeCat account. Social
+    providers are never configured per app. The service is its own project;
+    until it runs, the button is simply absent.
+  - **OrangeCat** (`ORANGECAT_OAUTH_CLIENT_ID`, `_SECRET`, optional
+    `_ISSUER`): one click for people who already have OrangeCat — one option
+    among them, never a requirement.
+- **Every type of user, one table.** Customers, helpers/assistants,
+  professionals, staff and admins are roles in the app's own users table.
+  Client-owned apps work the same way — their users belong to the client
+  because the app does.
+- **Pseudonymous by default.** No real name is required. An OIDC sign-in never
+  uses the provider's email as an identity (linking on an unverified address
+  is account takeover); further methods are linked from the account page,
+  optionally.
+- **OIDC clients:** OrangeCat's token endpoint accepts ONLY
+  `client_secret_post` (the default basic auth gets a misleading 400 "client_id
+  is required"), and PKCE is required even for confidential clients. Register a
+  client by adding a spec to orangecat's `scripts/oauth/register-client.ts`,
+  identity scopes only, then run it on the box.
 
-The instruction the identity-bridge spec gives Loki generalises to all of
-them: *"Do NOT build profiles, walls, or messaging inside Loki."* If your
-app needs profiles, payments or a public presence, those live at OrangeCat.
-Rebuilding them locally is the same mistake in a different repo.
+Loki, Solon and Heidi federate to OrangeCat today; they gain local accounts
+beside OrangeCat **on contact**, like every other migration here.
 
-Register a client by adding a spec to orangecat's
-`scripts/oauth/register-client.ts` — identity scopes only unless the app
-genuinely acts on OrangeCat's behalf — then run it on the box. Copy Solon's or
-Heidi's provider config verbatim: OrangeCat's token endpoint accepts ONLY
-`client_secret_post` (Auth.js defaults to `client_secret_basic`, which OC
-rejects with a 400 reading "client_id is required"), and PKCE is required even
-for confidential clients. Both cost a debugging cycle the first time.
-
-**2. Client-owned apps never federate.** aoz-begleitung's residents belong to AOZ,
-not to us. Those apps keep local auth, and the blessed library for new local
-auth is **better-auth 1.x**.
-
-### Why better-auth and not next-auth, for the local case
+### Why better-auth and not next-auth
 
 Because `next-auth` could not be enforced, and this file's whole premise is
 that unenforced choices drift. `blessed-versions.json` says so in its own
@@ -81,8 +88,10 @@ blessed ORM (Drizzle + `pg`), its magic-link plugin takes our own sender so
 
 ### What NOT to do
 
-Do **not** extract an auth package. `SHARED.md` lists auth under "what must NOT
-be centralized" — coupled to the framework *and* the user schema — and
+Do **not** extract an auth package. Auth is shared as the **starter's wiring**
+(`templates/app/lib/auth/`), copied into each product at birth and owned by it
+from then on. `SHARED.md` lists auth under "what must NOT be centralized" —
+coupled to the framework *and* the user schema — and
 `sitekit` is the evidence: it centralised nav markup, serves 2 of 20 repos, and
 shipped defects consumers could not patch because they did not own the markup.
 Centralising the markup centralised the bug.
@@ -150,6 +159,8 @@ weight → deleted.
 ## Rules
 
 1. New repos start on the blessed column. No exceptions without a row here.
+   Concretely: a new product starts from `templates/app`, which is this table
+   wired up and tested (see its README for how it is rendered).
 2. An exception is a documented architecture decision, not a habit. If the
    reason dies, the exception dies.
 3. When a migration lands, update "Migration state" in the same PR.
