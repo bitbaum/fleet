@@ -23,3 +23,11 @@ minimumReleaseAgeExclude:
   - "@bitbaum/mail-kit"
   - limitkit
   - bip-kit
+
+# drizzle-kit still reaches esbuild <=0.24 through the legacy @esbuild-kit
+# loader (GHSA-67mh-4wv8-2f99: its dev server answers any website). Nothing
+# here runs that server, but a known advisory in the lockfile is a standing
+# alert on every product made from this starter — so the loader gets the
+# patched esbuild. `pnpm run db:generate` is exercised by the template check.
+overrides:
+  "@esbuild-kit/core-utils>esbuild": ^0.25.0
