@@ -1,0 +1,53 @@
+name: Name check
+
+# Is this name free as a .com and a .ch? Asked of the registries themselves:
+# Verisign's RDAP for .com, SWITCH's RDAP for .ch. A 404 means not registered.
+# Every run includes a nonsense control name; if the control does not come
+# back free, the run fails instead of reporting every name as taken.
+#
+#   gh workflow run name-check.yml --repo bitbaum/fleet -f names="alpha beta"
+#
+# Results are annotations on the run (three lines: both free, one free, taken).
+# "Free" means unregistered at the moment of the check, not reserved — register
+# the pair the same day.
+on:
+  workflow_dispatch:
+    inputs:
+      names:
+        description: "space-separated names, without TLD, lowercase"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - env:
+          NAMES: ${{ inputs.names }}
+        run: |
+          set -uo pipefail
+          status() { curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$1"; }
+          control="zq$(date +%s)xk"
+          cc=$(status "https://rdap.verisign.com/com/v1/domain/$control.com")
+          ch=$(status "https://rdap.nic.ch/domain/$control.ch")
+          if [ "$cc" != 404 ] || [ "$ch" != 404 ]; then
+            echo "::error::the control name $control did not come back free (com:$cc ch:$ch): the registries are not answering as expected, so no result can be trusted"
+            exit 1
+          fi
+          free=""; part=""; taken=""
+          for n in $NAMES; do
+            [[ "$n" =~ ^[a-z0-9-]{2,40}$ ]] || { echo "::warning::skipped '$n' (lowercase letters, digits, hyphens)"; continue; }
+            c=$(status "https://rdap.verisign.com/com/v1/domain/$n.com")
+            h=$(status "https://rdap.nic.ch/domain/$n.ch")
+            s="$n(com:$([ "$c" = 404 ] && echo FREE || echo $c) ch:$([ "$h" = 404 ] && echo FREE || echo $h))"
+            if [ "$c" = 404 ] && [ "$h" = 404 ]; then free="$free $s"
+            elif [ "$c" = 404 ] || [ "$h" = 404 ]; then part="$part $s"
+            else taken="$taken $s"; fi
+            sleep 1
+          done
+          echo "::notice::BOTH FREE:${free:- none}"
+          echo "::notice::ONE FREE:${part:- none}"
+          echo "::notice::TAKEN:${taken:- none}"
