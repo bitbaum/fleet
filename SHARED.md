@@ -2,6 +2,11 @@
 
 **Before you build something, check this file. If it is here, install it.**
 
+**Starting a new product?** Do not assemble one: render
+[`templates/app`](templates/app/) (`scripts/templates/render-app.sh`, or Loki's
+kickoff / `new-site.sh`, which produce the same app). It already installs the
+packages below that every product needs, wired and tested.
+
 This exists because the alternative was tried and measurably failed. Every
 duplication in this fleet was already known, and knowing changed nothing:
 
@@ -548,7 +553,8 @@ Ranked by (copies × how identical the logic is). Counts from
 
 Stated explicitly, because "share everything" is its own failure:
 
-- **Auth / sessions** — coupled to the framework *and* the user schema.
+- **Auth / sessions** — coupled to the framework *and* the user schema. Shared
+  as the starter's wiring (`templates/app/lib/auth/`), never as a package.
 - **DB schemas** — Drizzle vs Prisma vs raw SQL; a shared schema fights every ORM.
 - **UI markup for chat and forms** — behaviour is shareable, *markup is not*.
   Each app owns its design tokens and has to keep looking like itself. This is

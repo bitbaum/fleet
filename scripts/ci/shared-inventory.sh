@@ -122,9 +122,15 @@ while IFS=$'\t' read -r name branch; do
   if [ "$(printf '%s' "$body" | jq -r '.truncated // false')" = "true" ]; then
     truncated="$truncated $name"
   fi
+  # The app starter is excluded, in fleet (templates/app/) and in the copy
+  # Loki scaffolds from (scripts/site-template/): it is the ONE canonical source
+  # every product is made from, not a duplicate. Each product rendered from it
+  # is still counted, so a concern the starter carries shows up once per
+  # product — which is the honest number.
   printf '%s' "$body" \
     | jq -r '.tree[]? | select(.type=="blob") | .path' 2>/dev/null \
     | grep -viE 'node_modules|\.next/|/dist/|__tests__|\.test\.|\.spec\.|\.d\.ts' \
+    | grep -vE '^templates/app/|^scripts/site-template/' \
     > "$TMP/$name.files"
   inspected=$((inspected + 1))
 done <<< "$repos"

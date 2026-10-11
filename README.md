@@ -28,6 +28,7 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | [`scripts/ci/bus-factor-audit.sh`](scripts/ci/bus-factor-audit.sh) | runs weekly: could someone who is not Cato operate each live app? Are its secrets NAMED in a committed env example (ratchet), and with `--box`: can it roll back, is its database dump fresh, do dumps leave the disk |
 | `scripts/ci/nextauth-origin-audit.mjs` | runs daily: does every next-auth app advertise its own public origin, or is it publishing `localhost` from behind Caddy? |
 | `scripts/fleet/` | local upkeep: worktree GC, stranded-work guard |
+| [`templates/app/`](templates/app/) | **the starter every new product is created from** — Next.js, next-intl (en/de/fr), better-auth accounts, CSP, ai-kit, mail-kit, limitkit, bip-kit, CI/CD. Render with `scripts/templates/render-app.sh`; Loki's kickoff and `new-site.sh` produce the same app. Rendered, installed, verified and signed into on every PR here |
 | `templates/ci/` | golden CI workflows + pre-commit — deliberately ONE central copy |
 | [`templates/CONTRIBUTING.md`](templates/CONTRIBUTING.md) | a pointer only: the terms live in `bitbaum/.github`, which GitHub shows on every repo's PR form. Do not copy them into a repo |
 

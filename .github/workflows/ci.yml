@@ -376,6 +376,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/ci/repo-metadata-audit.mjs --check
 
+      # templates/app is the starter every new product is created from, so a
+      # defect in it ships into every repo made after it. Its contract — the
+      # blessed majors, the verify floor, the CI/CD hygiene rules, the security
+      # invariants — is checked here with the fleet's own judges, no network.
+      # The app-template job below installs, verifies and signs people in.
+      - name: The app starter holds the fleet's contract
+        run: bash scripts/templates/test-app-template.sh
+
       # Drift guard. The fleet is on v7; templates handing out v4 is exactly
       # how this repo fell behind the repos it governs.
       - name: No stale action versions
@@ -386,3 +394,36 @@ jobs:
             exit 1
           fi
           echo "action versions: no stale pins"
+
+  # The starter, the way a product made from it runs: rendered with a test
+  # slug, installed from its lockfile, `pnpm run verify` (format, lint,
+  # typecheck, unit tests, build), and its accounts driven end to end against
+  # a real Postgres. Without this the template could rot while every check
+  # above stayed green — it is the one directory here nothing else executes.
+  app-template:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: starter_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d starter_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: templates/app/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: templates/app/.nvmrc
+      - name: Render, install, verify, sign in
+        env:
+          DATABASE_URL: postgres://app:app@localhost:5432/starter_test
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: bash scripts/templates/test-app-template.sh --full
