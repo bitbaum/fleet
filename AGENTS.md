@@ -199,17 +199,26 @@ is a bug.
 
 Use a package when the same behavior must exist in more than one product:
 tokens, mail, threads, a model client, a list query. Do not put a company list
-in a package. Do not add auth, ai-kit, or bip-kit unless the page needs a
+in a package.
+
+**If a package already does it, use it.** It is written and tested; writing it
+again is more code to keep and a second answer that drifts from the first.
+Discretion stays — where a package genuinely does not fit, do not force it —
+but not using it is the exception, so say why in one line where you chose
+otherwise. "It was quicker to write" is not a reason; "this list is five fixed
+options" is. Do not add auth, ai-kit, or bip-kit unless the page needs a
 signed-in user, a model, or a public changelog.
 
 A page that types the portfolio is a copy. Generate it, or do not ship it.
 
 ## Search
 
-Every search box goes through `@bitbaum/searchkit` (SHARED.md) — never a
-bare `.includes(q)` or `ILIKE '%q%'`, which lose a name to one wrong letter.
-Fix matching and ranking there, never in an app, and keep its generated
-typo suite (`typoCases` + `evaluate`) in the app's tests.
+A search box uses `@bitbaum/searchkit` (SHARED.md) by default, per the rule
+above. A bare `.includes(q)` or `ILIKE '%q%'` loses a name to one wrong
+letter — the SoundCloud failure. Skip it where typing is not searching (an
+exact id, a postcode, a filter over a handful of fixed options) and say so.
+Fix matching and ranking in the package, not in an app, and keep its
+generated typo suite (`typoCases` + `evaluate`) in the app's tests.
 
 ## Chats
 
