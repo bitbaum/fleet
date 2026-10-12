@@ -204,6 +204,13 @@ signed-in user, a model, or a public changelog.
 
 A page that types the portfolio is a copy. Generate it, or do not ship it.
 
+## Search
+
+Every search box goes through `@bitbaum/searchkit` (SHARED.md) — never a
+bare `.includes(q)` or `ILIKE '%q%'`, which lose a name to one wrong letter.
+Fix matching and ranking there, never in an app, and keep its generated
+typo suite (`typoCases` + `evaluate`) in the app's tests.
+
 ## Chats
 
 Every chat is `@bitbaum/chatkit`; fix chat bugs there, never in an app. The
