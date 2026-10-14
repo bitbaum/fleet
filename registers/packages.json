@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T16:05:57.263Z",
+  "generatedAt": "2026-10-14T09:06:54.333Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -241,6 +241,26 @@
       ]
     },
     {
+      "slug": "searchkit",
+      "name": "@bitbaum/searchkit",
+      "repo": "https://github.com/bitbaum/searchkit",
+      "description": "Search that finds what was meant: typo budgets by word length, prefix while typing, German spellings without umlauts, joined and split words, Algolia-order tie-break ranking, highlight ranges, query expansion for any database, and a generated typo regression suite. Zero dependencies; React optional.",
+      "version": "0.2.2",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/searchkit#v0.2.2"
+      },
+      "adopters": 6,
+      "adopterNames": [
+        "evig",
+        "heidi",
+        "loki",
+        "orangecat",
+        "solon",
+        "substrata"
+      ]
+    },
+    {
       "slug": "threadkit",
       "name": "threadkit",
       "repo": "https://github.com/bitbaum/threadkit",
@@ -257,6 +277,23 @@
         "skif",
         "substrata",
         "vitareba"
+      ]
+    },
+    {
+      "slug": "geo-kit",
+      "name": "@bitbaum/geo-kit",
+      "repo": "https://github.com/bitbaum/geo-kit",
+      "description": "Versioned, on-demand geography resources and sourced boundary assertions for web applications.",
+      "version": "0.1.1",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/geo-kit#a337aec928cf7804fecf459c308d366b90f4b2fa"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "orangecat",
+        "solon",
+        "substrata"
       ]
     },
     {
