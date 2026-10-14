@@ -26,6 +26,24 @@ the inventory underneath it is **generated**, and the number it produces is a
 
 ---
 
+## A new package gets its own repo by declaration
+
+A package needs its own repo: a folder inside another repo cannot be installed
+by tag, so Dependabot cannot move its consumers forward and every release
+means hand-edited pins in every app. Add an entry to
+`registers/package-repos.json` (name, description, the source repo and
+folder, any devDependencies the folder needs to build alone). On merge,
+`.github/workflows/package-repos.yml` creates `bitbaum/<name>` with
+`FLEET_PAT`: it copies the folder, makes it standalone from
+`templates/package` (CI, auto-merge, publish, Dependabot, licence), runs the
+package's own `verify`, and only then creates the repo and tags
+`v<version>`. Nobody clicks anything; an existing repo is never touched.
+
+npm is a separate, later step and is **not** on the critical path: consumers
+install the tag (`github:bitbaum/<name>#vX.Y.Z`) and Dependabot bumps it. The
+first npm publish of each package needs the account's passkey, so those are
+batched rather than done one by one.
+
 ## The registry — what already exists
 
 | Package | Install | Replaces |

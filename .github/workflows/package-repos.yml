@@ -1,0 +1,54 @@
+# Package repos come from a declaration, not from a person's click.
+#
+# registers/package-repos.json lists the package repos that must exist. On a
+# change to it (or to the script and template that build them), and daily as
+# a retry, this creates every declared repo that is missing: copied from its
+# source folder, made standalone from templates/package, checked by its own
+# `verify`, then created and tagged. Existing repos are never touched.
+#
+# Why CI and not an agent: an agent session's GitHub integration may not
+# create org repos (403 on POST /orgs/bitbaum/repos, 2026-10-12 and
+# 2026-10-14), which left searchkit living in orangecat's packages/ folder and
+# every consumer pinned to a commit someone bumps by hand.
+name: Package repos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - registers/package-repos.json
+      - scripts/packages/**
+      - templates/package/**
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: package-repos
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: pnpm (the fleet's pinned version)
+        run: npm install -g pnpm@11.25.0
+      - name: Create the declared package repos that do not exist
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::error::FLEET_PAT is not set; no repo can be created."
+            exit 1
+          fi
+          gh auth setup-git
+          node scripts/packages/create-package-repos.mjs

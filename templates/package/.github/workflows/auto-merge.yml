@@ -1,0 +1,56 @@
+# Auto-merge — nobody is in the merge loop.
+#
+# Green, ready PRs merge themselves and deploy themselves. The policy lives
+# ONCE, in bitbaum/fleet scripts/ci/auto-merge-sweep.sh (read it — it defines
+# exactly what "ready" means and how a PR is held back). This file only says
+# "run it, with these settings". Never copy the script: 22 copies once drifted
+# into 8 versions and a fix landed in one reached almost none of the others.
+#
+# Copy this file to .github/workflows/auto-merge.yml and set the lines marked
+# CHANGEME. Every other line is the same in every repo, and the shape is
+# audited (scripts/ci/cicd-hygiene-audit.sh, `automerge-miswired`): a duplicate
+# key, a hand-rolled job, or a workflow named here that the repo does not have
+# turns the weekly hygiene run red.
+#
+# To stop all of this: delete this file, or add a `hold` label to a PR.
+name: Auto-merge
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  schedule:
+    # A safety net for PRs that went green off-cycle (an external status that
+    # reported after CI, or a check that finished while this workflow was
+    # broken). GitHub throttles it to roughly hourly whatever the cron says.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+# Declared on the CALLER as well as inside the reusable workflow: a called
+# workflow's token is capped by what the caller grants. With a read-only token
+# the sweep merges nothing and still exits 0 — indistinguishable from having
+# nothing to merge.
+permissions:
+  contents: write # merge the PR
+  pull-requests: write # read PR state, delete the branch
+  actions: write # dispatch the re-arm and deploy workflows
+  checks: read # statusCheckRollup — only load-bearing on private repos
+  statuses: read
+
+jobs:
+  sweep:
+    uses: bitbaum/fleet/.github/workflows/auto-merge-sweep.yml@main
+    with:
+      base_branch: main
+      ci_workflow: ci.yml # the FILE of the workflow named under workflow_run
+      # SPACE-separated. Every workflow that runs on push and would therefore
+      # NOT fire after a merge made with GITHUB_TOKEN (ci.yml, publish.yml…).
+      # A comma becomes one bogus token: every dispatch fails, nothing ships,
+      # and the sweep still reports success.
+      rearm_workflows: "ci.yml"
+    secrets:
+      # Org secret, every bitbaum repo. A dispatch made with a PAT emits
+      # workflow_run, so after each merge the next PR's sweep fires at CI speed
+      # instead of waiting for the throttled schedule. Undefined resolves to
+      # empty and the reusable workflow falls back to github.token.
+      token: ${{ secrets.FLEET_PAT }}
