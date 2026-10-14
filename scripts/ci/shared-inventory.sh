@@ -89,6 +89,26 @@ repos=$(gh repo list "$OWNER" --limit "$LIMIT" --no-archived --source \
           --jq '.[] | "\(.name)\t\(.defaultBranchRef.name // "")"' 2>/dev/null)
 [ -n "$repos" ] || { echo "could not list repos for $OWNER" >&2; exit 2; }
 
+# Paths that are never a copy somebody wrote: dependencies, build output and
+# tests. dist/ is matched at the ROOT too — chatkit commits dist/composer.js,
+# and `/dist/` alone counted it as a second chat composer (2026-10-14).
+EXCLUDE_PATHS='node_modules|\.next/|(^|/)dist/|__tests__|\.test\.|\.spec\.|\.d\.ts'
+
+# The fleet's packages are excluded the way the app starter is: a kit IS the
+# one shared implementation that every copy should become. Counting chatkit's
+# Composer as a chat composer, or bip-kit's slug.ts as a slug helper, made
+# extracting a package read as MORE duplication — the ratchet punishing the
+# exact move it exists to reward. The list is the derived register, so a new
+# package is excluded the day it is registered, with no edit here.
+REGISTER="$HERE/../../registers/packages.json"
+KITS=""
+if [ -f "$REGISTER" ]; then
+  KITS=$(jq -r --arg o "$OWNER" '.packages[].repo // empty
+    | select(startswith("https://github.com/" + $o + "/"))
+    | sub("^https://github.com/[^/]+/"; "")' "$REGISTER")
+fi
+kits_skipped=""
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 truncated=""
@@ -117,6 +137,10 @@ fetch_tree() {
 while IFS=$'\t' read -r name branch; do
   [ -n "$name" ] || continue
   [ -n "$branch" ] || continue
+  if grep -qx "$name" <<<"$KITS"; then
+    kits_skipped="$kits_skipped $name"
+    continue
+  fi
   if ! body=$(fetch_tree "$name" "$branch"); then
     unreadable="$unreadable $name"
     continue
@@ -132,7 +156,7 @@ while IFS=$'\t' read -r name branch; do
   # product — which is the honest number.
   printf '%s' "$body" \
     | jq -r '.tree[]? | select(.type=="blob") | .path' 2>/dev/null \
-    | grep -viE 'node_modules|\.next/|/dist/|__tests__|\.test\.|\.spec\.|\.d\.ts' \
+    | grep -viE "$EXCLUDE_PATHS" \
     | grep -vE '^templates/app/|^scripts/site-template/' \
     > "$TMP/$name.files"
   inspected=$((inspected + 1))
@@ -171,6 +195,7 @@ done
 if [ "$MODE" = report ]; then
   echo
   echo "inspected $inspected repo(s) on their default branches"
+  [ -n "$kits_skipped" ] && echo "not counted (fleet packages — the shared implementation):$kits_skipped"
   [ -n "$truncated" ] && echo "⚠ TRUNCATED trees (undercounted):$truncated"
   [ -n "$unreadable" ] && echo "⚠ COULD NOT READ (undercounted):$unreadable"
   echo

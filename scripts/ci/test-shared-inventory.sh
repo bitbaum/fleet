@@ -140,6 +140,30 @@ for path in src/lib/domain/methods/ballot-updates.ts lib/auto-updates.ts src/com
   if matches date-utils "$path"; then no "date-utils ignores $path"; else ok "date-utils ignores $path"; fi
 done
 
+# Build output and the packages themselves are not copies.
+EXCLUDE=$(grep "^EXCLUDE_PATHS=" "$HERE/shared-inventory.sh" | cut -d"'" -f2)
+for path in dist/composer.js dist/react/Composer.js apps/web/dist/x.js node_modules/a/logger.ts; do
+  if grep -qiE "$EXCLUDE" <<<"$path"; then ok "not counted: $path"; else no "not counted: $path"; fi
+done
+for path in src/composer.ts src/lib/distance.ts lib/distribution/slug.ts; do
+  if grep -qiE "$EXCLUDE" <<<"$path"; then no "still counted: $path"; else ok "still counted: $path"; fi
+done
+
+KITS_FIXTURE='{"packages":[{"repo":"https://github.com/bitbaum/chatkit"},{"repo":"https://github.com/bitbaum/bip-kit"},{"repo":"https://github.com/someone-else/chatkit"},{}]}'
+kits=$(jq -r --arg o bitbaum '.packages[].repo // empty
+    | select(startswith("https://github.com/" + $o + "/"))
+    | sub("^https://github.com/[^/]+/"; "")' <<<"$KITS_FIXTURE")
+if [ "$kits" = "$(printf 'chatkit\nbip-kit')" ]; then
+  ok 'fleet packages are read from the register (own org only)'
+else
+  no "fleet packages are read from the register (own org only): got $(tr '\n' ' ' <<<"$kits")"
+fi
+if grep -q 'registers/packages.json' "$HERE/shared-inventory.sh" && grep -q 'kits_skipped="$kits_skipped' "$HERE/shared-inventory.sh"; then
+  ok 'the inventory skips the fleet packages'
+else
+  no 'the inventory skips the fleet packages'
+fi
+
 if grep -q '\.where"' "$HERE/shared-inventory.sh"; then
   ok 'a rise names the files behind it'
 else
