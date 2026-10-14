@@ -58,6 +58,9 @@ command -v jq >/dev/null 2>&1 || { echo "jq not found" >&2; exit 2; }
 # 16px, the soft keyboard, stop and retry. SHARED.md "Chat — the standard"
 # holds the checklist; this line only stops a new composer file appearing
 # without anyone deciding it should.
+# date-utils is anchored to a path segment: unanchored, `(dates)\.ts` matched
+# ballot-updates.ts, auto-updates.ts and useActivityUpdates.ts (grep -i), and
+# three files about UPDATES read as a rise in date helpers (2026-10-14).
 CONCERNS='
 automerge-script|scripts/ci/auto-merge-sweep\.sh$
 rate-limit|(lib|src|app|apps|packages)/.*rate-?limit(er)?\.(ts|js)$
@@ -66,7 +69,7 @@ logger|(lib|src)/.*logger\.(ts|js)$
 api-envelope|(lib|src)/.*(route-helpers|api-response|apiResponse)\.(ts|js)$
 health-route|.*api/health/route\.(ts|js)$
 slug-util|(lib|src)/.*slug(ify)?\.(ts|js)$
-date-utils|(lib|src)/.*(dates|date-utils)\.(ts|js)$
+date-utils|(lib|src)/(.*/)?(dates|date-utils)\.(ts|js)$
 ai-provider-client|(lib|src|packages|apps)/.*(provider|call-provider)s?\.(ts|js)$
 messaging-threads|(lib|src)/.*(message-utils|conversation-helpers|messages-view|thread-(utils|helpers))\.(ts|js)$
 list-query|(lib|src|hooks)/.*([uU]se-?[fF]ilter(s|ing)?|[uU]se-?[dD]ebounce|filter-?state|pagination)\.(ts|js)$
@@ -152,6 +155,7 @@ for line in $CONCERNS; do
     n=$(grep -icE "$re" "$f" 2>/dev/null || true)
     n=${n:-0}
     if [ "$n" -gt 0 ]; then
+      grep -iE "$re" "$f" | sed "s|^|    $r: |" >> "$TMP/$concern.where"
       repos_with=$((repos_with + 1))
       copies=$((copies + n))
       who="$who $r($n)"
@@ -216,6 +220,9 @@ while IFS=$'\t' read -r concern was_repos was_copies; do
   now_copies=$(printf '%s' "$now_line" | cut -f3)
   if [ "$now_copies" -gt "$was_copies" ]; then
     echo "✗ $concern: $was_copies → $now_copies files. The ratchet only turns one way."
+    # The baseline holds counts, not paths, so name every file now counted:
+    # a red ratchet that cannot say WHERE sends someone off to re-derive it.
+    [ -f "$TMP/$concern.where" ] && cat "$TMP/$concern.where"
     fail=1
   elif [ "$now_copies" -lt "$was_copies" ]; then
     echo "✓ $concern: $was_copies → $now_copies files — run --update to lock it in."
