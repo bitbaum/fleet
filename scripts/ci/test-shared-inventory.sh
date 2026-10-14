@@ -127,6 +127,25 @@ else
   no '--check refuses an incomplete read'
 fi
 
+# ── the patterns count what they say ─────────────────────────────────────────
+printf 'patterns\n'
+pattern() { grep "^$1|" "$HERE/shared-inventory.sh" | head -1 | cut -d'|' -f2-; }
+matches() { printf '%s\n' "$2" | grep -qiE "$(pattern "$1")"; }
+
+for path in src/lib/dates.ts lib/i18n/dates.ts src/services/cat/handlers/date-utils.ts; do
+  if matches date-utils "$path"; then ok "date-utils counts $path"; else no "date-utils counts $path"; fi
+done
+# Files about UPDATES end in "dates.ts" too; they are not date helpers.
+for path in src/lib/domain/methods/ballot-updates.ts lib/auto-updates.ts src/components/x/useActivityUpdates.ts; do
+  if matches date-utils "$path"; then no "date-utils ignores $path"; else ok "date-utils ignores $path"; fi
+done
+
+if grep -q '\.where"' "$HERE/shared-inventory.sh"; then
+  ok 'a rise names the files behind it'
+else
+  no 'a rise names the files behind it'
+fi
+
 # ── the baseline in the repo must match the script's concerns ────────────────
 printf 'baseline integrity\n'
 BASE="$HERE/shared-inventory.baseline"
