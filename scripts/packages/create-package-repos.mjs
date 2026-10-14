@@ -15,7 +15,8 @@
  *   1. copy the source folder from the source repo's default branch,
  *   2. make its package.json standalone (repository, packageManager, the
  *      devDependencies the declaration names),
- *   3. add templates/package (CI, auto-merge, publish, dependabot, licence),
+ *   3. add templates/package (CI, auto-merge, publish, release, dependabot,
+ *      licence),
  *   4. install, and run the package's own `verify` — nothing is created from
  *      a tree that does not pass,
  *   5. create bitbaum/<name>, push main, tag v<version>.
@@ -97,18 +98,55 @@ function repoExists(name) {
   }
 }
 
-function copyTemplates(dest, decl) {
-  const base = join(ROOT, 'templates', 'package');
+/**
+ * The files every package repo must carry, by their path in the repo. A
+ * template that lost one of these would create (or sync) repos without it —
+ * release.yml above all, which is how a package's owner ships a version from
+ * Loki — so both scripts refuse to run from such a template.
+ */
+export const REQUIRED_TEMPLATE_FILES = [
+  '.github/dependabot.yml',
+  '.github/workflows/auto-merge.yml',
+  '.github/workflows/ci.yml',
+  '.github/workflows/publish.yml',
+  '.github/workflows/release.yml',
+  '.gitignore',
+  'LICENSE',
+];
+
+/** A template file's path in the repo: `gitignore` is stored without its dot so git here does not obey it. */
+export function templateTarget(rel) {
+  return rel === 'gitignore' ? '.gitignore' : rel;
+}
+
+/** Refuse a template that lacks a required file. `paths` are repo paths. */
+export function checkTemplate(paths) {
+  const have = new Set(paths);
+  const missing = REQUIRED_TEMPLATE_FILES.filter(p => !have.has(p));
+  if (missing.length) {
+    throw new Error(`templates/package is missing ${missing.join(', ')} — every package repo needs it`);
+  }
+}
+
+/** Every templates/package file, rendered for one package: [{ path, content }]. */
+export function templateFiles(decl, base = join(ROOT, 'templates', 'package')) {
   const walk = dir =>
     readdirSync(dir, { withFileTypes: true }).flatMap(e =>
       e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]
     );
-  for (const file of walk(base)) {
-    const rel = relative(base, file);
-    const out = join(dest, rel === 'gitignore' ? '.gitignore' : rel);
+  const files = walk(base)
+    .map(file => ({ path: templateTarget(relative(base, file)), content: render(readFileSync(file, 'utf8'), decl) }))
+    .sort((a, b) => a.path.localeCompare(b.path));
+  checkTemplate(files.map(f => f.path));
+  return files;
+}
+
+function copyTemplates(dest, decl) {
+  for (const file of templateFiles(decl)) {
+    const out = join(dest, file.path);
     if (existsSync(out)) continue; // a file the package already has wins
     mkdirSync(dirname(out), { recursive: true });
-    writeFileSync(out, render(readFileSync(file, 'utf8'), decl));
+    writeFileSync(out, file.content);
   }
 }
 

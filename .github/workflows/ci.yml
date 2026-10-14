@@ -191,6 +191,17 @@ jobs:
       - name: Declared package repos are created safely, or not at all
         run: node scripts/packages/test-create-package-repos.mjs
 
+      # Every package repo is rendered from templates/package, and existing
+      # ones are offered its missing files by pull request. So the template's
+      # workflows must parse and hold valid shell (they fail far from here
+      # otherwise), the template must carry every required file — release.yml
+      # is how a package's owner ships from Loki — and the sync must offer only
+      # what a repo lacks, never twice, never over a person's "no".
+      - name: The package template's workflows parse, and their shell is shell
+        run: bash scripts/ci/check-workflows.sh templates/package/.github/workflows
+      - name: The package template is complete, and the sync only adds what is missing
+        run: node scripts/packages/test-sync-package-template.mjs
+
       # This detector reports on repos nobody is watching, so its own failure
       # mode is silence: a clean report from a broken audit is worse than no
       # audit, because it prints a ✓. Both sides are pinned — the real AOZ
