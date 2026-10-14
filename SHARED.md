@@ -35,9 +35,18 @@ means hand-edited pins in every app. Add an entry to
 folder, any devDependencies the folder needs to build alone). On merge,
 `.github/workflows/package-repos.yml` creates `bitbaum/<name>` with
 `FLEET_PAT`: it copies the folder, makes it standalone from
-`templates/package` (CI, auto-merge, publish, Dependabot, licence), runs the
-package's own `verify`, and only then creates the repo and tags
-`v<version>`. Nobody clicks anything; an existing repo is never touched.
+`templates/package` (CI, auto-merge, publish, release, Dependabot, licence),
+runs the package's own `verify`, and only then creates the repo and tags
+`v<version>`. Nobody clicks anything; an existing repo is never written to
+directly — a file added to the template later reaches it as a pull request
+that adds only what it lacks (`scripts/packages/sync-package-template.mjs`).
+
+**Releasing** is `release.yml` in the package repo: Loki's package page
+("Release vX.Y.Z", for the package's owner) or the Actions tab starts it. It
+refuses unless main's CI is green on the commit, raises the version, runs
+`verify` (rebuilding `dist/`), commits `release vX.Y.Z`, tags, pushes with
+`FLEET_PAT` (so `publish.yml` fires on the tag) and writes a GitHub release.
+Dependabot then proposes the tag to every consumer.
 
 npm is a separate, later step and is **not** on the critical path: consumers
 install the tag (`github:bitbaum/<name>#vX.Y.Z`) and Dependabot bumps it. The
