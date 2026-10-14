@@ -130,7 +130,7 @@ fi
 # ── the patterns count what they say ─────────────────────────────────────────
 printf 'patterns\n'
 pattern() { grep "^$1|" "$HERE/shared-inventory.sh" | head -1 | cut -d'|' -f2-; }
-matches() { printf '%s\n' "$2" | grep -qiE "$(pattern "$1")"; }
+matches() { grep -qiE "$(pattern "$1")" <<<"$2"; }
 
 for path in src/lib/dates.ts lib/i18n/dates.ts src/services/cat/handlers/date-utils.ts; do
   if matches date-utils "$path"; then ok "date-utils counts $path"; else no "date-utils counts $path"; fi
