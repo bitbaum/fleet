@@ -301,8 +301,10 @@ else
     scanned_repos+=("$repo")
     branch="$(gh_default_branch "$repo")"
     
-    # Check root-level public docs
-    for file in README.md CLAUDE.md AGENTS.md; do
+    # Root agent files, plus the two docs that have repeatedly restated a
+    # retired auth rule after the root files were fixed. A scan that only
+    # reads AGENTS.md misses the page AGENTS.md tells the agent to open next.
+    for file in README.md CLAUDE.md AGENTS.md .claude/CLAUDE.md docs/UNIFIED_AUTH.md docs/SHARED_CONTEXT.md; do
       content="$(gh_check_file "$repo" "$file" "$branch")"
       [ -n "$content" ] || continue
       

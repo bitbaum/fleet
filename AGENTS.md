@@ -10,6 +10,12 @@ A fact has one producer. A doc may point at the producer. A doc may not restate
 the fact. To change what something is called, or where it lives, edit the
 producer. The copies are the bug.
 
+A fact that stopped being true is a row in `registers/retired.json`.
+`scripts/ci/org-drift-audit.sh` fails when a public document still says it.
+Deleting the sentence without adding the row means the next session writes it
+back. Adding the row is the whole mechanism — do not special-case the sentence
+in a repo.
+
 Each repo keeps a short `AGENTS.md`: the pointer in `templates/AGENTS.md`, then
 only facts that exist only in that repo (how to run it, where the tests are).
 `CLAUDE.md` and any other agent file point here. They do not get their own

@@ -13,7 +13,7 @@
     "name is safe; a bare word like 'sink' is not, and does not belong here."
   ],
   "_fields": {
-    "kind": "host | name | repo",
+    "kind": "host | name | repo | claim | account",
     "from": "the retired form — what a document should no longer say",
     "to": "what it should say instead",
     "since": "ISO date the replacement became true",
@@ -148,6 +148,54 @@
       "since": "2026-09-29",
       "why": "Worldbuilding for the dropped thesis; never built.",
       "verified": "No repo, host or project profile carries the name."
+    },
+    {
+      "kind": "claim",
+      "from": "Staff = `@revamp-it.ch` email",
+      "to": "Staff is the users.is_staff column, granted by a super admin. The email domain grants nothing (evig src/lib/permissions.ts).",
+      "since": "2026-08-05",
+      "why": "Registration on the old domain used to be treated as staff. Agent briefs that still say so send the next session to reopen a door that is already closed.",
+      "verified": "evig src/lib/permissions.ts states staff is never derived from the email domain."
+    },
+    {
+      "kind": "claim",
+      "from": "Staff endpoints require `@revamp-it.ch` email",
+      "to": "Staff endpoints require users.is_staff.",
+      "since": "2026-08-05",
+      "why": "The generated API doc restated the retired rule, and the generator wrote it back on every run.",
+      "verified": "evig scripts/hirn-ingest-api-routes.ts now generates the is_staff rule."
+    },
+    {
+      "kind": "claim",
+      "from": "for initial auto-provisioning",
+      "to": "No auto-provisioning. A super admin sets is_staff.",
+      "since": "2026-08-05",
+      "why": "docs/UNIFIED_AUTH.md listed the email domain as a second way to become staff.",
+      "verified": "evig src/lib/permissions.ts."
+    },
+    {
+      "kind": "claim",
+      "from": "staff-auth domain",
+      "to": "There is no staff-auth domain. One bootstrap login address remains, and it is not a domain rule.",
+      "since": "2026-08-05",
+      "why": "The rebrand note told agents to leave the domain in place as infrastructure, which they read as the domain still granting staff.",
+      "verified": "evig .claude/CLAUDE.md Layer B, after this retirement."
+    },
+    {
+      "kind": "claim",
+      "from": "staff detection by @revamp-it.ch",
+      "to": "Staff detection is the is_staff column.",
+      "since": "2026-08-05",
+      "why": "The studio brief for evig still described auth that way, so a session that started there rebuilt the old rule.",
+      "verified": "evig src/lib/permissions.ts."
+    },
+    {
+      "kind": "host",
+      "from": "revampit.vercel.app",
+      "to": "https://evig.orangecat.ch",
+      "since": "2026-01-05",
+      "why": "Production left Vercel. The hostname in a guide still looks like a place to configure.",
+      "verified": "evig docs/guides/deployment.md: Vercel is retired. Production is the Hetzner box."
     }
   ]
 }
