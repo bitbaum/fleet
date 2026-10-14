@@ -1,0 +1,37 @@
+# CI for a bitbaum package repo — rendered from bitbaum/fleet templates/package
+# by scripts/packages/create-package-repos.mjs. Same floor as every repo:
+# install exactly the lockfile, run the package's own `verify`.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Re-arm strand: a GITHUB_TOKEN merge starts no workflow on its own, so the
+  # auto-merge sweep must be able to start CI on main explicitly.
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || 'branch' }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      # pnpm version comes from "packageManager" in package.json (SSOT).
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run verify
+      # dist/ is committed so a `github:` install needs no build step (pnpm
+      # refuses git-dependency builds without a per-SHA allowBuilds entry in
+      # every consumer). It must be exactly what the source builds to.
+      - name: Committed dist/ matches the source
+        run: git diff --exit-code --stat -- dist

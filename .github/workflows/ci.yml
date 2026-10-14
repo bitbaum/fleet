@@ -183,6 +183,14 @@ jobs:
       - name: The readings cannot flatter
         run: node scripts/ci/test-readings.mjs
 
+      # Package repos are created from a declaration with no human looking, so
+      # the self-test is about refusing: a malformed declaration, a source path
+      # that escapes its repo, a package with no verify or no version each stop
+      # the run before anything is created, and an existing repo is never a
+      # target.
+      - name: Declared package repos are created safely, or not at all
+        run: node scripts/packages/test-create-package-repos.mjs
+
       # This detector reports on repos nobody is watching, so its own failure
       # mode is silence: a clean report from a broken audit is worse than no
       # audit, because it prints a ✓. Both sides are pinned — the real AOZ
