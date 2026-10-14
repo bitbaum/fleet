@@ -504,6 +504,22 @@ if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES=$'.github/workflows/ci.yml' RS_BODY='B
     || no 'holds a Dependabot PR that touches a workflow (it runs with secrets)'
 fi
 
+# A routine update opened moments ago waits: Loki holds updates its owner
+# asked to approve from a 15-minute timer, and must get there first.
+young_prs=$(printf '[{"number":7,"title":"the fix","isDraft":false,"mergeable":"MERGEABLE","mergeStateStatus":"UNSTABLE","labels":[],"createdAt":"%s","statusCheckRollup":[{"status":"COMPLETED","conclusion":"SUCCESS","name":"lint"}]}]' "$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ)")
+if RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [hono](https://x) from 4.13.5 to 4.13.7.' \
+   RS_PRS="$young_prs" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] \
+    && ok 'a Dependabot update opened 5 minutes ago waits out the grace period' \
+    || no 'a Dependabot update opened 5 minutes ago waits out the grace period'
+fi
+if DEPENDABOT_GRACE_MINUTES=0 RS_AUTHOR="$DB" RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [hono](https://x) from 4.13.5 to 4.13.7.' \
+   RS_PRS="$young_prs" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] \
+    && ok 'DEPENDABOT_GRACE_MINUTES=0 merges it at once' \
+    || no 'DEPENDABOT_GRACE_MINUTES=0 merges it at once'
+fi
+
 if RS_AUTHOR='dependabot[bot]/User' RS_ASSOC=NONE RS_FILES="$LOCKS" RS_BODY='Bumps [hono](https://x) from 4.13.5 to 4.13.7.' \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -eq 0 ] \

@@ -625,6 +625,23 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
         done <<< "$bumps"
       fi
     fi
+    # A grace period before a routine update merges. Loki lets each project's
+    # owner choose how package updates arrive (automatic, ask me, stay on these
+    # versions) and enforces "ask" by putting `hold` on the PR from a timer
+    # that runs every 15 minutes. CI on a lockfile bump can finish sooner, and
+    # this sweep wakes on CI completion — so without a wait, an update the
+    # owner asked to approve could merge before Loki ever saw it. Thirty
+    # minutes covers two of Loki's passes; a weekly update arriving half an
+    # hour later costs nothing. DEPENDABOT_GRACE_MINUTES=0 turns it off.
+    if [ -z "$why" ]; then
+      grace="${DEPENDABOT_GRACE_MINUTES:-30}"
+      created=$(printf '%s' "$pr" | jq -r '.createdAt // ""')
+      if [ "$grace" -gt 0 ] && [ -n "$created" ] \
+         && [ "$created" \> "$(date -u -d "${grace} minutes ago" +%Y-%m-%dT%H:%M:%SZ)" ]; then
+        echo "[auto-merge] #${number} Dependabot, opened less than ${grace}m ago — waits so the project's update setting can hold it first"
+        continue
+      fi
+    fi
     if [ -z "$why" ]; then
       outside=0
       echo "[auto-merge] #${number} Dependabot, manifests only, no major update — merges on green like our own"
