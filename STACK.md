@@ -20,7 +20,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Validation | zod | — |
 | ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). loki runner & ivy-portal: better-sqlite3 for embedded local state. |
 | Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | loki runner/ivy: SQLite embedded |
-| Auth | **Every app owns its accounts** (decided 2026-10-11): **`better-auth` 1.x** on Drizzle + `pg`, offering every method — email + password with verification, magic link via `@bitbaum/mail-kit`, passkeys, TOTP 2FA, the shared bitbaum sign-in (Google, GitHub, X, Meta, Apple) and OrangeCat, both as OIDC. Roles live in the app's own users table. Wired once in `templates/app`. See "Identity". | orangecat itself is the identity provider (Supabase Auth). aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) pre-date better-auth — migrate on contact, not on a schedule |
+| Auth | **Every app owns its accounts** (decided 2026-10-11): **`better-auth` 1.x** on Drizzle + `pg`, offering every method — email + password with verification, magic link via `@bitbaum/mail-kit`, passkeys, TOTP 2FA, the shared bitbaum sign-in (Google, GitHub, X, Meta, Apple) and OrangeCat, both as OIDC. Roles live in the app's own users table. One package: `@bitbaum/accountkit/auth`. See "Identity". | orangecat itself is the identity provider (Supabase Auth). aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) pre-date better-auth — migrate on contact, not on a schedule |
 | Test runner (apps) | Vitest | loki: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
@@ -67,8 +67,9 @@ users table"), reversed by the owner on 2026-10-11.
   client by adding a spec to orangecat's `scripts/oauth/register-client.ts`,
   identity scopes only, then run it on the box.
 
-Loki, Solon and Heidi federate to OrangeCat today; they gain local accounts
-beside OrangeCat **on contact**, like every other migration here.
+Causius runs on the package (2026-10-15). Loki, Solon, Heidi, Substrata and
+evig still federate to OrangeCat through next-auth; each moves onto
+`@bitbaum/accountkit/auth` deliberately, one at a time.
 
 ### Why better-auth and not next-auth
 
@@ -86,21 +87,32 @@ and the existing audit measures it for free. No new machinery. It also uses the
 blessed ORM (Drizzle + `pg`), its magic-link plugin takes our own sender so
 `mail-kit` slots in unchanged, and hirnli has run it in production since 2026-09.
 
-### What NOT to do
+### One package, not a copied template (changed 2026-10-15)
 
-Do **not** extract an auth package. Auth is shared as the **starter's wiring**
-(`templates/app/lib/auth/`), copied into each product at birth and owned by it
-from then on. `SHARED.md` lists auth under "what must NOT be centralized" —
-coupled to the framework *and* the user schema — and
-`sitekit` is the evidence: it centralised nav markup, serves 2 of 20 repos, and
-shipped defects consumers could not patch because they did not own the markup.
-Centralising the markup centralised the bug.
+Accounts are **`@bitbaum/accountkit/auth`** — one versioned package, installed
+by every product. A product passes in what is its own (its address, its
+database, its mail sender) and gets the same methods, limits, cookie rules and
+account-linking rules as every other:
 
-Share the **decisions** (this section) and the **checks**, never the
-implementation. Existing apps migrate **on contact** — when someone is already
-in the auth path fixing something — never as a scheduled project. That is the
-only way adoption has ever moved here; ADR-0002 sat at "Proposed" for seven
-months while the duplicate count went 2 → 4.
+    export const { GET, POST, getSession, requireUser } = createAuthRuntime({ site, mail, isDatabaseConfigured, getDatabase });
+
+The account tables come from `@bitbaum/accountkit/auth/schema`, re-exported by
+each product's schema file, so every product generates the same migration.
+Each product keeps its own users table, its own roles and its own look; the
+sign-in screens it renders are its own components.
+
+This reverses the rule that said "do not extract an auth package; copy
+`templates/app/lib/auth/` into each product and own it". That rule promised
+uniformity and guaranteed drift: seven products would each carry their own
+copy of the hardest code in the stack, and a fix to one copy reaches nobody
+else. The owner asked for no drift (2026-10-15). The reason the rule gave —
+`sitekit` shipped bugs consumers could not patch because it centralised
+**markup** — still holds, and is why the package ships logic and tables, not
+pages.
+
+Fix auth bugs **in accountkit**, never in a product. Products move onto the
+package one at a time, deliberately, not "on contact". Causius was first
+(causius#23, live 2026-10-15); the rest of the order is in the owner's queue.
 
 ## Migration state (2026-09-02: DONE)
 
