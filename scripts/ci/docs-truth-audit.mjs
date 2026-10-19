@@ -266,6 +266,9 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
       para += " " + line;
       // Judge the PROSE for history words, not the names it quotes: a file
       // called removed.ts is not a sentence about something being removed.
+      // A name kept ON PURPOSE (a JWT issuer, a cookie key) is a decision, not
+      // drift: `<!-- docs-truth: keep — why -->` on the line records it.
+      if (/<!--\s*docs-truth:\s*keep\b/.test(line)) continue;
       const prose = (l) => (l ?? "").replace(/`[^`]*`/g, "").replace(/\]\([^)]*\)/g, "]");
       // A sentence wrapped across lines says "removed" once; read on to its
       // end (up to two more lines) before deciding it is a claim.

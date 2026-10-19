@@ -120,6 +120,11 @@ console.log("feedback from the first cleanup");
   check("a file that describes other repos opts its paths out, not its names", kinds(f).join() === "retired:revampit.orangecat.ch");
 }
 
+{
+  const f = judgeRepo(repo({ "CLAUDE.md": "| `JWT_ISSUER` (`revampit.orangecat.ch`) | Changing it invalidates every session. | <!-- docs-truth: keep — live sessions key on it -->" }), RETIRED);
+  check("a name kept on purpose, marked on its line, is a decision", f.length === 0);
+}
+
 console.log("relative to the doc's own directory");
 {
   const f = judgeRepo(repo({
