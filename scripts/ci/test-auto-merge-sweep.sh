@@ -95,7 +95,10 @@ exit ${RS_DOCS:-0}
 DOCS
   chmod +x "$dir/docs-truth"
   local docs_comments="${RS_DOCS_COMMENTS:-0}"
-  RS_DOCS=""; RS_DOCS_COMMENTS=""
+  # RS_COMPARE: authors of the commits between a run's sha and the tip, as the
+  # sweep's --jq would join them. Empty = the compare call fails.
+  local compare="${RS_COMPARE:-}"
+  RS_DOCS=""; RS_DOCS_COMMENTS=""; RS_COMPARE=""
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
   RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""
 
@@ -125,6 +128,7 @@ case "\$ARGS" in
   "pr list"*)                       cat "$dir/prs.json" ;;
   # The DCO gate: who opened the PR, and what its commits say.
   # The review list, matched BEFORE the pull itself: both paths start the same.
+  "api repos/"*"/compare/"*)         if [ -n "$compare" ]; then echo "$compare"; else exit 1; fi ;;
   "api repos/"*"/issues/"*"/comments"*) echo "$docs_comments" ;;
   "pr comment"*)                    echo "commented" ;;
   "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
@@ -296,6 +300,14 @@ if RS_BASESHA=$TIP RS_LIVE="{\"ok\":true,\"commit\":\"$OLD\"}" run_sweep success
     || no 'ships when the app serves an older commit although the last run is LABELLED with the tip'
 fi
 
+# 11b2. The last deploy wrote snapshots back to the base: the tip is that
+#       deploy's own commit, already live. Shipping it again is the loop.
+if RS_BASESHA=$TIP RS_COMPARE='github-actions[bot]' run_sweep success '' 1 deploy.yml "$OLD" 0; then
+  [ "$(deploys)" -eq 0 ] && grep -q "that deploy's own write-back" <<<"$SWEEP_OUT" \
+    && ok "a tip ahead of the deployed commit only by the deploy's write-back is not shipped again" \
+    || no "a tip ahead of the deployed commit only by the deploy's write-back is not shipped again"
+fi
+
 # 11c. Unknown is not deployed: an unreachable app must not read as "current".
 if RS_BASESHA=$TIP RS_LIVE=UNREACHABLE run_sweep success '' 1 deploy.yml "$TIP" 0; then
   [ "$(deploys)" -ge 1 ] && grep -q 'live commit UNKNOWN' <<<"$SWEEP_OUT" \
@@ -403,6 +415,22 @@ pr_fixture() { # <rollup-check-names, comma-separated>
   done
   printf '[{"number":7,"title":"the fix","isDraft":false,"mergeable":"MERGEABLE","mergeStateStatus":"UNSTABLE","labels":[],"createdAt":"2026-01-01T00:00:00Z","statusCheckRollup":[%s]}]' "$checks"
 }
+
+#   13e. The tip is ahead of the last run only by that run's own write-back
+#        (github-actions[bot] committing refreshed snapshots): the run's
+#        verdict is the tip's. Dispatching again is the bitbaum loop.
+if RS_HEADSHA=oldsha000 RS_COMPARE='github-actions[bot]' RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  grep -q 'written back by github-actions\[bot\]' <<<"$SWEEP_OUT" && [ "$(merges)" -eq 1 ] \
+    && ok "a tip ahead only by the bot's own write-back is judged by the run before it, and merges" \
+    || no "a tip ahead only by the bot's own write-back is judged by the run before it, and merges"
+fi
+#   13f. Any other author among those commits still needs its own verdict.
+if RS_HEADSHA=oldsha000 RS_COMPARE='github-actions[bot],someone' RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && [ "$(rearms)" -ge 1 ] \
+    && ok 'a tip carrying anyone else'"'"'s commit is not covered by the older verdict' \
+    || no 'a tip carrying anyone else'"'"'s commit is not covered by the older verdict'
+fi
+
 
 # 14. THE CARVE-OUT ITSELF: a PR green on every job the base fails may merge
 #     onto the red base. Its checks ran on the MERGE result, so green there is
