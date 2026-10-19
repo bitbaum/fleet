@@ -49,6 +49,9 @@ for (const t of ["image/x-icon", "white/NN", "next/link", "SECOND/MINUTE/HOUR", 
   check(`not a path: ${t}`, pathCandidate(t) === null);
 }
 
+check("a template is not a file", pathCandidate("scripts/db/migrations/NNN_descriptive_name.sql") === null && pathCandidate("src/lib/hirn/providers/[name].ts") === null && pathCandidate("migrations/YYYYMMDDHHMMSS_x.sql") === null);
+check("a dynamic route segment still is", pathCandidate("src/app/[slug]/page.tsx") === "src/app/[slug]/page.tsx");
+
 console.log("dead paths, links and files");
 {
   const f = judgeRepo(repo({
@@ -178,6 +181,7 @@ check("declaredMajor ignores git deps", declaredMajor({ dependencies: { x: "gith
       "Stack: Next.js 15, React 18, TypeScript 5.8, Tailwind CSS 3.3.",
       "Stack: Next.js 16, React 19, TypeScript 6.x, Tailwind 4.",
       "Tailwind v4 (this line previously claimed 3.3).",
+      "### Immediate (Next 30 Days) and Short-term (next 90 days)",
     ].join("\n"),
   }));
   const k = kinds(f);
