@@ -398,13 +398,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash scripts/ci/org-drift-audit.sh --check
 
-      # A repository page is the first thing anyone opens and the furthest
-      # surface from the code. On 2026-09-11, 13 registered apps had no
-      # homepage at all and one pointed at a domain that is not the app's.
-      - name: Repo metadata agrees with the register
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/ci/repo-metadata-audit.mjs --check
+      # Repo metadata (homepages, descriptions) is LIVE GitHub state no PR can
+      # change, so it is not judged per PR: it went red on every fleet PR on
+      # 2026-10-19 over five repos nobody had touched, including the PR that
+      # added the reconciler meant to repair them. repo-metadata.yml now writes
+      # homepages from the register daily and reports what is left; the
+      # detector's unit test still runs above, per PR.
 
       # templates/app is the starter every new product is created from, so a
       # defect in it ships into every repo made after it. Its contract — the
