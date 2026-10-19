@@ -127,6 +127,12 @@ export function pathCandidate(raw) {
   // "white/NN", "next/link" and "SECOND/MINUTE/HOUR" are not.
   const last = t.replace(/\/$/, "").split("/").pop();
   if (!t.endsWith("/") && !/\.[A-Za-z][\w-]{0,9}$/.test(last)) return null;
+  // A template, not a file: "NNN_name.sql", "YYYYMMDD_x.sql", "XXX.md", or a
+  // bracketed stem outside a router directory ("providers/[name].ts"). Inside
+  // app/ or pages/, "[slug]" is a real dynamic segment and stays a claim.
+  const stem = last.replace(/\.[^.]*$/, "");
+  if (/^(?:N{3,}|X{3,}|Y{4}[MDHS]*)(?:[_-]|$)/.test(stem)) return null;
+  if (/^\[[\w.]+\]$/.test(stem) && !/(?:^|\/)(?:app|pages)\//.test(t)) return null;
   return t.replace(/\/$/, "");
 }
 
@@ -162,7 +168,7 @@ export function declaredMajor(pkg, name) {
 }
 
 const STACK = [
-  { pkg: "next", re: /\bNext(?:\.js)?\s+v?(\d{2})(?![\d.]*\s*(?:ms|px|%))\b/g, label: "Next.js" },
+  { pkg: "next", re: /\bNext(?:\.js)?\s+v?(\d{2})(?![\d.]*\s*(?:ms|px|%|(?:[Dd]ays?|[Ww]eeks?|[Mm]onths?|[Yy]ears?|[Hh]ours?|[Mm]inutes?|[Ss]teps?)\b))\b/g, label: "Next.js" },
   { pkg: "react", re: /\bReact\s+v?(\d{2})\b/g, label: "React" },
   { pkg: "typescript", re: /\bTypeScript\s+v?(\d)(?:\.\d+)?(?:\.x)?\b/g, label: "TypeScript" },
   { pkg: "tailwindcss", re: /\bTailwind(?:\s+CSS)?\s+v?(\d)(?:\.\d+)?(?:\.x)?\b/g, label: "Tailwind CSS" },
