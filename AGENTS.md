@@ -81,8 +81,8 @@ lost. That is the same bug as a private copy: put it where the readers are.
   there carries `wallet: { holds, why }`, and
   `__tests__/unit/config/entity-admission.test.ts` enforces it. The same entity
   sits on three planes: OrangeCat is its economy, **Solon** its governance (its
-  decisions can be put to a signed vote), **Loki** its engineering (it can be
-  built and shipped by agents). Do not restate the list anywhere: three copies
+  decisions can be put to a signed vote), **Loki** its execution (it can be
+  worked on, built and shipped). Do not restate the list anywhere: three copies
   of it lived in orangecat's own agent-read docs, and all three had drifted —
   one named `organization`, which has never been a type.
 
