@@ -65,14 +65,13 @@ USE_LOCAL="${USE_LOCAL:-0}"
 
 # forbidden_patterns — regex alternatives for claims that contradict the register
 forbidden_patterns() {
-  cat <<'EOF'
-incorporation[- ]pending
-bitbaum AG\b
-AI-first product studio
-AI product studio
-github\.io/bitbaum
-Georgy Butaev
-EOF
+  # One list, in registers/org.json (forbiddenClaims), so the served-page audit
+  # (live-claims-audit.mjs) and this document audit can never disagree.
+  python3 -c '
+import json, sys
+for c in json.load(open(sys.argv[1])).get("forbiddenClaims", []):
+    print(c["pattern"])
+' "$REGISTER"
 }
 
 # retired_entries — `from|to|since|why` per line, from registers/retired.json

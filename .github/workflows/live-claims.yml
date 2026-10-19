@@ -1,0 +1,39 @@
+# Live-claims sweep: does what our sites SERVE still say what is true?
+#
+# The repo audits read files; most of what a visitor reads is rendered from
+# components, message catalogues and a CMS. This fetches each live site in
+# Loki's fleet map as a visitor gets it — home page plus the pages it links
+# first — and checks the served HTML for retired names and hosts, claims the
+# org register forbids, a copyright year nobody has touched, and same-site
+# links that answer 404.
+#
+# Not per-PR: it reads the box, and a box blip must never redden an unrelated
+# PR. Its unit test runs per-PR in ci.yml.
+name: Live claims
+
+on:
+  schedule:
+    - cron: '47 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-claims
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: The audit still detects, and still stays quiet
+        run: node scripts/ci/test-live-claims-audit.mjs
+
+      # Exits 2 — not 0 — if the map cannot be read, so a Loki outage is never
+      # published as a fleet whose pages are all true.
+      - name: Served pages have not drifted
+        run: node scripts/ci/live-claims-audit.mjs --check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"

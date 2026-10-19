@@ -86,7 +86,7 @@ export function parseRegister(conf) {
 }
 
 /** The judgement, isolated from the network so it can be tested. */
-export function judge({ repos, register, allow }) {
+export function judge({ repos, register, allow, retired = [], claims = [] }) {
   const findings = [];
   for (const r of repos) {
     if (r.archived) continue;
@@ -105,6 +105,21 @@ export function judge({ repos, register, allow }) {
     }
     if (!description && !allow.has(`${r.name}|description`)) {
       findings.push({ repo: r.name, kind: "description", detail: "no description" });
+    }
+    // A description is prose, but a retired name or a forbidden claim in it is
+    // not a matter of taste: "AI-first product studio — … FleetCrown and
+    // hirn.li" sat on bitbaum/bitbaum while every document had moved on.
+    if (description && !allow.has(`${r.name}|description`)) {
+      for (const x of retired) {
+        if (description.includes(x.from)) {
+          findings.push({ repo: r.name, kind: "description", detail: `description uses retired "${x.from}" — say "${x.to}"` });
+        }
+      }
+      for (const c of claims) {
+        if (new RegExp(c.pattern, "i").test(description)) {
+          findings.push({ repo: r.name, kind: "description", detail: `description contradicts the register (${c.pattern}) — ${c.why}` });
+        }
+      }
     }
   }
   return findings.sort((a, b) => (a.repo + a.kind).localeCompare(b.repo + b.kind));
@@ -149,7 +164,12 @@ if (!data.conf) {
 
 const register = parseRegister(data.conf);
 const allow = parseAllow(existsSync(ALLOW) ? readFileSync(ALLOW, "utf8") : "");
-const findings = judge({ repos: data.repos, register, allow });
+const readJson = (p, key) => {
+  try { return JSON.parse(readFileSync(join(here, p), "utf8"))[key] ?? []; } catch { return []; }
+};
+const retired = readJson("../../registers/retired.json", "retired").filter((x) => x.from && x.from.length >= 5);
+const claims = readJson("../../registers/org.json", "forbiddenClaims");
+const findings = judge({ repos: data.repos, register, allow, retired, claims });
 
 if (MODE === "list") {
   for (const f of findings) console.log(`${f.repo}|${f.kind}|${f.detail}`);

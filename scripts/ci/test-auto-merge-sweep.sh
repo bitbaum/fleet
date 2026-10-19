@@ -86,6 +86,16 @@ cat "$dir/live.json"
 CURL
     chmod +x "$dir/curl"
   fi
+  # The docs gate's checker, faked: exits RS_DOCS (default 0, clean) and prints
+  # a finding line, so the sweep never fetches a real repo from a test.
+  cat > "$dir/docs-truth" <<DOCS
+#!/usr/bin/env bash
+echo "  bitbaum/fixture/README.md:3  [path] names \\\`src/gone.ts\\\`, which is not in the repo"
+exit ${RS_DOCS:-0}
+DOCS
+  chmod +x "$dir/docs-truth"
+  local docs_comments="${RS_DOCS_COMMENTS:-0}"
+  RS_DOCS=""; RS_DOCS_COMMENTS=""
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
   RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""
 
@@ -115,6 +125,8 @@ case "\$ARGS" in
   "pr list"*)                       cat "$dir/prs.json" ;;
   # The DCO gate: who opened the PR, and what its commits say.
   # The review list, matched BEFORE the pull itself: both paths start the same.
+  "api repos/"*"/issues/"*"/comments"*) echo "$docs_comments" ;;
+  "pr comment"*)                    echo "commented" ;;
   "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
   "api repos/"*"/collaborators/"*"/permission"*) cat "$dir/perm.txt" ;;
   "api repos/"*"/pulls/"*"/files"*)  cat "$dir/files.txt" ;;
@@ -132,6 +144,7 @@ FAKE
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
         DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" REARM_POLL_SECONDS=0 \
+        DOCS_TRUTH_CMD="$dir/docs-truth" \
         bash "$SWEEP" 2>&1)
   status=$?
   SWEEP_OUT="$out"
@@ -719,6 +732,33 @@ self="[$(printf "$live" 1 tip)]"
 sibling_run_in_flight "$self" tip 1 \
   && no 'a run must not be its own in-flight sibling' \
   || ok 'a run is not its own sibling'
+
+# ── The docs gate ────────────────────────────────────────────────────────────
+# A PR that ADDS docs drift is held and told why, once per head commit; a
+# checker that cannot look never holds a PR.
+if RS_DOCS=1 RS_PRS="$(pr_fixture lint)" run_sweep success '' 1; then
+  [ "$(merges)" -eq 0 ] && grep -q 'skip: adds docs drift' <<<"$SWEEP_OUT" \
+    && ok 'a PR that adds docs drift is held' \
+    || no 'a PR that adds docs drift is held'
+  [ "$(grep -c '^pr comment' "$GH_LOG")" -eq 1 ] \
+    && ok 'and the PR is told which line, once' \
+    || no 'and the PR is told which line, once'
+fi
+if RS_DOCS=1 RS_DOCS_COMMENTS=1 RS_PRS="$(pr_fixture lint)" run_sweep success '' 1; then
+  [ "$(grep -c '^pr comment' "$GH_LOG")" -eq 0 ] && [ "$(merges)" -eq 0 ] \
+    && ok 'the same head commit is not commented twice' \
+    || no 'the same head commit is not commented twice'
+fi
+if RS_DOCS=2 RS_PRS="$(pr_fixture lint)" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && grep -q 'docs gate could not look' <<<"$SWEEP_OUT" \
+    && ok 'a docs checker that cannot look never holds a merge' \
+    || no 'a docs checker that cannot look never holds a merge'
+fi
+if RS_PRS="$(pr_fixture lint)" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && ! grep -q 'docs' <<<"$SWEEP_OUT" \
+    && ok 'a PR with clean docs merges as before' \
+    || no 'a PR with clean docs merges as before'
+fi
 
 # ── Verdict: LAST, so it counts every test above and IS the exit status ──────
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

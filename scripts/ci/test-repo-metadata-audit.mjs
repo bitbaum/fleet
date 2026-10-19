@@ -98,4 +98,16 @@ is(judge({ repos: sparse, register: reg, allow }).length, 2,
      "a host no row serves is still a finding");
 }
 
+{
+  const r = (d) => [{ name: "bitbaum", archived: false, homepage: "", description: d }];
+  const claims = [{ pattern: "AI-first product studio", why: "not what bitbaum is" }];
+  const retired = [{ from: "revampit.orangecat.ch", to: "evig.orangecat.ch" }];
+  is(judge({ repos: r("AI-first product studio — behind OrangeCat"), register: new Map(), allow: new Map(), claims }).length, 1,
+     "a description making a forbidden claim is a finding");
+  is(judge({ repos: r("Shop at revampit.orangecat.ch"), register: new Map(), allow: new Map(), retired }).length, 1,
+     "a description naming a retired host is a finding");
+  is(judge({ repos: r("Strategy repo and the generator for bitbaum.orangecat.ch"), register: new Map(), allow: new Map(), claims, retired }).length, 0,
+     "a true description is not");
+}
+
 console.log(`  ${pass} passed`);

@@ -1,0 +1,41 @@
+# Docs-truth sweep: does every repo's documentation describe its own code?
+#
+# The per-PR half lives in the auto-merge sweep (scripts/ci/auto-merge-sweep.sh,
+# "the docs gate"): a PR may not ADD a finding, so new drift cannot merge in
+# any repo that calls the sweep. This is the other half — it watches every
+# default branch, including repos with no sweep and drift that arrived some
+# other way, and holds the count per repo as a ratchet.
+#
+# Daily, because docs drift on the scale of merges, and the fleet merges many
+# times a day; a weekly sweep would let a week of agent sessions read the same
+# wrong sentence.
+name: Docs truth
+
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-truth
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # A detector that silently stopped detecting reports a clean fleet.
+      - name: The audit still detects, and still stays quiet
+        run: node scripts/ci/test-docs-truth-audit.mjs
+
+      # FLEET_PAT sees the private repos too; the default token sees this one.
+      - name: Every repo's docs agree with its tree
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/docs-truth-audit.mjs --sweep --check --list 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"

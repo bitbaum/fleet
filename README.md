@@ -21,6 +21,8 @@ versa. `dotfiles` is the environment again; this repo is the automation.
 | `scripts/ci/verify-floor-audit.sh` | does every repo's `verify` actually run lint + typecheck + test? |
 | `scripts/ci/shared-inventory.sh` | counts duplication across the fleet and holds it as a ratchet |
 | `scripts/ci/org-drift-audit.sh` | does any public document contradict the org register? A ratchet that prevents new lies from landing. |
+| `scripts/ci/docs-truth-audit.mjs` | does each repo's documentation describe its own code — paths, links, scripts, stack majors, retired names? Runs inside the auto-merge sweep on every PR (a PR may not add drift) and daily over every repo as a ratchet. |
+| `scripts/ci/live-claims-audit.mjs` | runs daily: does any live site serve a retired name, a forbidden claim, a past copyright year or a dead same-site link? |
 | `scripts/ci/cicd-hygiene-audit.sh` | is the pipeline AROUND the gates sound — no self-cancelling deploys, no deploy re-running CI's bundle, no cold Next builds? |
 | `scripts/ci/version-currency.mjs` | measures every repo against `blessed-versions.json` (SSOT of blessed majors + internal-package tags) and holds the gap count as a ratchet |
 | `scripts/ci/ui-defect-audit.mjs` | do any live sites ship WCAG AA contrast failures or misaligned stacks? |

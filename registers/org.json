@@ -13,7 +13,8 @@
     "legalStatus": "not AG, not incorporation-pending, not a registered company in any jurisdiction; the ventures are the same",
     "houseDomain": "names are addresses on the Hetzner box until a venture has its own domain, not a product line and not an OrangeCat feature",
     "host": "The serve register is bitbaum/loki scripts/hetzner/apps.conf. GitHub Pages is not a host.",
-    "originatorAliases": "First-commit author strings GitHub reports across the org, mapped to the ONE originator they are. All five are the same person under earlier handles and one unconfigured git default ('Your Name', reparaturbonus-zh 2025-06-18). Read by fleet/scripts/ci/origin-register.mjs to fill firstCommit.originator; the raw author string is kept beside it. A new contributor's first commit is NOT mapped here \u2014 an unmapped author is their own originator, which is the point of the rule."
+    "originatorAliases": "First-commit author strings GitHub reports across the org, mapped to the ONE originator they are. All five are the same person under earlier handles and one unconfigured git default ('Your Name', reparaturbonus-zh 2025-06-18). Read by fleet/scripts/ci/origin-register.mjs to fill firstCommit.originator; the raw author string is kept beside it. A new contributor's first commit is NOT mapped here — an unmapped author is their own originator, which is the point of the rule.",
+    "forbiddenClaims": "Extended regular expressions (grep -E and JavaScript both accept them). A public document or a served page matching one contradicts this register. Read by org-drift-audit.sh (documents) and live-claims-audit.mjs (served pages); one list, two readers."
   },
   "originatorAliases": {
     "catomean": "Cato",
@@ -21,5 +22,31 @@
     "Mao Nakamoto": "Cato",
     "George": "Cato",
     "Your Name": "Cato"
-  }
+  },
+  "forbiddenClaims": [
+    {
+      "pattern": "incorporation[- ]pending",
+      "why": "legalStatus is unregistered — nothing is pending"
+    },
+    {
+      "pattern": "bitbaum AG\\b",
+      "why": "there is no such entity; legalStatus is unregistered"
+    },
+    {
+      "pattern": "AI-first product studio",
+      "why": "not what bitbaum is (see publicName / legalStatus)"
+    },
+    {
+      "pattern": "AI product studio",
+      "why": "not what bitbaum is (see publicName / legalStatus)"
+    },
+    {
+      "pattern": "github\\.io/bitbaum",
+      "why": "host is Hetzner; GitHub Pages is not a host"
+    },
+    {
+      "pattern": "Georgy Butaev",
+      "why": "the public name is Cato; the legal personal name does not go on public surfaces"
+    }
+  ]
 }

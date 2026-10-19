@@ -218,6 +218,17 @@ jobs:
       - name: The org-drift audit still detects, and still stays quiet
         run: bash scripts/ci/test-org-drift-audit.sh
 
+      # Docs held to their OWN repo: paths, links, scripts, stack majors and
+      # retired names an agent would act on. Also the sweep's docs gate, so a
+      # broken detector here is a broken merge gate everywhere.
+      - name: The docs-truth audit still detects, and still stays quiet
+        run: node scripts/ci/test-docs-truth-audit.mjs
+
+      # Served pages held to the registers: retired names, forbidden claims,
+      # stale copyright, dead same-site links.
+      - name: The live-claims audit still detects, and still stays quiet
+        run: node scripts/ci/test-live-claims-audit.mjs
+
       # The judgement is a pure function of (repos, register, allow), so its
       # test needs no network — the fixtures are the shapes that were live on
       # 2026-09-11, including hirnli's correct-but-looks-wrong homepage.
