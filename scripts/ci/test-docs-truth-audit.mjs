@@ -125,6 +125,11 @@ console.log("feedback from the first cleanup");
   check("a name kept on purpose, marked on its line, is a decision", f.length === 0);
 }
 
+{
+  const f = judgeRepo(repo({ "public/thoughts/a.svg": "", "docs/style.md": "Embed it as ![x](/thoughts/a.svg); markup looks like `![alt](/thoughts/{name}.svg)`." }));
+  check("a /file link served from public/ resolves; a link inside a code span is markup", f.length === 0);
+}
+
 console.log("relative to the doc's own directory");
 {
   const f = judgeRepo(repo({

@@ -320,7 +320,8 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
       if (fence || elsewhere) continue; // trees and code samples are illustrations, not claims
 
       // --- relative markdown links
-      for (const m of line.matchAll(/\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
+      // A link shown INSIDE a code span is an example of markup, not a link.
+      for (const m of line.replace(/`[^`]*`/g, "").matchAll(/\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
         let target = m[1].replace(/^<|>$/g, "");
         if (/^(\w+:|#|\/\/)/.test(target) || /[{}$]/.test(target)) continue;
         // "/thoughts/x" is a route on the site, not a file in the repo.
@@ -331,7 +332,9 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
           ? posix.normalize(target.slice(1))
           : posix.normalize(posix.join(docDir, target));
         if (resolved.startsWith("..")) continue; // points outside the repo
-        if (!existsIn(tree, dirs, resolved.replace(/\/$/, ""))) {
+        // "/thoughts/x.svg" on a Next site is public/thoughts/x.svg.
+        const r = resolved.replace(/\/$/, "");
+        if (!existsIn(tree, dirs, r) && !(target.startsWith("/") && existsIn(tree, dirs, `public/${r}`))) {
           add(file, n, "link", target, `links to ${target}, which is not in the repo`);
         }
       }
