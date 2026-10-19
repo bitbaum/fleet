@@ -1,0 +1,43 @@
+# Repo-metadata reconciler: a repository's homepage is a fact the deploy
+# register (loki apps.conf) already holds, so this WRITES it instead of asking
+# someone to copy it across. ci.yml's per-PR "Repo metadata agrees with the
+# register" step only reports, and a report on a repo page nobody edits stays
+# red forever: on 2026-10-19 five homepages were missing or wrong and every
+# fleet PR inherited the red.
+#
+# Descriptions are prose and are never written; one that carries a retired
+# name or a forbidden claim stays a reported finding for a person.
+name: Repo metadata
+
+on:
+  schedule:
+    - cron: '23 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repo-metadata
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: The audit still detects, and still stays quiet
+        run: node scripts/ci/test-repo-metadata-audit.mjs
+
+      # Editing another repo's settings needs admin on it: FLEET_PAT.
+      - name: Homepages follow the register
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/repo-metadata-audit.mjs --fix 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"
+
+      - name: What is left needs a person
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/repo-metadata-audit.mjs --check 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"

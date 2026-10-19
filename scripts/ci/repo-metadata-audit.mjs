@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fleet audit: does a repository's GitHub metadata agree with the register?
 //
-//   repo-metadata-audit.mjs [--check] [--list] [--fixture FILE]
+//   repo-metadata-audit.mjs [--check] [--list] [--fix] [--fixture FILE]
 //
 // WHY
 //
@@ -48,7 +48,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const ORG = process.env.ORG ?? "bitbaum";
 const ALLOW = process.env.ALLOW_FILE ?? join(here, "repo-metadata.allow");
 const args = process.argv.slice(2);
-const MODE = args.includes("--list") ? "list" : "check";
+const MODE = args.includes("--list") ? "list" : args.includes("--fix") ? "fix" : "check";
 const FIXTURE = args.includes("--fixture") ? args[args.indexOf("--fixture") + 1] : null;
 
 /** allowlist: `repo|kind|reason` — kind is `homepage` or `description`. */
@@ -86,7 +86,7 @@ export function parseRegister(conf) {
 }
 
 /** The judgement, isolated from the network so it can be tested. */
-export function judge({ repos, register, allow }) {
+export function judge({ repos, register, allow, retired = [], claims = [] }) {
   const findings = [];
   for (const r of repos) {
     if (r.archived) continue;
@@ -97,14 +97,29 @@ export function judge({ repos, register, allow }) {
     if (reg && !allow.has(`${r.name}|homepage`)) {
       if (!homepage) {
         findings.push({ repo: r.name, kind: "homepage",
-          detail: `no homepage; the register says it serves https://${reg.domain}` });
+          detail: `no homepage; the register says it serves https://${reg.domain}`, fix: `https://${reg.domain}` });
       } else if (!(reg.domains ?? [reg.domain]).some((d) => homepage.includes(d))) {
         findings.push({ repo: r.name, kind: "homepage",
-          detail: `homepage ${homepage} is not the registered host https://${reg.domain}` });
+          detail: `homepage ${homepage} is not the registered host https://${reg.domain}`, fix: `https://${reg.domain}` });
       }
     }
     if (!description && !allow.has(`${r.name}|description`)) {
       findings.push({ repo: r.name, kind: "description", detail: "no description" });
+    }
+    // A description is prose, but a retired name or a forbidden claim in it is
+    // not a matter of taste: "AI-first product studio — … FleetCrown and
+    // hirn.li" sat on bitbaum/bitbaum while every document had moved on.
+    if (description && !allow.has(`${r.name}|description`)) {
+      for (const x of retired) {
+        if (description.includes(x.from)) {
+          findings.push({ repo: r.name, kind: "description", detail: `description uses retired "${x.from}" — say "${x.to}"` });
+        }
+      }
+      for (const c of claims) {
+        if (new RegExp(c.pattern, "i").test(description)) {
+          findings.push({ repo: r.name, kind: "description", detail: `description contradicts the register (${c.pattern}) — ${c.why}` });
+        }
+      }
     }
   }
   return findings.sort((a, b) => (a.repo + a.kind).localeCompare(b.repo + b.kind));
@@ -149,7 +164,32 @@ if (!data.conf) {
 
 const register = parseRegister(data.conf);
 const allow = parseAllow(existsSync(ALLOW) ? readFileSync(ALLOW, "utf8") : "");
-const findings = judge({ repos: data.repos, register, allow });
+const readJson = (p, key) => {
+  try { return JSON.parse(readFileSync(join(here, p), "utf8"))[key] ?? []; } catch { return []; }
+};
+const retired = readJson("../../registers/retired.json", "retired").filter((x) => x.from && x.from.length >= 5);
+const claims = readJson("../../registers/org.json", "forbiddenClaims");
+const findings = judge({ repos: data.repos, register, allow, retired, claims });
+
+// --fix: a homepage is a FACT the register already holds, so the reconciler
+// writes it rather than asking a person to copy it across. Descriptions are
+// prose and are never written — they are reported. Needs a token with admin
+// on the repo (FLEET_PAT); a refusal is reported, never hidden.
+if (MODE === "fix") {
+  let fixed = 0, refused = 0;
+  for (const f of findings.filter((x) => x.fix)) {
+    try {
+      execFileSync("gh", ["repo", "edit", `${ORG}/${f.repo}`, "--homepage", f.fix], { stdio: "pipe" });
+      console.log(`  fixed ${f.repo}: homepage → ${f.fix}`);
+      fixed++;
+    } catch (e) {
+      console.log(`  could not fix ${f.repo}: ${String(e.stderr ?? e.message).trim().split("\n")[0]}`);
+      refused++;
+    }
+  }
+  console.log(`repo-metadata --fix: ${fixed} homepage(s) set from the register${refused ? `, ${refused} refused` : ""}`);
+  process.exit(refused ? 1 : 0);
+}
 
 if (MODE === "list") {
   for (const f of findings) console.log(`${f.repo}|${f.kind}|${f.detail}`);

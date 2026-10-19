@@ -16,6 +16,23 @@ Deleting the sentence without adding the row means the next session writes it
 back. Adding the row is the whole mechanism — do not special-case the sentence
 in a repo.
 
+Four gates hold the rest, mechanically, so no doc or page has to be trusted:
+
+| What could go stale | Gate | When it bites |
+| --- | --- | --- |
+| A doc names a path, link, script or stack major its own repo contradicts, or a retired name | `scripts/ci/docs-truth-audit.mjs` | in the auto-merge sweep, on the PR about to merge: a PR may not ADD a finding (deleting a file a doc still names counts); daily over every repo, ratcheted |
+| A public document contradicts the org register | `scripts/ci/org-drift-audit.sh` | every fleet PR and daily |
+| A served page carries a retired name, a forbidden claim, a past copyright year or a dead same-site link | `scripts/ci/live-claims-audit.mjs` | daily over every live site in Loki's map, ratcheted |
+| A GitHub homepage or description disagrees with the registers | `scripts/ci/repo-metadata-audit.mjs` | every fleet PR |
+
+A finding is fixed by correcting the claim, or by saying on that line that the
+thing is gone ("removed", "retired", "there is no …") — a reader needs that
+sentence anyway. A dated file (`*-2026-07-13-*.md`), `CHANGELOG.md`, `content/`
+and anything under `archive/` describe their date, not today, and are not
+judged; a doc that has stopped being true and is worth keeping as history moves
+to an `archive/` directory. Forbidden claims are `forbiddenClaims` in
+`registers/org.json`: one list, read by every gate above.
+
 Each repo keeps a short `AGENTS.md`: the pointer in `templates/AGENTS.md`, then
 only facts that exist only in that repo (how to run it, where the tests are).
 `CLAUDE.md` and any other agent file point here. They do not get their own
@@ -81,8 +98,8 @@ lost. That is the same bug as a private copy: put it where the readers are.
   there carries `wallet: { holds, why }`, and
   `__tests__/unit/config/entity-admission.test.ts` enforces it. The same entity
   sits on three planes: OrangeCat is its economy, **Solon** its governance (its
-  decisions can be put to a signed vote), **Loki** its engineering (it can be
-  built and shipped by agents). Do not restate the list anywhere: three copies
+  decisions can be put to a signed vote), **Loki** its execution (it can be
+  worked on, built and shipped). Do not restate the list anywhere: three copies
   of it lived in orangecat's own agent-read docs, and all three had drifted —
   one named `organization`, which has never been a type.
 
