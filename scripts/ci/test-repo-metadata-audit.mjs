@@ -9,7 +9,7 @@
 // AND be named. An audit that cannot go red is decoration.
 //
 // Run: node scripts/ci/test-repo-metadata-audit.mjs
-import { judge, parseRegister, parseAllow } from "./repo-metadata-audit.mjs";
+import { judge, parseRegister, parseAllow, descriptionFromWhat, describedFromMap } from "./repo-metadata-audit.mjs";
 
 let pass = 0;
 const fail = (m) => { console.error(`  ✗ ${m}`); process.exitCode = 1; };
@@ -108,6 +108,29 @@ is(judge({ repos: sparse, register: reg, allow }).length, 2,
      "a description naming a retired host is a finding");
   is(judge({ repos: r("Strategy repo and the generator for bitbaum.orangecat.ch"), register: new Map(), allow: new Map(), claims, retired }).length, 0,
      "a true description is not");
+}
+
+{
+  is(descriptionFromWhat("Your AI economic agent — and the platform where it operates."), "Your AI economic agent — and the platform where it operates.", "a one-sentence what is the description");
+  is(descriptionFromWhat("First-principles rebuttal generator. Paste any article URL, get a structured response that includes:"), "First-principles rebuttal generator.", "a what that trails into a list keeps its whole sentences");
+  is(descriptionFromWhat("Paste any article URL, get a response that includes:"), null, "and yields nothing when only the list is left");
+  is(descriptionFromWhat("A. " + "x".repeat(400) + "."), "A.", "it stays within GitHub's limit by whole sentences");
+  const described = describedFromMap({ projects: [
+    { slug: "bitbaum", what: "The Bitbaum studio website and its static site generator. The public site is bitbaum.orangecat.ch.", urls: { repo: "https://github.com/bitbaum/bitbaum" } },
+    { slug: "x", what: null, urls: { repo: "https://github.com/bitbaum/x" } },
+  ] });
+  is(described.get("bitbaum"), "The Bitbaum studio website and its static site generator. The public site is bitbaum.orangecat.ch.", "a dot inside a host does not end a sentence");
+  is(described.size, 1, "only projects with a what and a repo describe one");
+  const claims = [{ pattern: "AI-first product studio", why: "not what bitbaum is" }];
+  const repos = (d) => [{ name: "bitbaum", archived: false, homepage: "", description: d }];
+  const [f] = judge({ repos: repos("AI-first product studio — behind OrangeCat"), register: new Map(), allow: new Map(), claims, described });
+  is(f?.fixDescription, described.get("bitbaum"), "a faulted description is replaced with the map's own words");
+  const [g] = judge({ repos: repos(""), register: new Map(), allow: new Map(), claims, described });
+  is(g?.fixDescription, described.get("bitbaum"), "so is a missing one");
+  is(judge({ repos: repos("A fine description"), register: new Map(), allow: new Map(), claims, described }).length, 0, "a description nobody faulted is never touched");
+  const bad = new Map([["bitbaum", "The AI-first product studio."]]);
+  const [h] = judge({ repos: repos(""), register: new Map(), allow: new Map(), claims, described: bad });
+  is(h?.fixDescription, undefined, "a replacement that makes the same mistake is not written");
 }
 
 console.log(`  ${pass} passed`);
