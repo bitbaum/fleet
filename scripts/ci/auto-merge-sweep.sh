@@ -215,6 +215,28 @@ rerun_non_verdict_run() {
     || { echo "[auto-merge] could not re-run ${rerun_id}" >&2; return 1; }
 }
 
+# Is the base tip ahead of $1 only by commits a workflow made for itself?
+#
+# A deploy that commits refreshed snapshots back to the base (bitbaum's site
+# does, on every run) moves the tip with a commit no CI run will ever judge:
+# that push is made with GITHUB_TOKEN, so it triggers nothing. The guards
+# below then saw an unjudged tip, dispatched CI, that run committed another
+# snapshot, and the next sweep saw a newer unjudged tip. Observed on
+# bitbaum/bitbaum 2026-10-19: a snapshot commit every ~6 minutes, each
+# differing only in map.json's generatedAt, a redeploy every time, and a green
+# repair PR that could never merge because the base never held still.
+#
+# A commit github-actions[bot] made was written BY a verified run, from the
+# tree that run verified, so that run's verdict covers it. Anything else since
+# — a person's push, a merge — still needs a verdict of its own.
+bot_only_since() {
+  [ -n "${1:-}" ] && [ "$1" != "$base_sha" ] || return 1
+  local who
+  who=$(gh api "repos/${REPO}/compare/$1...${base_sha}" \
+    --jq 'select(.status == "ahead") | [.commits[] | (.author.login // "")] | unique | join(",")' 2>/dev/null) || return 1
+  [ "$who" = "github-actions[bot]" ]
+}
+
 echo "[auto-merge] sweeping open PRs against ${BASE_BRANCH} in ${REPO}"
 
 # Never add changes to a base that is red or mid-verification.
@@ -276,7 +298,25 @@ else
   base_conclusion=$(printf '%s' "$base_ci" | jq -r '.conclusion // ""')
   base_ci_sha=$(printf '%s' "$base_ci" | jq -r '.headSha')
 
+  # The tip may have no run of its own only because the last run wrote back to
+  # it — see bot_only_since. Then that run's verdict is the tip's verdict.
+  adopted=""
   if [ "$base_ci_sha" != "$base_sha" ]; then
+    for cand in $(printf '%s' "$base_runs_json" | jq -r '
+        [ (if type == "array" then . else [.] end)[] | select(.status == "completed") | .headSha ]
+        | reduce .[] as $s ([]; if any(.[]; . == $s) then . else . + [$s] end) | .[:5][]' 2>/dev/null); do
+      if bot_only_since "$cand"; then adopted="$cand"; break; fi
+    done
+    if [ -n "$adopted" ]; then
+      echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}; every commit since ${adopted:0:8} was written back by github-actions[bot] — judging by ${adopted:0:8}'s verdict"
+      base_ci=$(printf '%s' "$base_runs_json" | pick_base_run "$adopted")
+      base_status=$(printf '%s' "$base_ci" | jq -r '.status')
+      base_conclusion=$(printf '%s' "$base_ci" | jq -r '.conclusion // ""')
+      base_ci_sha=$(printf '%s' "$base_ci" | jq -r '.headSha')
+    fi
+  fi
+
+  if [ "$base_ci_sha" != "$base_sha" ] && [ -z "$adopted" ]; then
     # THE DEADLOCK THIS GUARD BUILDS FOR ITSELF.
     #
     # "Wait for CI to catch up" assumes CI is coming. For an automated merge it
@@ -426,6 +466,9 @@ if [ -n "$DEPLOY_WORKFLOW" ] && [ -n "${base_ci:-}" ] && [ -z "${base_red_jobs}"
     echo "[auto-merge] a deploy is already in flight — not dispatching another"
   elif [ "$deployed_sha" = "$base_sha" ]; then
     echo "[auto-merge] ${BASE_BRANCH} ${base_sha:0:8} is already deployed (${deployed_source})"
+  elif bot_only_since "$deployed_sha"; then
+    # The deploy that shipped deployed_sha also wrote the commits after it.
+    echo "[auto-merge] ${BASE_BRANCH} ${base_sha:0:8} is already deployed — every commit since ${deployed_short} was that deploy's own write-back"
   else
     echo "[auto-merge] ${BASE_BRANCH} is at ${base_sha:0:8}; deployed (${deployed_source}) is ${deployed_short:-unknown} — shipping"
     gh workflow run "$DEPLOY_WORKFLOW" --repo "$REPO" --ref "$BASE_BRANCH" \
