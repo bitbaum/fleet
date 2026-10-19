@@ -23,7 +23,7 @@ Four gates hold the rest, mechanically, so no doc or page has to be trusted:
 | A doc names a path, link, script or stack major its own repo contradicts, or a retired name | `scripts/ci/docs-truth-audit.mjs` | in the auto-merge sweep, on the PR about to merge: a PR may not ADD a finding (deleting a file a doc still names counts); daily over every repo, ratcheted |
 | A public document contradicts the org register | `scripts/ci/org-drift-audit.sh` | every fleet PR and daily |
 | A served page carries a retired name, a forbidden claim, a past copyright year or a dead same-site link | `scripts/ci/live-claims-audit.mjs` | daily over every live site in Loki's map, ratcheted |
-| A GitHub homepage or description disagrees with the registers | `scripts/ci/repo-metadata-audit.mjs` | every fleet PR |
+| A GitHub homepage or description disagrees with the registers | `scripts/ci/repo-metadata-audit.mjs` | daily (`repo-metadata.yml`): writes the homepage from Loki's `apps.conf` and a missing or faulted description from the fleet map's "what", then reports what is left |
 
 A finding is fixed by correcting the claim, or by saying on that line that the
 thing is gone ("removed", "retired", "there is no …") — a reader needs that

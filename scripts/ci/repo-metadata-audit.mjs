@@ -49,6 +49,7 @@ const ORG = process.env.ORG ?? "bitbaum";
 const ALLOW = process.env.ALLOW_FILE ?? join(here, "repo-metadata.allow");
 const args = process.argv.slice(2);
 const MODE = args.includes("--list") ? "list" : args.includes("--fix") ? "fix" : "check";
+const MAP_URL = process.env.MAP_URL ?? "https://loki.orangecat.ch/api/fleet/map";
 const FIXTURE = args.includes("--fixture") ? args[args.indexOf("--fixture") + 1] : null;
 
 /** allowlist: `repo|kind|reason` — kind is `homepage` or `description`. */
@@ -85,11 +86,49 @@ export function parseRegister(conf) {
   return out;
 }
 
+/**
+ * A repo description from the venture's own one-line "what" in Loki's fleet
+ * map — the text the studio site already shows. Whole sentences only, within
+ * GitHub's limit; a "what" that trails off into a list (ends with ":") is not
+ * a description and yields null.
+ */
+export function descriptionFromWhat(what, max = 300) {
+  const t = (what ?? "").replace(/\s+/g, " ").trim();
+  if (!t) return null;
+  // A sentence ends at . ! ? followed by a space — not at the dots inside
+  // "bitbaum.orangecat.ch" or "S.Ink".
+  const sentences = t.split(/(?<=[.!?])\s+/);
+  let out = "";
+  for (const raw of sentences) {
+    const sent = raw.trim();
+    if (!sent) continue;
+    if (sent.endsWith(":")) break; // a lead-in to a list, not a sentence
+    if ((out ? out.length + 1 : 0) + sent.length > max) break;
+    out = out ? `${out} ${sent}` : sent;
+  }
+  return out || null;
+}
+
+/** Fleet map -> Map(repoName -> description written from its "what"). */
+export function describedFromMap(map) {
+  const out = new Map();
+  for (const p of map?.projects ?? []) {
+    const repo = (p?.urls?.repo ?? "").match(/github\.com\/[^/]+\/([^/#?]+)/)?.[1];
+    const d = descriptionFromWhat(p?.what);
+    if (repo && d && !out.has(repo)) out.set(repo, d);
+  }
+  return out;
+}
+
 /** The judgement, isolated from the network so it can be tested. */
-export function judge({ repos, register, allow, retired = [], claims = [] }) {
+export function judge({ repos, register, allow, retired = [], claims = [], described = new Map() }) {
   const findings = [];
+  const clean = (text) => text && !retired.some((x) => text.includes(x.from)) && !claims.some((c) => new RegExp(c.pattern, "i").test(text));
   for (const r of repos) {
     if (r.archived) continue;
+    // A description the reconciler may write: the map's own words, and only
+    // when they are themselves free of what the description is faulted for.
+    const better = clean(described.get(r.name)) ? described.get(r.name) : undefined;
     const reg = register.get(r.name);
     const homepage = (r.homepage ?? "").trim();
     const description = (r.description ?? "").trim();
@@ -104,7 +143,7 @@ export function judge({ repos, register, allow, retired = [], claims = [] }) {
       }
     }
     if (!description && !allow.has(`${r.name}|description`)) {
-      findings.push({ repo: r.name, kind: "description", detail: "no description" });
+      findings.push({ repo: r.name, kind: "description", detail: "no description", fixDescription: better });
     }
     // A description is prose, but a retired name or a forbidden claim in it is
     // not a matter of taste: "AI-first product studio — … FleetCrown and
@@ -112,12 +151,12 @@ export function judge({ repos, register, allow, retired = [], claims = [] }) {
     if (description && !allow.has(`${r.name}|description`)) {
       for (const x of retired) {
         if (description.includes(x.from)) {
-          findings.push({ repo: r.name, kind: "description", detail: `description uses retired "${x.from}" — say "${x.to}"` });
+          findings.push({ repo: r.name, kind: "description", detail: `description uses retired "${x.from}" — say "${x.to}"`, fixDescription: better });
         }
       }
       for (const c of claims) {
         if (new RegExp(c.pattern, "i").test(description)) {
-          findings.push({ repo: r.name, kind: "description", detail: `description contradicts the register (${c.pattern}) — ${c.why}` });
+          findings.push({ repo: r.name, kind: "description", detail: `description contradicts the register (${c.pattern}) — ${c.why}`, fixDescription: better });
         }
       }
     }
@@ -138,7 +177,11 @@ function load() {
   let conf = null;
   const blob = gh(`repos/${ORG}/loki/contents/scripts/hetzner/apps.conf`);
   if (blob?.content) conf = Buffer.from(blob.content, "base64").toString("utf8");
-  return { repos, conf };
+  let map = null;
+  try {
+    map = JSON.parse(execFileSync("curl", ["-fsS", "--max-time", "20", MAP_URL], { encoding: "utf8", maxBuffer: 32e6 }));
+  } catch { /* no map: descriptions are reported, not written */ }
+  return { repos, conf, map };
 }
 
 // Only run the sweep when invoked directly. Importing this file — which the
@@ -169,25 +212,33 @@ const readJson = (p, key) => {
 };
 const retired = readJson("../../registers/retired.json", "retired").filter((x) => x.from && x.from.length >= 5);
 const claims = readJson("../../registers/org.json", "forbiddenClaims");
-const findings = judge({ repos: data.repos, register, allow, retired, claims });
+const described = describedFromMap(data.map);
+const findings = judge({ repos: data.repos, register, allow, retired, claims, described });
 
 // --fix: a homepage is a FACT the register already holds, so the reconciler
-// writes it rather than asking a person to copy it across. Descriptions are
-// prose and are never written — they are reported. Needs a token with admin
-// on the repo (FLEET_PAT); a refusal is reported, never hidden.
+// writes it rather than asking a person to copy it across. A description is
+// written only when it is missing or wrong (a retired name, a forbidden claim)
+// AND the venture's own "what" in Loki's fleet map can replace it — a
+// description nobody faulted is never touched. Needs a token with admin on the
+// repo (FLEET_PAT); a refusal is reported, never hidden.
 if (MODE === "fix") {
   let fixed = 0, refused = 0;
-  for (const f of findings.filter((x) => x.fix)) {
+  const edits = [
+    ...findings.filter((x) => x.fix).map((f) => ({ repo: f.repo, flag: "--homepage", value: f.fix })),
+    ...[...new Map(findings.filter((x) => x.fixDescription).map((f) => [f.repo, f.fixDescription]))]
+      .map(([repo, value]) => ({ repo, flag: "--description", value })),
+  ];
+  for (const e of edits) {
     try {
-      execFileSync("gh", ["repo", "edit", `${ORG}/${f.repo}`, "--homepage", f.fix], { stdio: "pipe" });
-      console.log(`  fixed ${f.repo}: homepage → ${f.fix}`);
+      execFileSync("gh", ["repo", "edit", `${ORG}/${e.repo}`, e.flag, e.value], { stdio: "pipe" });
+      console.log(`  fixed ${e.repo}: ${e.flag.slice(2)} → ${e.value}`);
       fixed++;
-    } catch (e) {
-      console.log(`  could not fix ${f.repo}: ${String(e.stderr ?? e.message).trim().split("\n")[0]}`);
+    } catch (err) {
+      console.log(`  could not fix ${e.repo}: ${String(err.stderr ?? err.message).trim().split("\n")[0]}`);
       refused++;
     }
   }
-  console.log(`repo-metadata --fix: ${fixed} homepage(s) set from the register${refused ? `, ${refused} refused` : ""}`);
+  console.log(`repo-metadata --fix: ${fixed} field(s) set from the registers${refused ? `, ${refused} refused` : ""}`);
   process.exit(refused ? 1 : 0);
 }
 

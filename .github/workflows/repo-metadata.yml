@@ -1,12 +1,13 @@
 # Repo-metadata reconciler: a repository's homepage is a fact the deploy
 # register (loki apps.conf) already holds, so this WRITES it instead of asking
-# someone to copy it across. ci.yml's per-PR "Repo metadata agrees with the
-# register" step only reports, and a report on a repo page nobody edits stays
-# red forever: on 2026-10-19 five homepages were missing or wrong and every
-# fleet PR inherited the red.
+# someone to copy it across. It used to be a per-PR step in ci.yml that only
+# reported, and a report on a repo page nobody edits stays red forever: on
+# 2026-10-19 five homepages were missing or wrong and every fleet PR inherited
+# the red.
 #
-# Descriptions are prose and are never written; one that carries a retired
-# name or a forbidden claim stays a reported finding for a person.
+# A description is written only when it is missing or wrong (a retired name,
+# a forbidden claim) and the venture's own "what" in Loki's fleet map can
+# replace it; a description nobody faulted is never touched.
 name: Repo metadata
 
 on:
