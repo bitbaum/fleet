@@ -174,6 +174,7 @@ export const FALLBACK_REPOS = ["orangecat", "loki", "solon", "fleet", "dotfiles"
 // First segments that are always this repo's own, even when a change has just
 // removed the last file under them (that removal is the drift to catch).
 const KNOWN_ROOTS = new Set(["src", "app", "lib", "scripts", "docs", "components", "packages", "public", "supabase", "drizzle", ".github", ".claude", "tests", "__tests__", "e2e", "config", "hooks", "messages"]);
+const ILLUSTRATIVE = /\b(e\.g\.|i\.e\.|for example|for instance|example:|such as|placeholder|would (go|live|be))/i;
 const CODE_ROOTS = ["src", "app", "apps", "packages", "lib"];
 const GENERATED = /^(\.claude\/worktrees|\.tmp|tmp|\.next|node_modules|dist|build|out|coverage|\.env|\.turbo|\.vercel|test-results|playwright-report)(\/|$)/;
 const OTHER_REPO = /\bbitbaum\/[\w.-]+|github\.com\/|\b(in|from|of) (the )?(fleet|orangecat|loki|solon|dotfiles|evig|heidi|substrata|bitbaum)(\b| repo)/i;
@@ -251,15 +252,28 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
     const pkgs = nearestPkgs(file);
     const scripts = new Set(pkgs.flatMap((p) => Object.keys(p.scripts ?? {})));
 
+    // A file that describes OTHER repositories by design (a global agent file
+    // installed into ~/.claude from dotfiles) opts its paths out, on the
+    // record: `<!-- docs-truth: paths-elsewhere -->`. Retired names still count.
+    const elsewhere = /<!--\s*docs-truth:\s*paths-elsewhere\b[^>]*-->/.test(text);
+    const rows = scanLines(text);
     let para = "";
-    for (const { n, line, fence } of scanLines(text)) {
+    for (let i = 0; i < rows.length; i++) {
+      const { n, line, fence } = rows[i];
       // The paragraph (or list item) so far: a wrapped sentence names its
       // repository once, often lines before the path it then quotes.
       if (!line.trim() || /^(\s{0,1}[-*+] |\s{0,1}\d+\. |#)/.test(line)) para = "";
       para += " " + line;
       // Judge the PROSE for history words, not the names it quotes: a file
       // called removed.ts is not a sentence about something being removed.
-      if (HISTORICAL.test(line.replace(/`[^`]*`/g, "").replace(/\]\([^)]*\)/g, "]"))) continue;
+      const prose = (l) => (l ?? "").replace(/`[^`]*`/g, "").replace(/\]\([^)]*\)/g, "]");
+      // A sentence wrapped across lines says "removed" once; read on to its
+      // end (up to two more lines) before deciding it is a claim.
+      let sentence = prose(line);
+      for (let k = 1; k <= 2 && !fence && !/[.!?:]\s*$/.test(rows[i + k - 1]?.line ?? ".") && rows[i + k] && !rows[i + k].fence && rows[i + k].n === n + k && rows[i + k].line.trim(); k++) {
+        sentence += " " + prose(rows[i + k].line);
+      }
+      if (HISTORICAL.test(sentence)) continue;
 
       // --- retired forms
       for (const r of retired) {
@@ -269,8 +283,17 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
       }
 
       // --- scripts (also inside fences: a command block is a claim)
-      if (pkgs.length) {
+      if (pkgs.length && !elsewhere) {
         for (const m of line.matchAll(SCRIPT_RE)) {
+          // `cd examples/next && pnpm run dev` runs THAT package's script.
+          const cd = [...line.slice(0, m.index).matchAll(/\bcd\s+([\w./-]+)/g)].pop();
+          if (cd) {
+            const raw = cd[1].replace(/\/$/, "");
+            const cand = [raw, raw.split("/").slice(1).join("/"), docDir ? posix.join(docDir, raw) : ""].filter(Boolean).map((d) => posix.normalize(d));
+            const p = cand.map((d) => pkgAt(d)).find(Boolean);
+            if (p) { if (p.scripts?.[m[2]]) continue; }
+            else continue; // a directory this repo does not hold: not ours to judge
+          }
           const flags = m[1] ?? "";
           if (/--filter|(^|\s)-F(\s|=)|(^|\s)-C(\s|=)|--dir|--prefix|--workspace|(^|\s)-w(\s|$)/.test(flags)) continue;
           const s = m[2].replace(/[.,;:)]+$/, "");
@@ -291,7 +314,7 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
         }
       }
 
-      if (fence) continue; // trees and code samples are illustrations, not claims
+      if (fence || elsewhere) continue; // trees and code samples are illustrations, not claims
 
       // --- relative markdown links
       for (const m of line.matchAll(/\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
@@ -315,6 +338,8 @@ export function judgeRepo({ name, tree, read }, retired = [], otherRepos = FALLB
       // scripts/ci/…") is describing THAT tree; this one cannot judge it.
       const ctx = para;
       if (OTHER_REPO.test(ctx) || (otherRepo && otherRepo.test(ctx))) continue;
+      // "e.g. public/art/condor-dream.jpg" is where a file WOULD go.
+      if (ILLUSTRATIVE.test(prose(line))) continue;
       for (const m of line.matchAll(/`([^`\n]+)`/g)) {
         const raw = m[1];
         const p = pathCandidate(raw);

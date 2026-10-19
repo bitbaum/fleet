@@ -97,6 +97,29 @@ console.log("a wrapped sentence keeps its repository");
   check("a new paragraph is judged again", kinds(f).includes("path:src/missing.ts"));
 }
 
+console.log("feedback from the first cleanup");
+{
+  const f = judgeRepo(repo({
+    "package.json": PKG,
+    "examples/next/package.json": JSON.stringify({ scripts: { dev: "x" } }),
+    "README.md": [
+      "Run `cd examples/next && pnpm run dev`, and `cd examples/next && pnpm run nope`.",
+      "The worklists `docs/a.md` and `docs/b.md` were",
+      "removed once the work shipped.",
+      "A new painting goes in public/art, e.g. `public/art/condor.jpg`.",
+    ].join("\n"),
+    "GLOBAL.md": "",
+  }));
+  const k = kinds(f);
+  check("a cd into a sub-package reads that package's scripts", !k.includes("script:dev") && k.includes("script:nope"));
+  check("a removal stated on the next line is still history", !k.some((x) => x.startsWith("path:docs/")));
+  check("an example path is not a claim", !k.includes("path:public/art/condor.jpg"));
+}
+{
+  const f = judgeRepo(repo({ "CLAUDE.md": "<!-- docs-truth: paths-elsewhere -->\nProduct repos keep `app/globals.css` and `tailwind.config.ts`.\nProduction is revampit.orangecat.ch." }), RETIRED);
+  check("a file that describes other repos opts its paths out, not its names", kinds(f).join() === "retired:revampit.orangecat.ch");
+}
+
 console.log("relative to the doc's own directory");
 {
   const f = judgeRepo(repo({
