@@ -28,7 +28,7 @@ on:
   schedule:
     # Not on the hour. A cron on :00 competes with everything else in the org
     # for the same scheduler slot, which is part of why the per-repo ones drift.
-    - cron: '23,53 * * * *'
+    - cron: '53 * * * *' # hourly backup; box timer dispatches every 15 min
   workflow_dispatch:
     inputs:
       go:
