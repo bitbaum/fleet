@@ -47,6 +47,35 @@
     {
       "pattern": "Georgy Butaev",
       "why": "the public name is Cato; the legal personal name does not go on public surfaces"
+    },
+    {
+      "pattern": "RevampIT\\W+(is|was|as)\\W+(a\\W+|an\\W+|our\\W+)?(paying\\W+)?(client|customer|owner|partner)",
+      "why": "RevampIT dropped G; it is not a client, owner or partner. evig is G's own independent project; Kivvi is a bitbaum product."
+    },
+    {
+      "pattern": "(client|customer|partner)\\W+(is\\W+)?RevampIT",
+      "why": "RevampIT is not a client, customer or partner of bitbaum."
+    },
+    {
+      "pattern": "RevampIT\\|client",
+      "why": "apps.conf: no row is owned by RevampIT; Kivvi is bitbaum|product."
     }
-  ]
+  ],
+  "businessFacts": {
+    "_why": "Facts with no other producer. scripts/ci/business-facts-audit.sh fails when apps.conf or readings.json contradict them.",
+    "notClients": [
+      "RevampIT",
+      "Revamp-IT",
+      "revamp-it"
+    ],
+    "favourClients": [
+      "AOZ",
+      "vitareba",
+      "S-Ink"
+    ],
+    "products": {
+      "kivvi": "bitbaum product; evig is its first user",
+      "evig": "G's own independent project"
+    }
+  }
 }
