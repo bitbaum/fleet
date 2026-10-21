@@ -34,7 +34,7 @@
       "from": "revampit.orangecat.ch",
       "to": "evig.orangecat.ch",
       "since": "2026-09-10",
-      "why": "The organisation renamed to evig.",
+      "why": "evig is G's own independent project; it moved to its own host. revampit.orangecat.ch is a leftover alias (308).",
       "verified": "curl -L resolves to https://evig.orangecat.ch/ (200)"
     },
     {
