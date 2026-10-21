@@ -218,6 +218,55 @@ came for without leaving the screen, and does the record still say what
 happened? If either answer is no, it is not a gate — it is a dead end, and it
 is a bug.
 
+## One shape per kind
+
+The owner's words, 2026-10-19 (Loki) and 2026-10-21 (OrangeCat's payment
+screens): "Frankenstein elements … not aligned, look different, asymmetrical,
+with labels that don't say anything … I spend too much time going through the
+pages and telling you the same stuff." This is that stuff, stated once. It is
+a product rule for every plane; a repo's agent file names its own instances
+and gates and points here for the rule.
+
+**Things of the same kind look the same, sit in the same place and are the
+same size. Everything on a screen is there because the person came for it.**
+
+- **Siblings share one frame.** Tabs of one surface have the same title
+  shape, the same one line under it, the same content width. Not an icon
+  beside two titles and none beside the third.
+- **Rows of one list have one anatomy.** Name, the detail under it, one
+  action on the right, the same size on every row. Adding is the last row,
+  not a button somewhere else.
+- **Actions that belong together are equal cells in one row.** Two buttons
+  → `grid-cols-2`. Never a wide one beside a narrow one.
+- **A row of choices is one row.** Pick one of a few → a segmented control.
+  A few suggestions → an even grid. Many → one line that scrolls sideways.
+  On/off settings → one per row, in a list. Never pills in a wrapping box:
+  they break into "4 + 1 orphan" wherever the words run out.
+- **One primary action per screen, and it is monochrome inside the app.** The
+  warm accent is for public, top-of-funnel surfaces only. A disabled accent
+  button is a washed-out orange slab; a disabled monochrome one reads as
+  "not yet".
+- **Every label says what happens when it is tapped.** A button is a verb.
+  Text that looks like a button and is not ("Where this goes") is removed or
+  made a button. "(optional)" is not a label: closed-until-wanted is a button
+  that says "Add a note".
+- **An icon promises the screen.** A QR icon in the navigation opens on a QR.
+  A camera icon opens a camera. If the screen cannot deliver what the icon
+  says, change one of them.
+- **Phone first.** 390px wide with no sideways scroll, every target 44px, the
+  committing action reachable without scrolling past what the person came for.
+
+Before a screen ships, in this order, every time: look at it at 390px; put it
+beside its siblings and compare frame, button variant and row anatomy; read
+every label aloud; count the primary buttons (one); run the repo's design
+gates. Then ask the question the owner will ask — is any element here a
+Frankenstein element — and fix it before the PR, not after he says so.
+
+Each repo keeps the gates that catch its own instances (OrangeCat:
+`check:choice-rows`, `check:accent-ink`, `check:type-scale`; Loki:
+`scripts/test/choice-rows.ts`, `design:check`). A rule with no gate behind it
+is a rule that gets re-explained.
+
 ## Packages
 
 Use a package when the same behavior must exist in more than one product:
