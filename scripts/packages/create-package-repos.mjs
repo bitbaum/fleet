@@ -166,6 +166,12 @@ function seed(decl, work) {
   // A lockfile of its own, then the package's own gate. Nothing is created
   // from a tree that does not pass.
   run('pnpm', ['install', '--no-frozen-lockfile'], { cwd: pkgDir, stdio: 'inherit' });
+  // A package whose verify drives a browser (chartkit's label audit, chatkit's
+  // layout checks) needs Chromium on the runner; pnpm install does not fetch
+  // it. The template CI does the same, keyed on the same devDependency.
+  if (pkg.devDependencies?.playwright) {
+    run('pnpm', ['exec', 'playwright', 'install', '--with-deps', 'chromium'], { cwd: pkgDir, stdio: 'inherit' });
+  }
   run('pnpm', ['run', 'verify'], { cwd: pkgDir, stdio: 'inherit' });
   return { pkgDir, pkg, sha };
 }
