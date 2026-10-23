@@ -16,7 +16,7 @@ name: Publish
 # "on". Set it after the bootstrap:  gh variable set NPM_PUBLISHING -b on
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
 
 # Publishing is idempotent: the job first asks the registry whether
 # package.json's version already exists and skips (green) if it does. A
@@ -46,8 +46,8 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Is this version already on the registry?
         id: check
