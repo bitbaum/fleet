@@ -29,6 +29,14 @@ jobs:
           node-version: "24"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # A verify that drives a browser needs Chromium; pnpm install does not
+      # fetch it. Keyed on the playwright devDependency, so a package without
+      # one pays nothing here.
+      - name: Chromium, when the package's verify needs it
+        run: |
+          if node -e "process.exit(require('./package.json').devDependencies?.playwright ? 0 : 1)"; then
+            pnpm exec playwright install --with-deps chromium
+          fi
       - run: pnpm run verify
       # dist/ is committed so a `github:` install needs no build step (pnpm
       # refuses git-dependency builds without a per-SHA allowBuilds entry in
