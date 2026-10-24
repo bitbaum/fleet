@@ -38,6 +38,68 @@ export function lockedDependencies(manifest, lock) {
   }
   return result;
 }
+export function nestedSharedArtifacts(lock) {
+  const section =
+    lock.match(/^importers:[^\n]*\n([\s\S]*?)(?=^\S|(?![\s\S]))/m)?.[1] ?? "";
+  const entries = [];
+  for (const importer of section.matchAll(
+    /^  (.+):[^\n]*\n([\s\S]*?)(?=^  \S|^\S|(?![\s\S]))/gm,
+  )) {
+    if (importer[1].replace(/['"]/g, "") === ".") continue;
+    for (const dependency of importer[2].matchAll(
+      /^      ['"]?([^'"\n]+?)['"]?:\s*\n\s+specifier:.*\n\s+version: (.+)$/gm,
+    )) {
+      const name = dependency[1];
+      if (
+        known.has(name) ||
+        name.startsWith("@bitbaum/") ||
+        policy.packages[name]
+      )
+        entries.push([
+          importer[1],
+          name,
+          dependency[2].replace(/^['"]|['"]$/g, "").split("(")[0],
+        ]);
+    }
+  }
+  return entries.sort((a, b) =>
+    JSON.stringify(a).localeCompare(JSON.stringify(b)),
+  );
+}
+export function nestedSharedChange(files, readManifest) {
+  const sharedSpecs = (manifest) =>
+    Object.fromEntries(
+      Object.entries({
+        ...manifest?.dependencies,
+        ...manifest?.devDependencies,
+      })
+        .filter(
+          ([name]) =>
+            known.has(name) ||
+            name.startsWith("@bitbaum/") ||
+            policy.packages[name],
+        )
+        .sort(([a], [b]) => a.localeCompare(b)),
+    );
+  for (const { filename } of files) {
+    if (!filename.includes("/")) continue;
+    const isManifest = filename.endsWith("/package.json");
+    const isLock = /\/(?:pnpm-lock\.yaml|package-lock\.json|yarn\.lock)$/.test(
+      filename,
+    );
+    if (!isManifest && !isLock) continue;
+    const path = isManifest
+      ? filename
+      : filename.slice(0, filename.lastIndexOf("/")) + "/package.json";
+    const before = sharedSpecs(readManifest(path, "base")),
+      after = sharedSpecs(readManifest(path, "head"));
+    if (isLock && (Object.keys(before).length || Object.keys(after).length))
+      return true;
+    if (isManifest && JSON.stringify(before) !== JSON.stringify(after))
+      return true;
+  }
+  return false;
+}
 export async function assessRollout({
   repo,
   before,
@@ -178,10 +240,43 @@ async function main() {
   const pr = api(`repos/${repo}/pulls/${number}`);
   // Avoid requiring a Node lockfile from repositories with no root Node manifest.
   const manifest = content(repo, "package.json", pr.head.sha);
-  if (!manifest) return;
   // Package repositories publish artifacts; their downstream application consumers
   // provide the deployment/canary evidence. Do not require a library to deploy a site.
-  if (known.has(JSON.parse(manifest).name)) return;
+  if (manifest && known.has(JSON.parse(manifest).name)) return;
+  const files = [];
+  for (let page = 1; page <= 30; page++) {
+    const batch = api(
+      `repos/${repo}/pulls/${number}/files?per_page=100&page=${page}`,
+    );
+    files.push(...batch);
+    if (batch.length < 100) break;
+    if (page === 30)
+      throw new Error("Dependency scope exceeds the API file limit");
+  }
+  if (
+    nestedSharedChange(files, (path, side) => {
+      const text = content(
+        repo,
+        path,
+        side === "base" ? pr.base.sha : pr.head.sha,
+      );
+      return text ? JSON.parse(text) : null;
+    })
+  )
+    throw new Error(
+      "Nested shared dependency update requires importer-specific rollout evidence; automatic merge is held",
+    );
+  if (!manifest) return;
+  // Workspace artifacts cannot silently escape the root-consumer gate.
+  const baseLock = content(repo, "pnpm-lock.yaml", pr.base.sha) ?? "";
+  const headLock = content(repo, "pnpm-lock.yaml", pr.head.sha) ?? "";
+  if (
+    JSON.stringify(nestedSharedArtifacts(baseLock)) !==
+    JSON.stringify(nestedSharedArtifacts(headLock))
+  )
+    throw new Error(
+      "Nested workspace shared artifacts changed: automatic promotion is held until workspace-specific canary evidence is supported",
+    );
   const before = depsAt(repo, pr.base.sha),
     after = depsAt(repo, pr.head.sha);
   const changed = Object.keys(after).some(
