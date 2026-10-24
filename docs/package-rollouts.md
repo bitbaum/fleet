@@ -21,9 +21,9 @@ they do not silently promote. Lock-only pnpm root dependency changes are checked
 including pinned Git artifacts; npm lockfile v2/v3 direct dependencies are also
 supported. Unsupported lock formats, unavailable API evidence and checker errors
 hold automatic merging. Changed shared artifacts in nested pnpm importers hold automatic promotion
-until workspace-specific canary evidence is supported. Standalone nested
-lockfiles outside the root workspace still require explicit integration checks;
-they are not covered by this root dependency gate. Manual merges are not constrained by this script.
+until workspace-specific canary evidence is supported. Standalone nested dependency manifest changes and nested lockfile updates
+with shared dependencies likewise hold automatic promotion. The gate does not
+infer compatibility for an integration it cannot evaluate. Manual merges are not constrained by this script.
 
 For a regression: add the exact locked artifact to `blocked[package]` in the
 policy register, fix the package with a regression test and release a new version.

@@ -5,6 +5,7 @@ import {
   assessRollout,
   successfulWorkflows,
   nestedSharedArtifacts,
+  nestedSharedChange,
 } from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
@@ -126,5 +127,30 @@ test("nested shared importer changes cannot disappear behind unchanged root depe
   assert.notDeepEqual(
     nestedSharedArtifacts(lock("0.4.0")),
     nestedSharedArtifacts(lock("0.4.1")),
+  );
+});
+
+test("standalone nested manifests and locks cannot bypass the root gate", () => {
+  const manifest = { dependencies: { [name]: "^0.4.0" } };
+  assert.equal(
+    nestedSharedChange(
+      [{ filename: "frontend/pnpm-lock.yaml" }],
+      () => manifest,
+    ),
+    true,
+  );
+  assert.equal(
+    nestedSharedChange([{ filename: "frontend/package.json" }], (_, side) =>
+      side === "head" ? manifest : null,
+    ),
+    true,
+  );
+  assert.equal(
+    nestedSharedChange([{ filename: "frontend/package.json" }], () => manifest),
+    false,
+  );
+  assert.equal(
+    nestedSharedChange([{ filename: "frontend/page.tsx" }], () => manifest),
+    false,
   );
 });
