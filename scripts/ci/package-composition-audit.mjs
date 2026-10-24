@@ -74,7 +74,7 @@ export function auditComposition(
           `${feature}: ${binding.file} does not import its declared package`,
         );
       for (const symbol of binding.symbols ?? []) {
-        const escaped = RegExp.escape(String(symbol));
+        const escaped = String(symbol).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         if (!new RegExp(`(?:<${escaped}\\b|\\b${escaped}\\s*\\()`).test(source))
           findings.push(`${feature}: ${symbol} is not used in ${binding.file}`);
       }
