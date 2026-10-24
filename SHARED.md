@@ -810,3 +810,11 @@ through repos the gate cannot reach. Treat it as a
 **detector with an owner**, not as a gate — a detector nobody is assigned to is
 the muting this file was written to prevent. And never run `--update` on a rise
 you have not investigated: that erases the only signal there was.
+
+## Safe package promotion
+
+Shared fixes reach consumers through the staged rollout gate, not simultaneous
+fleet merges. See [the promotion and recovery contract](docs/package-rollouts.md)
+and [the canary/blocked-artifact policy](registers/package-rollouts.json).
+Consumer CI and browser checks are required; unknown evidence holds automatic
+merging. Follow the gate for agent-authored dependency updates too.
