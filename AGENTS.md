@@ -350,3 +350,9 @@ at creation and it is the only reason an abandoned experiment is findable later:
 
 The pruner refuses to touch anything that is not marked — "it is obviously a
 test repo" is the reasoning that eventually deletes something real.
+
+Shared-package updates must pass the central staged rollout gate before merging,
+including owner/agent PRs: run `node scripts/ci/package-rollout-gate.mjs owner/repo PR`.
+Do not manually merge around a hold. See `docs/package-rollouts.md` for exact
+artifact evidence, observation, blocked versions and recovery. Fix the upstream
+package with a regression test and check the affected consumer journey.

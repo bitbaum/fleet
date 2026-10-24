@@ -145,9 +145,12 @@ esac
 FAKE
   chmod +x "$dir/gh"
 
+  printf '#!/bin/sh\nexit %s\n' "${RS_ROLLOUT:-0}" > "$dir/rollout"
+  chmod +x "$dir/rollout"
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
         DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" REARM_POLL_SECONDS=0 \
+        PACKAGE_ROLLOUT_CMD="$dir/rollout" \
         DOCS_TRUTH_CMD="$dir/docs-truth" \
         bash "$SWEEP" 2>&1)
   status=$?
@@ -787,6 +790,15 @@ if RS_PRS="$(pr_fixture lint)" run_sweep success '' 1; then
     && ok 'a PR with clean docs merges as before' \
     || no 'a PR with clean docs merges as before'
 fi
+
+# Shared rollout evidence fails closed, even when the API/checker is unavailable.
+for receipt in 1 2; do
+  if RS_ROLLOUT="$receipt" RS_PRS="$(pr_fixture lint)" run_sweep success '' 1; then
+    [ "$(merges)" -eq 0 ] && grep -q 'held by shared-package rollout gate' <<<"$SWEEP_OUT" \
+      && ok "rollout gate exit $receipt holds a green PR" \
+      || no "rollout gate exit $receipt holds a green PR"
+  fi
+done
 
 # ── Verdict: LAST, so it counts every test above and IS the exit status ──────
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"

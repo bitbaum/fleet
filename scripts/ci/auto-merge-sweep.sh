@@ -769,6 +769,20 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
     fi
   fi
 
+  # Shared artifacts roll out to the canary first. Missing evidence holds,
+  # including network/API failures; never turn an unreadable result into approval.
+  rollout_rc=0
+  if [ -n "${PACKAGE_ROLLOUT_CMD:-}" ]; then
+    rollout_out=$(${PACKAGE_ROLLOUT_CMD} "$REPO" "$number" 2>&1) || rollout_rc=$?
+  else
+    rollout_out=$(node "$SWEEP_DIR/package-rollout-gate.mjs" "$REPO" "$number" 2>&1) || rollout_rc=$?
+  fi
+  if [ "$rollout_rc" != "0" ]; then
+    echo "[auto-merge] #${number} held by shared-package rollout gate (exit ${rollout_rc})"
+    printf '%s\n' "$rollout_out"
+    continue
+  fi
+
   # Mergeability is computed lazily by GitHub and is invalidated every time the
   # base branch moves — so right after a merge (exactly when this workflow runs)
   # every PR reports UNKNOWN. Poll until GitHub has an answer instead of
