@@ -1,0 +1,17 @@
+name: Shared package composition
+on:
+  workflow_call: {}
+permissions:
+  contents: read
+jobs:
+  composition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Check package decisions against the fleet baseline
+        run: |
+          git clone --quiet --depth 1 https://github.com/bitbaum/fleet.git "$RUNNER_TEMP/fleet-composition"
+          node "$RUNNER_TEMP/fleet-composition/scripts/ci/package-composition-audit.mjs" --dir "$GITHUB_WORKSPACE"

@@ -143,12 +143,14 @@ done <<<"$read_vars"
 grep -q "'strict-dynamic'" "$APP/lib/security.ts" && grep -q "connect-src 'self'" "$APP/lib/security.ts" \
   && ok "CSP: nonce + strict-dynamic, connect-src 'self'" || bad "the CSP lost strict-dynamic or connect-src 'self'"
 grep -q 'max-age=63072000' "$APP/lib/security.ts" && ok "HSTS for two years" || bad "HSTS is not two years"
-grep -q 'trustedProxies: 1' "$APP/lib/limits.ts" && ok "rate limits key on the proxy's hop" || bad "rate limits do not pin trustedProxies"
-grep -q 'input: false' "$APP/lib/auth/server.ts" && ok "a role cannot be chosen at sign-up" || bad "role is accepted as sign-up input"
-grep -q 'disableImplicitLinking: true' "$APP/lib/auth/server.ts" && ok "an email address never links accounts by itself" \
-  || bad "implicit account linking by email is on"
-grep -q '"client_secret_post"' "$APP/lib/auth/server.ts" && grep -q 'pkce: true' "$APP/lib/auth/server.ts" \
-  && ok "OIDC: client_secret_post + PKCE (what OrangeCat requires)" || bad "OIDC client auth is not client_secret_post + PKCE"
+if node "$ROOT/scripts/ci/package-composition-audit.mjs" --dir "$APP"; then
+  ok "shared product building blocks are installed and wired"
+else
+  bad "shared package composition is incomplete"
+fi
+grep -q 'createAuthRuntime' "$APP/lib/auth/server.ts" && grep -q '@bitbaum/accountkit/auth/next' "$APP/lib/auth/server.ts" \
+  && ok "accountkit owns role input, explicit linking, OIDC and authentication limits" || bad "authentication runtime is duplicated locally"
+grep -q '@bitbaum/accountkit/auth/schema' "$APP/lib/db/schema.ts" && ok "account tables use the shared schema" || bad "account schema is duplicated"
 grep -q 'localePrefix: "always"' "$APP/i18n/routing.ts" && ok 'next-intl localePrefix: "always"' || bad "localePrefix is not always"
 if grep -q 'ß' "$APP/messages/de.json"; then bad "German messages contain ß (Swiss spelling: ss)"; else ok "German is spelled the Swiss way"; fi
 
