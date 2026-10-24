@@ -18,12 +18,12 @@ in a repo.
 
 Four gates hold the rest, mechanically, so no doc or page has to be trusted:
 
-| What could go stale | Gate | When it bites |
-| --- | --- | --- |
-| A doc names a path, link, script or stack major its own repo contradicts, or a retired name | `scripts/ci/docs-truth-audit.mjs` | in the auto-merge sweep, on the PR about to merge: a PR may not ADD a finding (deleting a file a doc still names counts); daily over every repo, ratcheted |
-| A public document contradicts the org register | `scripts/ci/org-drift-audit.sh` | every fleet PR and daily |
-| A served page carries a retired name, a forbidden claim, a past copyright year or a dead same-site link | `scripts/ci/live-claims-audit.mjs` | daily over every live site in Loki's map, ratcheted |
-| A GitHub homepage or description disagrees with the registers | `scripts/ci/repo-metadata-audit.mjs` | daily (`repo-metadata.yml`): writes the homepage from Loki's `apps.conf` and a missing or faulted description from the fleet map's "what", then reports what is left |
+| What could go stale                                                                                     | Gate                                 | When it bites                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A doc names a path, link, script or stack major its own repo contradicts, or a retired name             | `scripts/ci/docs-truth-audit.mjs`    | in the auto-merge sweep, on the PR about to merge: a PR may not ADD a finding (deleting a file a doc still names counts); daily over every repo, ratcheted           |
+| A public document contradicts the org register                                                          | `scripts/ci/org-drift-audit.sh`      | every fleet PR and daily                                                                                                                                             |
+| A served page carries a retired name, a forbidden claim, a past copyright year or a dead same-site link | `scripts/ci/live-claims-audit.mjs`   | daily over every live site in Loki's map, ratcheted                                                                                                                  |
+| A GitHub homepage or description disagrees with the registers                                           | `scripts/ci/repo-metadata-audit.mjs` | daily (`repo-metadata.yml`): writes the homepage from Loki's `apps.conf` and a missing or faulted description from the fleet map's "what", then reports what is left |
 
 A finding is fixed by correcting the claim, or by saying on that line that the
 thing is gone ("removed", "retired", "there is no …") — a reader needs that
@@ -177,7 +177,7 @@ row and every rule skipped them while they served the public internet. The map
 resolves a project with a live URL and no hosting row as live.
 
 Adding a field is one row in that audit's `FIELDS` table. Adding a seventh
-*thing* is a conversation, not a commit.
+_thing_ is a conversation, not a commit.
 
 ## No dead ends
 
@@ -268,6 +268,24 @@ Each repo keeps the gates that catch its own instances (OrangeCat:
 is a rule that gets re-explained.
 
 ## Packages
+
+**Before implementation, make a package composition plan.** Read `SHARED.md`
+and `registers/product-building-blocks.json`; inspect the relevant package APIs,
+then record each applicable block, its actual import/runtime binding, and any
+specific incompatibility in the product's `package-plan.json`. Do this without
+waiting for the owner to name packages. Installed-but-unused is not adoption.
+The starter already carries the plan and the shared composition CI check.
+
+Shared UI is composed from the package's components and theme/slot contracts:
+sitekit for chrome and public entry blocks, accountkit for accounts, bip-kit for
+publishing, and design-tokens for the visual system. Keep product content,
+identity and domain-specific investigation/workflow code in the product. Extend
+an existing package when a shared block lacks a needed capability; consume the
+release rather than copying its implementation locally.
+
+A shared improvement reaches consumers through a versioned release, dependency
+update PR, tests and redeployment. Keep that path configured. Do not promise
+that changing a package changes a running, locked deployment instantly.
 
 Use a package when the same behavior must exist in more than one product:
 tokens, mail, threads, a model client, a list query. Do not put a company list

@@ -1,0 +1,18 @@
+{
+  "shell": {
+    "package": "@bitbaum/sitekit",
+    "description": "Header, footer, navigation and public entry blocks"
+  },
+  "identity": {
+    "package": "@bitbaum/accountkit",
+    "description": "Account runtime, screens and account menu"
+  },
+  "publishing": {
+    "package": "bip-kit",
+    "description": "Blog and canonical roadmap/changelog rendering"
+  },
+  "design": {
+    "package": "@bitbaum/design-tokens",
+    "description": "Shared theme roles, typography, fonts and composition"
+  }
+}
