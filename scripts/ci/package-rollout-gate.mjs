@@ -177,7 +177,11 @@ async function main() {
   const [repo, number] = process.argv.slice(2);
   const pr = api(`repos/${repo}/pulls/${number}`);
   // Avoid requiring a Node lockfile from repositories with no root Node manifest.
-  if (!content(repo, "package.json", pr.head.sha)) return;
+  const manifest = content(repo, "package.json", pr.head.sha);
+  if (!manifest) return;
+  // Package repositories publish artifacts; their downstream application consumers
+  // provide the deployment/canary evidence. Do not require a library to deploy a site.
+  if (known.has(JSON.parse(manifest).name)) return;
   const before = depsAt(repo, pr.base.sha),
     after = depsAt(repo, pr.head.sha);
   const changed = Object.keys(after).some(

@@ -6,7 +6,8 @@ but cannot establish that auth, CSS, navigation and real workflows still work in
 an app.
 
 The automatic merge sweep enforces `registers/package-rollouts.json` for shared
-root dependencies. BiasLens is the initial canary for the seven packages it
+root dependencies in application consumers. Package repositories retain their
+own verify/publish gates; downstream apps provide deployment evidence. BiasLens is the initial canary for the seven packages it
 actually consumes. A canary dependency PR must pass both `ci.yml` and
 `browser-smoke.yml` on its exact head. Every other consumer waits for the same
 locked artifact to be deployed on the canary, with successful CI and browser
@@ -36,3 +37,8 @@ need phone/desktop, keyboard, auth-state and theme checks; auth needs database-b
 session/authorization tests. New bugs become regression tests in the owning
 package and the affected consumer. Add another representative canary before
 promoting into a materially different runtime or integration.
+
+The existing Loki [self-host deployment workflow](https://github.com/bitbaum/loki/blob/main/.github/workflows/selfhost-deploy.yml)
+uses atomic releases and includes health-check and page-regression rollback.
+Those checks do not establish correctness of every authenticated or domain flow;
+keep those in the consumer test suite. A failed deployment holds promotion.
