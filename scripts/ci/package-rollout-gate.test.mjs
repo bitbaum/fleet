@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lockedDependencies, assessRollout } from "./package-rollout-gate.mjs";
+import {
+  lockedDependencies,
+  assessRollout,
+  successfulWorkflows,
+} from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
 const settings = {
