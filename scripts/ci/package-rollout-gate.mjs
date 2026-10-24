@@ -38,6 +38,34 @@ export function lockedDependencies(manifest, lock) {
   }
   return result;
 }
+export function nestedSharedArtifacts(lock) {
+  const section =
+    lock.match(/^importers:[^\n]*\n([\s\S]*?)(?=^\S|(?![\s\S]))/m)?.[1] ?? "";
+  const entries = [];
+  for (const importer of section.matchAll(
+    /^  (.+):[^\n]*\n([\s\S]*?)(?=^  \S|^\S|(?![\s\S]))/gm,
+  )) {
+    if (importer[1].replace(/['"]/g, "") === ".") continue;
+    for (const dependency of importer[2].matchAll(
+      /^      ['"]?([^'"\n]+?)['"]?:\s*\n\s+specifier:.*\n\s+version: (.+)$/gm,
+    )) {
+      const name = dependency[1];
+      if (
+        known.has(name) ||
+        name.startsWith("@bitbaum/") ||
+        policy.packages[name]
+      )
+        entries.push([
+          importer[1],
+          name,
+          dependency[2].replace(/^['"]|['"]$/g, "").split("(")[0],
+        ]);
+    }
+  }
+  return entries.sort((a, b) =>
+    JSON.stringify(a).localeCompare(JSON.stringify(b)),
+  );
+}
 export async function assessRollout({
   repo,
   before,
@@ -182,6 +210,16 @@ async function main() {
   // Package repositories publish artifacts; their downstream application consumers
   // provide the deployment/canary evidence. Do not require a library to deploy a site.
   if (known.has(JSON.parse(manifest).name)) return;
+  // Workspace artifacts cannot silently escape the root-consumer gate.
+  const baseLock = content(repo, "pnpm-lock.yaml", pr.base.sha) ?? "";
+  const headLock = content(repo, "pnpm-lock.yaml", pr.head.sha) ?? "";
+  if (
+    JSON.stringify(nestedSharedArtifacts(baseLock)) !==
+    JSON.stringify(nestedSharedArtifacts(headLock))
+  )
+    throw new Error(
+      "Nested workspace shared artifacts changed: automatic promotion is held until workspace-specific canary evidence is supported",
+    );
   const before = depsAt(repo, pr.base.sha),
     after = depsAt(repo, pr.head.sha);
   const changed = Object.keys(after).some(
