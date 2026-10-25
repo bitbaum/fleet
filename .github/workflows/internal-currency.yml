@@ -76,7 +76,7 @@ jobs:
       - name: Self-test the reconciler first
         run: |
           node scripts/ci/test-currency-reconciler.mjs
-          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs
+          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs scripts/ci/currency-toolchain.test.mjs
 
       - name: What is behind?
         id: plan
@@ -132,10 +132,27 @@ jobs:
           token: ${{ secrets.FLEET_PAT }}
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      - name: Select the updated projects' declared package manager
+        id: pm
+        env:
+          BUMPS: ${{ toJSON(matrix.target.bumps) }}
+        run: |
+          set -euo pipefail
+          tooling="$RUNNER_TEMP/fleet-currency-tooling"
+          git clone --quiet --depth 1 https://github.com/bitbaum/fleet.git "$tooling"
+          node "$tooling/scripts/ci/currency-toolchain.mjs" >> "$GITHUB_OUTPUT"
+
+      - uses: pnpm/action-setup@v6
+        if: steps.pm.outputs.needed == 'true'
+        with:
+          package_json_file: ${{ steps.pm.outputs.manifest }}
+      - name: Keep the pnpm store outside installed tool dependencies
+        if: steps.pm.outputs.needed == 'true'
+        run: pnpm config set store-dir "$RUNNER_TEMP/fleet-pnpm-store" --global
 
       - name: Raise the floor and let pnpm write the lockfile
         env:
