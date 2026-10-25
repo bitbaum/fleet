@@ -413,6 +413,7 @@ jobs:
       - name: The app starter holds the fleet's contract
         run: |
           node --test scripts/ci/package-composition-audit.test.mjs scripts/ci/package-rollout-gate.test.mjs scripts/ci/package-canary-audit.test.mjs scripts/ci/git-package-currency.test.mjs
+          node --test scripts/test/auth-journey.test.mjs
           bash scripts/templates/test-app-template.sh
 
       # Drift guard. The fleet is on v7; templates handing out v4 is exactly

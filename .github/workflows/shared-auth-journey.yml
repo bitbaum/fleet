@@ -1,0 +1,69 @@
+name: Shared account lifecycle
+on:
+  workflow_call:
+    inputs:
+      migrate-command:
+        type: string
+        required: true
+      sign-in-path:
+        type: string
+        default: /sign-in
+      account-path:
+        type: string
+        default: /account
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: auth_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d auth_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://app:app@127.0.0.1:5432/auth_test
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: bitbaum/fleet
+          path: .fleet-auth-tests
+          sparse-checkout: |
+            scripts/test/auth-journey.mjs
+            scripts/test/capture-auth-mail.mjs
+          sparse-checkout-cone-mode: false
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply this app's committed migrations to the isolated database
+        env:
+          MIGRATE_COMMAND: ${{ inputs.migrate-command }}
+        run: bash -euo pipefail -c "$MIGRATE_COMMAND"
+      - run: pnpm run build
+      - name: Exercise account lifecycle and shared reset form
+        env:
+          AUTH_TEST_SIGNIN_PATH: ${{ inputs.sign-in-path }}
+          AUTH_TEST_ACCOUNT_PATH: ${{ inputs.account-path }}
+          BROWSER_EXECUTABLE: /usr/bin/google-chrome
+        run: node .fleet-auth-tests/scripts/test/auth-journey.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-lifecycle-evidence
+          path: auth-journey-artifacts/
+          retention-days: 14
+          if-no-files-found: warn
