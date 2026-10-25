@@ -40,7 +40,9 @@ on:
     # everything else in the org for the same scheduler slot. See
     # deploy-reconciler.yml for why nothing here may DEPEND on this firing;
     # workflow_dispatch is the reliable trigger and the box can tick it.
-    - cron: '41 7 * * 2'
+    - cron: '41 */6 * * *'
+  repository_dispatch:
+    types: [shared-package-release]
   workflow_dispatch:
     inputs:
       go:
@@ -72,7 +74,9 @@ jobs:
       # The deciding half is pure and network-free, so it is proved before it
       # is trusted — same practice as every other audit in this directory.
       - name: Self-test the reconciler first
-        run: node scripts/ci/test-currency-reconciler.mjs
+        run: |
+          node scripts/ci/test-currency-reconciler.mjs
+          node --test scripts/ci/git-package-currency.test.mjs
 
       - name: What is behind?
         id: plan

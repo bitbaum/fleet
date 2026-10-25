@@ -6,9 +6,17 @@ import {
   successfulWorkflows,
   nestedSharedArtifacts,
   nestedSharedChange,
+  dependencyIdentity,
 } from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
+test("aliases cannot escape first-party artifact checks", () => {
+  assert.equal(dependencyIdentity("sitekit", "npm:@bitbaum/sitekit@^0.4.2"), name);
+  assert.equal(dependencyIdentity("@fleet/ai-forms", "github:bitbaum/ai-forms#v0.1.3"), "ai-forms");
+  assert.deepEqual(lockedDependencies({ dependencies: { sitekit: "npm:@bitbaum/sitekit@^0.4.2" } },
+    "importers:\n  .:\n    dependencies:\n      sitekit:\n        specifier: npm:@bitbaum/sitekit@^0.4.2\n        version: '@bitbaum/sitekit@0.4.2(react@19)'\n"), { [name]: "0.4.2" });
+  assert.throws(() => lockedDependencies({ dependencies: { sitekit: "npm:@bitbaum/sitekit@^0.4.2" } }, "importers:\n  .:\n"), /Missing locked artifact/);
+});
 const settings = {
   soakHours: 24,
   packages: { [name]: { canary: "bitbaum/biaslens" } },

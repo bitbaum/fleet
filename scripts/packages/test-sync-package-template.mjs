@@ -15,7 +15,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { REQUIRED_TEMPLATE_FILES, checkTemplate, templateFiles } from './create-package-repos.mjs';
-import { missingTemplateFiles, planSync, syncPullRequest } from './sync-package-template.mjs';
+import { missingTemplateFiles, planSync, syncPullRequest, syncDeclarations } from './sync-package-template.mjs';
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log(`  ✓ ${m}`); pass++; };
@@ -24,6 +24,7 @@ const eq = (a, b, m) => (JSON.stringify(a) === JSON.stringify(b) ? ok(m) : no(m,
 const throws = (fn, re, m) => { try { fn(); no(m, 'no error'); } catch (e) { re.test(e.message) ? ok(m) : no(m, e.message); } };
 
 const decl = { name: 'searchkit', description: 'd', source: { repo: 'bitbaum/orangecat', path: 'packages/searchkit' } };
+eq(syncDeclarations([decl], { packages: [{ repo: 'https://github.com/bitbaum/searchkit' }, { repo: 'https://github.com/bitbaum/accountkit' }, { repo: 'https://github.com/other/untrusted' }] }).map(x => x.name), ['searchkit', 'accountkit'], 'sync reaches existing registered kits, without duplicates or other owners');
 
 console.log('the template');
 const files = templateFiles(decl);

@@ -15,6 +15,18 @@ const registry = JSON.parse(
   ),
 );
 const known = new Set(registry.packages.map((p) => p.name));
+export function dependencyIdentity(name, spec) {
+  if (typeof spec === "string" && spec.startsWith("npm:")) {
+    const target = spec.slice(4), split = target.lastIndexOf("@");
+    if (split > target.indexOf("/")) return target.slice(0, split);
+  }
+  if (typeof spec === "string") {
+    const git = /^(?:github:|git\+https:\/\/github\.com\/)([\w.-]+\/[\w.-]+?)(?:\.git)?#/.exec(spec);
+    if (git) return registry.packages.find((entry) => entry.repo === `https://github.com/${git[1]}`)?.name ?? name;
+  }
+  return name;
+}
+const shared = (name) => known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name];
 export function lockedDependencies(manifest, lock) {
   const deps = { ...manifest.dependencies, ...manifest.devDependencies };
   const result = {};
@@ -22,6 +34,7 @@ export function lockedDependencies(manifest, lock) {
   const root =
     lock.match(/^  \.:\s*\n([\s\S]*?)(?=^  \S|^\S|(?![\s\S]))/m)?.[1] ?? "";
   for (const [name, spec] of Object.entries(deps)) {
+    const identity = dependencyIdentity(name, spec);
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const version = root.match(
       new RegExp(
@@ -31,10 +44,16 @@ export function lockedDependencies(manifest, lock) {
     )?.[1];
     if (
       !version &&
-      (known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name])
+      shared(identity)
     )
       throw new Error(`Missing locked artifact for ${name}`);
-    result[name] = version?.replace(/^['"]|['"]$/g, "").split("(")[0] ?? spec;
+    let artifact = version?.replace(/^['"]|['"]$/g, "").split("(")[0] ?? spec;
+    // pnpm's npm aliases include the target name in their lock resolution.
+    if (typeof spec === "string" && spec.startsWith("npm:") && artifact.startsWith(`${identity}@`))
+      artifact = artifact.slice(identity.length + 1);
+    if (result[identity] && result[identity] !== artifact && shared(identity))
+      throw new Error(`Conflicting locked artifacts for ${identity}`);
+    result[identity] = artifact;
   }
   return result;
 }
@@ -73,12 +92,8 @@ export function nestedSharedChange(files, readManifest) {
         ...manifest?.dependencies,
         ...manifest?.devDependencies,
       })
-        .filter(
-          ([name]) =>
-            known.has(name) ||
-            name.startsWith("@bitbaum/") ||
-            policy.packages[name],
-        )
+        .map(([name, spec]) => [dependencyIdentity(name, spec), spec])
+        .filter(([name]) => shared(name))
         .sort(([a], [b]) => a.localeCompare(b)),
     );
   for (const { filename } of files) {
@@ -177,13 +192,14 @@ function depsAt(repo, ref) {
   const manifest = content(repo, "package.json", ref);
   if (!manifest) return {};
   const parsed = JSON.parse(manifest);
-  const names = Object.keys({
+  const dependencies = {
     ...parsed.dependencies,
     ...parsed.devDependencies,
-  });
+  };
+  const names = Object.keys(dependencies);
   if (
     !names.some(
-      (n) => known.has(n) || n.startsWith("@bitbaum/") || policy.packages[n],
+      (n) => shared(dependencyIdentity(n, dependencies[n])),
     )
   )
     return {};
@@ -196,6 +212,7 @@ function depsAt(repo, ref) {
       throw new Error("Unsupported npm lockfile: artifact evidence is missing");
     return Object.fromEntries(
       names.map((n) => {
+        const identity = dependencyIdentity(n, dependencies[n]);
         const entry = packages[`node_modules/${n}`];
         const artifact =
           entry?.resolved && /git|codeload/.test(entry.resolved)
@@ -203,10 +220,10 @@ function depsAt(repo, ref) {
             : entry?.version;
         if (
           !artifact &&
-          (known.has(n) || n.startsWith("@bitbaum/") || policy.packages[n])
+          shared(identity)
         )
           throw new Error(`Missing locked artifact for ${n}`);
-        return [n, artifact ?? "unresolved"];
+        return [identity, artifact ?? "unresolved"];
       }),
     );
   }
