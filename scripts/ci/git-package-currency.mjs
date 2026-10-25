@@ -81,14 +81,19 @@ export function planRegistryMigration(
   };
 }
 
-const api = (path) =>
-  JSON.parse(
-    execFileSync("gh", ["api", path], {
-      encoding: "utf8",
-      timeout: 30_000,
-      stdio: ["ignore", "pipe", "pipe"],
-    }),
-  );
+const api = (path) => {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return JSON.parse(execFileSync("gh", ["api", path], {
+        encoding: "utf8", timeout: 30_000,
+        maxBuffer: 64 * 1024 * 1024,
+        stdio: ["ignore", "pipe", "pipe"],
+      }));
+    } catch (error) {
+      if (attempt === 2 || !/HTTP (?:401|429|5\d\d)|timed out|ECONNRESET/.test(String(error.stderr ?? error.message))) throw error;
+    }
+  }
+};
 export function gitPackageVersion(repo, ref, request = api) {
   const file = request(
     `repos/${repo}/contents/package.json?ref=${encodeURIComponent(ref)}`,

@@ -69,10 +69,8 @@ export function lockedDependencies(manifest, lock, importer = ".") {
     if (!version && shared(identity))
       throw new Error(`Missing locked artifact for ${name}`);
     let artifact = version?.replace(/^['"]|['"]$/g, "").split("(")[0] ?? spec;
-    // pnpm's npm aliases include the target name in their lock resolution.
+    // pnpm prefixes aliased npm AND Git resolutions with the target identity.
     if (
-      typeof spec === "string" &&
-      spec.startsWith("npm:") &&
       artifact.startsWith(`${identity}@`)
     )
       artifact = artifact.slice(identity.length + 1);
