@@ -42,6 +42,8 @@ jobs:
           sparse-checkout: |
             scripts/test/auth-journey.mjs
             scripts/test/auth-browser.mjs
+            scripts/test/auth-methods.mjs
+            scripts/test/auth-totp.mjs
             scripts/test/capture-auth-mail.mjs
           sparse-checkout-cone-mode: false
       - uses: pnpm/action-setup@v6
@@ -60,7 +62,13 @@ jobs:
           AUTH_TEST_SIGNIN_PATH: ${{ inputs.sign-in-path }}
           AUTH_TEST_ACCOUNT_PATH: ${{ inputs.account-path }}
           BROWSER_EXECUTABLE: /usr/bin/google-chrome
-        run: node .fleet-auth-tests/scripts/test/auth-journey.mjs
+        run: |
+          set -euo pipefail
+          # Fresh server process per scenario preserves production rate limits;
+          # the application build and isolated database are reused.
+          for scenario in recovery passkeys two-factor two-factor-disable magic-link two-factor-magic-link two-factor-passkeys; do
+            AUTH_TEST_SCENARIO="$scenario" node .fleet-auth-tests/scripts/test/auth-journey.mjs
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
