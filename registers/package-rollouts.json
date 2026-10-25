@@ -1,14 +1,33 @@
 {
   "soakHours": 24,
   "packages": {
-    "@bitbaum/sitekit": { "canary": "bitbaum/biaslens" },
-    "@bitbaum/accountkit": { "canary": "bitbaum/biaslens" },
-    "@bitbaum/design-tokens": { "canary": "bitbaum/biaslens" },
-    "bip-kit": { "canary": "bitbaum/biaslens" },
-    "@bitbaum/ai-kit": { "canary": "bitbaum/biaslens" },
-    "@bitbaum/mail-kit": { "canary": "bitbaum/biaslens" },
-    "limitkit": { "canary": "bitbaum/biaslens" },
-    "@bitbaum/chatkit": { "canary": "bitbaum/biaslens" }
+    "@bitbaum/sitekit": {
+      "canary": "bitbaum/biaslens"
+    },
+    "@bitbaum/accountkit": {
+      "canary": "bitbaum/biaslens"
+    },
+    "@bitbaum/design-tokens": {
+      "canary": "bitbaum/biaslens"
+    },
+    "bip-kit": {
+      "canary": "bitbaum/biaslens"
+    },
+    "@bitbaum/ai-kit": {
+      "canary": "bitbaum/biaslens"
+    },
+    "@bitbaum/mail-kit": {
+      "canary": "bitbaum/biaslens"
+    },
+    "limitkit": {
+      "canary": "bitbaum/biaslens"
+    },
+    "@bitbaum/chatkit": {
+      "canary": "bitbaum/biaslens"
+    }
   },
-  "blocked": {}
+  "blocked": {},
+  "deploymentReceipts": {
+    "bitbaum/biaslens": "https://biaslens.orangecat.ch/.well-known/fleet-release.json"
+  }
 }
