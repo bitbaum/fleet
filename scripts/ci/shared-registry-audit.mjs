@@ -36,6 +36,8 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { releaseTargets } from "./package-release-target.mjs";
+import { latestVerifiedGitRelease } from "./git-package-currency.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SHARED_MD = process.env.SHARED_MD_PATH || join(HERE, "..", "..", "SHARED.md");
@@ -281,11 +283,18 @@ function gh(args) {
   // stderr is PIPED, not inherited: a missing manifest is an expected 404 and
   // printing thirteen of them makes a working audit look broken. The error is
   // still available to the caller, which is the half that matters.
-  return execFileSync("gh", args, {
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return execFileSync("gh", args, {
+        encoding: "utf8",
+        maxBuffer: 64 * 1024 * 1024,
+        timeout: 30_000,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } catch (error) {
+      if (attempt === 2 || !/HTTP (?:401|429|5\d\d)|timed out|ECONNRESET/.test(String(error.stderr ?? error.message))) throw error;
+    }
+  }
 }
 
 /** A 404 means "this repo has no such manifest". Anything else means we could not look. */
@@ -293,20 +302,20 @@ export function isMissing(err) {
   return /404|Not Found/i.test(String(err?.stderr ?? "") + String(err?.message ?? ""));
 }
 
-/** Manifest paths worth looking at. A monorepo consumer is still an adopter. */
-const MANIFEST_PATHS = [
-  "package.json",
-  "apps/web/package.json",
-  "packages/ai/package.json",
-  "packages/core/package.json",
-  "frontend/package.json",
-  "backend/package.json",
-];
+/** Every tracked project, workspace and starter, excluding generated/test fixtures. */
+export function manifestPaths(tree) {
+  if (tree.truncated) throw new Error("Git tree is truncated; manifest coverage is incomplete");
+  if (!Array.isArray(tree.tree)) throw new Error("Git tree is unavailable");
+  return tree.tree.filter((entry) => entry.type === "blob" &&
+    /(?:^|\/)package\.json$/.test(entry.path) &&
+    !/(?:^|\/)(?:node_modules|\.git|\.next|dist|coverage|fixtures|__fixtures__)(?:\/|$)/.test(entry.path))
+    .map((entry) => entry.path).sort();
+}
 
-function fetchManifests(owner, limit) {
+function fetchManifests(owner, limit, includePrivate = false) {
   const repos = JSON.parse(gh(["repo", "list", owner, "--limit", String(limit),
-    "--no-archived", "--json", "name,isFork"]))
-    .filter((r) => !r.isFork)
+    "--no-archived", "--json", "name,isFork,isPrivate"]))
+    .filter((r) => !r.isFork && (includePrivate || !r.isPrivate))
     .map((r) => r.name);
 
   const manifests = [];
@@ -318,7 +327,14 @@ function fetchManifests(owner, limit) {
   // limitkit (3) and threadkit (3).
   const unreadable = [];
   for (const repo of repos) {
-    for (const path of MANIFEST_PATHS) {
+    let paths;
+    try {
+      paths = manifestPaths(JSON.parse(gh(["api", `repos/${owner}/${repo}/git/trees/HEAD?recursive=1`])));
+    } catch (error) {
+      unreadable.push(`${repo}/(tree): ${firstLine(error)}`);
+      continue;
+    }
+    for (const path of paths) {
       let raw;
       try {
         raw = gh(["api", `repos/${owner}/${repo}/contents/${path}`, "--jq", ".content"]);
@@ -328,7 +344,7 @@ function fetchManifests(owner, limit) {
       }
       try {
         manifests.push({ repo, path, pkg: JSON.parse(Buffer.from(raw.trim(), "base64").toString("utf8")) });
-      } catch { /* unparseable manifest is not an adopter claim */ }
+      } catch { unreadable.push(`${repo}/${path}: invalid package manifest`); }
     }
   }
   return { repos, manifests, unreadable };
@@ -360,8 +376,12 @@ async function main() {
   const owner = process.env.GH_OWNER || "bitbaum";
   const limit = Number(process.env.GH_LIMIT || 200);
   const check = process.argv.includes("--check");
+  const includePrivate = process.argv.includes("--include-private");
+  if (includePrivate && process.argv.includes("--emit")) {
+    throw new Error("Private inventory is local-only; refusing to publish private adopter names");
+  }
 
-  const { repos, manifests, unreadable } = fetchManifests(owner, limit);
+  const { repos, manifests, unreadable } = fetchManifests(owner, limit, includePrivate);
   if (repos.length === 0) {
     // A sweep that looked at nothing must never read as a clean sweep.
     console.error("⊘ shared-registry audit SKIPPED — gh repo list returned no repos.");
@@ -396,10 +416,9 @@ async function main() {
       manifestByRepo,
       generatedAt: new Date().toISOString(),
     });
-    const publishedVersions = await publishedNpmVersions(payload.packages);
-    for (const pkg of payload.packages) {
-      if (publishedVersions.has(pkg.slug)) pkg.version = publishedVersions.get(pkg.slug);
-    }
+    payload.packages = await releaseTargets(payload.packages, fetch, (repo) =>
+      latestVerifiedGitRelease(repo, (path) => JSON.parse(gh(["api", path]))));
+    payload.scope = "public, active, non-fork repositories; all tracked project manifests";
     // A timestamp that moves on every run makes the file differ on every run,
     // so "commit only when something changed" commits every week and says
     // nothing. Measured within an hour of shipping the first version: the

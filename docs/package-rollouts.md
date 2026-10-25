@@ -86,3 +86,24 @@ The existing Loki [self-host deployment workflow](https://github.com/bitbaum/lok
 uses atomic releases and includes health-check and page-regression rollback.
 Those checks do not establish correctness of every authenticated or domain flow;
 keep those in the consumer test suite. A failed deployment holds promotion.
+
+## Generated release registry coverage
+
+The shared registry producer discovers every tracked project `package.json`
+from each repository tree, including workspaces, examples and starters. Generated
+build output and fixture directories are excluded. Truncated trees, malformed
+manifests and unavailable APIs prevent publication of a partial registry.
+
+The `adopters` field counts dependency declarations, including development,
+workspace, example and starter declarations; it does not prove runtime use or
+deployment. Canary bindings and browser journeys supply separate evidence.
+
+Public `registers/packages.json` contains public, active, non-fork repositories.
+Use `--include-private` only for a local internal audit; it cannot be combined
+with `--emit`, so private adopter names cannot enter the public site.
+
+Release recommendations compare stable npm artifacts with immutable Git tags
+that match the package version and passed exact-commit CI. A newer verified Git
+release can win over lagging npm; equal versions prefer npm. The record includes
+the chosen source and immutable Git commit where applicable. Old consumer pins
+and unpublished repository versions never establish the current target.

@@ -1,23 +1,26 @@
 {
-  "generatedAt": "2026-10-14T09:06:54.333Z",
+  "generatedAt": "2026-10-25T12:59:38.187Z",
   "packages": [
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.20.1",
+      "version": "1.21.4",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/ai-kit"
+        "command": "pnpm add @bitbaum/ai-kit@^1.21.4"
       },
-      "adopters": 16,
+      "adopters": 20,
       "adopterNames": [
         "aoz-begleitung",
+        "biaslens",
         "botsmann",
         "causius",
         "datacat",
+        "diplodoctor",
         "evig",
+        "fleet",
         "heidi",
         "hirnli",
         "kivvi",
@@ -25,11 +28,16 @@
         "orangecat",
         "sbb-fundbuero",
         "skif",
+        "solon",
         "substrata",
         "surf-your-life",
         "truthseeker",
         "vitareba"
-      ]
+      ],
+      "release": {
+        "source": "npm",
+        "version": "1.21.4"
+      }
     },
     {
       "slug": "bip-kit",
@@ -39,16 +47,19 @@
       "version": "0.6.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add bip-kit"
+        "command": "pnpm add bip-kit@^0.6.0"
       },
-      "adopters": 14,
+      "adopters": 17,
       "adopterNames": [
         "aoz-begleitung",
+        "biaslens",
         "bitbaum",
         "botsmann",
         "causius",
         "datacat",
+        "diplodoctor",
         "evig",
+        "fleet",
         "heidi",
         "kivvi",
         "loki",
@@ -57,23 +68,32 @@
         "skif",
         "solon",
         "substrata"
-      ]
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.6.0"
+      }
     },
     {
       "slug": "mail-kit",
       "name": "@bitbaum/mail-kit",
       "repo": "https://github.com/bitbaum/mail-kit",
       "description": "The fleet's one email layer: Resend over raw fetch, zero dependencies, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/mail-kit"
+        "command": "pnpm add @bitbaum/mail-kit@^0.2.0"
       },
-      "adopters": 12,
+      "adopters": 17,
       "adopterNames": [
+        "accountkit",
         "aoz-begleitung",
+        "biaslens",
         "botsmann",
+        "causius",
+        "diplodoctor",
         "evig",
+        "fleet",
         "hirnli",
         "kivvi",
         "loki",
@@ -83,31 +103,45 @@
         "skif",
         "surf-your-life",
         "vitareba"
-      ]
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.2.0"
+      }
     },
     {
-      "slug": "accountkit",
-      "name": "@bitbaum/accountkit",
-      "repo": "https://github.com/bitbaum/accountkit",
-      "description": "One account for every bitbaum product: the account menu, and Sign in with OrangeCat (provider, session refresh, identity rules, error screen). Styled from @bitbaum/design-tokens.",
-      "version": "0.2.1",
+      "slug": "chatkit",
+      "name": "@bitbaum/chatkit",
+      "repo": "https://github.com/bitbaum/chatkit",
+      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
+      "version": "0.15.2",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#v0.2.1"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chatkit@^0.15.2"
       },
-      "adopters": 10,
+      "adopters": 16,
       "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "bitbaum",
+        "botsmann",
         "causius",
-        "datacat",
+        "diplodoctor",
         "evig",
         "heidi",
+        "kivvi",
         "loki",
-        "petvity",
+        "orangecat",
         "skif",
         "solon",
         "substrata",
-        "surf-your-life"
-      ]
+        "surf-your-life",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.15.2"
+      }
     },
     {
       "slug": "limitkit",
@@ -117,13 +151,17 @@
       "version": "0.2.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add limitkit"
+        "command": "pnpm add limitkit@^0.2.0"
       },
-      "adopters": 10,
+      "adopters": 14,
       "adopterNames": [
+        "accountkit",
+        "biaslens",
         "botsmann",
         "causius",
+        "diplodoctor",
         "evig",
+        "fleet",
         "heidi",
         "loki",
         "orangecat",
@@ -131,7 +169,74 @@
         "skif",
         "surf-your-life",
         "truthseeker"
-      ]
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.2.0"
+      }
+    },
+    {
+      "slug": "design-tokens",
+      "name": "@bitbaum/design-tokens",
+      "repo": "https://github.com/bitbaum/design-tokens",
+      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
+      "version": "1.2.0",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/design-tokens#5c31f48743dabf9294bf9380a15862b4efbc68a0"
+      },
+      "adopters": 13,
+      "adopterNames": [
+        "accountkit",
+        "biaslens",
+        "bitbaum",
+        "causius",
+        "chartkit",
+        "chatkit",
+        "diplodoctor",
+        "fleet",
+        "loki",
+        "skif",
+        "solon",
+        "substrata",
+        "whenkit"
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v1.2.0",
+        "commit": "5c31f48743dabf9294bf9380a15862b4efbc68a0"
+      }
+    },
+    {
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
+      "version": "0.6.2",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/accountkit#9c8d93ade6945615b5204d8eaad5c717078b7e17"
+      },
+      "adopters": 12,
+      "adopterNames": [
+        "biaslens",
+        "causius",
+        "datacat",
+        "evig",
+        "fleet",
+        "heidi",
+        "loki",
+        "petvity",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life"
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.6.2",
+        "commit": "9c8d93ade6945615b5204d8eaad5c717078b7e17"
+      }
     },
     {
       "slug": "whenkit",
@@ -141,11 +246,12 @@
       "version": "0.3.2",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/whenkit#v0.3.2"
+        "command": "pnpm add github:bitbaum/whenkit#f5e0a24208187091c2ca792008cdd7695a19910f"
       },
-      "adopters": 9,
+      "adopters": 10,
       "adopterNames": [
         "datacat",
+        "diplodoctor",
         "evig",
         "heidi",
         "hirnli",
@@ -154,91 +260,39 @@
         "petvity",
         "substrata",
         "surf-your-life"
-      ]
-    },
-    {
-      "slug": "chatkit",
-      "name": "@bitbaum/chatkit",
-      "repo": "https://github.com/bitbaum/chatkit",
-      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.7.0",
-      "install": {
+      ],
+      "release": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/chatkit#163c879163d22c6eb633314b3bd4e25712a01899"
-      },
-      "adopters": 8,
-      "adopterNames": [
-        "bitbaum",
-        "causius",
-        "evig",
-        "heidi",
-        "loki",
-        "orangecat",
-        "skif",
-        "substrata"
-      ]
-    },
-    {
-      "slug": "design-tokens",
-      "name": "@bitbaum/design-tokens",
-      "repo": "https://github.com/bitbaum/design-tokens",
-      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
-      "version": "1.1.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/design-tokens"
-      },
-      "adopters": 8,
-      "adopterNames": [
-        "accountkit",
-        "bitbaum",
-        "causius",
-        "chatkit",
-        "loki",
-        "skif",
-        "solon",
-        "whenkit"
-      ]
-    },
-    {
-      "slug": "ai-forms",
-      "name": "ai-forms",
-      "repo": "https://github.com/bitbaum/ai-forms",
-      "description": "Headless AI form filling and conversational refinement. Provider-agnostic core, React hook, and a server route factory.",
-      "version": "0.1.3",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add ai-forms"
-      },
-      "adopters": 6,
-      "adopterNames": [
-        "ai-kit",
-        "aoz-begleitung",
-        "evig",
-        "kivvi",
-        "loki",
-        "surf-your-life"
-      ]
+        "tag": "v0.3.2",
+        "commit": "f5e0a24208187091c2ca792008cdd7695a19910f"
+      }
     },
     {
       "slug": "listkit",
-      "name": "listkit",
+      "name": "@bitbaum/listkit",
       "repo": "https://github.com/bitbaum/listkit",
       "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
       "version": "0.2.0",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/listkit#v0.1.0"
+        "command": "pnpm add github:bitbaum/listkit#085ce70e65fff9a71b0c3811fcd11fc8d9fbb5f5"
       },
-      "adopters": 6,
+      "adopters": 8,
       "adopterNames": [
         "bitbaum",
+        "causius",
+        "diplodoctor",
         "hirnli",
         "loki",
         "orangecat",
         "skif",
         "substrata"
-      ]
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.2.0",
+        "commit": "085ce70e65fff9a71b0c3811fcd11fc8d9fbb5f5"
+      }
     },
     {
       "slug": "searchkit",
@@ -248,17 +302,71 @@
       "version": "0.2.2",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/searchkit#v0.2.2"
+        "command": "pnpm add github:bitbaum/searchkit#09532b1974c7cb92f38c98decaeed334f3ffea72"
       },
-      "adopters": 6,
+      "adopters": 8,
       "adopterNames": [
+        "causius",
+        "diplodoctor",
         "evig",
         "heidi",
         "loki",
         "orangecat",
         "solon",
         "substrata"
-      ]
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.2.2",
+        "commit": "09532b1974c7cb92f38c98decaeed334f3ffea72"
+      }
+    },
+    {
+      "slug": "ai-forms",
+      "name": "ai-forms",
+      "repo": "https://github.com/bitbaum/ai-forms",
+      "description": "Headless AI form filling and conversational refinement. Provider-agnostic core, React hook, and a server route factory.",
+      "version": "0.1.3",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add ai-forms@^0.1.3"
+      },
+      "adopters": 6,
+      "adopterNames": [
+        "ai-kit",
+        "aoz-begleitung",
+        "evig",
+        "kivvi",
+        "loki",
+        "surf-your-life"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.1.3"
+      }
+    },
+    {
+      "slug": "sitekit",
+      "name": "@bitbaum/sitekit",
+      "repo": "https://github.com/bitbaum/sitekit",
+      "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
+      "version": "0.4.2",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/sitekit@^0.4.2"
+      },
+      "adopters": 5,
+      "adopterNames": [
+        "biaslens",
+        "camille-boulangerie",
+        "fleet",
+        "skif",
+        "substrata"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.4.2"
+      }
     },
     {
       "slug": "threadkit",
@@ -268,7 +376,7 @@
       "version": "0.1.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add threadkit"
+        "command": "pnpm add threadkit@^0.1.1"
       },
       "adopters": 5,
       "adopterNames": [
@@ -277,7 +385,11 @@
         "skif",
         "substrata",
         "vitareba"
-      ]
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.1.1"
+      }
     },
     {
       "slug": "geo-kit",
@@ -287,30 +399,39 @@
       "version": "0.1.1",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/geo-kit#a337aec928cf7804fecf459c308d366b90f4b2fa"
+        "command": "pnpm add github:bitbaum/geo-kit#fce36b959056799d500371181468844aed7ed513"
       },
       "adopters": 3,
       "adopterNames": [
         "orangecat",
         "solon",
         "substrata"
-      ]
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.1.1",
+        "commit": "fce36b959056799d500371181468844aed7ed513"
+      }
     },
     {
-      "slug": "sitekit",
-      "name": "@bitbaum/sitekit",
-      "repo": "https://github.com/bitbaum/sitekit",
-      "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
-      "version": "0.3.1",
+      "slug": "chartkit",
+      "name": "@bitbaum/chartkit",
+      "repo": "https://github.com/bitbaum/chartkit",
+      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
+      "version": "0.1.1",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/sitekit"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chartkit#55da9bdcee82eac9473d77a1316af322a6e3b20c"
       },
-      "adopters": 2,
+      "adopters": 1,
       "adopterNames": [
-        "camille-boulangerie",
         "substrata"
-      ]
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.1.1",
+        "commit": "55da9bdcee82eac9473d77a1316af322a6e3b20c"
+      }
     },
     {
       "slug": "speechkit",
@@ -320,12 +441,16 @@
       "version": "1.0.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/speechkit"
+        "command": "pnpm add @bitbaum/speechkit@^1.0.0"
       },
       "adopters": 1,
       "adopterNames": [
         "heidi"
-      ]
+      ],
+      "release": {
+        "source": "npm",
+        "version": "1.0.0"
+      }
     },
     {
       "slug": "paykit",
@@ -335,10 +460,15 @@
       "version": "0.1.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/paykit"
+        "command": "pnpm add @bitbaum/paykit@^0.1.0"
       },
       "adopters": 0,
-      "adopterNames": []
+      "adopterNames": [],
+      "release": {
+        "source": "npm",
+        "version": "0.1.0"
+      }
     }
-  ]
+  ],
+  "scope": "public, active, non-fork repositories; all tracked project manifests"
 }
