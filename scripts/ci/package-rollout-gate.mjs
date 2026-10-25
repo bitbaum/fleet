@@ -70,9 +70,7 @@ export function lockedDependencies(manifest, lock, importer = ".") {
       throw new Error(`Missing locked artifact for ${name}`);
     let artifact = version?.replace(/^['"]|['"]$/g, "").split("(")[0] ?? spec;
     // pnpm prefixes aliased npm AND Git resolutions with the target identity.
-    if (
-      artifact.startsWith(`${identity}@`)
-    )
+    if (artifact.startsWith(`${identity}@`))
       artifact = artifact.slice(identity.length + 1);
     if (result[identity] && result[identity] !== artifact && shared(identity))
       throw new Error(`Conflicting locked artifacts for ${identity}`);
@@ -278,6 +276,58 @@ function greenWorkflows(repo, sha) {
       .workflow_runs,
   );
 }
+/** Shared by root and starter consumers: a green deploy cannot override a stale receipt. */
+export async function canaryDeploymentEvidence({
+  canary,
+  tip,
+  dependencies,
+  deploy,
+  checks,
+  receiptUrl,
+  lock,
+  fetchImpl = fetch,
+}) {
+  let receiptHealthy = true;
+  if (receiptUrl) {
+    const url = new URL(receiptUrl);
+    if (url.protocol !== "https:")
+      throw new Error("Deployment receipts require HTTPS");
+    url.searchParams.set("commit", tip);
+    const response = await fetchImpl(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok)
+      throw new Error(
+        `${canary}: deployment receipt returned HTTP ${response.status}`,
+      );
+    const receipt = await response.json();
+    if (!lock) throw new Error(`${canary}: receipt lockfile is unavailable`);
+    receiptHealthy = receiptMatches(receipt, {
+      repo: canary,
+      commit: tip,
+      artifacts: Object.fromEntries(
+        Object.entries(dependencies).filter(([name]) => shared(name)),
+      ),
+      lockSha256: createHash("sha256").update(lock).digest("hex"),
+    });
+    if (!receiptHealthy)
+      console.error(
+        `${canary}: live receipt does not match the current commit and locked artifacts`,
+      );
+  }
+  return {
+    dependencies,
+    healthy:
+      receiptHealthy &&
+      deploy?.conclusion === "success" &&
+      deploy.head_sha === tip &&
+      checks.includes("ci.yml") &&
+      checks.includes("browser-smoke.yml"),
+    deployedAt: deploy?.updated_at,
+  };
+}
+
 async function main() {
   const [repo, number] = process.argv.slice(2);
   const pr = api(`repos/${repo}/pulls/${number}`);
@@ -337,16 +387,17 @@ async function main() {
             `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
           ).workflow_runs[0];
           const checks = greenWorkflows(canary, tip);
-          const result = {
+          const result = await canaryDeploymentEvidence({
+            canary,
+            tip,
             dependencies: depsAt(canary, tip),
-            healthy:
-              receiptHealthy &&
-              deploy?.conclusion === "success" &&
-              deploy.head_sha === tip &&
-              checks.includes("ci.yml") &&
-              checks.includes("browser-smoke.yml"),
-            deployedAt: deploy?.updated_at,
-          };
+            deploy,
+            checks,
+            receiptUrl: policy.deploymentReceipts?.[canary],
+            lock:
+              content(canary, "pnpm-lock.yaml", tip) ??
+              content(canary, "package-lock.json", tip),
+          });
           cache.set(canary, result);
           return result;
         },
@@ -406,50 +457,17 @@ async function main() {
         `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
       ).workflow_runs[0];
       const checks = greenWorkflows(canary, tip);
-      const dependencies = depsAt(canary, tip);
-      let receiptHealthy = true;
-      const receiptUrl = policy.deploymentReceipts?.[canary];
-      if (receiptUrl) {
-        const url = new URL(receiptUrl);
-        if (url.protocol !== "https:")
-          throw new Error("Deployment receipts require HTTPS");
-        url.searchParams.set("commit", tip);
-        const response = await fetch(url, {
-          cache: "no-store",
-          signal: AbortSignal.timeout(10_000),
-        });
-        if (!response.ok)
-          throw new Error(
-            `${canary}: deployment receipt returned HTTP ${response.status}`,
-          );
-        const receipt = await response.json();
-        const lock =
+      const result = await canaryDeploymentEvidence({
+        canary,
+        tip,
+        dependencies: depsAt(canary, tip),
+        deploy,
+        checks,
+        receiptUrl: policy.deploymentReceipts?.[canary],
+        lock:
           content(canary, "pnpm-lock.yaml", tip) ??
-          content(canary, "package-lock.json", tip);
-        if (!lock)
-          throw new Error(`${canary}: receipt lockfile is unavailable`);
-        receiptHealthy = receiptMatches(receipt, {
-          repo: canary,
-          commit: tip,
-          artifacts: Object.fromEntries(
-            Object.entries(dependencies).filter(([name]) => shared(name)),
-          ),
-          lockSha256: createHash("sha256").update(lock).digest("hex"),
-        });
-        if (!receiptHealthy)
-          console.error(
-            `${canary}: live receipt does not match the current commit and locked artifacts`,
-          );
-      }
-      const result = {
-        dependencies,
-        healthy:
-          deploy?.conclusion === "success" &&
-          deploy.head_sha === tip &&
-          checks.includes("ci.yml") &&
-          checks.includes("browser-smoke.yml"),
-        deployedAt: deploy?.updated_at,
-      };
+          content(canary, "package-lock.json", tip),
+      });
       cache.set(canary, result);
       return result;
     },
