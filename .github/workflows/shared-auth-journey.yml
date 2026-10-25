@@ -41,6 +41,7 @@ jobs:
           path: .fleet-auth-tests
           sparse-checkout: |
             scripts/test/auth-journey.mjs
+            scripts/test/auth-browser.mjs
             scripts/test/capture-auth-mail.mjs
           sparse-checkout-cone-mode: false
       - uses: pnpm/action-setup@v6

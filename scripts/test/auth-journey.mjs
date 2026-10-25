@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { authChromium } from "./auth-browser.mjs";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
@@ -146,7 +147,7 @@ try {
   assert.equal(redirect.searchParams.get("next"), account);
   const token = redirect.searchParams.get("token");
   const require = createRequire(resolve("package.json"));
-  const { chromium } = require("playwright");
+  const chromium = authChromium(require);
   browser = await chromium.launch({
     executablePath: process.env.BROWSER_EXECUTABLE ?? "/usr/bin/chromium",
     args: ["--no-sandbox"],
