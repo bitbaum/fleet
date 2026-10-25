@@ -114,7 +114,7 @@ jobs:
     timeout-minutes: 20
     # One repo failing to bump must not stop the others. A repo whose install
     # is broken today is exactly the repo that has been stranded longest.
-    continue-on-error: true
+    # fail-fast:false keeps sibling jobs running; real failures still fail this run.
     strategy:
       fail-fast: false
       max-parallel: 3
