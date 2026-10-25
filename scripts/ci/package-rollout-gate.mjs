@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { receiptMatches } from "./release-receipt-contract.mjs";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -17,22 +19,44 @@ const registry = JSON.parse(
 const known = new Set(registry.packages.map((p) => p.name));
 export function dependencyIdentity(name, spec) {
   if (typeof spec === "string" && spec.startsWith("npm:")) {
-    const target = spec.slice(4), split = target.lastIndexOf("@");
+    const target = spec.slice(4),
+      split = target.lastIndexOf("@");
     if (split > target.indexOf("/")) return target.slice(0, split);
   }
   if (typeof spec === "string") {
-    const git = /^(?:github:|git\+https:\/\/github\.com\/)([\w.-]+\/[\w.-]+?)(?:\.git)?#/.exec(spec);
-    if (git) return registry.packages.find((entry) => entry.repo === `https://github.com/${git[1]}`)?.name ?? name;
+    const git =
+      /^(?:github:|git\+https:\/\/github\.com\/)([\w.-]+\/[\w.-]+?)(?:\.git)?#/.exec(
+        spec,
+      );
+    if (git)
+      return (
+        registry.packages.find(
+          (entry) => entry.repo === `https://github.com/${git[1]}`,
+        )?.name ?? name
+      );
   }
   return name;
 }
-const shared = (name) => known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name];
-export function lockedDependencies(manifest, lock) {
-  const deps = { ...manifest.dependencies, ...manifest.devDependencies };
+const shared = (name) =>
+  known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name];
+export function lockedDependencies(manifest, lock, importer = ".") {
+  const deps = {
+    ...manifest.dependencies,
+    ...manifest.devDependencies,
+    ...manifest.optionalDependencies,
+  };
   const result = {};
-  // Read pnpm's root importer only; peer contexts do not change the artifact identity.
+  // Callers select the importer explicitly; peer contexts do not change artifact identity.
+  const importers =
+    lock.match(/^importers:[^\n]*\n([\s\S]*?)(?=^\S|(?![\s\S]))/m)?.[1] ?? "";
+  const escapedImporter = importer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const root =
-    lock.match(/^  \.:\s*\n([\s\S]*?)(?=^  \S|^\S|(?![\s\S]))/m)?.[1] ?? "";
+    importers.match(
+      new RegExp(
+        `^  (?:${escapedImporter}|["']${escapedImporter}["']):[^\\n]*\\n([\\s\\S]*?)(?=^  \\S|^\\S|(?![\\s\\S]))`,
+        "m",
+      ),
+    )?.[1] ?? "";
   for (const [name, spec] of Object.entries(deps)) {
     const identity = dependencyIdentity(name, spec);
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -42,18 +66,46 @@ export function lockedDependencies(manifest, lock) {
         "m",
       ),
     )?.[1];
-    if (
-      !version &&
-      shared(identity)
-    )
+    if (!version && shared(identity))
       throw new Error(`Missing locked artifact for ${name}`);
     let artifact = version?.replace(/^['"]|['"]$/g, "").split("(")[0] ?? spec;
     // pnpm's npm aliases include the target name in their lock resolution.
-    if (typeof spec === "string" && spec.startsWith("npm:") && artifact.startsWith(`${identity}@`))
+    if (
+      typeof spec === "string" &&
+      spec.startsWith("npm:") &&
+      artifact.startsWith(`${identity}@`)
+    )
       artifact = artifact.slice(identity.length + 1);
     if (result[identity] && result[identity] !== artifact && shared(identity))
       throw new Error(`Conflicting locked artifacts for ${identity}`);
     result[identity] = artifact;
+  }
+  return result;
+}
+export function lockedNpmDependencies(manifest, lock, importer = ".") {
+  const deps = {
+    ...manifest.dependencies,
+    ...manifest.devDependencies,
+    ...manifest.optionalDependencies,
+  };
+  if (![2, 3].includes(lock.lockfileVersion) || !lock.packages)
+    throw new Error("Unsupported npm lockfile: artifact evidence is missing");
+  const prefix = importer === "." ? "" : importer.replace(/\/$/, "") + "/";
+  const result = {};
+  for (const [name, spec] of Object.entries(deps)) {
+    const identity = dependencyIdentity(name, spec);
+    const entry =
+      lock.packages[`${prefix}node_modules/${name}`] ??
+      lock.packages[`node_modules/${name}`];
+    const artifact =
+      entry?.resolved && /git|codeload/.test(entry.resolved)
+        ? entry.resolved
+        : entry?.version;
+    if (!artifact && shared(identity))
+      throw new Error(`Missing locked artifact for ${name}`);
+    if (result[identity] && result[identity] !== artifact && shared(identity))
+      throw new Error(`Conflicting locked artifacts for ${identity}`);
+    result[identity] = artifact ?? "unresolved";
   }
   return result;
 }
@@ -195,38 +247,16 @@ function depsAt(repo, ref) {
   const dependencies = {
     ...parsed.dependencies,
     ...parsed.devDependencies,
+    ...parsed.optionalDependencies,
   };
   const names = Object.keys(dependencies);
-  if (
-    !names.some(
-      (n) => shared(dependencyIdentity(n, dependencies[n])),
-    )
-  )
+  if (!names.some((n) => shared(dependencyIdentity(n, dependencies[n]))))
     return {};
   const lock = content(repo, "pnpm-lock.yaml", ref);
   if (lock) return lockedDependencies(parsed, lock);
   const npm = content(repo, "package-lock.json", ref);
-  if (npm) {
-    const packages = JSON.parse(npm).packages;
-    if (!packages)
-      throw new Error("Unsupported npm lockfile: artifact evidence is missing");
-    return Object.fromEntries(
-      names.map((n) => {
-        const identity = dependencyIdentity(n, dependencies[n]);
-        const entry = packages[`node_modules/${n}`];
-        const artifact =
-          entry?.resolved && /git|codeload/.test(entry.resolved)
-            ? entry.resolved
-            : entry?.version;
-        if (
-          !artifact &&
-          shared(identity)
-        )
-          throw new Error(`Missing locked artifact for ${n}`);
-        return [identity, artifact ?? "unresolved"];
-      }),
-    );
-  }
+  if (npm) return lockedNpmDependencies(parsed, JSON.parse(npm));
+
   throw new Error(
     `${repo}: supported lockfile required for artifact-specific rollout evidence`,
   );
@@ -289,7 +319,9 @@ async function main() {
     const changed = Object.keys(afterTemplate).some(
       (name) =>
         beforeTemplate[name] !== afterTemplate[name] &&
-        (known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name]),
+        (known.has(name) ||
+          name.startsWith("@bitbaum/") ||
+          policy.packages[name]),
     );
     if (changed) {
       const cache = new Map();
@@ -310,6 +342,7 @@ async function main() {
           const result = {
             dependencies: depsAt(canary, tip),
             healthy:
+              receiptHealthy &&
               deploy?.conclusion === "success" &&
               deploy.head_sha === tip &&
               checks.includes("ci.yml") &&
@@ -327,14 +360,17 @@ async function main() {
     }
   }
   if (
-    nestedSharedChange(files.filter(({ filename }) => !filename.startsWith("templates/app/")), (path, side) => {
-      const text = content(
-        repo,
-        path,
-        side === "base" ? pr.base.sha : pr.head.sha,
-      );
-      return text ? JSON.parse(text) : null;
-    })
+    nestedSharedChange(
+      files.filter(({ filename }) => !filename.startsWith("templates/app/")),
+      (path, side) => {
+        const text = content(
+          repo,
+          path,
+          side === "base" ? pr.base.sha : pr.head.sha,
+        );
+        return text ? JSON.parse(text) : null;
+      },
+    )
   )
     throw new Error(
       "Nested shared dependency update requires importer-specific rollout evidence; automatic merge is held",
@@ -372,8 +408,43 @@ async function main() {
         `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
       ).workflow_runs[0];
       const checks = greenWorkflows(canary, tip);
+      const dependencies = depsAt(canary, tip);
+      let receiptHealthy = true;
+      const receiptUrl = policy.deploymentReceipts?.[canary];
+      if (receiptUrl) {
+        const url = new URL(receiptUrl);
+        if (url.protocol !== "https:")
+          throw new Error("Deployment receipts require HTTPS");
+        url.searchParams.set("commit", tip);
+        const response = await fetch(url, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (!response.ok)
+          throw new Error(
+            `${canary}: deployment receipt returned HTTP ${response.status}`,
+          );
+        const receipt = await response.json();
+        const lock =
+          content(canary, "pnpm-lock.yaml", tip) ??
+          content(canary, "package-lock.json", tip);
+        if (!lock)
+          throw new Error(`${canary}: receipt lockfile is unavailable`);
+        receiptHealthy = receiptMatches(receipt, {
+          repo: canary,
+          commit: tip,
+          artifacts: Object.fromEntries(
+            Object.entries(dependencies).filter(([name]) => shared(name)),
+          ),
+          lockSha256: createHash("sha256").update(lock).digest("hex"),
+        });
+        if (!receiptHealthy)
+          console.error(
+            `${canary}: live receipt does not match the current commit and locked artifacts`,
+          );
+      }
       const result = {
-        dependencies: depsAt(canary, tip),
+        dependencies,
         healthy:
           deploy?.conclusion === "success" &&
           deploy.head_sha === tip &&
