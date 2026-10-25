@@ -338,6 +338,9 @@ async function main() {
 
   const plan = byRepo(rows);
 
+  if (asJson && unreadable.length) console.error(`UNCHECKED repositories: ${unreadable.join(", ")}`);
+  if (asJson && uncheckedGit.size) console.error(`UNCHECKED Git releases: ${[...uncheckedGit].join(", ")}`);
+
   if (asJson) {
     // Over the cap, emit an EMPTY matrix rather than the plan. The workflow
     // acts on whatever this prints, so refusing here is the refusal.

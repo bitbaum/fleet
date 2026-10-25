@@ -60,6 +60,28 @@ tags verified stable versions even before npm bootstrap. The template sync
 offers missing release files to every registered package, not just newly
 extracted packages. Existing files remain owned by their repositories.
 
+## Account lifecycle evidence
+
+`.github/workflows/shared-auth-journey.yml` builds the consuming app without auth
+secrets, applies its committed migrations to an isolated PostgreSQL database,
+then starts the production server with synthetic credentials. Consumers provide
+`migrate-command`, `sign-in-path`, and `account-path` through a job in their
+`browser-smoke.yml`. The driver captures mail locally through the app's real
+adapter; it does not send external mail.
+
+The journey checks registration and role escalation protection, verification,
+reset response parity for unknown addresses, return paths, token removal from
+browser history, password reset and token reuse, session revocation, old and new
+passwords, and browser login into the server-rendered account page. It captures
+light and dark reset forms at 320, 390, and 1280 pixels and rejects horizontal
+overflow. Building without auth secrets is intentional: it catches session pages
+incorrectly cached as signed-out redirects. Logs and screenshots contain synthetic
+users; mail bodies and recovery tokens remain in memory.
+
+This journey covers the shared email/password runtime. Apps with Supabase,
+organizations, or different account routes require equivalent adapter-specific
+journeys before promotion; installing a package does not establish adoption.
+
 The existing Loki [self-host deployment workflow](https://github.com/bitbaum/loki/blob/main/.github/workflows/selfhost-deploy.yml)
 uses atomic releases and includes health-check and page-regression rollback.
 Those checks do not establish correctness of every authenticated or domain flow;
