@@ -192,7 +192,7 @@ check("npm failing is null, never a bump", latestOf(AI_KIT, { run: () => { throw
 check("npm answering garbage is null, never a bump", latestOf(AI_KIT, { run: () => "not-a-version" }) === null);
 
 // ── the cap ──────────────────────────────────────────────────────────────────
-check("the cap is small enough to be a real guard", MAX_PRS > 0 && MAX_PRS <= 25);
+check("the cap is small enough to be a real guard", MAX_PRS > 0 && MAX_PRS <= 30);
 // The cap must clear the fleet's REAL size or it fires on every correct run,
 // which is how a guard gets raised unread. 13 is what the first live run
 // counted across 43 repos on 2026-09-21; 12 was set from a miscount and

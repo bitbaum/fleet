@@ -76,13 +76,13 @@ jobs:
       - name: Self-test the reconciler first
         run: |
           node scripts/ci/test-currency-reconciler.mjs
-          node --test scripts/ci/git-package-currency.test.mjs
+          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs
 
       - name: What is behind?
         id: plan
         env:
-          # The default token reads public repos only. A private repo would
-          # land in UNCHECKED — named, never counted as current.
+          # Only explicitly public repositories may enter this public matrix.
+          # Private consumers need automation in their own private context.
           GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
@@ -150,10 +150,15 @@ jobs:
           echo "$BUMPS" | node -e '
             const fs = require("node:fs");
             const bumps = JSON.parse(fs.readFileSync(0, "utf8"));
+            const head = require("node:child_process").execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+            if (bumps.some(b => b.sourceSha !== head)) throw new Error("Source changed since planning; rerun the census");
             for (const b of bumps) {
               const pkg = JSON.parse(fs.readFileSync(b.path, "utf8"));
-              for (const field of ["dependencies", "devDependencies"]) {
-                if (pkg[field]?.[b.name]) pkg[field][b.name] = b.to;
+              for (const field of ["dependencies", "devDependencies", "optionalDependencies"]) {
+                if (pkg[field]?.[b.name]) {
+                  if (pkg[field][b.name] !== b.from) throw new Error(`Stale declaration: ${b.path}: ${b.name}`);
+                  pkg[field][b.name] = b.to;
+                }
               }
               fs.writeFileSync(b.path, JSON.stringify(pkg, null, 2) + "\n");
               console.log(`${b.path}: ${b.name} ${b.from} -> ${b.to}`);
@@ -173,19 +178,29 @@ jobs:
               let dir = path.dirname(bump.path);
               for (;;) {
                 if (fs.existsSync(path.join(dir, "pnpm-lock.yaml"))) {
-                  roots.add(dir);
+                  roots.add(`pnpm:${dir}`);
+                  break;
+                }
+                if (fs.existsSync(path.join(dir, "package-lock.json"))) {
+                  roots.add(`npm:${dir}`);
                   break;
                 }
                 const parent = path.dirname(dir);
-                if (parent === dir) throw new Error(`No pnpm lockfile for ${bump.path}`);
+                if (parent === dir) throw new Error(`No supported lockfile for ${bump.path}`);
                 dir = parent;
               }
             }
             for (const dir of [...roots].sort()) console.log(dir);
           ')
           for root in "${INSTALL_ROOTS[@]}"; do
-            echo "Regenerating pnpm lockfile in $root"
-            (cd "$root" && pnpm install --no-frozen-lockfile)
+            manager="${root%%:*}"
+            project_dir="${root#*:}"
+            echo "Regenerating $manager lockfile in $project_dir"
+            if [ "$manager" = "npm" ]; then
+              (cd "$project_dir" && npm install)
+            else
+              (cd "$project_dir" && pnpm install --no-frozen-lockfile)
+            fi
           done
 
       - name: Open or update the pull request
