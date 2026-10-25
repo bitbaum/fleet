@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   ChatStarters,
@@ -8,7 +8,7 @@ import {
   type ComposerLabelOverrides,
   type Starter,
   type ThreadLabels,
-} from '@bitbaum/chatkit/react';
+} from "@bitbaum/chatkit/react";
 
 /** Product supplies its own localized labels and answer function; chat behavior stays shared. */
 export function SharedChat({
@@ -36,7 +36,7 @@ export function SharedChat({
     <section aria-label={ariaLabel}>
       <ChatThread
         messages={messages}
-        live={sending ? { status: threadLabels?.working ?? 'Working on it…' } : null}
+        live={sending ? { status: threadLabels?.working ?? "Working on it…" } : null}
         labels={threadLabels}
         empty={
           <ChatStarters
