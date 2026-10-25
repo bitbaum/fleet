@@ -52,6 +52,27 @@ test("canary requires browser and CI proof", async () => {
     [],
   );
 });
+test("template consumers may use full CI plus the exact canary soak", async () => {
+  assert.deepEqual(
+    await check({
+      repo: "bitbaum/example",
+      candidateChecks: ["ci.yml"],
+      requiredChecks: ["ci.yml"],
+    }),
+    [],
+  );
+  const findings = await check({
+    repo: "bitbaum/example",
+    candidateChecks: ["ci.yml"],
+    requiredChecks: ["ci.yml"],
+    readCanary: async () => ({
+      dependencies: { [name]: "0.4.1" },
+      healthy: true,
+      deployedAt: "2026-10-24T11:30:00Z",
+    }),
+  });
+  assert.match(findings[0], /soak for 24h/);
+});
 test("wrong artifact, failed deploy, too recent or invalid receipts hold", async () => {
   for (const change of [
     { dependencies: { [name]: "0.4.0" } },
