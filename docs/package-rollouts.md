@@ -107,3 +107,28 @@ that match the package version and passed exact-commit CI. A newer verified Git
 release can win over lagging npm; equal versions prefer npm. The record includes
 the chosen source and immutable Git commit where applicable. Old consumer pins
 and unpublished repository versions never establish the current target.
+
+## Live artifact receipts
+
+`scripts/ci/release-receipt.mjs` records the clean checked-out commit, the selected
+lockfile digest, and the canonical locked/installed first-party package versions.
+It refuses a dirty or untracked source tree, missing installed packages,
+mutable workspace/branch references, unsupported locks and mismatched npm
+versions. It uses the actual Git checkout rather than the workflow run's label.
+
+The deployment integration writes the result into the staged public directory
+as `/.well-known/fleet-release.json`. It contains no environment, user data,
+local paths or unrelated dependency inventory. Public output requires `--public`;
+the caller must establish repository visibility before passing that flag.
+Private inventory stays internal. pnpm importers and npm v2/v3 project locks
+use the same parsers as the rollout gate.
+
+Once a canary actually serves a verified receipt, configure its HTTPS URL in
+`registers/package-rollouts.json` under `deploymentReceipts["owner/repo"]`.
+The gate then requires the live receipt to match the current commit, complete
+canonical artifact map and lockfile digest, in addition to exact CI/browser,
+successful deployment and the unchanged 24-hour observation period. Missing,
+stale or malformed live evidence holds promotion. An unconfigured receipt URL
+does not claim deployed-artifact verification; deployment integration and live
+validation are separate prerequisites to enabling it. Existing nested-consumer
+holds remain in place until importer-specific rollout policies are configured.
