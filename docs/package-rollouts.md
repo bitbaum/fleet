@@ -25,6 +25,13 @@ until workspace-specific canary evidence is supported. Standalone nested depende
 with shared dependencies likewise hold automatic promotion. The gate does not
 infer compatibility for an integration it cannot evaluate. Manual merges are not constrained by this script.
 
+The first-party `templates/app` starter has a narrow supported path: its full
+`ci.yml` must pass on the candidate commit (including clean install, package
+verification, production build and the auth integration journey). Shared package
+changes in that template still require the exact artifact to deploy on the
+designated canary and complete the same observation period. Other nested
+manifests remain held until they provide equivalent importer-specific evidence.
+
 For a regression: add the exact locked artifact to `blocked[package]` in the
 policy register, fix the package with a regression test and release a new version.
 Do not move a published tag. Revert the affected consumer dependency/lockfile PR

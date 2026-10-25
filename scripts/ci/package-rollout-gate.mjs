@@ -106,6 +106,7 @@ export async function assessRollout({
   after,
   readCanary,
   candidateChecks,
+  requiredChecks = ["ci.yml", "browser-smoke.yml"],
   settings = policy,
   now = Date.now(),
 }) {
@@ -131,12 +132,9 @@ export async function assessRollout({
       );
       continue;
     }
-    if (
-      !candidateChecks.includes("ci.yml") ||
-      !candidateChecks.includes("browser-smoke.yml")
-    ) {
+    if (!requiredChecks.every((check) => candidateChecks.includes(check))) {
       findings.push(
-        `${name}: consumer needs successful CI and browser-smoke workflows on this commit`,
+        `${name}: consumer needs successful ${requiredChecks.join(" and ")} workflows on this commit`,
       );
       continue;
     }
@@ -253,8 +251,66 @@ async function main() {
     if (page === 30)
       throw new Error("Dependency scope exceeds the API file limit");
   }
+  // The app starter is a supported consumer in its own right. Its CI runs a
+  // clean install, package verification, production build and auth journey.
+  // Keep all other nested consumers held until they have equivalent evidence.
+  const templateFiles = files.filter(({ filename }) =>
+    /^templates\/app\/(?:package\.json|pnpm-lock\.yaml)$/.test(filename),
+  );
+  if (templateFiles.length) {
+    const templateDeps = (sha) => {
+      const rawManifest = content(repo, "templates/app/package.json", sha);
+      if (!rawManifest) return {};
+      const templateManifest = JSON.parse(rawManifest);
+      const lock = content(repo, "templates/app/pnpm-lock.yaml", sha);
+      if (!lock)
+        throw new Error("templates/app requires a committed pnpm lockfile");
+      return lockedDependencies(templateManifest, lock);
+    };
+    const beforeTemplate = templateDeps(pr.base.sha);
+    const afterTemplate = templateDeps(pr.head.sha);
+    const changed = Object.keys(afterTemplate).some(
+      (name) =>
+        beforeTemplate[name] !== afterTemplate[name] &&
+        (known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name]),
+    );
+    if (changed) {
+      const cache = new Map();
+      const findings = await assessRollout({
+        repo,
+        before: beforeTemplate,
+        after: afterTemplate,
+        candidateChecks: greenWorkflows(repo, pr.head.sha),
+        requiredChecks: ["ci.yml"],
+        readCanary: async (canary) => {
+          if (cache.has(canary)) return cache.get(canary);
+          const branch = api(`repos/${canary}`).default_branch;
+          const tip = api(`repos/${canary}/commits/${branch}`).sha;
+          const deploy = api(
+            `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
+          ).workflow_runs[0];
+          const checks = greenWorkflows(canary, tip);
+          const result = {
+            dependencies: depsAt(canary, tip),
+            healthy:
+              deploy?.conclusion === "success" &&
+              deploy.head_sha === tip &&
+              checks.includes("ci.yml") &&
+              checks.includes("browser-smoke.yml"),
+            deployedAt: deploy?.updated_at,
+          };
+          cache.set(canary, result);
+          return result;
+        },
+      });
+      if (findings.length) {
+        console.log(findings.join("\n"));
+        process.exitCode = 1;
+      }
+    }
+  }
   if (
-    nestedSharedChange(files, (path, side) => {
+    nestedSharedChange(files.filter(({ filename }) => !filename.startsWith("templates/app/")), (path, side) => {
       const text = content(
         repo,
         path,
