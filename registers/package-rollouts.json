@@ -7,7 +7,8 @@
     "bip-kit": { "canary": "bitbaum/biaslens" },
     "@bitbaum/ai-kit": { "canary": "bitbaum/biaslens" },
     "@bitbaum/mail-kit": { "canary": "bitbaum/biaslens" },
-    "limitkit": { "canary": "bitbaum/biaslens" }
+    "limitkit": { "canary": "bitbaum/biaslens" },
+    "@bitbaum/chatkit": { "canary": "bitbaum/biaslens" }
   },
   "blocked": {}
 }
