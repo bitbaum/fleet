@@ -41,6 +41,16 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ORG = 'bitbaum';
 export const SYNC_BRANCH = 'fleet/template-sync';
 
+/** Newly extracted packages and established kits both need release plumbing. */
+export function syncDeclarations(declarations, registry) {
+  const entries = new Map(declarations.map((entry) => [entry.name, entry]));
+  for (const entry of registry.packages ?? []) {
+    const match = /^https:\/\/github\.com\/bitbaum\/([a-z0-9-]+)$/.exec(entry.repo ?? '');
+    if (match && !entries.has(match[1])) entries.set(match[1], { name: match[1] });
+  }
+  return [...entries.values()];
+}
+
 /** The template files a repo does not have. `repoPaths` = every path on its default branch. */
 export function missingTemplateFiles(files, repoPaths) {
   const have = new Set(repoPaths);
@@ -138,7 +148,10 @@ function pushBranch(name, defaultBranch, missing, pr) {
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
-  const declarations = parseDeclarations(readFileSync(join(ROOT, 'registers', 'package-repos.json'), 'utf8'));
+  const declarations = syncDeclarations(
+    parseDeclarations(readFileSync(join(ROOT, 'registers', 'package-repos.json'), 'utf8')),
+    JSON.parse(readFileSync(join(ROOT, 'registers', 'packages.json'), 'utf8')),
+  );
   let changed = 0;
   for (const decl of declarations) {
     const info = repoInfo(decl.name);

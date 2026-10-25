@@ -46,6 +46,20 @@ session/authorization tests. New bugs become regression tests in the owning
 package and the affected consumer. Add another representative canary before
 promoting into a materially different runtime or integration.
 
+`scripts/ci/package-canary-audit.mjs` verifies that every configured canary
+declares its package and has an import/runtime binding in its package plan.
+The scheduled `package-canaries.yml` workflow repeats that check against current
+default branches. This validates configuration, not deployed journey health.
+
+The currency reconciler also follows registered immutable Git dependencies.
+Published packages move to their canonical npm identity (preserving aliases).
+Otherwise only stable Git tags with a matching package version and successful
+CI on that exact commit are eligible; installed newer commits are never
+downgraded to older tags. `templates/package` supplies `git-release.yml`, which
+tags verified stable versions even before npm bootstrap. The template sync
+offers missing release files to every registered package, not just newly
+extracted packages. Existing files remain owned by their repositories.
+
 The existing Loki [self-host deployment workflow](https://github.com/bitbaum/loki/blob/main/.github/workflows/selfhost-deploy.yml)
 uses atomic releases and includes health-check and page-regression rollback.
 Those checks do not establish correctness of every authenticated or domain flow;

@@ -78,6 +78,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { listRepos, fetchManifest, listDir, manifestPaths } from "./version-currency.mjs";
+import { registeredGitDependency, planGitUpdate, planRegistryMigration, latestVerifiedGitRelease, gitPackageVersion } from "./git-package-currency.mjs";
 
 /** Our own packages, and nobody else's. See "what it will NOT do". */
 export const INTERNAL_SCOPE = "@bitbaum/";
@@ -101,7 +102,9 @@ export const INTERNAL_SCOPE = "@bitbaum/";
  * whole fleet at once" still refuses, while 13 known-genuine bumps pass. Raise
  * it again only against another run's output, and say which run.
  */
-export const MAX_PRS = 20;
+// 2026-10-25: the dated census found 23 real stale repositories / 59 updates.
+// Keep the cap above that measured queue and below the 60 active repositories.
+export const MAX_PRS = 25;
 
 /**
  * Split a registry range into its operator and its floor version.
@@ -287,6 +290,9 @@ async function main() {
   const rows = [];
   const unreadable = [];
   const latestByName = {};
+  const gitReleases = new Map();
+  const gitVersions = new Map();
+  const uncheckedGit = new Set();
 
   for (const repo of repos) {
     const rootNames = listDir(owner, repo, "");
@@ -309,6 +315,24 @@ async function main() {
         }
       }
       rows.push(...planForManifest(repo, path, pkg, latestByName, npmNames));
+      for (const [name, specifier] of Object.entries({ ...pkg.dependencies, ...pkg.devDependencies })) {
+        const identity = registeredGitDependency(specifier, registry);
+        if (!identity) continue;
+        try {
+          const key = `${identity.repo}#${identity.ref}`;
+          if (!gitVersions.has(key)) gitVersions.set(key, gitPackageVersion(identity.repo, identity.ref));
+          if (identity.npm) {
+            if (!(identity.name in latestByName)) latestByName[identity.name] = latestOf(identity.name);
+            const migration = planRegistryMigration(repo, path, name, specifier, identity, gitVersions.get(key), latestByName[identity.name]);
+            if (migration) { rows.push(migration); continue; }
+          }
+          if (!gitReleases.has(identity.repo)) gitReleases.set(identity.repo, latestVerifiedGitRelease(identity.repo));
+          const target = gitReleases.get(identity.repo);
+          if (!target) { uncheckedGit.add(identity.repo); continue; }
+          const row = planGitUpdate(repo, path, name, specifier, { ...target, name: identity.name, currentVersion: gitVersions.get(key) });
+          if (row) rows.push(row);
+        } catch { uncheckedGit.add(identity.repo); }
+      }
     }
   }
 
@@ -317,6 +341,10 @@ async function main() {
   if (asJson) {
     // Over the cap, emit an EMPTY matrix rather than the plan. The workflow
     // acts on whatever this prints, so refusing here is the refusal.
+    if (plan.length > MAX_PRS) {
+      console.error(`Refusing ${plan.length} repository updates: cap is ${MAX_PRS}; inspect the plan before changing it.`);
+      process.exitCode = 1;
+    }
     console.log(JSON.stringify(plan.length > MAX_PRS ? [] : plan));
     return;
   }
@@ -324,7 +352,7 @@ async function main() {
   console.log(`Internal package currency across ${repos.length} repos in ${owner}:\n`);
 
   if (plan.length === 0) {
-    console.log("✓ every registered shared npm dependency is at the published version.");
+    console.log("No update planned for checked registered shared dependencies; see any UNCHECKED entries below.");
   } else {
     for (const entry of plan) {
       console.log(`  ${entry.repo}`);
@@ -343,6 +371,7 @@ async function main() {
     console.log(`\n  UNCHECKED (could not read): ${unreadable.join(", ")}`);
     console.log("  Not a pass. Re-run with a token that can see them.");
   }
+  if (uncheckedGit.size) console.error(`UNCHECKED Git releases (missing verified release or unavailable evidence): ${[...uncheckedGit].join(", ")}`);
 
   if (plan.length > MAX_PRS) {
     console.error(
