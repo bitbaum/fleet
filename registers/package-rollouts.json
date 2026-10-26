@@ -211,6 +211,18 @@
       "canaryChecks": [
         "ci.yml"
       ]
+    },
+    "@bitbaum/speechkit": {
+      "canary": "bitbaum/heidi",
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
     }
   },
   "blocked": {
@@ -222,6 +234,7 @@
   "deploymentReceipts": {
     "bitbaum/biaslens": "https://biaslens.orangecat.ch/.well-known/fleet-release.json",
     "bitbaum/kivvi": "https://kivvi.orangecat.ch/.well-known/fleet-release.json",
-    "bitbaum/substrata": "https://substrata.orangecat.ch/.well-known/fleet-release.json"
+    "bitbaum/substrata": "https://substrata.orangecat.ch/.well-known/fleet-release.json",
+    "bitbaum/heidi": "https://heidi.orangecat.ch/.well-known/fleet-release.json"
   }
 }
