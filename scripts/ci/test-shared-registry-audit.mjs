@@ -30,22 +30,20 @@ const eq = (got, want, m) => {
 
 console.log("test-shared-registry-audit");
 
-// The registry is the release source of truth. The two highest-risk owner
-// contracts must not show an older copyable install command in SHARED.md.
+// Install instructions are generated. Curated package descriptions must link
+// to the producer instead of copying commands that become stale on release.
 {
   const packages = JSON.parse(
     readFileSync(join(process.cwd(), "registers/packages.json"), "utf8"),
   ).packages;
   const shared = readFileSync(join(process.cwd(), "SHARED.md"), "utf8");
-  for (const slug of ["accountkit", "chatkit"]) {
-    const release = packages.find((item) => item.slug === slug);
-    const row = shared
-      .split("\n")
-      .find((line) => line.startsWith(`| [\`${slug}\`]`));
-    if (release && row?.includes(release.install.command))
-      ok(`${slug} install guidance matches the verified registry release`);
+  for (const { slug } of packages) {
+    const row = shared.split("\n").find((line) => line.startsWith(`| [\`${slug}\`]`));
+    const install = row?.split("|")[2] ?? "";
+    if (install.includes("(registers/packages.json)") && !install.includes("pnpm add"))
+      ok(`${slug} install guidance points to the generated release record`);
     else
-      bad(`${slug} install guidance is missing or stale versus registers/packages.json`);
+      bad(`${slug} install guidance must link to the generated release record`);
   }
 }
 

@@ -449,3 +449,20 @@ test("standalone nested manifests and locks cannot bypass the root gate", () => 
     false,
   );
 });
+
+test("obsolete AccountKit downgrade is blocked even for its bootstrap canary", async () => {
+  for (const artifact of [
+    "https://codeload.github.com/bitbaum/accountkit/tar.gz/ec5654270527757aa0e762f09b5aaabf272389a2",
+    "git+https://github.com/bitbaum/accountkit.git#ec5654270527757aa0e762f09b5aaabf272389a2",
+    "0.2.1",
+  ]) {
+    const findings = await assessRollout({
+      repo: "bitbaum/biaslens",
+      before: { "@bitbaum/accountkit": "current" },
+      after: { "@bitbaum/accountkit": artifact },
+      candidateChecks: ["ci.yml", "browser-smoke.yml"],
+      readCanary: async () => { throw new Error("blocked artifacts must not read canary evidence"); },
+    });
+    assert.ok(findings.some((finding) => finding.includes("release is blocked")));
+  }
+});
