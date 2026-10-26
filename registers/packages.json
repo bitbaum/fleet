@@ -81,10 +81,10 @@
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
       "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add bip-kit@^0.6.0"
+        "command": "pnpm add bip-kit@^0.6.1"
       },
       "adopters": 17,
       "adopterNames": [
