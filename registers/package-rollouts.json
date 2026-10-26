@@ -56,7 +56,7 @@
         "apps/web",
         "packages/ai"
       ],
-      "bootstrapPr": 141,
+      "bootstrapPr": 150,
       "candidateChecks": [
         "ci.yml",
         "browser-smoke.yml"
