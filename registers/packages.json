@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T05:50:45.259Z",
+  "generatedAt": "2026-10-26T06:51:39.721Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -461,16 +461,17 @@
       "name": "@bitbaum/paykit",
       "repo": "https://github.com/bitbaum/paykit",
       "description": "Let a website get paid without holding the money. Classify a pasted Bitcoin receive string, and record a shown code (Twint, another currency) the visitor pays in their own app.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/paykit@^0.1.0"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/paykit#d3038e303e6fe9e97a171131c7001637d104fd77"
       },
       "adopters": 0,
       "adopterNames": [],
       "release": {
-        "source": "npm",
-        "version": "0.1.0"
+        "source": "git",
+        "tag": "v0.1.1",
+        "commit": "d3038e303e6fe9e97a171131c7001637d104fd77"
       }
     }
   ],
