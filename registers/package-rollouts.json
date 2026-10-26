@@ -114,6 +114,16 @@
         "browser-smoke.yml"
       ]
     },
+    "@bitbaum/paykit": {
+      "canary": "bitbaum/orangecat",
+      "bootstrapPr": 1430,
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
+    },
     "@bitbaum/searchkit": {
       "canary": "bitbaum/substrata",
       "bootstrapPr": 254,
