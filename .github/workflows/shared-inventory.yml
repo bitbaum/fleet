@@ -12,12 +12,18 @@ on:
     # Weekly. Duplication grows on the timescale of features and new repos, not
     # individual commits — a daily run would be noise, and noise gets muted.
     - cron: '41 6 * * 1'
+  repository_dispatch:
+    types: [shared-package-release]
   workflow_dispatch:
     inputs:
       strict:
         description: 'Fail when duplication has risen'
         type: boolean
         default: true
+
+concurrency:
+  group: shared-inventory
+  cancel-in-progress: false
 
 permissions:
   # write, only so the weekly run can refresh registers/packages.json — the
