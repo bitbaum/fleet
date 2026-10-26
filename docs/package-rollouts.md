@@ -6,15 +6,30 @@ but cannot establish that auth, CSS, navigation and real workflows still work in
 an app.
 
 The automatic merge sweep enforces `registers/package-rollouts.json` for shared
-root dependencies in application consumers. Package repositories retain their
-own verify/publish gates; downstream apps provide deployment evidence. BiasLens is the initial canary for the seven packages it
-actually consumes. A canary dependency PR must pass both `ci.yml` and
-`browser-smoke.yml` on its exact head. Every other consumer waits for the same
-locked artifact to be deployed on the canary, with successful CI and browser
-checks, and a 24-hour observation period. The latest canary default-branch commit
-must be the deployed commit. Another deployment restarts the conservative
-observation period. Each consumer must still pass all of its own checks, including successful
-`ci.yml` and `browser-smoke.yml` workflows on the candidate commit.
+root dependencies in application consumers. Each package has a canary chosen for
+a real runtime binding: BiasLens covers SiteKit, AccountKit and Design Tokens;
+Kivvi covers AI Kit (through its `packages/ai` importer), ChatKit, AI Forms,
+MailKit, LimitKit and BipKit; Substrata covers ChartKit, WhenKit, ListKit,
+SearchKit, ThreadKit and Geo Kit. Workspace importers, public release receipts
+and the wider release project are recorded where they differ.
+
+The canary must pass the checks meaningful to that package on the exact commit:
+UI and chat integrations require CI and browser smoke; utility packages require
+CI. A consumer source change that can alter its user experience must also pass
+its configured browser workflow. Dependency-only candidates use the narrower
+check set configured for that package. Every other consumer waits for the same
+locked artifact to be deployed on the canary, with those canary checks green, and
+a 24-hour observation period. The live release receipt binds the deployment to
+the commit, lockfile and exact artifacts. The latest canary default-branch commit
+must be the deployed commit. Another deployment restarts the observation period.
+
+The 24-hour threshold is a conservative full daily operating cycle: it gives a
+canary time to see daytime use, scheduled work and (for AI packages) a daily
+provider-budget reset. It is a policy threshold, not a claim that 23 or 25 hours
+has a scientifically distinct risk boundary, and it cannot prove zero bugs. The
+hourly merge sweep rechecks held candidates and promotes them when the evidence
+matures. Changing the threshold changes both exposure time and rollout delay, so
+it belongs in the shared policy rather than in individual app workflows.
 
 Known first-party packages without a designated canary wait for configuration;
 they do not silently promote. Lock-only pnpm root dependency changes are checked,
