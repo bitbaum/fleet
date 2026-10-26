@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T06:51:39.721Z",
+  "generatedAt": "2026-10-26T13:32:42.886Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -108,7 +108,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.6.0"
+        "version": "0.6.1"
       }
     },
     {
@@ -186,8 +186,8 @@
       "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, and the Tailwind preset that maps them.",
       "version": "1.2.0",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/design-tokens#5c31f48743dabf9294bf9380a15862b4efbc68a0"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/design-tokens@^1.2.0"
       },
       "adopters": 13,
       "adopterNames": [
@@ -206,9 +206,8 @@
         "whenkit"
       ],
       "release": {
-        "source": "git",
-        "tag": "v1.2.0",
-        "commit": "5c31f48743dabf9294bf9380a15862b4efbc68a0"
+        "source": "npm",
+        "version": "1.2.0"
       }
     },
     {
@@ -218,8 +217,8 @@
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
       "version": "0.6.3",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#d9c311e54fe97442f367874cfaa0ef451ba0f2bd"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.6.3"
       },
       "adopters": 12,
       "adopterNames": [
@@ -237,9 +236,8 @@
         "surf-your-life"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.6.3",
-        "commit": "d9c311e54fe97442f367874cfaa0ef451ba0f2bd"
+        "source": "npm",
+        "version": "0.6.3"
       }
     },
     {
@@ -249,8 +247,8 @@
       "description": "Dates and times people can pick without typing: day chips, time chips, length chips, a readable date field over the native picker, and a low-friction booking request that resolves to {startsAt, endsAt} in the provider's zone.",
       "version": "0.3.2",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/whenkit#f5e0a24208187091c2ca792008cdd7695a19910f"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/whenkit@^0.3.2"
       },
       "adopters": 10,
       "adopterNames": [
@@ -266,9 +264,8 @@
         "surf-your-life"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.3.2",
-        "commit": "f5e0a24208187091c2ca792008cdd7695a19910f"
+        "source": "npm",
+        "version": "0.3.2"
       }
     },
     {
@@ -278,8 +275,8 @@
       "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
       "version": "0.2.1",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/listkit#cca70801aacbbf5310c976b0610ca469ba869e97"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/listkit@^0.2.1"
       },
       "adopters": 8,
       "adopterNames": [
@@ -293,9 +290,8 @@
         "substrata"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.2.1",
-        "commit": "cca70801aacbbf5310c976b0610ca469ba869e97"
+        "source": "npm",
+        "version": "0.2.1"
       }
     },
     {
@@ -305,8 +301,8 @@
       "description": "Search that finds what was meant: typo budgets by word length, prefix while typing, German spellings without umlauts, joined and split words, Algolia-order tie-break ranking, highlight ranges, query expansion for any database, and a generated typo regression suite. Zero dependencies; React optional.",
       "version": "0.2.2",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/searchkit#09532b1974c7cb92f38c98decaeed334f3ffea72"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/searchkit@^0.2.2"
       },
       "adopters": 8,
       "adopterNames": [
@@ -320,9 +316,8 @@
         "substrata"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.2.2",
-        "commit": "09532b1974c7cb92f38c98decaeed334f3ffea72"
+        "source": "npm",
+        "version": "0.2.2"
       }
     },
     {
@@ -402,8 +397,8 @@
       "description": "Versioned, on-demand geography resources and sourced boundary assertions for web applications.",
       "version": "0.1.1",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/geo-kit#fce36b959056799d500371181468844aed7ed513"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/geo-kit@^0.1.1"
       },
       "adopters": 3,
       "adopterNames": [
@@ -412,9 +407,8 @@
         "substrata"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.1.1",
-        "commit": "fce36b959056799d500371181468844aed7ed513"
+        "source": "npm",
+        "version": "0.1.1"
       }
     },
     {
@@ -424,17 +418,16 @@
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
       "version": "0.1.1",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/chartkit#55da9bdcee82eac9473d77a1316af322a6e3b20c"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.1.1"
       },
       "adopters": 1,
       "adopterNames": [
         "substrata"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.1.1",
-        "commit": "55da9bdcee82eac9473d77a1316af322a6e3b20c"
+        "source": "npm",
+        "version": "0.1.1"
       }
     },
     {
