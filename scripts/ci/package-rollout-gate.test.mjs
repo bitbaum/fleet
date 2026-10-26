@@ -8,11 +8,37 @@ import {
   nestedSharedUpdates,
   nestedSharedChange,
   dependencyIdentity,
+  hasConsumerSourceChanges,
   lockedNpmDependencies,
   canaryDeploymentEvidence,
 } from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
+test("only consumer behavior files require browser candidate proof", () => {
+  assert.equal(
+    hasConsumerSourceChanges([
+      { filename: "package.json" },
+      { filename: "pnpm-lock.yaml" },
+      { filename: "pnpm-workspace.yaml" },
+      { filename: "package-plan.json" },
+    ]),
+    false,
+  );
+  assert.equal(
+    hasConsumerSourceChanges([
+      { filename: "pnpm-workspace.yaml" },
+      { filename: "src/app/chat.tsx" },
+    ]),
+    true,
+  );
+  assert.equal(
+    hasConsumerSourceChanges(
+      [{ filename: "packages/ai/package.json" }, { filename: "apps/web/page.tsx" }],
+      "packages/ai",
+    ),
+    false,
+  );
+});
 test("aliases cannot escape first-party artifact checks", () => {
   assert.equal(dependencyIdentity("sitekit", "npm:@bitbaum/sitekit@^0.4.2"), name);
   assert.equal(dependencyIdentity("@fleet/ai-forms", "github:bitbaum/ai-forms#v0.1.3"), "ai-forms");

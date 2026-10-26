@@ -97,3 +97,39 @@ test("npm aliases satisfy canonical package declaration and import bindings", as
     [],
   );
 });
+
+test("adapter re-exports may prove package symbols at their rendered consumer", async () => {
+  const plan = {
+    blocks: {
+      dates: {
+        package: "@bitbaum/whenkit",
+        bindings: [
+          {
+            file: "components/ui/date-input.tsx",
+            symbols: ["DateInput"],
+            usageFiles: ["components/review/LeadDraft.tsx"],
+          },
+        ],
+      },
+    },
+  };
+  const sources = {
+    "components/ui/date-input.tsx":
+      "import '@bitbaum/whenkit/styles.css'; export { DateInput } from '@bitbaum/whenkit/react';",
+    "components/review/LeadDraft.tsx":
+      "import { DateInput } from '@/components/ui/date-input'; export const Draft = () => <DateInput />;",
+  };
+  const result = await auditCanaries(
+    {
+      packages: {
+        "@bitbaum/whenkit": { canary: "bitbaum/substrata", bootstrapPr: 253 },
+      },
+    },
+    async () => ({
+      manifest: { dependencies: { "@bitbaum/whenkit": "^0.3.2" } },
+      plan,
+      readSource: async (file) => sources[file] ?? null,
+    }),
+  );
+  assert.deepEqual(result, []);
+});
