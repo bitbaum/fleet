@@ -180,33 +180,37 @@ export async function assessRollout({
       !(
         known.has(name) ||
         name.startsWith("@bitbaum/") ||
-        settings.packages[name]
+        settings.packages?.[name]
       )
     )
       continue;
-    if (settings.blocked[name]?.includes(version)) {
+    if (settings.blocked?.[name]?.includes(version)) {
       findings.push(`${name}@${version}: release is blocked`);
       continue;
     }
-    const config = settings.packages[name];
+    const config = settings.packages?.[name];
     if (!config) {
       findings.push(
         `${name}: no designated canary; configure one before automatic promotion`,
       );
       continue;
     }
-    if (!requiredChecks.every((check) => candidateChecks.includes(check))) {
+    const candidateRequired = config.candidateChecks ?? requiredChecks;
+    if (!candidateRequired.every((check) => candidateChecks.includes(check))) {
       findings.push(
-        `${name}: consumer needs successful ${requiredChecks.join(" and ")} workflows on this commit`,
+        `${name}: consumer needs successful ${candidateRequired.join(" and ")} workflows on this commit`,
       );
       continue;
     }
     if (repo === config.canary) continue;
-    const canary = await readCanary(config.canary);
+    const canary = await readCanary(config.canary, config, name);
     if (
       !canary ||
       canary.dependencies[name] !== version ||
       !canary.healthy ||
+      !(config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"]).every((check) =>
+        canary.checks?.includes(check),
+      ) ||
       now - Date.parse(canary.deployedAt) < settings.soakHours * 3600000 ||
       !Number.isFinite(Date.parse(canary.deployedAt))
     ) {
@@ -283,6 +287,7 @@ export async function canaryDeploymentEvidence({
   dependencies,
   deploy,
   checks,
+  requiredChecks = ["ci.yml", "browser-smoke.yml"],
   receiptUrl,
   lock,
   fetchImpl = fetch,
@@ -322,8 +327,8 @@ export async function canaryDeploymentEvidence({
       receiptHealthy &&
       deploy?.conclusion === "success" &&
       deploy.head_sha === tip &&
-      checks.includes("ci.yml") &&
-      checks.includes("browser-smoke.yml"),
+      requiredChecks.every((check) => checks.includes(check)),
+    checks,
     deployedAt: deploy?.updated_at,
   };
 }
@@ -379,8 +384,10 @@ async function main() {
         after: afterTemplate,
         candidateChecks: greenWorkflows(repo, pr.head.sha),
         requiredChecks: ["ci.yml"],
-        readCanary: async (canary) => {
-          if (cache.has(canary)) return cache.get(canary);
+        readCanary: async (canary, config) => {
+          const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
+          const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+          if (cache.has(cacheKey)) return cache.get(cacheKey);
           const branch = api(`repos/${canary}`).default_branch;
           const tip = api(`repos/${canary}/commits/${branch}`).sha;
           const deploy = api(
@@ -393,12 +400,13 @@ async function main() {
             dependencies: depsAt(canary, tip),
             deploy,
             checks,
+            requiredChecks,
             receiptUrl: policy.deploymentReceipts?.[canary],
             lock:
               content(canary, "pnpm-lock.yaml", tip) ??
               content(canary, "package-lock.json", tip),
           });
-          cache.set(canary, result);
+          cache.set(cacheKey, result);
           return result;
         },
       });
@@ -449,8 +457,10 @@ async function main() {
     before,
     after,
     candidateChecks: greenWorkflows(repo, pr.head.sha),
-    readCanary: async (canary) => {
-      if (cache.has(canary)) return cache.get(canary);
+    readCanary: async (canary, config) => {
+      const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
+      const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+      if (cache.has(cacheKey)) return cache.get(cacheKey);
       const branch = api(`repos/${canary}`).default_branch;
       const tip = api(`repos/${canary}/commits/${branch}`).sha;
       const deploy = api(
@@ -463,12 +473,13 @@ async function main() {
         dependencies: depsAt(canary, tip),
         deploy,
         checks,
+        requiredChecks,
         receiptUrl: policy.deploymentReceipts?.[canary],
         lock:
           content(canary, "pnpm-lock.yaml", tip) ??
           content(canary, "package-lock.json", tip),
       });
-      cache.set(canary, result);
+      cache.set(cacheKey, result);
       return result;
     },
   });
