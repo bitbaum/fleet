@@ -1,80 +1,216 @@
 {
   "soakHours": 24,
   "packages": {
-    "@bitbaum/sitekit": {
-      "canary": "bitbaum/biaslens",
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "candidateDependencyChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
-    },
     "@bitbaum/accountkit": {
       "canary": "bitbaum/biaslens",
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "candidateDependencyChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
-    },
-    "@bitbaum/design-tokens": {
-      "canary": "bitbaum/biaslens",
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "candidateDependencyChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
-    },
-    "bip-kit": {
-      "canary": "bitbaum/kivvi",
-      "canaryImporter": "apps/web",
-      "receiptProject": "apps/web",
-      "bootstrapPr": 141,
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
     },
     "@bitbaum/ai-kit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "packages/ai",
       "receiptProject": "apps/web",
       "bootstrapPr": 141,
-      "candidateChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
     },
-    "@bitbaum/mail-kit": {
-      "canary": "bitbaum/kivvi",
-      "canaryImporter": "apps/web",
-      "receiptProject": "apps/web",
-      "bootstrapPr": 141,
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
-    },
-    "limitkit": {
-      "canary": "bitbaum/kivvi",
-      "canaryImporter": "apps/web",
-      "receiptProject": "apps/web",
-      "bootstrapPr": 141,
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+    "@bitbaum/chartkit": {
+      "canary": "bitbaum/substrata",
+      "bootstrapPr": 252,
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
     },
     "@bitbaum/chatkit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
       "bootstrapPr": 141,
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "candidateDependencyChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
     },
-    "@bitbaum/chartkit": {
+    "@bitbaum/design-tokens": {
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
+    },
+    "@bitbaum/geo-kit": {
       "canary": "bitbaum/substrata",
-      "bootstrapPr": 252,
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "candidateDependencyChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+      "bootstrapPr": 254,
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
+    },
+    "@bitbaum/listkit": {
+      "canary": "bitbaum/substrata",
+      "bootstrapPr": 254,
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
+    },
+    "@bitbaum/mail-kit": {
+      "canary": "bitbaum/kivvi",
+      "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
+      "bootstrapPr": 141,
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
+    },
+    "@bitbaum/searchkit": {
+      "canary": "bitbaum/substrata",
+      "bootstrapPr": 254,
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
+    },
+    "@bitbaum/sitekit": {
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
+    },
+    "@bitbaum/whenkit": {
+      "canary": "bitbaum/substrata",
+      "bootstrapPr": 254,
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
     },
     "ai-forms": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
       "bootstrapPr": 141,
-      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
-      "candidateDependencyChecks": ["ci.yml"],
-      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
+    },
+    "bip-kit": {
+      "canary": "bitbaum/kivvi",
+      "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
+      "bootstrapPr": 141,
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
+    },
+    "limitkit": {
+      "canary": "bitbaum/kivvi",
+      "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
+      "bootstrapPr": 141,
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ]
+    },
+    "threadkit": {
+      "canary": "bitbaum/substrata",
+      "bootstrapPr": 254,
+      "candidateChecks": [
+        "ci.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml"
+      ]
     }
   },
   "blocked": {
