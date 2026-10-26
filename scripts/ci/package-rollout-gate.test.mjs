@@ -137,6 +137,31 @@ test("package policy may require only checks meaningful to its surface", async (
   assert.match((await finding([], ["ci.yml"]))[0], /consumer needs successful ci.yml/);
   assert.match((await finding(["ci.yml"], []))[0], /pass CI\/browser checks/);
 });
+test("a workspace canary is the package-specific bootstrap for its importer", async () => {
+  const workspacePolicy = {
+    soakHours: 24,
+    packages: {
+      "ai-forms": {
+        canary: "bitbaum/kivvi",
+        canaryImporter: "apps/web",
+        bootstrapPr: 141,
+        candidateChecks: ["ci.yml", "browser-smoke.yml"],
+      },
+    },
+  };
+  const findings = await assessRollout({
+    repo: "bitbaum/kivvi",
+    before: { "ai-forms": "0.1.2" },
+    after: { "ai-forms": "0.1.3" },
+    candidateChecks: ["ci.yml", "browser-smoke.yml"],
+    settings: workspacePolicy,
+    now,
+    readCanary: async () => {
+      assert.fail("the configured bootstrap canary must not require its own soak");
+    },
+  });
+  assert.deepEqual(findings, []);
+});
 test("blocked version cannot even reach canary", async () =>
   assert.ok(
     (
