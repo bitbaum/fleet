@@ -78,7 +78,7 @@
     },
     "@bitbaum/geo-kit": {
       "canary": "bitbaum/substrata",
-      "bootstrapPr": 253,
+      "bootstrapPr": 255,
       "candidateChecks": [
         "ci.yml"
       ],
@@ -129,7 +129,7 @@
     },
     "@bitbaum/searchkit": {
       "canary": "bitbaum/substrata",
-      "bootstrapPr": 253,
+      "bootstrapPr": 255,
       "candidateChecks": [
         "ci.yml"
       ],
