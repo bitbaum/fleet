@@ -386,6 +386,7 @@ test("workspace receipts may cover a broader release project than the package im
     lockSha256: createHash("sha256").update(lock).digest("hex"),
     artifacts: receiptDependencies,
     versions: receiptDependencies,
+    projects: ["apps/web", "packages/ai"],
   };
   const result = await canaryDeploymentEvidence({
     canary: "bitbaum/kivvi",
@@ -393,6 +394,7 @@ test("workspace receipts may cover a broader release project than the package im
     dependencies,
     receiptDependencies,
     receiptProject: "apps/web",
+    receiptProjects: ["apps/web", "packages/ai"],
     deploy: { conclusion: "success", head_sha: tip, updated_at: receipt.createdAt },
     checks: ["ci.yml", "browser-smoke.yml"],
     receiptUrl: "https://example.test/.well-known/fleet-release.json",

@@ -379,9 +379,11 @@ function canaryDepsAt(repo, ref, config) {
   return workspaceDepsAt(repo, ref, importer);
 }
 function receiptDepsAt(repo, ref, config) {
-  return config.receiptProject
-    ? workspaceDepsAt(repo, ref, config.receiptProject)
-    : canaryDepsAt(repo, ref, config);
+  const projects = config.receiptProjects ?? (config.receiptProject ? [config.receiptProject] : null);
+  if (!projects) return canaryDepsAt(repo, ref, config);
+  if (!Array.isArray(projects) || projects.length === 0)
+    throw new Error(`${repo}: invalid receipt projects`);
+  return Object.assign({}, ...projects.map((project) => workspaceDepsAt(repo, ref, project)));
 }
 export function successfulWorkflows(runs) {
   const seen = new Set(),
@@ -412,6 +414,7 @@ export async function canaryDeploymentEvidence({
   requiredChecks = ["ci.yml", "browser-smoke.yml"],
   receiptUrl,
   receiptProject = ".",
+  receiptProjects,
   receiptDependencies = dependencies,
   lock,
   fetchImpl = fetch,
@@ -440,6 +443,7 @@ export async function canaryDeploymentEvidence({
       ),
       lockSha256: createHash("sha256").update(lock).digest("hex"),
       project: receiptProject,
+      projects: receiptProjects,
     });
     if (!receiptHealthy)
       console.error(
@@ -527,6 +531,7 @@ async function main() {
             dependencies: canaryDepsAt(canary, tip, config),
             receiptDependencies: receiptDepsAt(canary, tip, config),
             receiptProject: config.receiptProject ?? ".",
+            receiptProjects: config.receiptProjects,
             deploy,
             checks,
             requiredChecks,
@@ -631,6 +636,7 @@ async function main() {
           dependencies: canaryDepsAt(canary, tip, config),
           receiptDependencies: receiptDepsAt(canary, tip, config),
           receiptProject: config.receiptProject ?? ".",
+          receiptProjects: config.receiptProjects,
           deploy,
           checks,
           requiredChecks,
@@ -681,6 +687,7 @@ async function main() {
           dependencies: canaryDepsAt(canary, tip, config),
           receiptDependencies: receiptDepsAt(canary, tip, config),
           receiptProject: config.receiptProject ?? ".",
+          receiptProjects: config.receiptProjects,
           deploy,
           checks,
           requiredChecks,
@@ -730,6 +737,7 @@ async function main() {
         dependencies: canaryDepsAt(canary, tip, config),
         receiptDependencies: receiptDepsAt(canary, tip, config),
         receiptProject: config.receiptProject ?? ".",
+        receiptProjects: config.receiptProjects,
         deploy,
         checks,
         requiredChecks,

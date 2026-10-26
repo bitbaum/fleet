@@ -13,7 +13,7 @@ export const isImmutableArtifact = (value) =>
 /** Expected artifacts are the caller's complete canonical first-party map. */
 export function receiptMatches(
   receipt,
-  { repo, commit, artifacts, lockSha256, project = "." },
+  { repo, commit, artifacts, lockSha256, project = ".", projects },
 ) {
   if (
     receipt?.formatVersion !== 1 ||
@@ -28,6 +28,7 @@ export function receiptMatches(
   )
     return false;
   if (lockSha256 && receipt.lockSha256 !== lockSha256) return false;
+  if (projects && JSON.stringify(receipt.projects) !== JSON.stringify(projects)) return false;
   const actual = Object.entries(receipt.artifacts ?? {}).sort();
   if (
     actual.some(
