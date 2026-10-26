@@ -132,3 +132,11 @@ stale or malformed live evidence holds promotion. An unconfigured receipt URL
 does not claim deployed-artifact verification; deployment integration and live
 validation are separate prerequisites to enabling it. Existing nested-consumer
 holds remain in place until importer-specific rollout policies are configured.
+
+## Obsolete AccountKit downgrade proposals
+
+Dependabot proposed replacing deployed AccountKit 0.6.3 with 0.2.1 in Heidi
+#218 and Solon #304. That artifact lacks the current account runtime and recovery
+exports. Both proposals were closed; the obsolete commit and npm version are
+blocked centrally, including at the canary. This does not prohibit an intentional
+recovery to a compatible, separately verified release through the existing policy.

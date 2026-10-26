@@ -19,7 +19,10 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "packages/ai",
       "receiptProject": "apps/web",
-      "receiptProjects": ["apps/web", "packages/ai"],
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml"
@@ -48,7 +51,10 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
-      "receiptProjects": ["apps/web", "packages/ai"],
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -106,7 +112,10 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
-      "receiptProjects": ["apps/web", "packages/ai"],
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -171,7 +180,10 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
-      "receiptProjects": ["apps/web", "packages/ai"],
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -189,7 +201,10 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
-      "receiptProjects": ["apps/web", "packages/ai"],
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -204,7 +219,10 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
-      "receiptProjects": ["apps/web", "packages/ai"],
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -244,7 +262,10 @@
   "blocked": {
     "@bitbaum/accountkit": [
       "https://codeload.github.com/bitbaum/accountkit/tar.gz/9c8d93ade6945615b5204d8eaad5c717078b7e17",
-      "git+https://github.com/bitbaum/accountkit.git#9c8d93ade6945615b5204d8eaad5c717078b7e17"
+      "git+https://github.com/bitbaum/accountkit.git#9c8d93ade6945615b5204d8eaad5c717078b7e17",
+      "https://codeload.github.com/bitbaum/accountkit/tar.gz/ec5654270527757aa0e762f09b5aaabf272389a2",
+      "git+https://github.com/bitbaum/accountkit.git#ec5654270527757aa0e762f09b5aaabf272389a2",
+      "0.2.1"
     ]
   },
   "deploymentReceipts": {
