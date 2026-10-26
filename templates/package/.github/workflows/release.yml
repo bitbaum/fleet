@@ -124,6 +124,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Install Chromium when the package uses Playwright
+        run: |
+          if node -e 'const p = require("./package.json"); const d = { ...p.dependencies, ...p.devDependencies }; process.exit(d.playwright || d["@playwright/test"] ? 0 : 1)'; then
+            pnpm exec playwright install --with-deps chromium
+          fi
+
       # Inputs reach the shell as environment variables, never pasted into the
       # script: a `version` is free text typed by whoever started the run.
       - name: Decide the version
