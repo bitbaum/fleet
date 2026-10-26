@@ -46,6 +46,12 @@
       "bootstrapPr": 252,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+    },
+    "ai-forms": {
+      "canary": "bitbaum/kivvi",
+      "bootstrapPr": 141,
+      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     }
   },
   "blocked": {

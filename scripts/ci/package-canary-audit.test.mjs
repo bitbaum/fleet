@@ -72,3 +72,28 @@ test("bootstrap PR identity is forwarded to canary evidence", async () => {
   assert.deepEqual(findings, []);
   assert.deepEqual(args, ["bitbaum/substrata", 252]);
 });
+
+test("npm aliases satisfy canonical package declaration and import bindings", async () => {
+  const aliasPolicy = {
+    packages: { "ai-forms": { canary: "bitbaum/kivvi", bootstrapPr: 141 } },
+  };
+  const aliasEvidence = {
+    manifest: {
+      dependencies: { "@fleet/ai-forms": "npm:ai-forms@^0.1.3" },
+    },
+    plan: {
+      blocks: {
+        forms: {
+          package: "ai-forms",
+          bindings: [{ file: "form.tsx", symbols: ["useAiForm"] }],
+        },
+      },
+    },
+    readSource: async () =>
+      "import { useAiForm } from '@fleet/ai-forms/react'; const form = useAiForm();",
+  };
+  assert.deepEqual(
+    await auditCanaries(aliasPolicy, async () => aliasEvidence),
+    [],
+  );
+});

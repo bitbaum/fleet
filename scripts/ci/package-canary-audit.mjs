@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { dependencyIdentity } from "./package-rollout-gate.mjs";
 
 /** A configured canary must actually execute the package it is meant to exercise. */
 export async function auditCanaries(settings, readEvidence) {
@@ -18,29 +19,52 @@ export async function auditCanaries(settings, readEvidence) {
       findings.push(`${name}: canary evidence unavailable for ${entry.canary}`);
       continue;
     }
-    const { manifest, plan, readSource } = evidence;
-    const dependencies = {
-      ...manifest?.dependencies,
-      ...manifest?.devDependencies,
-    };
-    if (!dependencies[name]) {
-      findings.push(`${name}: ${entry.canary} does not declare this package`);
-      continue;
-    }
+    const { manifest, plan, readSource, manifestForSource } = evidence;
     const blocks = Object.values(plan?.blocks ?? {}).filter(
       (block) => block.package === name && !block.exception,
     );
+    const manifestDependencies = {
+      ...manifest?.dependencies,
+      ...manifest?.devDependencies,
+      ...manifest?.optionalDependencies,
+    };
+    const declaredAtRoot = Object.entries(manifestDependencies).some(
+      ([dependency, spec]) => dependencyIdentity(dependency, spec) === name,
+    );
+    if (declaredAtRoot && !blocks.length) {
+      findings.push(`${name}: ${entry.canary} has no declared runtime binding`);
+      continue;
+    }
+    if (!declaredAtRoot && (!manifestForSource || !blocks.length)) {
+      findings.push(`${name}: ${entry.canary} does not declare this package`);
+      continue;
+    }
+    let declared = false;
     let bound = false;
     for (const block of blocks) {
       for (const binding of block.bindings ?? []) {
+        const bindingManifest = (await manifestForSource?.(binding.file)) ?? manifest;
+        const dependencies = {
+          ...bindingManifest?.dependencies,
+          ...bindingManifest?.devDependencies,
+          ...bindingManifest?.optionalDependencies,
+        };
+        const installedNames = Object.entries(dependencies)
+          .filter(
+            ([dependency, spec]) => dependencyIdentity(dependency, spec) === name,
+          )
+          .map(([dependency]) => dependency);
+        if (!installedNames.length) continue;
+        declared = true;
         const source = await readSource(binding.file);
         // A comment naming a package is not an import. Test actual import syntax.
-        const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (
-          !new RegExp(
+        const importedNames = [name, ...installedNames].some((dependency) => {
+          const escaped = dependency.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          return new RegExp(
             `(?:from\\s*|import\\s*)['"]${escaped}(?:/[^'"]*)?['"]`,
-          ).test(source ?? "")
-        )
+          ).test(source ?? "");
+        });
+        if (!importedNames)
           continue;
         if (binding.symbols?.length) {
           bound ||= binding.symbols.some((symbol) => {
@@ -49,6 +73,10 @@ export async function auditCanaries(settings, readEvidence) {
           });
         } else if (/design-tokens$/.test(name)) bound = true;
       }
+    }
+    if (!declared) {
+      findings.push(`${name}: ${entry.canary} does not declare this package`);
+      continue;
     }
     if (!bound)
       findings.push(`${name}: ${entry.canary} has no declared runtime binding`);
@@ -79,6 +107,15 @@ if (
     );
     return Buffer.from(value.content, "base64").toString();
   };
+  const tree = (repo, ref) => {
+    const value = api(`repos/${repo}/git/trees/${ref}?recursive=1`);
+    if (value.truncated) throw new Error(`${repo}@${ref} tree is truncated`);
+    return new Set(
+      (value.tree ?? [])
+        .filter((item) => item.type === "blob" && /(^|\/)package\.json$/.test(item.path))
+        .map((item) => item.path),
+    );
+  };
   const findings = await auditCanaries(settings, async (repo, bootstrapPr) => {
     let ref = api(`repos/${repo}/commits/HEAD`).sha;
     if (bootstrapPr != null) {
@@ -98,9 +135,26 @@ if (
     }
     const cacheKey = `${repo}@${ref}`;
     if (!cache.has(cacheKey)) {
+      const manifestPaths = tree(repo, ref);
+      const manifestCache = new Map();
+      const readManifest = (path) => {
+        if (!manifestPaths.has(path)) return null;
+        if (!manifestCache.has(path)) manifestCache.set(path, JSON.parse(file(repo, path, ref)));
+        return manifestCache.get(path);
+      };
       cache.set(cacheKey, {
-        manifest: JSON.parse(file(repo, "package.json", ref)),
+        manifest: readManifest("package.json"),
         plan: JSON.parse(file(repo, "package-plan.json", ref)),
+        manifestForSource: async (sourcePath) => {
+          if (!sourcePath || sourcePath.startsWith("/") || sourcePath.split("/").includes("..")) return null;
+          const parts = sourcePath.split("/");
+          for (let i = parts.length - 1; i >= 0; i--) {
+            const candidate = [...parts.slice(0, i), "package.json"].join("/");
+            const value = readManifest(candidate);
+            if (value) return value;
+          }
+          return readManifest("package.json");
+        },
         readSource: async (path) => {
           if (!path || path.startsWith("/") || path.split("/").includes(".."))
             return null;

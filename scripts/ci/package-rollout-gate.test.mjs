@@ -8,6 +8,8 @@ import {
   nestedSharedUpdates,
   nestedSharedChange,
   dependencyIdentity,
+  lockedNpmDependencies,
+  canaryDeploymentEvidence,
 } from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
@@ -191,6 +193,77 @@ test("nested shared importer changes cannot disappear behind unchanged root depe
     nestedSharedArtifacts(lock("0.4.0")),
     nestedSharedArtifacts(lock("0.4.1")),
   );
+});
+
+test("nested workspace importer locks resolve aliases to canonical package artifacts", () => {
+  const importer = "apps/web";
+  const manifest = {
+    dependencies: {
+      "@fleet/ai-forms": "npm:ai-forms@^0.1.3",
+      "@bitbaum/chatkit": "^0.15.3",
+    },
+  };
+  const lock = `importers:\n  .:\n    dependencies:\n  apps/web:\n    dependencies:\n      '@fleet/ai-forms':\n        specifier: npm:ai-forms@^0.1.3\n        version: ai-forms@0.1.3(react@18)\n      '@bitbaum/chatkit':\n        specifier: ^0.15.3\n        version: 0.15.3(react@18)\n\npackages:\n`;
+  assert.deepEqual(lockedDependencies(manifest, lock, importer), {
+    "ai-forms": "0.1.3",
+    "@bitbaum/chatkit": "0.15.3",
+  });
+  assert.throws(
+    () => lockedDependencies(manifest, lock, "apps/missing"),
+    /Missing locked artifact/,
+  );
+  const npmLock = {
+    lockfileVersion: 3,
+    packages: {
+      "apps/web/node_modules/@fleet/ai-forms": { version: "0.1.3" },
+      "apps/web/node_modules/@bitbaum/chatkit": { version: "0.15.3" },
+    },
+  };
+  assert.deepEqual(lockedNpmDependencies(manifest, npmLock, importer), {
+    "ai-forms": "0.1.3",
+    "@bitbaum/chatkit": "0.15.3",
+  });
+});
+
+test("canary deployment evidence binds checks, receipt, and lock to the exact SHA", async () => {
+  const tip = "a".repeat(40);
+  const lock = "lock bytes";
+  const dependencies = { [name]: "0.4.1" };
+  const receipt = {
+    formatVersion: 1,
+    repo: "bitbaum/biaslens",
+    commit: tip,
+    project: ".",
+    createdAt: "2026-10-24T11:00:00.000Z",
+    lockSha256: "unused in mock",
+    artifacts: dependencies,
+    versions: dependencies,
+  };
+  const result = await canaryDeploymentEvidence({
+    canary: "bitbaum/biaslens",
+    tip,
+    dependencies,
+    deploy: { conclusion: "success", head_sha: tip, updated_at: receipt.createdAt },
+    checks: ["ci.yml", "browser-smoke.yml"],
+    receiptUrl: "https://example.test/.well-known/fleet-release.json",
+    lock,
+    fetchImpl: async (url) => {
+      assert.equal(new URL(url).searchParams.get("commit"), tip);
+      const { createHash } = await import("node:crypto");
+      receipt.lockSha256 = createHash("sha256").update(lock).digest("hex");
+      return new Response(JSON.stringify(receipt), { status: 200 });
+    },
+  });
+  assert.equal(result.healthy, true);
+  assert.equal(result.dependencies[name], "0.4.1");
+  const wrongCommit = await canaryDeploymentEvidence({
+    canary: "bitbaum/biaslens",
+    tip,
+    dependencies,
+    deploy: { conclusion: "success", head_sha: "b".repeat(40), updated_at: receipt.createdAt },
+    checks: ["ci.yml", "browser-smoke.yml"],
+  });
+  assert.equal(wrongCommit.healthy, false);
 });
 
 test("retired nested workspace importers are safe while nested package updates stay held", () => {
