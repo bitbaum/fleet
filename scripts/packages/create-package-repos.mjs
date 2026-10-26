@@ -105,6 +105,8 @@ function repoExists(name) {
  * Loki — so both scripts refuse to run from such a template.
  */
 export const REQUIRED_TEMPLATE_FILES = [
+  'AGENTS.md',
+  'CLAUDE.md',
   '.github/dependabot.yml',
   '.github/workflows/auto-merge.yml',
   '.github/workflows/ci.yml',
