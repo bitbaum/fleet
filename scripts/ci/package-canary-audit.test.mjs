@@ -158,3 +158,14 @@ test("adapter re-exports may prove package symbols at their rendered consumer", 
   );
   assert.deepEqual(result, []);
 });
+
+test("additional integration classes cannot hide missing runtime bindings", async () => {
+  const seen=[];
+  const settings={packages:{"@bitbaum/chatkit":{canary:"bitbaum/primary",additionalCanaries:[{canary:"bitbaum/embedded",bootstrapPr:55}]}}};
+  const findings=await auditCanaries(settings,async(repo,pr)=>{
+    seen.push([repo,pr]);
+    return {manifest:{dependencies:{"@bitbaum/chatkit":"^0.15.4"}},plan:{blocks:{}},readSource:async()=>""};
+  });
+  assert.deepEqual(seen,[["bitbaum/primary",null],["bitbaum/embedded",55]]);
+  assert.equal(findings.length,2);assert.ok(findings.some(f=>f.includes("embedded")));
+});

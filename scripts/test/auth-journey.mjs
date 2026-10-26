@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { checkAuthIntegration } from "./auth-integration.mjs";
 import { authChromium } from "./auth-browser.mjs";
 import { exerciseAuthMethod } from "./auth-methods.mjs";
 import { createServer } from "node:http";
@@ -146,6 +147,22 @@ try {
     consumerRequire.resolve("@bitbaum/accountkit/auth")
   );
   const labels = authLabelsFor(signIn.split("/").filter(Boolean)[0]);
+  if (scenario === "recovery" && process.env.AUTH_TEST_INTEGRATION_CHECK) {
+    browser = await authChromium(consumerRequire).launch({
+      ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}),
+      args: ["--no-sandbox"],
+    });
+    try {
+      const context = await browser.newContext();
+      await context.addCookies([...cookies].map(([name, value]) => ({ name, value, url: base, httpOnly: true })));
+      const page = await context.newPage();
+      await checkAuthIntegration(process.env.AUTH_TEST_INTEGRATION_CHECK, { page, base, userId: signedIn.user.id });
+    } finally {
+      await browser.close();
+      browser = null;
+    }
+  }
+
   if (scenario !== "recovery") {
     const chromium = authChromium(consumerRequire);
     browser = await chromium.launch({

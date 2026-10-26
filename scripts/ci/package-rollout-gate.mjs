@@ -213,40 +213,45 @@ export async function assessRollout({
       );
       continue;
     }
+    const canaries = [config, ...(config.additionalCanaries ?? [])];
+    const candidateConfig = canaries.find((entry) => entry.canary === repo) ?? config;
     const candidateRequired = candidateSourceChanged
-      ? (config.candidateChecks ?? requiredChecks)
-      : (config.candidateDependencyChecks ?? config.candidateChecks ?? requiredChecks);
+      ? (candidateConfig.candidateChecks ?? requiredChecks)
+      : (candidateConfig.candidateDependencyChecks ?? candidateConfig.candidateChecks ?? requiredChecks);
     if (!candidateRequired.every((check) => candidateChecks.includes(check))) {
       findings.push(
         `${name}: consumer needs successful ${candidateRequired.join(" and ")} workflows on this commit`,
       );
       continue;
     }
-    if (repo === config.canary) {
+    if (canaries.some((entry) => entry.canary === repo)) {
       if (
         Number.isInteger(candidatePullRequest) &&
-        config.bootstrapPr === candidatePullRequest
+        candidateConfig.bootstrapPr === candidatePullRequest
       )
         continue;
       findings.push(
-        `${name}: canary consumer must use its configured bootstrap PR${config.bootstrapPr ? ` #${config.bootstrapPr}` : ""}`,
+        `${name}: canary consumer must use its configured bootstrap PR${candidateConfig.bootstrapPr ? ` #${candidateConfig.bootstrapPr}` : ""}`,
       );
       continue;
     }
-    const canary = await readCanary(config.canary, config, name);
-    if (
-      !canary ||
-      canary.dependencies[name] !== version ||
-      !canary.healthy ||
-      !(config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"]).every((check) =>
-        canary.checks?.includes(check),
-      ) ||
-      now - Date.parse(canary.deployedAt) < settings.soakHours * 3600000 ||
-      !Number.isFinite(Date.parse(canary.deployedAt))
-    ) {
-      findings.push(
-        `${name}@${version}: wait for ${config.canary} to deploy this artifact, pass CI/browser checks and soak for ${settings.soakHours}h`,
-      );
+    // Every integration class must qualify before downstream promotion.
+    for (const representative of canaries) {
+      const canary = await readCanary(representative.canary, representative, name);
+      if (
+        !canary ||
+        canary.dependencies[name] !== version ||
+        !canary.healthy ||
+        !(representative.canaryChecks ?? ["ci.yml", "browser-smoke.yml"]).every((check) =>
+          canary.checks?.includes(check),
+        ) ||
+        now - Date.parse(canary.deployedAt) < settings.soakHours * 3600000 ||
+        !Number.isFinite(Date.parse(canary.deployedAt))
+      ) {
+        findings.push(
+          `${name}@${version}: wait for ${representative.canary} to deploy this artifact, pass CI/browser checks and soak for ${settings.soakHours}h`,
+        );
+      }
     }
   }
   return findings;

@@ -152,3 +152,21 @@ currency planning and the serialized shared inventory refresh, which dispatches
 Bitbaum with the exact changed registry commit. Scheduled reconciliation remains
 the fallback when a publisher notification fails. Template synchronization adds
 this missing workflow to existing packages through their normal checked PRs.
+
+## Different integration classes
+
+A package policy may add `additionalCanaries`, each with its own `canary`,
+`bootstrapPr`, checks and receipt/importer configuration. Each designated PR
+can enter its own canary after its exact candidate checks. Every representative
+must deploy the same artifact, pass its configured checks and complete the full
+observation period before an ordinary consumer can promote. Adding an embedded
+page representative therefore supplements, rather than replaces, a workspace
+representative. The canary binding audit inspects each representative.
+
+The reusable account lifecycle accepts `integration-check-script`, an optional
+product-owned `.mjs` exporting `run({page, base, userId})`. It runs once after
+verification of a synthetic account on the local production build; all existing
+account lifecycle assertions still run. The check receives an authenticated
+browser, not customer credentials. Missing/invalid scripts and failed assertions
+fail the workflow. Product tests may intercept model routes with synthetic data
+while exercising their actual page, components, styles and scrolling layout.
