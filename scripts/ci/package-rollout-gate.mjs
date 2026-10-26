@@ -133,6 +133,17 @@ export function nestedSharedArtifacts(lock) {
     JSON.stringify(a).localeCompare(JSON.stringify(b)),
   );
 }
+export function nestedSharedUpdates(beforeLock, afterLock) {
+  const before = new Map(
+    nestedSharedArtifacts(beforeLock).map(([importer, name, version]) => [
+      `${importer}\0${name}`,
+      version,
+    ]),
+  );
+  return nestedSharedArtifacts(afterLock).filter(
+    ([importer, name, version]) => before.get(`${importer}\0${name}`) !== version,
+  );
+}
 export function nestedSharedChange(files, readManifest) {
   const sharedSpecs = (manifest) =>
     Object.fromEntries(
@@ -154,9 +165,14 @@ export function nestedSharedChange(files, readManifest) {
     const path = isManifest
       ? filename
       : filename.slice(0, filename.lastIndexOf("/")) + "/package.json";
-    const before = sharedSpecs(readManifest(path, "base")),
-      after = sharedSpecs(readManifest(path, "head"));
-    if (isLock && (Object.keys(before).length || Object.keys(after).length))
+    const beforeManifest = readManifest(path, "base");
+    const afterManifest = readManifest(path, "head");
+    // A deleted workspace package is retired, not a nested consumer whose
+    // shared dependency update needs importer-specific rollout evidence.
+    if (!afterManifest) continue;
+    const before = sharedSpecs(beforeManifest),
+      after = sharedSpecs(afterManifest);
+    if (isLock && Object.keys(after).length)
       return true;
     if (isManifest && JSON.stringify(before) !== JSON.stringify(after))
       return true;
@@ -436,12 +452,9 @@ async function main() {
   // Workspace artifacts cannot silently escape the root-consumer gate.
   const baseLock = content(repo, "pnpm-lock.yaml", pr.base.sha) ?? "";
   const headLock = content(repo, "pnpm-lock.yaml", pr.head.sha) ?? "";
-  if (
-    JSON.stringify(nestedSharedArtifacts(baseLock)) !==
-    JSON.stringify(nestedSharedArtifacts(headLock))
-  )
+  if (nestedSharedUpdates(baseLock, headLock).length)
     throw new Error(
-      "Nested workspace shared artifacts changed: automatic promotion is held until workspace-specific canary evidence is supported",
+      "Nested workspace shared artifacts were added or changed: automatic promotion is held until workspace-specific canary evidence is supported",
     );
   const before = depsAt(repo, pr.base.sha),
     after = depsAt(repo, pr.head.sha);

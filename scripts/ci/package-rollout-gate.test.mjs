@@ -5,6 +5,7 @@ import {
   assessRollout,
   successfulWorkflows,
   nestedSharedArtifacts,
+  nestedSharedUpdates,
   nestedSharedChange,
   dependencyIdentity,
 } from "./package-rollout-gate.mjs";
@@ -192,6 +193,19 @@ test("nested shared importer changes cannot disappear behind unchanged root depe
   );
 });
 
+test("retired nested workspace importers are safe while nested package updates stay held", () => {
+  const lock = (version) =>
+    `importers:\n  .:\n    dependencies:\n  packages/chartkit:\n    devDependencies:\n      '@bitbaum/design-tokens':\n        specifier: ^1.1.0\n        version: ${version}\n\npackages:\n`;
+  const before = lock("1.1.0");
+  assert.deepEqual(nestedSharedUpdates(before, "importers:\n  .:\n\npackages:\n"), []);
+  assert.deepEqual(nestedSharedUpdates(before, lock("1.2.0")), [
+    ["packages/chartkit", "@bitbaum/design-tokens", "1.2.0"],
+  ]);
+  assert.deepEqual(nestedSharedUpdates("importers:\n  .:\n\npackages:\n", lock("1.1.0")), [
+    ["packages/chartkit", "@bitbaum/design-tokens", "1.1.0"],
+  ]);
+});
+
 test("standalone nested manifests and locks cannot bypass the root gate", () => {
   const manifest = { dependencies: { [name]: "^0.4.0" } };
   assert.equal(
@@ -213,6 +227,13 @@ test("standalone nested manifests and locks cannot bypass the root gate", () => 
   );
   assert.equal(
     nestedSharedChange([{ filename: "frontend/page.tsx" }], () => manifest),
+    false,
+  );
+  assert.equal(
+    nestedSharedChange(
+      [{ filename: "packages/retired-kit/package.json" }],
+      (_, side) => (side === "base" ? manifest : null),
+    ),
     false,
   );
 });
