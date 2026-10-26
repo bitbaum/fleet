@@ -14,5 +14,9 @@
   "design": {
     "package": "@bitbaum/design-tokens",
     "description": "Shared theme roles, typography, fonts and composition"
+  },
+  "chat": {
+    "package": "@bitbaum/chatkit",
+    "description": "Accessible shared chat composer, thread, messages and suggestions"
   }
 }

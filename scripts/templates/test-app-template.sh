@@ -151,6 +151,8 @@ fi
 grep -q 'createAuthRuntime' "$APP/lib/auth/server.ts" && grep -q '@bitbaum/accountkit/auth/next' "$APP/lib/auth/server.ts" \
   && ok "accountkit owns role input, explicit linking, OIDC and authentication limits" || bad "authentication runtime is duplicated locally"
 grep -q '@bitbaum/accountkit/auth/schema' "$APP/lib/db/schema.ts" && ok "account tables use the shared schema" || bad "account schema is duplicated"
+grep -q '@bitbaum/chatkit/react' "$APP/components/chat/SharedChat.tsx" && grep -q '"@bitbaum/chatkit"' "$APP/package.json" \
+  && ok "chat behavior and presentation use chatkit" || bad "chat behavior is duplicated or package is absent"
 grep -q 'localePrefix: "always"' "$APP/i18n/routing.ts" && ok 'next-intl localePrefix: "always"' || bad "localePrefix is not always"
 if grep -q 'ß' "$APP/messages/de.json"; then bad "German messages contain ß (Swiss spelling: ss)"; else ok "German is spelled the Swiss way"; fi
 

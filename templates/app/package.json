@@ -37,7 +37,8 @@
     "react-dom": "19.3.0",
     "zod": "^4.6.6",
     "@bitbaum/sitekit": "^0.4.2",
-    "@bitbaum/accountkit": "github:bitbaum/accountkit#d9c311e54fe97442f367874cfaa0ef451ba0f2bd"
+    "@bitbaum/accountkit": "github:bitbaum/accountkit#d9c311e54fe97442f367874cfaa0ef451ba0f2bd",
+    "@bitbaum/chatkit": "^0.15.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
