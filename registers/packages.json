@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T05:20:13.982Z",
+  "generatedAt": "2026-10-26T05:50:45.259Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -121,7 +121,7 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/chatkit@^0.15.3"
       },
-      "adopters": 16,
+      "adopters": 17,
       "adopterNames": [
         "aoz-begleitung",
         "biaslens",
@@ -130,6 +130,7 @@
         "causius",
         "diplodoctor",
         "evig",
+        "fleet",
         "heidi",
         "kivvi",
         "loki",
