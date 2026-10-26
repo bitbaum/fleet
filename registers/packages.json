@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:04:31.148Z",
+  "generatedAt": "2026-10-26T21:58:48.571Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -116,10 +116,10 @@
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
       "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.15.3",
+      "version": "0.17.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.15.3"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chatkit#15065e9fbb541cf69bbae4376e8045647907e05c"
       },
       "adopters": 17,
       "adopterNames": [
@@ -142,8 +142,9 @@
         "vitareba"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.15.3"
+        "source": "git",
+        "tag": "v0.17.0",
+        "commit": "15065e9fbb541cf69bbae4376e8045647907e05c"
       }
     },
     {
@@ -331,10 +332,11 @@
         "source": "npm",
         "command": "pnpm add ai-forms@^0.1.3"
       },
-      "adopters": 6,
+      "adopters": 7,
       "adopterNames": [
         "ai-kit",
         "aoz-begleitung",
+        "biaslens",
         "evig",
         "kivvi",
         "loki",
