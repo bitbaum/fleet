@@ -149,7 +149,9 @@ try {
   if (scenario !== "recovery") {
     const chromium = authChromium(consumerRequire);
     browser = await chromium.launch({
-      executablePath: process.env.BROWSER_EXECUTABLE ?? "/usr/bin/chromium",
+      ...(process.env.BROWSER_EXECUTABLE
+        ? { executablePath: process.env.BROWSER_EXECUTABLE }
+        : {}),
       args: ["--no-sandbox"],
     });
     const context = await browser.newContext();
@@ -194,7 +196,9 @@ try {
     const require = createRequire(resolve("package.json"));
     const chromium = authChromium(require);
     browser = await chromium.launch({
-      executablePath: process.env.BROWSER_EXECUTABLE ?? "/usr/bin/chromium",
+      ...(process.env.BROWSER_EXECUTABLE
+        ? { executablePath: process.env.BROWSER_EXECUTABLE }
+        : {}),
       args: ["--no-sandbox"],
     });
     const page = await browser.newPage({
