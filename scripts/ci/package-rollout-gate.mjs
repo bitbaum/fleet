@@ -186,6 +186,7 @@ export async function assessRollout({
   readCanary,
   candidateChecks,
   candidateSourceChanged = false,
+  candidatePullRequest,
   requiredChecks = ["ci.yml", "browser-smoke.yml"],
   settings = policy,
   now = Date.now(),
@@ -221,7 +222,17 @@ export async function assessRollout({
       );
       continue;
     }
-    if (repo === config.canary) continue;
+    if (repo === config.canary) {
+      if (
+        Number.isInteger(candidatePullRequest) &&
+        config.bootstrapPr === candidatePullRequest
+      )
+        continue;
+      findings.push(
+        `${name}: canary consumer must use its configured bootstrap PR${config.bootstrapPr ? ` #${config.bootstrapPr}` : ""}`,
+      );
+      continue;
+    }
     const canary = await readCanary(config.canary, config, name);
     if (
       !canary ||
@@ -498,6 +509,7 @@ async function main() {
         after: afterTemplate,
         candidateChecks: greenWorkflows(repo, pr.head.sha),
         candidateSourceChanged: hasConsumerSourceChanges(files, "templates/app"),
+        candidatePullRequest: Number(number),
         requiredChecks: ["ci.yml"],
         readCanary: async (canary, config) => {
           const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
@@ -601,6 +613,7 @@ async function main() {
       after: afterNested,
       candidateChecks: greenWorkflows(repo, pr.head.sha),
       candidateSourceChanged: hasConsumerSourceChanges(files, importer),
+      candidatePullRequest: Number(number),
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
@@ -650,6 +663,7 @@ async function main() {
       after: afterNested,
       candidateChecks: greenWorkflows(repo, pr.head.sha),
       candidateSourceChanged: hasConsumerSourceChanges(files, project),
+      candidatePullRequest: Number(number),
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
@@ -699,6 +713,7 @@ async function main() {
     after,
     candidateChecks: greenWorkflows(repo, pr.head.sha),
     candidateSourceChanged: hasConsumerSourceChanges(files),
+    candidatePullRequest: Number(number),
     readCanary: async (canary, config) => {
       const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
       const cacheKey = `${canary}:${requiredChecks.join(",")}`;
