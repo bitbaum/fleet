@@ -29,6 +29,11 @@ const dependencies = (manifest) => ({
   ...manifest.optionalDependencies,
 });
 const digest = (text) => createHash("sha256").update(text).digest("hex");
+const isProjectPath = (path) =>
+  typeof path === "string" &&
+  !path.startsWith("/") &&
+  !/[\n\r\\]/.test(path) &&
+  (path === "." || path.split("/").every((part) => part && part !== "." && part !== ".."));
 /** Only public first-party package metadata; no environment, paths, or product data. */
 export function createReleaseReceipt({
   repo,
@@ -47,9 +52,14 @@ export function createReleaseReceipt({
     !/^[0-9a-f]{40}$/.test(commit ?? "")
   )
     throw new Error("A repository and exact built commit are required");
-  if (importer.includes("..") || /[\n\r\\]/.test(importer))
+  if (!isProjectPath(importer))
     throw new Error("Project must be inside the checkout");
-  if (!Array.isArray(importers) || !importers.length || importers.some((path) => typeof path !== "string" || path.includes("..") || /[\n\r\\]/.test(path)))
+  if (
+    !Array.isArray(importers) ||
+    !importers.length ||
+    importers.some((path) => !isProjectPath(path)) ||
+    new Set(importers).size !== importers.length
+  )
     throw new Error("Receipt importers must be project paths inside the checkout");
   const manifestsByPath = Object.fromEntries(importers.map((path) => [path, path === importer ? manifest : manifests[path]]));
   const wanted = [];
@@ -155,6 +165,8 @@ function main() {
   const lockImporter = relative(lockRoot, dir).replaceAll("\\", "/") || ".";
   const installed = {};
   const projects = (option("--projects", importer)).split(",");
+  if (projects.some((project) => !isProjectPath(project)) || new Set(projects).size !== projects.length)
+    throw new Error("Receipt importers must be unique project paths inside the checkout");
   const projectManifests = {};
   for (const project of projects) {
     projectManifests[project] = JSON.parse(readFileSync(resolve(root, project, "package.json"), "utf8"));
