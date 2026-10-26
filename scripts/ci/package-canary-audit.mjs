@@ -108,6 +108,9 @@ if (
       execFileSync("gh", ["api", path], {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
+        // Large monorepos (OrangeCat has >5k tracked blobs) can exceed
+        // Node's 1 MiB default even though GitHub returned complete evidence.
+        maxBuffer: 64 * 1024 * 1024,
       }),
     );
   const file = (repo, path, ref) => {
