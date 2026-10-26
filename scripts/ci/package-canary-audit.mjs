@@ -13,7 +13,7 @@ export async function auditCanaries(settings, readEvidence) {
     }
     let evidence;
     try {
-      evidence = await readEvidence(entry.canary);
+      evidence = await readEvidence(entry.canary, entry.bootstrapPr ?? null);
     } catch {
       findings.push(`${name}: canary evidence unavailable for ${entry.canary}`);
       continue;
@@ -79,20 +79,36 @@ if (
     );
     return Buffer.from(value.content, "base64").toString();
   };
-  const findings = await auditCanaries(settings, async (repo) => {
-    if (!cache.has(repo)) {
-      const tip = api(`repos/${repo}/commits/HEAD`).sha;
-      cache.set(repo, {
-        manifest: JSON.parse(file(repo, "package.json", tip)),
-        plan: JSON.parse(file(repo, "package-plan.json", tip)),
+  const findings = await auditCanaries(settings, async (repo, bootstrapPr) => {
+    let ref = api(`repos/${repo}/commits/HEAD`).sha;
+    if (bootstrapPr != null) {
+      const pr = api(`repos/${repo}/pulls/${bootstrapPr}`);
+      if (pr.state === "open") {
+        const defaultBranch = api(`repos/${repo}`).default_branch;
+        if (
+          pr.head?.repo?.full_name !== repo ||
+          pr.base?.repo?.full_name !== repo ||
+          pr.base?.ref !== defaultBranch
+        )
+          throw new Error(`${repo}#${bootstrapPr} is not an in-repository default-branch PR`);
+        ref = pr.head.sha;
+      } else if (!pr.merged) {
+        throw new Error(`${repo}#${bootstrapPr} is closed without merging`);
+      }
+    }
+    const cacheKey = `${repo}@${ref}`;
+    if (!cache.has(cacheKey)) {
+      cache.set(cacheKey, {
+        manifest: JSON.parse(file(repo, "package.json", ref)),
+        plan: JSON.parse(file(repo, "package-plan.json", ref)),
         readSource: async (path) => {
           if (!path || path.startsWith("/") || path.split("/").includes(".."))
             return null;
-          return file(repo, path, tip);
+          return file(repo, path, ref);
         },
       });
     }
-    return cache.get(repo);
+    return cache.get(cacheKey);
   });
   if (findings.length) {
     console.error(findings.join("\n"));

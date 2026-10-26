@@ -33,6 +33,7 @@ function check(overrides = {}) {
     readCanary: async () => ({
       dependencies: { [name]: "0.4.1" },
       healthy: true,
+      checks: ["ci.yml", "browser-smoke.yml"],
       deployedAt: "2026-10-22T12:00:00Z",
     }),
     ...overrides,
@@ -76,6 +77,7 @@ test("template consumers may use full CI plus the exact canary soak", async () =
     readCanary: async () => ({
       dependencies: { [name]: "0.4.1" },
       healthy: true,
+        checks: ["ci.yml", "browser-smoke.yml"],
       deployedAt: "2026-10-24T11:30:00Z",
     }),
   });
@@ -94,12 +96,43 @@ test("wrong artifact, failed deploy, too recent or invalid receipts hold", async
           readCanary: async () => ({
             dependencies: { [name]: "0.4.1" },
             healthy: true,
+            checks: ["ci.yml", "browser-smoke.yml"],
             deployedAt: "2026-10-22T12:00:00Z",
             ...change,
           }),
         })
       ).length,
     );
+});
+test("package policy may require only checks meaningful to its surface", async () => {
+  const settings = {
+    soakHours: 24,
+    packages: {
+      "bip-kit": {
+        canary: "bitbaum/biaslens",
+        candidateChecks: ["ci.yml"],
+        canaryChecks: ["ci.yml"],
+      },
+    },
+  };
+  const finding = async (candidateChecks, canaryChecks) =>
+    assessRollout({
+      repo: "bitbaum/example",
+      before: { "bip-kit": "0.1.0" },
+      after: { "bip-kit": "0.2.0" },
+      candidateChecks,
+      settings,
+      now,
+      readCanary: async () => ({
+        dependencies: { "bip-kit": "0.2.0" },
+        healthy: true,
+        checks: canaryChecks,
+        deployedAt: "2026-10-22T12:00:00Z",
+      }),
+    });
+  assert.deepEqual(await finding(["ci.yml"], ["ci.yml"]), []);
+  assert.match((await finding([], ["ci.yml"]))[0], /consumer needs successful ci.yml/);
+  assert.match((await finding(["ci.yml"], []))[0], /pass CI\/browser checks/);
 });
 test("blocked version cannot even reach canary", async () =>
   assert.ok(

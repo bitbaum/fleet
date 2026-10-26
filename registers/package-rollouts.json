@@ -2,28 +2,50 @@
   "soakHours": 24,
   "packages": {
     "@bitbaum/sitekit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "@bitbaum/accountkit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "@bitbaum/design-tokens": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "bip-kit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml"],
+      "canaryChecks": ["ci.yml"]
     },
     "@bitbaum/ai-kit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml"],
+      "canaryChecks": ["ci.yml"]
     },
     "@bitbaum/mail-kit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml"],
+      "canaryChecks": ["ci.yml"]
     },
     "limitkit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml"],
+      "canaryChecks": ["ci.yml"]
     },
     "@bitbaum/chatkit": {
-      "canary": "bitbaum/biaslens"
+      "canary": "bitbaum/biaslens",
+      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
+    },
+    "@bitbaum/chartkit": {
+      "canary": "bitbaum/substrata",
+      "bootstrapPr": 252,
+      "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     }
   },
   "blocked": {

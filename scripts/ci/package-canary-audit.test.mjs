@@ -57,3 +57,18 @@ test("missing and unavailable evidence is not a pass", async () => {
     /invalid/,
   );
 });
+
+test("bootstrap PR identity is forwarded to canary evidence", async () => {
+  let args;
+  const configured = {
+    packages: {
+      [name]: { canary: "bitbaum/substrata", bootstrapPr: 252 },
+    },
+  };
+  const findings = await auditCanaries(configured, async (...received) => {
+    args = received;
+    return evidence();
+  });
+  assert.deepEqual(findings, []);
+  assert.deepEqual(args, ["bitbaum/substrata", 252]);
+});
