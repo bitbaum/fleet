@@ -35,6 +35,11 @@
 name: Internal package currency
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - registers/packages.json
+      - .github/workflows/internal-currency.yml
   schedule:
     # Weekly, and deliberately not on the hour — a cron at :00 competes with
     # everything else in the org for the same scheduler slot. See
