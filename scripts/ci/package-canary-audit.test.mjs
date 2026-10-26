@@ -73,6 +73,31 @@ test("bootstrap PR identity is forwarded to canary evidence", async () => {
   assert.deepEqual(args, ["bitbaum/substrata", 252]);
 });
 
+test("workspace canary importers must be represented in release receipts", async () => {
+  const nestedPolicy = {
+    packages: {
+      "@bitbaum/ai-kit": {
+        canary: "bitbaum/kivvi",
+        canaryImporter: "packages/ai",
+        receiptProject: "apps/web",
+        receiptProjects: ["apps/web", "packages/ai"],
+      },
+    },
+  };
+  assert.deepEqual(await auditCanaries(nestedPolicy, async () => evidence({
+    manifest: { dependencies: { "@bitbaum/ai-kit": "^1.21.4" } },
+    plan: { blocks: { ai: { package: "@bitbaum/ai-kit", bindings: [{ file: "chat.tsx", symbols: ["useAI"] }] } } },
+    manifestForSource: async () => ({ dependencies: { "@bitbaum/ai-kit": "^1.21.4" } }),
+    readSource: async () => "import { useAI } from '@bitbaum/ai-kit/react'; useAI();",
+  })), []);
+  const missingReceipt = structuredClone(nestedPolicy);
+  delete missingReceipt.packages["@bitbaum/ai-kit"].receiptProjects;
+  assert.match(
+    (await auditCanaries(missingReceipt, async () => evidence()))[0],
+    /release receipt does not cover configured canary importers apps\/web, packages\/ai/,
+  );
+});
+
 test("npm aliases satisfy canonical package declaration and import bindings", async () => {
   const aliasPolicy = {
     packages: { "ai-forms": { canary: "bitbaum/kivvi", bootstrapPr: 141 } },
