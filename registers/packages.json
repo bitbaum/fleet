@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-25T12:59:38.187Z",
+  "generatedAt": "2026-10-26T04:08:48.165Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -114,10 +114,10 @@
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
       "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.15.2",
+      "version": "0.15.3",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.15.2"
+        "command": "pnpm add @bitbaum/chatkit@^0.15.3"
       },
       "adopters": 16,
       "adopterNames": [
@@ -140,7 +140,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.15.2"
+        "version": "0.15.3"
       }
     },
     {
@@ -153,7 +153,7 @@
         "source": "npm",
         "command": "pnpm add limitkit@^0.2.0"
       },
-      "adopters": 14,
+      "adopters": 15,
       "adopterNames": [
         "accountkit",
         "biaslens",
@@ -163,6 +163,7 @@
         "evig",
         "fleet",
         "heidi",
+        "kivvi",
         "loki",
         "orangecat",
         "petvity",
@@ -212,10 +213,10 @@
       "name": "@bitbaum/accountkit",
       "repo": "https://github.com/bitbaum/accountkit",
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.6.2",
+      "version": "0.6.3",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#9c8d93ade6945615b5204d8eaad5c717078b7e17"
+        "command": "pnpm add github:bitbaum/accountkit#d9c311e54fe97442f367874cfaa0ef451ba0f2bd"
       },
       "adopters": 12,
       "adopterNames": [
@@ -234,8 +235,8 @@
       ],
       "release": {
         "source": "git",
-        "tag": "v0.6.2",
-        "commit": "9c8d93ade6945615b5204d8eaad5c717078b7e17"
+        "tag": "v0.6.3",
+        "commit": "d9c311e54fe97442f367874cfaa0ef451ba0f2bd"
       }
     },
     {
@@ -272,10 +273,10 @@
       "name": "@bitbaum/listkit",
       "repo": "https://github.com/bitbaum/listkit",
       "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "install": {
         "source": "git",
-        "command": "pnpm add github:bitbaum/listkit#085ce70e65fff9a71b0c3811fcd11fc8d9fbb5f5"
+        "command": "pnpm add github:bitbaum/listkit#cca70801aacbbf5310c976b0610ca469ba869e97"
       },
       "adopters": 8,
       "adopterNames": [
@@ -290,8 +291,8 @@
       ],
       "release": {
         "source": "git",
-        "tag": "v0.2.0",
-        "commit": "085ce70e65fff9a71b0c3811fcd11fc8d9fbb5f5"
+        "tag": "v0.2.1",
+        "commit": "cca70801aacbbf5310c976b0610ca469ba869e97"
       }
     },
     {
