@@ -17,6 +17,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          diagnostic="$(mktemp)"
+          trap 'rm -f "$diagnostic"' EXIT
           echo '## Required-check protection evidence' >> "$GITHUB_STEP_SUMMARY"
           echo 'Read-only: this workflow changes no repository settings.' >> "$GITHUB_STEP_SUMMARY"
           for name in fleet accountkit heidi causius bitbaum; do
@@ -24,10 +26,11 @@ jobs:
             info="$(gh api "repos/$repo" --jq '{default_branch,admin:.permissions.admin}')"
             branch="$(jq -r '.default_branch' <<< "$info")"
             admin="$(jq -r '.admin' <<< "$info")"
-            if policy="$(gh api "repos/$repo/branches/$branch/protection" 2>/dev/null)"; then
+            if policy="$(gh api "repos/$repo/branches/$branch/protection" 2>"$diagnostic")"; then
               summary="$(jq -c '{required_contexts:(.required_status_checks.contexts // []),required_checks:(.required_status_checks.checks // []),strict:(.required_status_checks.strict // false),enforce_admins:(.enforce_admins.enabled // false),required_reviews:(.required_pull_request_reviews.required_approving_review_count // 0)}' <<< "$policy")"
               echo "- $repo: admin=$admin; $summary" | tee -a "$GITHUB_STEP_SUMMARY"
             else
-              echo "- $repo: admin=$admin; protection could not be read (absent protection and unavailable authority must be distinguished before changing settings)." | tee -a "$GITHUB_STEP_SUMMARY"
+              status="$(sed -n 's/.*(HTTP \([0-9][0-9][0-9]\)).*/\1/p' "$diagnostic" | tail -1)"
+              echo "- $repo: admin=$admin; branch-protection read failed, HTTP ${status:-unknown}. A 404 is an absent branch-protection record, not proof that no ruleset applies; rulesets need separate inspection." | tee -a "$GITHUB_STEP_SUMMARY"
             fi
           done
