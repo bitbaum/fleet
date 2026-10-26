@@ -37,6 +37,8 @@ export function createReleaseReceipt({
   pnpmLock,
   npmLock,
   importer = ".",
+  importers = [importer],
+  manifests = {},
   installed = {},
   createdAt = new Date().toISOString(),
 }) {
@@ -47,20 +49,29 @@ export function createReleaseReceipt({
     throw new Error("A repository and exact built commit are required");
   if (importer.includes("..") || /[\n\r\\]/.test(importer))
     throw new Error("Project must be inside the checkout");
-  const wanted = Object.entries(dependencies(manifest)).filter(([name, spec]) =>
-    isShared(dependencyIdentity(name, spec)),
-  );
+  if (!Array.isArray(importers) || !importers.length || importers.some((path) => typeof path !== "string" || path.includes("..") || /[\n\r\\]/.test(path)))
+    throw new Error("Receipt importers must be project paths inside the checkout");
+  const manifestsByPath = Object.fromEntries(importers.map((path) => [path, path === importer ? manifest : manifests[path]]));
+  const wanted = [];
+  for (let i = 0; i < importers.length; i++) {
+    const path = importers[i];
+    const current = manifestsByPath[path];
+    if (!current) throw new Error(`${path}: project manifest is required for release receipt`);
+    const importerDependencies = Object.entries(dependencies(current)).filter(([name, spec]) => isShared(dependencyIdentity(name, spec)));
+    for (const [depName, spec] of importerDependencies) wanted.push({ depName, spec, importer: path });
+  }
   if (wanted.length && !pnpmLock && !npmLock)
     throw new Error("Shared packages require a supported lockfile");
-  const locked = pnpmLock
-    ? lockedDependencies(manifest, pnpmLock, importer)
-    : npmLock
-      ? lockedNpmDependencies(manifest, JSON.parse(npmLock), importer)
-      : {};
   const artifacts = {},
     versions = {};
-  for (const [depName, spec] of wanted) {
+  for (const { depName, spec, importer: currentImporter } of wanted) {
     const name = dependencyIdentity(depName, spec),
+      currentManifest = manifestsByPath[currentImporter],
+      locked = pnpmLock
+        ? lockedDependencies(currentManifest, pnpmLock, currentImporter)
+        : npmLock
+          ? lockedNpmDependencies(currentManifest, JSON.parse(npmLock), currentImporter)
+          : {},
       artifact = locked[name],
       actual = installed[depName];
     if (!isImmutableArtifact(artifact ?? ""))
@@ -69,6 +80,8 @@ export function createReleaseReceipt({
       throw new Error(`${name}: installed package metadata is missing`);
     if (/^\d/.test(artifact) && artifact !== actual.version)
       throw new Error(`${name}: installed package differs from the lockfile`);
+    if (artifacts[name] && artifacts[name] !== artifact)
+      throw new Error(`${name}: workspace importers resolve different artifacts`);
     artifacts[name] = artifact;
     versions[name] = actual.version;
   }
@@ -77,6 +90,7 @@ export function createReleaseReceipt({
     repo,
     commit,
     project: importer,
+    projects: [...importers],
     createdAt,
     lockSha256: digest(pnpmLock ?? npmLock ?? ""),
     artifacts: Object.fromEntries(Object.entries(artifacts).sort()),
@@ -140,19 +154,24 @@ function main() {
   const lockRoot = dirname(pnpmLock ? pnpmPath : npmPath);
   const lockImporter = relative(lockRoot, dir).replaceAll("\\", "/") || ".";
   const installed = {};
-  for (const [name, spec] of Object.entries(dependencies(manifest))) {
-    if (!isShared(dependencyIdentity(name, spec))) continue;
-    let location = dir;
-    while (true) {
-      const path = resolve(location, "node_modules", name, "package.json");
-      if (existsSync(path)) {
-        installed[name] = JSON.parse(readFileSync(path, "utf8"));
-        break;
+  const projects = (option("--projects", importer)).split(",");
+  const projectManifests = {};
+  for (const project of projects) {
+    projectManifests[project] = JSON.parse(readFileSync(resolve(root, project, "package.json"), "utf8"));
+    for (const [name, spec] of Object.entries(dependencies(projectManifests[project]))) {
+      if (!isShared(dependencyIdentity(name, spec))) continue;
+      let location = resolve(root, project);
+      while (true) {
+        const path = resolve(location, "node_modules", name, "package.json");
+        if (existsSync(path)) {
+          installed[name] = JSON.parse(readFileSync(path, "utf8"));
+          break;
+        }
+        if (location === root) break;
+        const parent = dirname(location);
+        if (parent === location || relative(root, parent).startsWith("..")) break;
+        location = parent;
       }
-      if (location === root) break;
-      const parent = dirname(location);
-      if (parent === location || relative(root, parent).startsWith("..")) break;
-      location = parent;
     }
   }
   const receipt = createReleaseReceipt({
@@ -162,6 +181,8 @@ function main() {
     pnpmLock,
     npmLock,
     importer: lockImporter,
+    importers: projects,
+    manifests: projectManifests,
     installed,
   });
   // Project identity remains relative to the checkout, even for a nested independent lock root.

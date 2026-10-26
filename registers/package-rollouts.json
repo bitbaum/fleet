@@ -19,6 +19,7 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "packages/ai",
       "receiptProject": "apps/web",
+      "receiptProjects": ["apps/web", "packages/ai"],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml"
@@ -47,6 +48,7 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
+      "receiptProjects": ["apps/web", "packages/ai"],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -104,6 +106,7 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
+      "receiptProjects": ["apps/web", "packages/ai"],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -158,6 +161,7 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
+      "receiptProjects": ["apps/web", "packages/ai"],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -175,6 +179,7 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
+      "receiptProjects": ["apps/web", "packages/ai"],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",
@@ -189,6 +194,7 @@
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
       "receiptProject": "apps/web",
+      "receiptProjects": ["apps/web", "packages/ai"],
       "bootstrapPr": 141,
       "candidateChecks": [
         "ci.yml",

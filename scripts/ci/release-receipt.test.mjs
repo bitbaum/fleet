@@ -117,6 +117,31 @@ test("Git installs retain their immutable commit and installed package version",
   assert.equal(result.artifacts["@bitbaum/accountkit"], artifact);
   assert.equal(result.versions["@bitbaum/accountkit"], "0.6.2");
 });
+test("multi-importer receipts attest app and nested workspace packages", () => {
+  const ai = "@bitbaum/ai-kit";
+  const lock = pnpmLock
+    .replace("  .:", "  apps/web:")
+    .replace(
+      "packages:",
+      "  'packages/ai':\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^1.21.4\n        version: 1.21.4\npackages:",
+    );
+  const result = createReleaseReceipt({
+    ...input,
+    importers: ["apps/web", "packages/ai"],
+    importer: "apps/web",
+    manifests: {
+      "apps/web": manifest,
+      "packages/ai": { dependencies: { [ai]: "^1.21.4" } },
+    },
+    pnpmLock: lock,
+    installed: {
+      chat: { name, version: "0.15.2" },
+      [ai]: { name: ai, version: "1.21.4" },
+    },
+  });
+  assert.deepEqual(result.projects, ["apps/web", "packages/ai"]);
+  assert.deepEqual(result.artifacts, { [ai]: "1.21.4", [name]: "0.15.2" });
+});
 test("an explicitly selected nested importer cannot borrow root artifact evidence", () => {
   const nested = `  'apps/web':\n    dependencies:\n      chat:\n        specifier: npm:@bitbaum/chatkit@^0.15.2\n        version: '@bitbaum/chatkit@0.15.3(react@19.3.1)'\n`;
   const lock = pnpmLock.replace("packages:", nested + "packages:");
