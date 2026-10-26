@@ -154,7 +154,11 @@ try {
     });
     try {
       const context = await browser.newContext();
-      await context.addCookies([...cookies].map(([name, value]) => ({ name, value, url: base, httpOnly: true })));
+      const login = await context.request.post(base + "/api/auth/sign-in/email", {
+        headers: { origin: base },
+        data: { email, password },
+      });
+      assert.equal(login.status(), 200, "product integration browser signs in normally");
       const page = await context.newPage();
       await checkAuthIntegration(process.env.AUTH_TEST_INTEGRATION_CHECK, { page, base, userId: signedIn.user.id });
     } finally {
