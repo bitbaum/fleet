@@ -45,6 +45,7 @@ no() { printf '  ✗ %s\n' "$1"; FAIL=$((FAIL + 1)); }
 run_sweep() {
   local conclusion="$1" failed_steps="${2:-}" attempt="${3:-1}"
   local deploy_wf="${4:-}" deployed_sha="${5:-}" deploy_running="${6:-0}" rearm_seen="${RS_REARM_SEEN:-}" rearm_late="${RS_REARM_LATE:-0}"
+  local rearm_if_files="${RS_REARM_IF_FILES:-}" rearm_if_workflows="${RS_REARM_IF_WORKFLOWS:-}"
   local status_field="${RS_STATUS:-completed}"
   local base_sha="${RS_BASESHA:-basesha000000}"
   local head_field="${RS_HEADSHA:-$base_sha}"
@@ -100,7 +101,7 @@ DOCS
   local compare="${RS_COMPARE:-}"
   RS_DOCS=""; RS_DOCS_COMMENTS=""; RS_COMPARE=""
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
-  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""
+  RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""; RS_REARM_IF_FILES=""; RS_REARM_IF_WORKFLOWS=""
 
   cat > "$dir/gh" <<FAKE
 #!/usr/bin/env bash
@@ -150,6 +151,7 @@ FAKE
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
         DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" REARM_POLL_SECONDS=0 \
+        REARM_IF_FILES="$rearm_if_files" REARM_IF_WORKFLOWS="$rearm_if_workflows" \
         PACKAGE_ROLLOUT_CMD="$dir/rollout" \
         DOCS_TRUTH_CMD="$dir/docs-truth" \
         bash "$SWEEP" 2>&1)
@@ -354,6 +356,7 @@ echo "auto-merge sweep — coverage ported from orangecat"
 
 merges() { grep -c '^pr merge' "$GH_LOG" 2>/dev/null; }
 rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
+package_rearms() { grep -c '^workflow run internal-currency.yml' "$GH_LOG" 2>/dev/null; }
 
 # 12. A base run still in progress is not a verdict either way — defer, and do
 #     NOT re-run it (re-running an in-flight run would cancel it).
@@ -495,6 +498,25 @@ if RS_REARM_LATE=2 RS_REARM_SEEN=basesha000000 RS_PRS="$(pr_fixture 'lint')" run
   [ "$(merges)" -ge 1 ] && [ "$(rearms)" -eq 0 ] \
     && ok 'waits for a push-triggered run GitHub has not listed yet, and does not re-arm' \
     || no 'waits for a push-triggered run GitHub has not listed yet, and does not re-arm'
+fi
+
+# 19c. A GITHUB_TOKEN merge of the package registry suppresses push events, so
+#      explicitly dispatch the reconciler for a PR that changes its input.
+if RS_REARM_IF_FILES='registers/packages.json .github/workflows/internal-currency.yml .github/workflows/auto-merge.yml' \
+   RS_REARM_IF_WORKFLOWS=internal-currency.yml RS_FILES=registers/packages.json \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && [ "$(package_rearms)" -eq 1 ] \
+    && ok 're-arms package currency after a registry-changing merge' \
+    || no 're-arms package currency after a registry-changing merge'
+fi
+
+# 19d. Ordinary Fleet merges do not need a full 22-repo reconciliation run.
+if RS_REARM_IF_FILES='registers/packages.json .github/workflows/internal-currency.yml .github/workflows/auto-merge.yml' \
+   RS_REARM_IF_WORKFLOWS=internal-currency.yml RS_FILES=README.md \
+   RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  [ "$(merges)" -ge 1 ] && [ "$(package_rearms)" -eq 0 ] \
+    && ok 'does not re-arm package currency for unrelated merges' \
+    || no 'does not re-arm package currency for unrelated merges'
 fi
 
 echo "auto-merge sweep — Dependabot"
