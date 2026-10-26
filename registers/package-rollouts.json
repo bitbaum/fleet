@@ -26,7 +26,12 @@
       "canary": "bitbaum/biaslens"
     }
   },
-  "blocked": {},
+  "blocked": {
+    "@bitbaum/accountkit": [
+      "https://codeload.github.com/bitbaum/accountkit/tar.gz/9c8d93ade6945615b5204d8eaad5c717078b7e17",
+      "git+https://github.com/bitbaum/accountkit.git#9c8d93ade6945615b5204d8eaad5c717078b7e17"
+    ]
+  },
   "deploymentReceipts": {
     "bitbaum/biaslens": "https://biaslens.orangecat.ch/.well-known/fleet-release.json"
   }
