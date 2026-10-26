@@ -108,6 +108,15 @@ export function auditComposition(
           findings.push(`${feature}: ${symbol} is not used in ${binding.file}`);
       }
     }
+    for (const surface of entry.surfaces ?? []) {
+      if (
+        !surface ||
+        surface.startsWith("/") ||
+        surface.split("/").includes("..") ||
+        !existsSync(resolve(dir, surface))
+      )
+        findings.push(`${feature}: required product surface is missing or unsafe: ${surface}`);
+    }
   }
   if (
     !existsSync(resolve(dir, ".github/dependabot.yml")) ||
