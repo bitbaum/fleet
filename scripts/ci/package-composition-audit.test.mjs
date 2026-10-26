@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { auditComposition } from "./package-composition-audit.mjs";
@@ -121,6 +121,20 @@ test("dependency-only adoption fails when the rendered binding disappears", () =
     assert.ok(
       auditComposition(dir, baseline).some((x) => x.includes("not used")),
     );
+  }));
+test("required feature surfaces are checked against the product tree", () =>
+  fixture((dir) => {
+    const path = join(dir, "package-plan.json");
+    const plan = JSON.parse(readFileSync(path, "utf8"));
+    plan.blocks.shell.surfaces = ["src/app/roadmap/page.tsx", "src/app/changelog/page.tsx"];
+    writeFileSync(path, JSON.stringify(plan));
+    const findings = auditComposition(dir, baseline);
+    assert.equal(findings.filter((x) => x.includes("required product surface")).length, 2);
+    mkdirSync(join(dir, "src/app/roadmap"), { recursive: true });
+    mkdirSync(join(dir, "src/app/changelog"), { recursive: true });
+    writeFileSync(join(dir, "src/app/roadmap/page.tsx"), "export default function Roadmap() {}");
+    writeFileSync(join(dir, "src/app/changelog/page.tsx"), "export default function Changelog() {}");
+    assert.deepEqual(auditComposition(dir, baseline), []);
   }));
 test("a missing package plan fails before a product can claim a shared foundation", () =>
   fixture((dir) => {
