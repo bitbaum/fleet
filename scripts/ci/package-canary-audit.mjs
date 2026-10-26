@@ -67,9 +67,18 @@ export async function auditCanaries(settings, readEvidence) {
         if (!importedNames)
           continue;
         if (binding.symbols?.length) {
+          const usageSources = await Promise.all(
+            (binding.usageFiles ?? []).map((path) => readSource(path)),
+          );
+          const bindingSources = [source, ...usageSources].filter(
+            (value) => typeof value === "string",
+          );
           bound ||= binding.symbols.some((symbol) => {
             const safe = symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            return new RegExp(`(?:<${safe}\\b|\\b${safe}\\s*\\()`).test(source);
+            const used = new RegExp(
+              `(?:<${safe}\\b|\\b${safe}\\s*\\()`,
+            );
+            return bindingSources.some((content) => used.test(content));
           });
         } else if (/design-tokens$/.test(name)) bound = true;
       }

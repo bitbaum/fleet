@@ -45,6 +45,73 @@ function fixture(run) {
 }
 test("declared installed and rendered building block passes", () =>
   fixture((dir) => assert.deepEqual(auditComposition(dir, baseline), [])));
+test("a package adapter may prove its exported component at a rendered consumer", () =>
+  fixture((dir) => {
+    writeFileSync(
+      join(dir, "package-plan.json"),
+      JSON.stringify({
+        blocks: {
+          shell: {
+            package: "@bitbaum/sitekit",
+            bindings: [
+              {
+                file: "adapter.tsx",
+                symbols: ["SiteMasthead"],
+                usageFiles: ["page.tsx"],
+              },
+            ],
+          },
+        },
+      }),
+    );
+    writeFileSync(
+      join(dir, "adapter.tsx"),
+      "import {SiteMasthead} from '@bitbaum/sitekit/react'; export {SiteMasthead};",
+    );
+    writeFileSync(
+      join(dir, "page.tsx"),
+      "import {SiteMasthead} from './adapter'; export const Page=()=> <SiteMasthead />;",
+    );
+    assert.deepEqual(auditComposition(dir, baseline), []);
+  }));
+test("npm and Git aliases bind to the canonical shared package", () =>
+  fixture((dir) => {
+    writeFileSync(
+      join(dir, "package.json"),
+      JSON.stringify({
+        dependencies: {
+          "@bitbaum/sitekit": "^0.4.0",
+          listkit: "github:bitbaum/listkit#cca70801aacbbf5310c976b0610ca469ba869e97",
+        },
+      }),
+    );
+    writeFileSync(
+      join(dir, "package-plan.json"),
+      JSON.stringify({
+        blocks: {
+          shell: {
+            package: "@bitbaum/sitekit",
+            bindings: [{ file: "shell.tsx", symbols: ["SiteMasthead"] }],
+          },
+          lists: {
+            package: "@bitbaum/listkit",
+            bindings: [{ file: "list.tsx", symbols: ["applyQuery"] }],
+          },
+        },
+      }),
+    );
+    writeFileSync(
+      join(dir, "list.tsx"),
+      "import {applyQuery} from 'listkit'; export const list = (rows, spec) => applyQuery(rows, spec);",
+    );
+    assert.deepEqual(
+      auditComposition(dir, {
+        ...baseline,
+        lists: { package: "@bitbaum/listkit" },
+      }),
+      [],
+    );
+  }));
 test("dependency-only adoption fails when the rendered binding disappears", () =>
   fixture((dir) => {
     writeFileSync(

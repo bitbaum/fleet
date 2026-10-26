@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { dependencyIdentity } from "./package-rollout-gate.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export function auditComposition(
   dir,
@@ -51,7 +52,12 @@ export function auditComposition(
       findings.push(
         `${feature}: expected ${required.package}, or document the specific exception`,
       );
-    if (!deps[entry.package])
+    const installedNames = Object.entries(deps)
+      .filter(
+        ([name, spec]) => dependencyIdentity(name, spec) === entry.package,
+      )
+      .map(([name]) => name);
+    if (!installedNames.length)
       findings.push(`${feature}: ${entry.package} is not installed`);
     if (!Array.isArray(entry.bindings) || entry.bindings.length === 0) {
       findings.push(`${feature}: no rendered/runtime binding declared`);
@@ -69,13 +75,36 @@ export function auditComposition(
         continue;
       }
       const source = read(binding.file);
-      if (!source.includes(entry.package))
+      const importNames = [entry.package, ...installedNames].map((name) =>
+        name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      );
+      const importsPackage = importNames.some((name) =>
+        new RegExp(`(?:from\\s*|import\\s*)['"]${name}(?:/[^'"]*)?['"]`).test(
+          source,
+        ),
+      );
+      if (!importsPackage)
         findings.push(
           `${feature}: ${binding.file} does not import its declared package`,
         );
+      const usageSources = [];
+      for (const file of binding.usageFiles ?? []) {
+        if (
+          !file ||
+          file.startsWith("/") ||
+          file.split("/").includes("..") ||
+          !existsSync(resolve(dir, file))
+        ) {
+          findings.push(`${feature}: usage file is missing or outside this repository`);
+          continue;
+        }
+        usageSources.push(read(file));
+      }
+      const bindingSources = [source, ...usageSources];
       for (const symbol of binding.symbols ?? []) {
         const escaped = String(symbol).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (!new RegExp(`(?:<${escaped}\\b|\\b${escaped}\\s*\\()`).test(source))
+        const used = new RegExp(`(?:<${escaped}\\b|\\b${escaped}\\s*\\()`);
+        if (!bindingSources.some((content) => used.test(content)))
           findings.push(`${feature}: ${symbol} is not used in ${binding.file}`);
       }
     }
