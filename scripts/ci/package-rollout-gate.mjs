@@ -300,6 +300,39 @@ function workspaceDepsAt(repo, ref, importer) {
     `${repo}/${importer}: supported lockfile required for artifact-specific rollout evidence`,
   );
 }
+function standaloneDepsAt(repo, ref, project) {
+  const rawManifest = content(repo, `${project}/package.json`, ref);
+  if (!rawManifest) return {};
+  const parsed = JSON.parse(rawManifest);
+  const lock =
+    content(repo, `${project}/pnpm-lock.yaml`, ref) ??
+    content(repo, `${project}/package-lock.json`, ref);
+  if (!lock) {
+    const dependencies = {
+      ...parsed.dependencies,
+      ...parsed.devDependencies,
+      ...parsed.optionalDependencies,
+    };
+    if (
+      Object.entries(dependencies).some(([name, spec]) =>
+        shared(dependencyIdentity(name, spec)),
+      )
+    )
+      throw new Error(
+        `${repo}/${project}: standalone shared dependencies require a committed lockfile`,
+      );
+    return {};
+  }
+  if (content(repo, `${project}/pnpm-lock.yaml`, ref))
+    return lockedDependencies(parsed, lock);
+  return lockedNpmDependencies(parsed, JSON.parse(lock));
+}
+function rootHasImporter(lock, importer) {
+  const section =
+    lock.match(/^importers:[^\n]*\n([\s\S]*?)(?=^\S|(?![\s\S]))/m)?.[1] ?? "";
+  const escaped = importer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^  (?:${escaped}|['"]${escaped}['"]):`, "m").test(section);
+}
 function canaryDepsAt(repo, ref, config) {
   const importer = config.canaryImporter;
   if (!importer) return depsAt(repo, ref);
@@ -471,52 +504,104 @@ async function main() {
   // Workspace artifacts cannot silently escape the root-consumer gate.
   const baseLock = content(repo, "pnpm-lock.yaml", pr.base.sha) ?? "";
   const headLock = content(repo, "pnpm-lock.yaml", pr.head.sha) ?? "";
-  const nestedUpdates = nestedSharedUpdates(baseLock, headLock);
-  const canaryCache = new Map();
-  const nestedImporters = new Set(nestedUpdates.map(([importer]) => importer));
-  const nestedManifestChanges = new Set();
-  for (const { filename } of files) {
-    if (!filename.endsWith("/package.json") || filename.startsWith("templates/app/")) continue;
-    const beforeManifest = content(repo, filename, pr.base.sha);
-    const afterManifest = content(repo, filename, pr.head.sha);
-    if (!afterManifest) continue;
-    const beforeSpecs = Object.fromEntries(
-      Object.entries({
-        ...JSON.parse(beforeManifest ?? "{}").dependencies,
-        ...JSON.parse(beforeManifest ?? "{}").devDependencies,
-        ...JSON.parse(beforeManifest ?? "{}").optionalDependencies,
-      })
-        .map(([name, spec]) => [dependencyIdentity(name, spec), spec])
-        .filter(([name]) => shared(name)),
-    );
-    const afterParsed = JSON.parse(afterManifest);
-    const afterSpecs = Object.fromEntries(
-      Object.entries({
-        ...afterParsed.dependencies,
-        ...afterParsed.devDependencies,
-        ...afterParsed.optionalDependencies,
-      })
-        .map(([name, spec]) => [dependencyIdentity(name, spec), spec])
-        .filter(([name]) => shared(name)),
-    );
-    if (JSON.stringify(beforeSpecs) !== JSON.stringify(afterSpecs))
-      nestedManifestChanges.add(filename.slice(0, -"/package.json".length));
-  }
-  for (const importer of nestedImporters)
-    if (!nestedManifestChanges.has(importer))
-      throw new Error(
-        `${importer}: shared lock artifact changed without a corresponding workspace manifest update; automatic promotion is held`,
-      );
-  const unaccountedNested = [...nestedManifestChanges].filter(
-    (importer) => !nestedImporters.has(importer),
+  const rootImporters = new Set(
+    nestedSharedUpdates(baseLock, headLock).map(([importer]) => importer),
   );
-  if (unaccountedNested.length)
-    throw new Error(
-      `${unaccountedNested.join(", ")}: nested shared dependency update has no importer-specific lock evidence; automatic promotion is held`,
-    );
-  for (const importer of nestedImporters) {
+  const standaloneProjects = new Set();
+  const canaryCache = new Map();
+  for (const { filename } of files) {
+    if (filename.startsWith("templates/app/")) continue;
+    const isManifest = filename.endsWith("/package.json");
+    const isLock = /\/(?:pnpm-lock\.yaml|package-lock\.json)$/.test(filename);
+    if (!isManifest && !isLock) continue;
+    const project = filename.slice(0, filename.lastIndexOf("/"));
+    if (!project) continue;
+    if (
+      content(repo, `${project}/pnpm-lock.yaml`, pr.base.sha) ||
+      content(repo, `${project}/package-lock.json`, pr.base.sha) ||
+      content(repo, `${project}/pnpm-lock.yaml`, pr.head.sha) ||
+      content(repo, `${project}/package-lock.json`, pr.head.sha)
+    ) {
+      standaloneProjects.add(project);
+    } else if (
+      rootHasImporter(baseLock, project) ||
+      rootHasImporter(headLock, project)
+    ) {
+      rootImporters.add(project);
+    } else if (isManifest) {
+      const beforeRaw = content(repo, filename, pr.base.sha);
+      const afterRaw = content(repo, filename, pr.head.sha);
+      const sharedEntries = (raw) => {
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Object.entries({
+          ...parsed.dependencies,
+          ...parsed.devDependencies,
+          ...parsed.optionalDependencies,
+        }).filter(([name, spec]) => shared(dependencyIdentity(name, spec)));
+      };
+      if (
+        JSON.stringify(sharedEntries(beforeRaw)) !==
+        JSON.stringify(sharedEntries(afterRaw))
+      )
+        throw new Error(
+          `${project}: nested shared dependency update has no importer-specific lock evidence; automatic promotion is held`,
+        );
+    }
+  }
+  for (const importer of rootImporters) {
+    if (!content(repo, `${importer}/package.json`, pr.head.sha))
+      throw new Error(
+        `${importer}: nested shared lock update has no matching manifest; automatic promotion is held`,
+      );
     const beforeNested = workspaceDepsAt(repo, pr.base.sha, importer);
     const afterNested = workspaceDepsAt(repo, pr.head.sha, importer);
+    const changedNested = Object.keys(afterNested).some(
+      (name) =>
+        beforeNested[name] !== afterNested[name] &&
+        (known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name]),
+    );
+    if (!changedNested) continue;
+    const findings = await assessRollout({
+      repo,
+      before: beforeNested,
+      after: afterNested,
+      candidateChecks: greenWorkflows(repo, pr.head.sha),
+      requiredChecks: ["ci.yml"],
+      readCanary: async (canary, config) => {
+        const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
+        const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+        if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
+        const branch = api(`repos/${canary}`).default_branch;
+        const tip = api(`repos/${canary}/commits/${branch}`).sha;
+        const deploy = api(
+          `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
+        ).workflow_runs[0];
+        const checks = greenWorkflows(canary, tip);
+        const result = await canaryDeploymentEvidence({
+          canary,
+          tip,
+          dependencies: canaryDepsAt(canary, tip, config),
+          deploy,
+          checks,
+          requiredChecks,
+          receiptUrl: policy.deploymentReceipts?.[canary],
+          lock:
+            content(canary, "pnpm-lock.yaml", tip) ??
+            content(canary, "package-lock.json", tip),
+        });
+        canaryCache.set(cacheKey, result);
+        return result;
+      },
+    });
+    if (findings.length) {
+      console.log(findings.join("\n"));
+      process.exitCode = 1;
+    }
+  }
+  for (const project of standaloneProjects) {
+    const beforeNested = standaloneDepsAt(repo, pr.base.sha, project);
+    const afterNested = standaloneDepsAt(repo, pr.head.sha, project);
     const changedNested = Object.keys(afterNested).some(
       (name) =>
         beforeNested[name] !== afterNested[name] &&

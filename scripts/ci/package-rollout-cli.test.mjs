@@ -98,3 +98,65 @@ console.log(JSON.stringify(result));
     }
   });
 }
+
+test("standalone nested starters use their own lockfile for package rollout evidence", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rollout-nested-cli-"));
+  const base = "a".repeat(40);
+  const head = "b".repeat(40);
+  const tip = "c".repeat(40);
+  const standaloneLock = (version) =>
+    `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^${version}\n        version: ${version}\n`;
+  const canaryLock =
+    `lockfileVersion: '9.0'\nimporters:\n  .:\n  packages/ai:\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^1.21.4\n        version: 1.21.4\n`;
+  const rootLock = "lockfileVersion: '9.0'\nimporters:\n  .:\n";
+  try {
+    writeFileSync(
+      join(dir, "gh"),
+      `#!${process.execPath}
+const [verb,path] = process.argv.slice(2);
+const base=${JSON.stringify(base)}, head=${JSON.stringify(head)}, tip=${JSON.stringify(tip)};
+const lock=${standaloneLock.toString()};
+const canaryLock=${JSON.stringify(canaryLock)};
+const rootLock=${JSON.stringify(rootLock)};
+const encode = value => ({content:Buffer.from(value).toString('base64')});
+let result;
+if(verb!=='api') throw Error('unexpected CLI invocation');
+if(path==='repos/bitbaum/loki/pulls/1') result={base:{sha:base},head:{sha:head}};
+else if(path.includes('/pulls/1/files?')) result=[{filename:'scripts/site-template/package.json'},{filename:'scripts/site-template/pnpm-lock.yaml'}];
+else if(path==='repos/bitbaum/kivvi') result={default_branch:'main'};
+else if(path==='repos/bitbaum/kivvi/commits/main') result={sha:tip};
+else if(path.includes('repos/bitbaum/kivvi/actions/workflows/deploy.yml/runs?')) result={workflow_runs:[{conclusion:'success',head_sha:tip,updated_at:new Date().toISOString()}]};
+else if(path.includes('repos/bitbaum/kivvi/actions/runs?')) result={workflow_runs:['ci.yml','browser-smoke.yml'].map(p=>({path:'.github/workflows/'+p,event:'push',conclusion:'success'}))};
+else if(path.includes('repos/bitbaum/loki/actions/runs?')) result={workflow_runs:[{path:'.github/workflows/ci.yml',event:'pull_request',conclusion:'success'}]};
+else if(path.includes('/contents/')) {
+ const [repo,file,ref]=/^repos\\/([^/]+\\/[^/]+)\\/contents\\/(.+)\\?ref=(.+)$/.exec(path).slice(1);
+ let value=null;
+ if(repo==='bitbaum/loki' && file==='package.json') value=JSON.stringify({name:'loki',dependencies:{}});
+ if(repo==='bitbaum/loki' && file==='pnpm-lock.yaml') value=rootLock;
+ if(repo==='bitbaum/loki' && file==='scripts/site-template/package.json') value=JSON.stringify({name:'starter',dependencies:{'@bitbaum/ai-kit':'^'+(ref===base?'1.21.0':'1.21.4')}});
+ if(repo==='bitbaum/loki' && file==='scripts/site-template/pnpm-lock.yaml') value=lock(ref===base?'1.21.0':'1.21.4');
+ if(repo==='bitbaum/kivvi' && file==='packages/ai/package.json') value=JSON.stringify({name:'@kivvi/ai',dependencies:{'@bitbaum/ai-kit':'^1.21.4'}});
+ if(repo==='bitbaum/kivvi' && file==='pnpm-lock.yaml') value=canaryLock;
+ if(value!==null) result=encode(value);
+}
+if(result===undefined){console.error('404');process.exit(1)}
+console.log(JSON.stringify(result));
+`,
+      { mode: 0o755 },
+    );
+    const run = spawnSync(
+      process.execPath,
+      [
+        new URL("./package-rollout-gate.mjs", import.meta.url).pathname,
+        "bitbaum/loki",
+        "1",
+      ],
+      { encoding: "utf8", env: { ...process.env, PATH: `${dir}:${process.env.PATH}` } },
+    );
+    assert.equal(run.status, 1, run.stdout + run.stderr);
+    assert.match(run.stdout, /@bitbaum\/ai-kit@1\.21\.4: wait for bitbaum\/kivvi/);
+    assert.doesNotMatch(run.stdout + run.stderr, /no importer-specific lock evidence/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
