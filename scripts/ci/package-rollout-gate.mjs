@@ -249,7 +249,7 @@ export async function assessRollout({
         !Number.isFinite(Date.parse(canary.deployedAt))
       ) {
         findings.push(
-          `${name}@${version}: wait for ${representative.canary} to deploy this artifact, pass CI/browser checks and soak for ${settings.soakHours}h`,
+          `${name}@${version}: wait for ${representative.canary} to deploy this artifact${settings.soakHours ? ", pass CI/browser checks and soak for " + settings.soakHours + "h" : " and pass CI/browser checks"}`,
         );
       }
     }
