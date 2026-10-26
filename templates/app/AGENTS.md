@@ -47,3 +47,8 @@ around a package defect.
 
 Keep shared fixes in their owning package. Shared package composition CI checks
 that adoption is real and that dependency updates remain enabled.
+
+Use Fleet's auto-merge sweep as the merge authority. Do not call the direct
+GitHub merge API, use built-in `--auto` merging, or manually merge a PR: those
+paths can bypass the docs, CI-freshness and shared-package rollout checks.
+Leave a PR open if a required workflow is missing or red.
