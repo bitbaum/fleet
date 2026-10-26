@@ -4,16 +4,19 @@
     "@bitbaum/sitekit": {
       "canary": "bitbaum/biaslens",
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "candidateDependencyChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "@bitbaum/accountkit": {
       "canary": "bitbaum/biaslens",
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "candidateDependencyChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "@bitbaum/design-tokens": {
       "canary": "bitbaum/biaslens",
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "candidateDependencyChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "bip-kit": {
@@ -54,12 +57,14 @@
       "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "candidateDependencyChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "@bitbaum/chartkit": {
       "canary": "bitbaum/substrata",
       "bootstrapPr": 252,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "candidateDependencyChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     },
     "ai-forms": {
@@ -68,6 +73,7 @@
       "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
+      "candidateDependencyChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
     }
   },
