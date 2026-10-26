@@ -1,5 +1,5 @@
 {
-  "soakHours": 24,
+  "soakHours": 0,
   "packages": {
     "@bitbaum/accountkit": {
       "canary": "bitbaum/biaslens",

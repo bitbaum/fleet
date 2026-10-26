@@ -90,7 +90,7 @@ console.log(JSON.stringify(result));
       ]) {
         const held = run(bad);
         assert.equal(held.status, 1, held.stdout + held.stderr);
-        assert.match(held.stdout, /wait for .*soak for 24h/);
+        assert.match(held.stdout, /wait for .* to deploy this artifact/);
       }
       assert.equal(run(receipt, 503).status, 2);
     } finally {

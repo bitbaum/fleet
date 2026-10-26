@@ -11,9 +11,12 @@ own verify/publish gates; downstream apps provide deployment evidence. BiasLens 
 actually consumes. A canary dependency PR must pass both `ci.yml` and
 `browser-smoke.yml` on its exact head. Every other consumer waits for the same
 locked artifact to be deployed on the canary, with successful CI and browser
-checks, and a 24-hour observation period. The latest canary default-branch commit
-must be the deployed commit. Another deployment restarts the conservative
-observation period. Each consumer must still pass all of its own checks, including successful
+checks, and an observation period of `soakHours`. That period is **0** while the
+canaries have almost no traffic (owner, 2026-10-26): a day on a site nobody uses
+observes nothing and only delays every other product by a day. Raise it again
+once a canary has real users, so the wait actually watches something. The
+latest canary default-branch commit must be the deployed commit. Another
+deployment restarts the observation period. Each consumer must still pass all of its own checks, including successful
 `ci.yml` and `browser-smoke.yml` workflows on the candidate commit.
 
 Known first-party packages without a designated canary wait for configuration;
@@ -127,7 +130,7 @@ Once a canary actually serves a verified receipt, configure its HTTPS URL in
 `registers/package-rollouts.json` under `deploymentReceipts["owner/repo"]`.
 The gate then requires the live receipt to match the current commit, complete
 canonical artifact map and lockfile digest, in addition to exact CI/browser,
-successful deployment and the unchanged 24-hour observation period. Missing,
+successful deployment and the observation period (`soakHours`). Missing,
 stale or malformed live evidence holds promotion. An unconfigured receipt URL
 does not claim deployed-artifact verification; deployment integration and live
 validation are separate prerequisites to enabling it. Existing nested-consumer
