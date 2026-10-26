@@ -153,6 +153,12 @@ grep -q 'createAuthRuntime' "$APP/lib/auth/server.ts" && grep -q '@bitbaum/accou
 grep -q '@bitbaum/accountkit/auth/schema' "$APP/lib/db/schema.ts" && ok "account tables use the shared schema" || bad "account schema is duplicated"
 grep -q '@bitbaum/chatkit/react' "$APP/components/chat/SharedChat.tsx" && grep -q '"@bitbaum/chatkit"' "$APP/package.json" \
   && ok "chat behavior and presentation use chatkit" || bad "chat behavior is duplicated or package is absent"
+grep -q '@bitbaum/accountkit' "$APP/AGENTS.md" && grep -q '@bitbaum/chatkit' "$APP/AGENTS.md" && grep -q '@bitbaum/ai-kit' "$APP/AGENTS.md" \
+  && ok "agent rules route shared auth, chat and model fixes to their owning packages" \
+  || bad "agent rules omit shared-package ownership instructions"
+grep -q 'auto-merge sweep' "$APP/AGENTS.md" && grep -q -- '--auto' "$APP/AGENTS.md" \
+  && ok "agent rules prohibit merge paths that bypass Fleet policy" \
+  || bad "agent rules omit the central merge-policy requirement"
 grep -q 'localePrefix: "always"' "$APP/i18n/routing.ts" && ok 'next-intl localePrefix: "always"' || bad "localePrefix is not always"
 if grep -q 'ß' "$APP/messages/de.json"; then bad "German messages contain ß (Swiss spelling: ss)"; else ok "German is spelled the Swiss way"; fi
 

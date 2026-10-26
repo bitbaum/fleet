@@ -315,6 +315,18 @@ generated typo suite (`typoCases` + `evaluate`) in the app's tests.
 Every chat is `@bitbaum/chatkit`; fix chat bugs there, never in an app. The
 checklist it enforces is `SHARED.md` → "Chat — the standard".
 
+## Authentication and accounts
+
+`@bitbaum/accountkit` owns shared authentication behavior: registration,
+password login and recovery, verification, magic links, passkeys, TOTP,
+sessions, social/OIDC adapters, account linking, and shared screens/runtime.
+Fix a cross-product auth defect in accountkit, add the regression test there,
+release it through the verified package path, and update consumers. Do not
+repair shared auth by forking handlers, tables, mail flows or screens in an
+app. Products keep their own role and tenant policy, legacy identity mapping,
+provider configuration and domain-specific authorization; preserve those at
+the app adapter and prove parity before changing them.
+
 ## Repos you create
 
 The fleet creates repos automatically now — Loki provisions one per
@@ -356,3 +368,11 @@ including owner/agent PRs: run `node scripts/ci/package-rollout-gate.mjs owner/r
 Do not manually merge around a hold. See `docs/package-rollouts.md` for exact
 artifact evidence, observation, blocked versions and recovery. Fix the upstream
 package with a regression test and check the affected consumer journey.
+
+For every pull request, use the Fleet auto-merge sweep as the merge authority.
+Do not use GitHub's direct merge API, its built-in `--auto` merge, or a manual
+merge click: those paths can bypass the sweep's docs, CI-freshness and package
+rollout gates when repository branch protection is absent. A green workflow is
+necessary but is not by itself authorization to merge. If the sweep or a
+required check is unavailable, leave the pull request open and record the
+blocker.

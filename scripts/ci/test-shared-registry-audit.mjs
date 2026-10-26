@@ -17,6 +17,8 @@ import {
   installFor, specifiersFor, buildPackagesJson, publishedNpmVersions,
   unreleasable, repoSlug,
 } from "./shared-registry-audit.mjs";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 let pass = 0, fail = 0;
 const ok = (m) => { pass++; console.log(`  ✓ ${m}`); };
@@ -27,6 +29,25 @@ const eq = (got, want, m) => {
 };
 
 console.log("test-shared-registry-audit");
+
+// The registry is the release source of truth. The two highest-risk owner
+// contracts must not show an older copyable install command in SHARED.md.
+{
+  const packages = JSON.parse(
+    readFileSync(join(process.cwd(), "registers/packages.json"), "utf8"),
+  ).packages;
+  const shared = readFileSync(join(process.cwd(), "SHARED.md"), "utf8");
+  for (const slug of ["accountkit", "chatkit"]) {
+    const release = packages.find((item) => item.slug === slug);
+    const row = shared
+      .split("\n")
+      .find((line) => line.startsWith(`| [\`${slug}\`]`));
+    if (release && row?.includes(release.install.command))
+      ok(`${slug} install guidance matches the verified registry release`);
+    else
+      bad(`${slug} install guidance is missing or stale versus registers/packages.json`);
+  }
+}
 
 // ── unreleasable: an npm package with no tag-driven release ──────────────────
 {
