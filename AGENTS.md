@@ -315,6 +315,18 @@ generated typo suite (`typoCases` + `evaluate`) in the app's tests.
 Every chat is `@bitbaum/chatkit`; fix chat bugs there, never in an app. The
 checklist it enforces is `SHARED.md` → "Chat — the standard".
 
+## Authentication and accounts
+
+`@bitbaum/accountkit` owns shared authentication behavior: registration,
+password login and recovery, verification, magic links, passkeys, TOTP,
+sessions, social/OIDC adapters, account linking, and shared screens/runtime.
+Fix a cross-product auth defect in accountkit, add the regression test there,
+release it through the verified package path, and update consumers. Do not
+repair shared auth by forking handlers, tables, mail flows or screens in an
+app. Products keep their own role and tenant policy, legacy identity mapping,
+provider configuration and domain-specific authorization; preserve those at
+the app adapter and prove parity before changing them.
+
 ## Repos you create
 
 The fleet creates repos automatically now — Loki provisions one per
