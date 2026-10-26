@@ -291,6 +291,38 @@ test("canary deployment evidence binds checks, receipt, and lock to the exact SH
   assert.equal(wrongCommit.healthy, false);
 });
 
+test("workspace receipts may cover a broader release project than the package importer", async () => {
+  const tip = "e".repeat(40);
+  const lock = "workspace lock bytes";
+  const dependencies = { [name]: "0.4.1" };
+  const receiptDependencies = { [name]: "0.4.1", "@bitbaum/chatkit": "0.15.3" };
+  const { createHash } = await import("node:crypto");
+  const receipt = {
+    formatVersion: 1,
+    repo: "bitbaum/kivvi",
+    commit: tip,
+    project: "apps/web",
+    createdAt: "2026-10-26T00:00:00.000Z",
+    lockSha256: createHash("sha256").update(lock).digest("hex"),
+    artifacts: receiptDependencies,
+    versions: receiptDependencies,
+  };
+  const result = await canaryDeploymentEvidence({
+    canary: "bitbaum/kivvi",
+    tip,
+    dependencies,
+    receiptDependencies,
+    receiptProject: "apps/web",
+    deploy: { conclusion: "success", head_sha: tip, updated_at: receipt.createdAt },
+    checks: ["ci.yml", "browser-smoke.yml"],
+    receiptUrl: "https://example.test/.well-known/fleet-release.json",
+    lock,
+    fetchImpl: async () => new Response(JSON.stringify(receipt), { status: 200 }),
+  });
+  assert.equal(result.healthy, true);
+  assert.deepEqual(result.dependencies, dependencies);
+});
+
 test("retired nested workspace importers are safe while nested package updates stay held", () => {
   const lock = (version) =>
     `importers:\n  .:\n    dependencies:\n  packages/chartkit:\n    devDependencies:\n      '@bitbaum/design-tokens':\n        specifier: ^1.1.0\n        version: ${version}\n\npackages:\n`;

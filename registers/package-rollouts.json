@@ -19,6 +19,7 @@
     "bip-kit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
@@ -26,6 +27,7 @@
     "@bitbaum/ai-kit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "packages/ai",
+      "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
@@ -33,6 +35,7 @@
     "@bitbaum/mail-kit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
@@ -40,6 +43,7 @@
     "limitkit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
@@ -47,6 +51,7 @@
     "@bitbaum/chatkit": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
@@ -60,6 +65,7 @@
     "ai-forms": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
       "bootstrapPr": 141,
       "candidateChecks": ["ci.yml", "browser-smoke.yml"],
       "canaryChecks": ["ci.yml", "browser-smoke.yml"]
@@ -72,6 +78,7 @@
     ]
   },
   "deploymentReceipts": {
-    "bitbaum/biaslens": "https://biaslens.orangecat.ch/.well-known/fleet-release.json"
+    "bitbaum/biaslens": "https://biaslens.orangecat.ch/.well-known/fleet-release.json",
+    "bitbaum/kivvi": "https://kivvi.orangecat.ch/.well-known/fleet-release.json"
   }
 }
