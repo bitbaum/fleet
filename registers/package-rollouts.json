@@ -3,6 +3,7 @@
   "packages": {
     "@bitbaum/accountkit": {
       "canary": "bitbaum/biaslens",
+      "bootstrapPr": 90,
       "candidateChecks": [
         "ci.yml",
         "browser-smoke.yml"
