@@ -27,6 +27,8 @@
 #
 # Every repo-specific value is an env var (GH_REPO, BASE_BRANCH, CI_WORKFLOW,
 # REARM_WORKFLOWS, MAX_RUN_ATTEMPTS), so there is nothing left to fork over.
+# A repository may additionally set REARM_IF_FILES and REARM_IF_WORKFLOWS to
+# dispatch an automation only when the merged PR changes one of its inputs.
 #
 # WHY THIS EXISTS
 # ---------------
@@ -80,6 +82,8 @@ REPO="${GH_REPO:?GH_REPO must be set}"
 BASE_BRANCH="${BASE_BRANCH:-main}"
 CI_WORKFLOW="${CI_WORKFLOW:-ci.yml}"
 REARM_WORKFLOWS="${REARM_WORKFLOWS:-$CI_WORKFLOW}"
+REARM_IF_FILES="${REARM_IF_FILES:-}"
+REARM_IF_WORKFLOWS="${REARM_IF_WORKFLOWS:-}"
 
 # Workflow that ships the base branch, e.g. deploy.yml. EMPTY DISABLES IT, and
 # empty is the default: a repo that does not set this behaves exactly as before,
@@ -486,6 +490,7 @@ if [ "$count" -eq 0 ]; then
 fi
 
 merged_any=0
+conditional_rearm_workflows=""
 
 # OLDEST FIRST. `gh pr list` returns newest-first, and this loop merges the
 # first eligible PR and stops — so the newest green PR wins every sweep and an
@@ -855,6 +860,17 @@ INNER_EOF
   fi
 
   echo "[auto-merge] #${number} green and ready — merging: ${title}"
+  if [ -n "$REARM_IF_FILES" ] && [ -n "$REARM_IF_WORKFLOWS" ]; then
+    changed_files=$(gh api "repos/${REPO}/pulls/${number}/files?per_page=100" \
+      --paginate \
+      --jq '.[].filename' 2>/dev/null || true)
+    for changed_path in $REARM_IF_FILES; do
+      if grep -Fxq "$changed_path" <<<"$changed_files"; then
+        conditional_rearm_workflows="$REARM_IF_WORKFLOWS"
+        break
+      fi
+    done
+  fi
   if gh pr merge "$number" --repo "$REPO" --squash --delete-branch; then
     merged_any=1
     echo "[auto-merge] #${number} merged"
@@ -887,7 +903,14 @@ if [ "$merged_any" -eq 1 ]; then
   rearm_poll="${REARM_POLL_SECONDS:-5}"
   # How many times to look: one now, then one per poll across the wait.
   rearm_looks=$(( ${REARM_WAIT_SECONDS:-45} / (rearm_poll > 0 ? rearm_poll : 1) + 1 ))
-  for wf in $REARM_WORKFLOWS; do
+  rearm_workflows="$REARM_WORKFLOWS"
+  for wf in $conditional_rearm_workflows; do
+    case " $rearm_workflows " in
+      *" $wf "*) ;;
+      *) rearm_workflows="$rearm_workflows $wf" ;;
+    esac
+  done
+  for wf in $rearm_workflows; do
     seen=0
     look=0
     while [ -n "$tip" ] && [ "$look" -lt "$rearm_looks" ]; do
