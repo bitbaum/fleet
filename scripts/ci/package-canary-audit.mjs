@@ -12,6 +12,23 @@ export async function auditCanaries(settings, readEvidence) {
       findings.push(`${name}: invalid or absent canary repository`);
       continue;
     }
+    const receiptProjects =
+      entry.receiptProjects ??
+      [entry.receiptProject ?? entry.canaryImporter ?? "."];
+    const requiredReceiptProjects = new Set(
+      [entry.receiptProject, entry.canaryImporter].filter(Boolean),
+    );
+    if (!requiredReceiptProjects.size) requiredReceiptProjects.add(".");
+    if (
+      !Array.isArray(receiptProjects) ||
+      receiptProjects.some((project) => typeof project !== "string") ||
+      [...requiredReceiptProjects].some((project) => !receiptProjects.includes(project))
+    ) {
+      findings.push(
+        `${name}: release receipt does not cover configured canary importers ${[...requiredReceiptProjects].join(", ")}`,
+      );
+      continue;
+    }
     let evidence;
     try {
       evidence = await readEvidence(entry.canary, entry.bootstrapPr ?? null);
