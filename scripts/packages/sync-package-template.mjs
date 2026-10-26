@@ -31,7 +31,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -146,6 +146,18 @@ function pushBranch(name, defaultBranch, missing, pr) {
   git('push', '-q', '--force', 'origin', `HEAD:refs/heads/${SYNC_BRANCH}`);
 }
 
+/** Update only the PR fields we own; avoid gh pr edit's unrelated org/project queries. */
+export function updatePullRequest(runGh, name, number, pull) {
+  const directory = mkdtempSync(join(tmpdir(), "fleet-pull-update-"));
+  const payload = join(directory, "pull.json");
+  try {
+    writeFileSync(payload, JSON.stringify({ title: pull.title, body: pull.body }), { mode: 0o600 });
+    return runGh("api", "--method", "PATCH", `repos/${ORG}/${name}/pulls/${number}`, "--input", payload);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
   const declarations = syncDeclarations(
@@ -187,7 +199,7 @@ async function main() {
       const url = gh('pr', 'create', '--repo', `${ORG}/${decl.name}`, '--base', info.default_branch, '--head', SYNC_BRANCH, '--title', pr.title, '--body', pr.body).trim();
       console.log(`→ ${ORG}/${decl.name}: opened ${url} adding ${what}`);
     } else {
-      gh('pr', 'edit', String(pull.number), '--repo', `${ORG}/${decl.name}`, '--title', pr.title, '--body', pr.body);
+      updatePullRequest(gh, decl.name, pull.number, pr);
       console.log(`→ ${ORG}/${decl.name}: updated ${pull.html_url} to add ${what}`);
     }
     changed++;

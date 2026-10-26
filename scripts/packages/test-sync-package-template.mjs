@@ -11,11 +11,11 @@
  * one would quietly stop giving it to new repos.
  */
 
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, existsSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { REQUIRED_TEMPLATE_FILES, checkTemplate, templateFiles } from './create-package-repos.mjs';
-import { missingTemplateFiles, planSync, syncPullRequest, syncDeclarations } from './sync-package-template.mjs';
+import { missingTemplateFiles, planSync, syncPullRequest, syncDeclarations, updatePullRequest } from './sync-package-template.mjs';
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log(`  ✓ ${m}`); pass++; };
@@ -85,6 +85,18 @@ console.log('the pull request');
 const pr = syncPullRequest(missing);
 eq(pr.title, 'chore: add the fleet package template files this repo is missing (release.yml)', 'the title names the files');
 eq(pr.body.includes('`.github/workflows/release.yml`') && pr.body.includes('no file this repository already has is changed'), true, 'the body lists them and says nothing else changes');
+
+
+
+console.log("bounded pull-request updates");
+let updateFile;
+const update = { title: "Template update", body: "First line\nLiteral `code` and $(not-a-command)" };
+updatePullRequest((...args) => {
+  eq(args.slice(0, 4), ["api", "--method", "PATCH", "repos/bitbaum/searchkit/pulls/7"], "PR edits use the bounded REST endpoint, not org/project GraphQL");
+  updateFile = args[5];
+  eq(JSON.parse(readFileSync(updateFile, "utf8")), update, "multiline PR content is preserved as JSON without shell expansion");
+}, "searchkit", 7, update);
+eq(existsSync(updateFile), false, "temporary PR payload is removed");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
