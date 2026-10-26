@@ -22,7 +22,7 @@ test("aliases cannot escape first-party artifact checks", () => {
 });
 const settings = {
   soakHours: 24,
-  packages: { [name]: { canary: "bitbaum/biaslens" } },
+  packages: { [name]: { canary: "bitbaum/biaslens", bootstrapPr: 42 } },
   blocked: {},
 };
 function check(overrides = {}) {
@@ -31,6 +31,7 @@ function check(overrides = {}) {
     before: { [name]: "0.4.0" },
     after: { [name]: "0.4.1" },
     candidateChecks: ["ci.yml", "browser-smoke.yml"],
+    candidatePullRequest: 42,
     settings,
     now,
     readCanary: async () => ({
@@ -62,6 +63,13 @@ test("canary requires browser and CI proof", async () => {
       candidateChecks: ["ci.yml", "browser-smoke.yml"],
     }),
     [],
+  );
+});
+test("only the configured PR may bootstrap its own package canary", async () => {
+  assert.deepEqual(await check({ repo: "bitbaum/biaslens", candidatePullRequest: 42 }), []);
+  assert.match(
+    (await check({ repo: "bitbaum/biaslens", candidatePullRequest: 43 }))[0],
+    /configured bootstrap PR #42/,
   );
 });
 test("dependency-only UI package bumps use CI while source changes require browser proof", async () => {
@@ -186,6 +194,7 @@ test("a workspace canary is the package-specific bootstrap for its importer", as
     before: { "ai-forms": "0.1.2" },
     after: { "ai-forms": "0.1.3" },
     candidateChecks: ["ci.yml", "browser-smoke.yml"],
+    candidatePullRequest: 141,
     settings: workspacePolicy,
     now,
     readCanary: async () => {
@@ -193,6 +202,19 @@ test("a workspace canary is the package-specific bootstrap for its importer", as
     },
   });
   assert.deepEqual(findings, []);
+  const wrongBootstrap = await assessRollout({
+    repo: "bitbaum/kivvi",
+    before: { "ai-forms": "0.1.2" },
+    after: { "ai-forms": "0.1.3" },
+    candidateChecks: ["ci.yml", "browser-smoke.yml"],
+    candidatePullRequest: 142,
+    settings: workspacePolicy,
+    now,
+    readCanary: async () => {
+      assert.fail("a non-bootstrap PR cannot bypass deployed canary evidence");
+    },
+  });
+  assert.match(wrongBootstrap[0], /configured bootstrap PR #141/);
 });
 test("blocked version cannot even reach canary", async () =>
   assert.ok(
