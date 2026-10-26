@@ -185,6 +185,7 @@ export async function assessRollout({
   after,
   readCanary,
   candidateChecks,
+  candidateSourceChanged = false,
   requiredChecks = ["ci.yml", "browser-smoke.yml"],
   settings = policy,
   now = Date.now(),
@@ -211,7 +212,9 @@ export async function assessRollout({
       );
       continue;
     }
-    const candidateRequired = config.candidateChecks ?? requiredChecks;
+    const candidateRequired = candidateSourceChanged
+      ? (config.candidateChecks ?? requiredChecks)
+      : (config.candidateDependencyChecks ?? config.candidateChecks ?? requiredChecks);
     if (!candidateRequired.every((check) => candidateChecks.includes(check))) {
       findings.push(
         `${name}: consumer needs successful ${candidateRequired.join(" and ")} workflows on this commit`,
@@ -236,6 +239,25 @@ export async function assessRollout({
     }
   }
   return findings;
+}
+function hasConsumerSourceChanges(files, prefix = "") {
+  const normalizedPrefix = prefix ? `${prefix.replace(/\/$/, "")}/` : "";
+  return files.some(({ filename }) => {
+    if (normalizedPrefix && !filename.startsWith(normalizedPrefix)) return false;
+    const relative = normalizedPrefix
+      ? filename.slice(normalizedPrefix.length)
+      : filename;
+    if (!relative) return false;
+    if (
+      /(^|\/)(?:package\.json|pnpm-lock\.yaml|package-lock\.json|npm-shrinkwrap\.json|package-plan\.json)$/.test(relative) ||
+      relative.startsWith(".github/workflows/") ||
+      relative.startsWith("docs/") ||
+      /(?:^|\/)README(?:\.[^/]*)?$/i.test(relative) ||
+      /\.mdx?$/i.test(relative)
+    )
+      return false;
+    return true;
+  });
 }
 function api(path) {
   return JSON.parse(
@@ -475,6 +497,7 @@ async function main() {
         before: beforeTemplate,
         after: afterTemplate,
         candidateChecks: greenWorkflows(repo, pr.head.sha),
+        candidateSourceChanged: hasConsumerSourceChanges(files, "templates/app"),
         requiredChecks: ["ci.yml"],
         readCanary: async (canary, config) => {
           const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
@@ -577,6 +600,7 @@ async function main() {
       before: beforeNested,
       after: afterNested,
       candidateChecks: greenWorkflows(repo, pr.head.sha),
+      candidateSourceChanged: hasConsumerSourceChanges(files, importer),
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
@@ -625,6 +649,7 @@ async function main() {
       before: beforeNested,
       after: afterNested,
       candidateChecks: greenWorkflows(repo, pr.head.sha),
+      candidateSourceChanged: hasConsumerSourceChanges(files, project),
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
@@ -673,6 +698,7 @@ async function main() {
     before,
     after,
     candidateChecks: greenWorkflows(repo, pr.head.sha),
+    candidateSourceChanged: hasConsumerSourceChanges(files),
     readCanary: async (canary, config) => {
       const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
       const cacheKey = `${canary}:${requiredChecks.join(",")}`;

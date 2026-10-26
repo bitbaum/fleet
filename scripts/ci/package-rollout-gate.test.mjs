@@ -64,6 +64,38 @@ test("canary requires browser and CI proof", async () => {
     [],
   );
 });
+test("dependency-only UI package bumps use CI while source changes require browser proof", async () => {
+  const settings = {
+    soakHours: 24,
+    packages: {
+      [name]: {
+        canary: "bitbaum/biaslens",
+        candidateChecks: ["ci.yml", "browser-smoke.yml"],
+        candidateDependencyChecks: ["ci.yml"],
+      },
+    },
+    blocked: {},
+  };
+  const run = (candidateSourceChanged, candidateChecks) =>
+    assessRollout({
+      repo: "bitbaum/example",
+      before: { [name]: "0.4.0" },
+      after: { [name]: "0.4.1" },
+      candidateSourceChanged,
+      candidateChecks,
+      settings,
+      now,
+      readCanary: async () => ({
+        dependencies: { [name]: "0.4.1" },
+        healthy: true,
+        checks: ["ci.yml", "browser-smoke.yml"],
+        deployedAt: "2026-10-22T12:00:00Z",
+      }),
+    });
+  assert.deepEqual(await run(false, ["ci.yml"]), []);
+  assert.match((await run(true, ["ci.yml"]))[0], /ci.yml and browser-smoke.yml/);
+  assert.deepEqual(await run(true, ["ci.yml", "browser-smoke.yml"]), []);
+});
 test("template consumers may use full CI plus the exact canary soak", async () => {
   assert.deepEqual(
     await check({
