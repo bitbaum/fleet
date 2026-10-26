@@ -7,7 +7,10 @@ import { dependencyIdentity } from "./package-rollout-gate.mjs";
 /** A configured canary must actually execute the package it is meant to exercise. */
 export async function auditCanaries(settings, readEvidence) {
   const findings = [];
-  for (const [name, entry] of Object.entries(settings.packages ?? {})) {
+  const entries = Object.entries(settings.packages ?? {}).flatMap(([name, entry]) =>
+    [entry, ...(entry.additionalCanaries ?? [])].map((representative) => [name, representative]),
+  );
+  for (const [name, entry] of entries) {
     if (!/^[\w.-]+\/[\w.-]+$/.test(entry.canary ?? "")) {
       findings.push(`${name}: invalid or absent canary repository`);
       continue;

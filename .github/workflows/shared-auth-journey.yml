@@ -2,6 +2,9 @@ name: Shared account lifecycle
 on:
   workflow_call:
     inputs:
+      integration-check-script:
+        type: string
+        default: ""
       migrate-command:
         type: string
         required: true
@@ -42,6 +45,7 @@ jobs:
           sparse-checkout: |
             scripts/test/auth-journey.mjs
             scripts/test/auth-browser.mjs
+            scripts/test/auth-integration.mjs
             scripts/test/auth-methods.mjs
             scripts/test/auth-totp.mjs
             scripts/test/capture-auth-mail.mjs
@@ -59,6 +63,7 @@ jobs:
       - run: pnpm run build
       - name: Exercise account lifecycle and shared reset form
         env:
+          AUTH_TEST_INTEGRATION_CHECK: ${{ inputs.integration-check-script }}
           AUTH_TEST_SIGNIN_PATH: ${{ inputs.sign-in-path }}
           AUTH_TEST_ACCOUNT_PATH: ${{ inputs.account-path }}
           BROWSER_EXECUTABLE: /usr/bin/google-chrome

@@ -466,3 +466,17 @@ test("obsolete AccountKit downgrade is blocked even for its bootstrap canary", a
     assert.ok(findings.some((finding) => finding.includes("release is blocked")));
   }
 });
+
+test("each representative can bootstrap independently but all must qualify for downstream promotion", async () => {
+  const multi = { ...settings, packages: { [name]: { ...settings.packages[name], additionalCanaries: [{ canary: "bitbaum/case-app", bootstrapPr: 7, candidateChecks: ["ci.yml", "case-browser.yml"], canaryChecks: ["ci.yml", "case-browser.yml"] }] } } };
+  assert.deepEqual(await check({settings:multi, repo:"bitbaum/case-app", candidatePullRequest:7, candidateChecks:["ci.yml", "case-browser.yml"]}),[]);
+  assert.ok((await check({settings:multi, repo:"bitbaum/case-app", candidatePullRequest:8, candidateChecks:["ci.yml", "case-browser.yml"]})).length);
+  assert.ok((await check({settings:multi, repo:"bitbaum/case-app", candidatePullRequest:7, candidateChecks:["ci.yml"]})).length);
+  const calls=[];
+  const evidence=async (repo)=> {calls.push(repo); return {dependencies:{[name]:"0.4.1"},healthy:repo!=="bitbaum/case-app",checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-22T12:00:00Z"};};
+  const result=await check({settings:multi,readCanary:evidence});
+  assert.deepEqual(calls,["bitbaum/biaslens","bitbaum/case-app"]);
+  assert.equal(result.length,1);assert.match(result[0],/case-app/);
+  assert.deepEqual(await check({settings:multi,readCanary:async()=>({dependencies:{[name]:"0.4.1"},healthy:true,checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-22T12:00:00Z"})}),[]);
+  assert.ok((await check({settings:multi,readCanary:async()=>({dependencies:{[name]:"0.4.1"},healthy:true,checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-24T11:00:00Z"})})).length, "additional representatives retain the full observation period");
+});
