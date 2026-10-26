@@ -251,7 +251,7 @@ export async function assessRollout({
   }
   return findings;
 }
-function hasConsumerSourceChanges(files, prefix = "") {
+export function hasConsumerSourceChanges(files, prefix = "") {
   const normalizedPrefix = prefix ? `${prefix.replace(/\/$/, "")}/` : "";
   return files.some(({ filename }) => {
     if (normalizedPrefix && !filename.startsWith(normalizedPrefix)) return false;
@@ -260,7 +260,7 @@ function hasConsumerSourceChanges(files, prefix = "") {
       : filename;
     if (!relative) return false;
     if (
-      /(^|\/)(?:package\.json|pnpm-lock\.yaml|package-lock\.json|npm-shrinkwrap\.json|package-plan\.json)$/.test(relative) ||
+      /(^|\/)(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|package-lock\.json|npm-shrinkwrap\.json|package-plan\.json)$/.test(relative) ||
       relative.startsWith(".github/workflows/") ||
       relative.startsWith("docs/") ||
       /(?:^|\/)README(?:\.[^/]*)?$/i.test(relative) ||
