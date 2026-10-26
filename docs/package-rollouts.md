@@ -140,3 +140,15 @@ Dependabot proposed replacing deployed AccountKit 0.6.3 with 0.2.1 in Heidi
 exports. Both proposals were closed; the obsolete commit and npm version are
 blocked centrally, including at the canary. This does not prohibit an intentional
 recovery to a compatible, separately verified release through the existing policy.
+
+## Release freshness
+
+The package template's `release-notify.yml` listens to successful release,
+publish and CI completions. It requests reconciliation only for a stable tagged
+commit with successful exact-commit CI; it never executes workflow artifacts or
+pull-request code. Fleet then independently resolves available releases rather
+than trusting the notification's version claim. The same event starts consumer
+currency planning and the serialized shared inventory refresh, which dispatches
+Bitbaum with the exact changed registry commit. Scheduled reconciliation remains
+the fallback when a publisher notification fails. Template synchronization adds
+this missing workflow to existing packages through their normal checked PRs.

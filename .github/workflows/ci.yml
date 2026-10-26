@@ -202,6 +202,9 @@ jobs:
       - name: The package template is complete, and the sync only adds what is missing
         run: node scripts/packages/test-sync-package-template.mjs
 
+      - name: Verified release notifications
+        run: node scripts/packages/test-release-notify.mjs
+
       # This detector reports on repos nobody is watching, so its own failure
       # mode is silence: a clean report from a broken audit is worse than no
       # audit, because it prints a ✓. Both sides are pinned — the real AOZ
