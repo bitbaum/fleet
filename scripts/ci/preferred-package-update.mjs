@@ -8,12 +8,14 @@ const compare = (a, b) => {
 export function preferredPackageUpdate({ repo, path, name, from, identity, currentVersion, target, sourceSha }) {
   const have = parse(currentVersion), want = parse(target?.version);
   if (!have || !want || compare(have, want) > 0) return null;
+  const sameVersion = compare(have, want) === 0;
   let to;
   if (target.release?.source === 'git') {
-    if (compare(have, want) === 0) return null;
     const sha = target.release.commit;
     const gitRepo = target.repo?.replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '');
     if (!/^[0-9a-f]{40}$/.test(sha ?? '') || !/^[\w.-]+\/[\w.-]+$/.test(gitRepo ?? '')) throw new Error('Unverified Git target');
+    const installedGit = /^(?:github:|git\+https:\/\/github\.com\/)([\w.-]+\/[\w.-]+?)(?:\.git)?#(v\d+\.\d+\.\d+|[0-9a-f]{40})$/.exec(from ?? '');
+    if (sameVersion && (!installedGit || installedGit[1] !== gitRepo || installedGit[2] === sha)) return null;
     to = `github:${gitRepo}#${sha}`;
   } else if (target.release?.source === 'npm') {
     // Preserve the dependency key, including aliases; a Git alias may differ.

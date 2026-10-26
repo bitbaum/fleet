@@ -15,6 +15,29 @@ test('installed newer/equal artifacts never migrate backwards to older Git', () 
   for (const currentVersion of ['1.2.0', '1.3.0', '2.0.0', '1.3.0-beta.1', 'unresolved'])
     assert.equal(preferredPackageUpdate({ ...input, currentVersion }), null);
 });
+test('same-version Git pins advance to the exact verified release commit', () => {
+  const old = 'c'.repeat(40);
+  const row = preferredPackageUpdate({
+    ...input,
+    from: `github:bitbaum/design-tokens#${old}`,
+    identity: { packageName: target.name },
+    currentVersion: '1.2.0',
+  });
+  assert.equal(row.to, `github:bitbaum/design-tokens#${sha}`);
+  assert.equal(row.latest, '1.2.0');
+  assert.equal(preferredPackageUpdate({
+    ...input,
+    from: `github:bitbaum/design-tokens#${sha}`,
+    identity: { packageName: target.name },
+    currentVersion: '1.2.0',
+  }), null);
+  assert.equal(preferredPackageUpdate({
+    ...input,
+    from: 'npm:@bitbaum/design-tokens@^1.2.0',
+    identity: { packageName: target.name, range: '^1.2.0' },
+    currentVersion: '1.2.0',
+  }), null);
+});
 test('a newer declared floor is not lowered even when old lock is behind', () => {
   assert.equal(preferredPackageUpdate({ ...input, identity: { ...input.identity, range: '^1.4.0' } }), null);
 });
