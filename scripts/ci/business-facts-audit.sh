@@ -2,7 +2,7 @@
 #
 # Fleet audit: do the registers contradict the business facts?
 #
-#   business-facts-audit.sh            (reads loki's apps.conf via gh)
+#   business-facts-audit.sh            (reads loki's public apps.conf via raw GitHub)
 #   APPS_CONF=path business-facts-audit.sh
 #
 # WHY: 2026-10-21 apps.conf listed Kivvi as RevampIT|client-app|favour after
@@ -16,7 +16,13 @@ ORG="$HERE/../../registers/org.json"
 READINGS="$HERE/../../registers/readings.json"
 conf="$(mktemp)"; trap 'rm -f "$conf"' EXIT
 if [[ -n "${APPS_CONF:-}" ]]; then cp "$APPS_CONF" "$conf"
-else gh api repos/bitbaum/loki/contents/scripts/hetzner/apps.conf -H 'Accept: application/vnd.github.raw' > "$conf"; fi
+else
+  # This source file is public. Fetch the raw object so this routine audit
+  # does not consume the authenticated GitHub API quota used by CI sweeps.
+  curl --fail --silent --show-error --location --retry 3 --retry-all-errors \
+    'https://raw.githubusercontent.com/bitbaum/loki/main/scripts/hetzner/apps.conf' \
+    --output "$conf"
+fi
 python3 - "$ORG" "$READINGS" "$conf" <<'PY'
 import json, sys
 org, readings, conf = sys.argv[1:]
