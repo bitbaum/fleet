@@ -107,8 +107,19 @@ test("standalone nested starters use their own lockfile for package rollout evid
   const standaloneLock = (version) =>
     `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^${version}\n        version: ${version}\n`;
   const canaryLock =
-    `lockfileVersion: '9.0'\nimporters:\n  .:\n  packages/ai:\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^1.21.4\n        version: 1.21.4\n`;
+    `lockfileVersion: '9.0'\nimporters:\n  .:\n  apps/web:\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^1.21.4\n        version: 1.21.4\n      '@bitbaum/chatkit':\n        specifier: ^0.15.3\n        version: 0.15.3\n  packages/ai:\n    dependencies:\n      '@bitbaum/ai-kit':\n        specifier: ^1.21.4\n        version: 1.21.4\n`;
   const rootLock = "lockfileVersion: '9.0'\nimporters:\n  .:\n";
+  const receiptArtifacts = { "@bitbaum/ai-kit": "1.21.4", "@bitbaum/chatkit": "0.15.3" };
+  const receipt = {
+    formatVersion: 1,
+    repo: "bitbaum/kivvi",
+    commit: tip,
+    project: "apps/web",
+    createdAt: new Date().toISOString(),
+    lockSha256: createHash("sha256").update(canaryLock).digest("hex"),
+    artifacts: receiptArtifacts,
+    versions: receiptArtifacts,
+  };
   try {
     writeFileSync(
       join(dir, "gh"),
@@ -136,6 +147,7 @@ else if(path.includes('/contents/')) {
  if(repo==='bitbaum/loki' && file==='scripts/site-template/package.json') value=JSON.stringify({name:'starter',dependencies:{'@bitbaum/ai-kit':'^'+(ref===base?'1.21.0':'1.21.4')}});
  if(repo==='bitbaum/loki' && file==='scripts/site-template/pnpm-lock.yaml') value=lock(ref===base?'1.21.0':'1.21.4');
  if(repo==='bitbaum/kivvi' && file==='packages/ai/package.json') value=JSON.stringify({name:'@kivvi/ai',dependencies:{'@bitbaum/ai-kit':'^1.21.4'}});
+ if(repo==='bitbaum/kivvi' && file==='apps/web/package.json') value=JSON.stringify({name:'@kivvi/web',dependencies:{'@bitbaum/ai-kit':'^1.21.4','@bitbaum/chatkit':'^0.15.3'}});
  if(repo==='bitbaum/kivvi' && file==='pnpm-lock.yaml') value=canaryLock;
  if(value!==null) result=encode(value);
 }
@@ -144,9 +156,18 @@ console.log(JSON.stringify(result));
 `,
       { mode: 0o755 },
     );
+    writeFileSync(
+      join(dir, "fetch.mjs"),
+      `globalThis.fetch = async (url) => {
+ if(new URL(url).hostname!=='kivvi.orangecat.ch') throw Error('unexpected network target');
+ return new Response(${JSON.stringify(JSON.stringify(receipt))},{status:200,headers:{'content-type':'application/json'}});
+};`,
+    );
     const run = spawnSync(
       process.execPath,
       [
+        "--import",
+        join(dir, "fetch.mjs"),
         new URL("./package-rollout-gate.mjs", import.meta.url).pathname,
         "bitbaum/loki",
         "1",
