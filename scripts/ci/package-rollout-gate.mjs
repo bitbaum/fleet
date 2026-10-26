@@ -300,6 +300,18 @@ function workspaceDepsAt(repo, ref, importer) {
     `${repo}/${importer}: supported lockfile required for artifact-specific rollout evidence`,
   );
 }
+function canaryDepsAt(repo, ref, config) {
+  const importer = config.canaryImporter;
+  if (!importer) return depsAt(repo, ref);
+  if (
+    typeof importer !== "string" ||
+    importer.startsWith("/") ||
+    importer.split("/").some((part) => !part || part === "." || part === "..") ||
+    importer.includes("\\")
+  )
+    throw new Error(`${repo}: invalid canary importer path`);
+  return workspaceDepsAt(repo, ref, importer);
+}
 export function successfulWorkflows(runs) {
   const seen = new Set(),
     passed = [];
@@ -436,7 +448,7 @@ async function main() {
           const result = await canaryDeploymentEvidence({
             canary,
             tip,
-            dependencies: depsAt(canary, tip),
+            dependencies: canaryDepsAt(canary, tip, config),
             deploy,
             checks,
             requiredChecks,
@@ -530,7 +542,7 @@ async function main() {
         const result = await canaryDeploymentEvidence({
           canary,
           tip,
-          dependencies: depsAt(canary, tip),
+          dependencies: canaryDepsAt(canary, tip, config),
           deploy,
           checks,
           requiredChecks,
@@ -575,7 +587,7 @@ async function main() {
       const result = await canaryDeploymentEvidence({
         canary,
         tip,
-        dependencies: depsAt(canary, tip),
+        dependencies: canaryDepsAt(canary, tip, config),
         deploy,
         checks,
         requiredChecks,
