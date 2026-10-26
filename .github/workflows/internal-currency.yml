@@ -117,7 +117,10 @@ jobs:
     # fail-fast:false keeps sibling jobs running; real failures still fail this run.
     strategy:
       fail-fast: false
-      max-parallel: 3
+      # Each matrix item performs a cross-repository checkout and push. Keep
+      # one at a time to avoid secondary API/rate-limit bursts on large plans;
+      # a failed checkout happens before edits and must fail visibly for retry.
+      max-parallel: 1
       matrix:
         target: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
