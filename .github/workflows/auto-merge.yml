@@ -55,12 +55,10 @@ jobs:
 
       - name: Merge every green, ready PR
         env:
-          # FLEET_PAT where available, GITHUB_TOKEN otherwise. This repo runs
-          # the sweep inline rather than calling the reusable workflow — it IS
-          # the reusable workflow — so it needs the same fallback the callers
-          # get from `secrets.token || github.token`, or it stays the one repo
-          # in the fleet whose queue drains at the throttled schedule.
-          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+          # Every API operation in this sweep targets this repository. Use
+          # the per-repository token so the routine queue drain does not consume
+          # the owner-scoped FLEET_PAT quota needed by cross-repository audits.
+          GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           BASE_BRANCH: ${{ github.event.repository.default_branch }}
           CI_WORKFLOW: ci.yml
