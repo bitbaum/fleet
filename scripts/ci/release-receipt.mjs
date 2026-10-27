@@ -44,6 +44,7 @@ export function createReleaseReceipt({
   importer = ".",
   importers = [importer],
   manifests = {},
+  lockImporters = {},
   installed = {},
   createdAt = new Date().toISOString(),
 }) {
@@ -75,12 +76,15 @@ export function createReleaseReceipt({
   const artifacts = {},
     versions = {};
   for (const { depName, spec, importer: currentImporter } of wanted) {
+    const lockImporter = lockImporters[currentImporter] ?? currentImporter;
+    if (!isProjectPath(lockImporter))
+      throw new Error(`${currentImporter}: project is outside the selected lock root`);
     const name = dependencyIdentity(depName, spec),
       currentManifest = manifestsByPath[currentImporter],
       locked = pnpmLock
-        ? lockedDependencies(currentManifest, pnpmLock, currentImporter)
+        ? lockedDependencies(currentManifest, pnpmLock, lockImporter)
         : npmLock
-          ? lockedNpmDependencies(currentManifest, JSON.parse(npmLock), currentImporter)
+          ? lockedNpmDependencies(currentManifest, JSON.parse(npmLock), lockImporter)
           : {},
       artifact = locked[name],
       actual = installed[depName];
@@ -162,7 +166,6 @@ function main() {
       ? readFileSync(npmPath, "utf8")
       : undefined;
   const lockRoot = dirname(pnpmLock ? pnpmPath : npmPath);
-  const lockImporter = relative(lockRoot, dir).replaceAll("\\", "/") || ".";
   const installed = {};
   const projects = (option("--projects", importer)).split(",");
   if (projects.some((project) => !isProjectPath(project)) || new Set(projects).size !== projects.length)
@@ -192,13 +195,14 @@ function main() {
     manifest,
     pnpmLock,
     npmLock,
-    importer: lockImporter,
+    importer,
     importers: projects,
+    lockImporters: Object.fromEntries(projects.map(project => [
+      project, relative(lockRoot, resolve(root, project)).replaceAll("\\", "/") || ".",
+    ])),
     manifests: projectManifests,
     installed,
   });
-  // Project identity remains relative to the checkout, even for a nested independent lock root.
-  receipt.project = importer;
   mkdirSync(dirname(output), { recursive: true });
   writeFileSync(output, JSON.stringify(receipt, null, 2) + "\n");
   console.log(
