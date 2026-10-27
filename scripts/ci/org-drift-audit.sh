@@ -395,7 +395,11 @@ else
       else
         status=$?
         if [[ "$status" == 4 ]]; then continue; fi
-        echo "Org drift evidence incomplete: $repo/$file could not be read." >&2
+        detail="${GH_READ_FAILURE:-raw source unavailable}"
+        detail="${detail//$'\n'/ }"
+        detail="${detail//$'\r'/ }"
+        detail="$(printf '%s' "$detail" | sed -E 's/(gho|ghp|github_pat)_[A-Za-z0-9_]+/[redacted]/g' | cut -c1-300)"
+        echo "Org drift evidence incomplete: $repo/$file could not be read ($detail)." >&2
         exit 2
       fi
       
