@@ -188,3 +188,28 @@ and branch-policy audits before treating this as an organization-wide control.
   as a verified Git release. Saved npm Trusted Publisher configuration cannot
   be inspected or changed with this session's GitHub-only administration access.
   Do not describe npm publication as complete or repeat identical failed runs.
+
+
+## 2026-10-27 live receipt closure
+
+- Kivvi #157 merged after full local verification and green CI/browser checks.
+  Its live receipt serves `608af26c73f66452efa30053069695467503bc67` with
+  ChatKit 0.20.0 and AI Kit 1.21.4. This closes the reported build failure,
+  not the separate account-engine migration or all user journeys.
+- PayKit's diagnostic mode (#8) exercised the actual npm OIDC exchange without
+  publishing. Run `40543445302` confirms repository `bitbaum/paykit`, repository
+  ID `1383527729`, workflow `publish.yml` on main and audience
+  `npm:registry.npmjs.org`; npm rejected that identity with HTTP 404.
+  Configuration may exist but is not accepting this identity. Neither token
+  was logged. npm administration access remains unavailable in this session.
+- A fresh public-map scan still found 8/20 structurally valid receipts. The
+  existing gated redeployment path added Botsmann's first available receipt
+  (`40544835489`), revealing its old deployed ChatKit 0.12.0/AI Kit 1.21.0.
+  DataCat, Petvity and Skif gated redeployments are running. Loki #1447 wires
+  the existing producer into its separate deployment path; CI is pending.
+- `scripts/ci/verify-live-release-receipt.mjs --url <https-url> --expected
+  <staged-receipt.json>` compares a live receipt with the complete staged
+  contract through the existing receipt matcher. Wrong commits, locks,
+  importer scope, artifact maps, unavailable responses and invalid JSON fail.
+  This is a reusable deployment check; adding it does not certify an app
+  until its real deployed verification passes.
