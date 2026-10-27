@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T20:42:11.525Z",
+  "generatedAt": "2026-10-27T20:50:20.476Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -37,6 +37,43 @@
       "release": {
         "source": "npm",
         "version": "1.21.4"
+      }
+    },
+    {
+      "slug": "mail-kit",
+      "name": "@bitbaum/mail-kit",
+      "repo": "https://github.com/bitbaum/mail-kit",
+      "description": "The fleet's one email layer: Resend over raw fetch, zero dependencies, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
+      "version": "0.2.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/mail-kit@^0.2.0"
+      },
+      "adopters": 19,
+      "adopterNames": [
+        "accountkit",
+        "aoz-begleitung",
+        "biaslens",
+        "botsmann",
+        "causius",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "hirnli",
+        "kivvi",
+        "loki",
+        "orangecat",
+        "petvity",
+        "s-ink",
+        "skif",
+        "solon",
+        "surf-your-life",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.2.0"
       }
     },
     {
@@ -393,6 +430,25 @@
       "release": {
         "source": "npm",
         "version": "0.3.0"
+      }
+    },
+    {
+      "slug": "speechkit",
+      "name": "@bitbaum/speechkit",
+      "repo": "https://github.com/bitbaum/speechkit",
+      "description": "Measure how somebody spoke — pauses, rate, where they searched for a word, grammar a listener would notice — and say only what the evidence allows. Language-agnostic; no pronunciation score, on purpose.",
+      "version": "1.0.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/speechkit@^1.0.0"
+      },
+      "adopters": 1,
+      "adopterNames": [
+        "heidi"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "1.0.0"
       }
     },
     {
