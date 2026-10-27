@@ -205,6 +205,9 @@ jobs:
       - name: Authenticated product integration checks
         run: node --test scripts/test/auth-integration.test.mjs
 
+      - name: Registry publication concurrency and recovery
+        run: node --test scripts/ci/publish-package-registry.test.mjs
+
       - name: Verified release notifications
         run: node scripts/packages/test-release-notify.mjs
 
