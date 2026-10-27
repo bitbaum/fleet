@@ -1,5 +1,37 @@
 import { execFileSync } from "node:child_process";
 
+const rawPackageVersion = (repo, ref, run = execFileSync) => {
+  const url = `https://raw.githubusercontent.com/${repo}/${encodeURIComponent(ref)}/package.json`;
+  const content = run("curl", [
+    "--fail", "--silent", "--show-error", "--location",
+    "--retry", "3", "--retry-all-errors", "--retry-delay", "1", "--retry-max-time", "30",
+    "--connect-timeout", "10", "--max-time", "30", url,
+  ], {
+    encoding: "utf8", timeout: 45_000, maxBuffer: 1024 * 1024,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  return JSON.parse(content).version;
+};
+
+function gitTags(repo, run = execFileSync) {
+  const output = run("git", ["ls-remote", "--tags", `https://github.com/${repo}.git`, "refs/tags/v*"], {
+    encoding: "utf8", timeout: 60_000, maxBuffer: 8 * 1024 * 1024,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const tags = new Map();
+  for (const line of output.trim().split("\n")) {
+    if (!line) continue;
+    const [sha, ref] = line.split("\t");
+    const peeled = ref.endsWith("^{}");
+    const tag = ref.replace(/^refs\/tags\//, "").replace(/\^\{\}$/, "");
+    const entry = tags.get(tag) ?? { tag, sha: "" };
+    entry[peeled ? "sha" : "objectSha"] = sha;
+    if (!peeled && !entry.sha) entry.sha = sha; // lightweight tag
+    tags.set(tag, entry);
+  }
+  return [...tags.values()];
+}
+
 /** Only registered, immutable first-party Git artifacts belong to this updater. */
 export function registeredGitDependency(specifier, registry) {
   if (typeof specifier !== "string") return null;
@@ -94,33 +126,37 @@ const api = (path) => {
     }
   }
 };
-export function gitPackageVersion(repo, ref, request = api) {
-  const file = request(
-    `repos/${repo}/contents/package.json?ref=${encodeURIComponent(ref)}`,
-  );
-  const manifest = JSON.parse(Buffer.from(file.content, "base64").toString());
-  return manifest.version;
+export function gitPackageVersion(repo, ref, request, run = execFileSync) {
+  if (!request) return rawPackageVersion(repo, ref, run);
+  const file = request(`repos/${repo}/contents/package.json?ref=${encodeURIComponent(ref)}`);
+  return JSON.parse(Buffer.from(file.content, "base64").toString()).version;
 }
 
 /** Releases need a stable tag, matching package version and successful CI on that commit. */
-export function latestVerifiedGitRelease(repo, request = api) {
-  const refs = request(`repos/${repo}/git/matching-refs/tags/v`);
+export function latestVerifiedGitRelease(repo, request, run = execFileSync, readPackage = rawPackageVersion, checkRuns = api) {
+  const refs = request
+    ? request(`repos/${repo}/git/matching-refs/tags/v`)
+    : gitTags(repo, run);
   const releases = refs
     .map((ref) => ({
-      tag: ref.ref.replace("refs/tags/", ""),
-      version: ref.ref.replace("refs/tags/v", ""),
+      tag: ref.ref?.replace("refs/tags/", "") ?? ref.tag,
+      version: (ref.ref?.replace("refs/tags/", "") ?? ref.tag)?.replace(/^v/, ""),
+      sha: ref.sha,
     }))
     .filter((ref) => version(ref.version))
     .sort((a, b) => compare(version(b.version), version(a.version)));
   for (const release of releases) {
-    const commit = request(
-      `repos/${repo}/commits/${encodeURIComponent(release.tag)}`,
-    );
-    if (!/^[0-9a-f]{40}$/.test(commit.sha ?? "")) continue;
-    if (gitPackageVersion(repo, commit.sha, request) !== release.version)
+    const sha = request
+      ? request(`repos/${repo}/commits/${encodeURIComponent(release.tag)}`).sha
+      : release.sha;
+    if (!/^[0-9a-f]{40}$/.test(sha ?? "")) continue;
+    const declaredVersion = request
+      ? gitPackageVersion(repo, sha, request)
+      : readPackage(repo, sha, run);
+    if (declaredVersion !== release.version)
       continue;
-    const runs = request(
-      `repos/${repo}/actions/runs?head_sha=${commit.sha}&per_page=100`,
+    const runs = (request ?? checkRuns)(
+      `repos/${repo}/actions/runs?head_sha=${sha}&per_page=100`,
     ).workflow_runs;
     const latest = runs.find(
       (run) =>
@@ -128,7 +164,7 @@ export function latestVerifiedGitRelease(repo, request = api) {
         ["push", "workflow_dispatch"].includes(run.event),
     );
     if (latest?.conclusion === "success")
-      return { ...release, sha: commit.sha };
+      return { ...release, sha };
   }
   return null;
 }
