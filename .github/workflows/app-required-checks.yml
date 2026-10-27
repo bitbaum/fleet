@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Inspect or enforce verified app checks for Causius and Heidi
+        description: Inspect or enforce verified app checks for Fleet, Causius and Heidi
         type: choice
         options: [inspect, apply]
         default: inspect
