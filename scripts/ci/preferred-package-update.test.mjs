@@ -49,6 +49,18 @@ test('equal npm release replaces Git with correct npm alias', () => {
   const row = preferredPackageUpdate({ ...input, from: `github:bitbaum/design-tokens#${sha}`, identity: { packageName: target.name }, currentVersion: '1.2.0', target: { ...target, release: { source: 'npm' } } });
   assert.equal(row.to, 'npm:@bitbaum/design-tokens@^1.2.0');
 });
+test('equal npm release migrates a direct scoped Git pin to a registry range', () => {
+  const name = '@bitbaum/accountkit';
+  const row = preferredPackageUpdate({
+    ...input,
+    name,
+    from: `github:bitbaum/accountkit#${sha}`,
+    identity: { packageName: name },
+    currentVersion: '0.8.0',
+    target: { name, version: '0.8.0', release: { source: 'npm' } },
+  });
+  assert.equal(row.to, '^0.8.0');
+});
 test('npm floor raises without downgrading an ahead lock', () => {
   const npm = { ...target, release: { source: 'npm' } };
   assert.equal(preferredPackageUpdate({ ...input, target: npm, currentVersion: '1.2.0' }).to, 'npm:@bitbaum/design-tokens@^1.2.0');
@@ -197,4 +209,10 @@ test('actual workflow mutation rejects stale source/declarations and updates opt
     assert.equal(result.status, 0, result.stderr);
     assert.equal(JSON.parse(readFileSync(file, 'utf8')).optionalDependencies[row.name], row.to);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('automatic currency events are not suppressed by the manual dry-run input', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(new URL('../../.github/workflows/internal-currency.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /if:\s*\$\{\{\s*needs\.plan\.outputs\.any == 'true' && \(github\.event_name != 'workflow_dispatch' \|\| inputs\.go == true\)\s*\}\}/);
 });
