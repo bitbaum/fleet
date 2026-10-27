@@ -176,6 +176,33 @@ RETIRED=/nonexistent
 eq 0 "$(retired_entries | grep -c . || true)" "a missing register contributes nothing"
 RETIRED="$RETIRED_FIXTURE"
 
+# Transport failures must not be mistaken for missing docs or a main branch.
+gh() {
+  case "$AUDIT_TRANSPORT_FIXTURE" in
+    branch) printf '%s\n' master ;;
+    branch-failure) return 1 ;;
+    absent) echo 'gh: Not Found (HTTP 404)' >&2; return 1 ;;
+    denied) echo 'gh: Resource not accessible (HTTP 403)' >&2; return 1 ;;
+    success) printf '%s\n' SGVsbG8= ;;
+    malformed) printf '%s\n' '!invalid!' ;;
+  esac
+}
+AUDIT_TRANSPORT_FIXTURE=branch
+eq master "$(gh_default_branch example)" "default branch comes from observed metadata"
+AUDIT_TRANSPORT_FIXTURE=branch-failure
+if value="$(gh_default_branch example)"; then no "metadata failure must not invent main"; else ok "metadata failure does not invent main"; fi
+AUDIT_TRANSPORT_FIXTURE=success
+eq Hello "$(gh_check_file example README.md master)" "successful file content is decoded"
+AUDIT_TRANSPORT_FIXTURE=absent
+gh_check_file example README.md master >/dev/null; status=$?
+eq 4 "$status" "only HTTP 404 identifies an absent file"
+AUDIT_TRANSPORT_FIXTURE=denied
+gh_check_file example README.md master >/dev/null; status=$?
+eq 2 "$status" "HTTP 403 is unavailable evidence rather than an empty doc"
+AUDIT_TRANSPORT_FIXTURE=malformed
+if gh_check_file example README.md master >/dev/null; then no "malformed file encoding must fail"; else ok "malformed file encoding fails"; fi
+unset -f gh
+
 echo
 printf '%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
