@@ -84,10 +84,11 @@ continue independent work during elapsed-time waits.
 
 ## D. Complete accounts and safe app migrations
 
-Use AccountKit's shared account/runtime contract by default: signup password
-confirmation/visibility with paste and password-manager support, verification and
+Use AccountKit's shared account/runtime contract by default: signup safeguards and visibility with paste and password-manager support, verification and
 resend, login, recovery, magic links, passkeys, sessions and second factors.
-Reconcile latest released behavior before repeating already-landed work.
+Reconcile latest released behavior before repeating already-landed work. The later
+owner-approved signup decision is one password field (AccountKit #29); do not
+restore a confirmation field by applying superseded instructions.
 
 Target the union of currently supported social methods: OrangeCat, Google,
 GitHub and X, verified against the refreshed inventory. Present the same verified
@@ -201,3 +202,11 @@ for applicable apps, passed identity/security migrations, completed observations
 reconciled public claims, and a second automated release/update cycle. Report
 retained exceptions and external blockers explicitly. An inaccessible, blocked or
 unverified subset prevents an unqualified claim that everything is complete.
+
+## Later owner decisions reconciled
+
+Fleet #251 sets the idle observation wait to zero while canary traffic cannot
+provide useful evidence. Exact-artifact canary deployment and CI/browser checks
+remain required. Do not reintroduce an arbitrary day-long wait from the earlier
+audit plan. AccountKit #29 keeps one password field at signup; preserve that
+explicit UX decision while testing visibility, paste/autofill and recovery.
