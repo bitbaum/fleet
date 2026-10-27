@@ -319,5 +319,15 @@
     "bitbaum/bitbaum": [
       "deploy-site.yml"
     ]
+  },
+  "managedConsumerMirrors": {
+    "bitbaum/loki": [
+      {
+        "path": "scripts/site-template",
+        "ownerRepo": "bitbaum/fleet",
+        "ownerPath": "templates/app",
+        "syncWorkflow": "starter-sync.yml"
+      }
+    ]
   }
 }

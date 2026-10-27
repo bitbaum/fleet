@@ -18,6 +18,7 @@ import { readFileSync } from "node:fs";
 import { currencyRepositories, currencySnapshot } from "./currency-snapshot.mjs";
 import { releaseTargets } from "./package-release-target.mjs";
 import { canaryFirst } from "./canary-currency-plan.mjs";
+import { managedMirrorFor, verifyMirrorEvidence } from "./currency-managed-mirrors.mjs";
 import { preferredPackageUpdate, immutableGitArtifact } from "./preferred-package-update.mjs";
 import { registeredGitDependency, gitPackageVersion } from "./git-package-currency.mjs";
 
@@ -214,6 +215,7 @@ async function main() {
   if (includePrivate && asJson) throw new Error("Private audit is local report only; cannot emit an automation matrix");
   const repos = currencyRepositories(owner, includePrivate);
   const registry = JSON.parse(readFileSync(new URL("../../registers/packages.json", import.meta.url), "utf8"));
+  const policy = JSON.parse(readFileSync(new URL("../../registers/package-rollouts.json", import.meta.url), "utf8"));
   const targets = new Map((await releaseTargets(registry.packages)).map(pkg => [pkg.name, pkg]));
   const npmNames = new Set(registry.packages.map(pkg => pkg.name));
   const rows = [];
@@ -224,6 +226,12 @@ async function main() {
     try {
       const snapshot = currencySnapshot(owner, repo);
       for (const path of snapshot.paths) {
+        const mirror = managedMirrorFor(`${owner}/${repo}`, path, policy);
+        if (mirror) {
+          verifyMirrorEvidence(mirror, snapshot.file);
+          if (asJson) console.error(`${repo}/${path}: updated through ${mirror.ownerRepo}/${mirror.ownerPath} and ${mirror.syncWorkflow}`);
+          continue;
+        }
         const pkg = snapshot.manifest(path);
         const entries = Object.entries({ ...pkg.dependencies, ...pkg.devDependencies, ...pkg.optionalDependencies });
         const interested = entries.map(([name, from]) => {
@@ -271,7 +279,6 @@ async function main() {
   // Never act on a partial census: API/manifest/lock failures are unknown, not current.
   if (unreadable.length) throw new Error(`Currency scan incomplete:\n${unreadable.join("\n")}`);
 
-  const policy = JSON.parse(readFileSync(new URL("../../registers/package-rollouts.json", import.meta.url), "utf8"));
   const plan = canaryFirst(byRepo(rows), policy, owner);
 
   if (asJson && unreadable.length) console.error(`UNCHECKED repositories: ${unreadable.join(", ")}`);
