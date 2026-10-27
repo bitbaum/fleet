@@ -106,7 +106,11 @@ jobs:
 
       - name: Sweep
         env:
-          GH_TOKEN: ${{ secrets.token || github.token }}
+          # Use the isolated per-repository quota for polling and checks. The
+          # optional organization token is needed only for the merge write,
+          # where it preserves workflow_run events after the merge.
+          GH_TOKEN: ${{ github.token }}
+          MERGE_TOKEN: ${{ secrets.token }}
           GH_REPO: ${{ github.repository }}
           BASE_BRANCH: ${{ inputs.base_branch }}
           CI_WORKFLOW: ${{ inputs.ci_workflow }}

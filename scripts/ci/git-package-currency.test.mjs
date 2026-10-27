@@ -100,6 +100,28 @@ test("only matching stable versions with successful exact-commit CI are eligible
     null,
   );
 });
+test("production Git release discovery uses remote tags and raw source, not three REST reads", () => {
+  const object = "c".repeat(40), commit = "d".repeat(40), latest = "e".repeat(40);
+  const gitCalls = [];
+  const run = (_command, args) => {
+    gitCalls.push(args);
+    return `${object}\trefs/tags/v0.6.0\n${commit}\trefs/tags/v0.6.0^{}\n${latest}\trefs/tags/v0.7.0\n`;
+  };
+  const sourceReads = [];
+  const result = latestVerifiedGitRelease(
+    "bitbaum/accountkit",
+    undefined,
+    run,
+    (_repo, ref) => { sourceReads.push(ref); return "0.7.0"; },
+    (path) => {
+      assert.equal(path, `repos/bitbaum/accountkit/actions/runs?head_sha=${latest}&per_page=100`);
+      return { workflow_runs: [{ path: ".github/workflows/ci.yml", event: "push", conclusion: "success" }] };
+    },
+  );
+  assert.deepEqual(gitCalls[0].slice(0, 2), ["ls-remote", "--tags"]);
+  assert.deepEqual(sourceReads, [latest]);
+  assert.deepEqual(result, { tag: "v0.7.0", version: "0.7.0", sha: latest });
+});
 test("published packages migrate from Git without changing aliases or downgrading", () => {
   const identity = { name: "@bitbaum/chatkit", npm: true };
   assert.equal(

@@ -153,6 +153,25 @@ test('discovers nested template outside old known directories, reads actual work
   assert.deepEqual(snapshot.paths, ['desktop/template/package.json']);
   assert.deepEqual(snapshot.artifacts(snapshot.paths[0], snapshot.manifest(snapshot.paths[0])), { [target.name]: '1.1.0' });
 });
+test('public currency trees use shallow Git transport without per-repository REST calls', () => {
+  const fixture = snapshotFixture();
+  const calls = [];
+  const run = (_command, args) => {
+    calls.push(args);
+    if (args[0] === 'clone') return '';
+    if (args[0] === '-C' && args[2] === 'rev-parse') return `${sourceSha}\n`;
+    if (args[0] === '-C' && args[2] === 'ls-tree') {
+      return `100644 blob ${sha}\tdesktop/template/package.json\0`
+        + `100644 blob ${sha}\tpnpm-lock.yaml\0`;
+    }
+    throw new Error(`unexpected Git call: ${args.join(' ')}`);
+  };
+  const snapshot = currencySnapshot('bitbaum', 'app', undefined, fixture.readFile, run);
+  assert.equal(snapshot.commit, sourceSha);
+  assert.deepEqual(snapshot.paths, ['desktop/template/package.json']);
+  assert.ok(calls[0].includes('--filter=blob:none'));
+  assert.equal(calls.filter(args => args[0] === 'clone').length, 1);
+});
 test('supports npm workspace hoisting evidence at the nearest lock root', () => {
   const fixture = snapshotFixture({ npm: true });
   const snapshot = currencySnapshot('bitbaum', 'app', fixture.request, fixture.readFile);

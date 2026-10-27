@@ -871,7 +871,22 @@ INNER_EOF
       fi
     done
   fi
-  if gh pr merge "$number" --repo "$REPO" --squash --delete-branch; then
+  # Keep the owner-scoped token out of the sweep's many reads: those belong to
+  # the repository's own GITHUB_TOKEN and its separate API quota. Use the
+  # optional merge token for this one write only. This preserves push-triggered
+  # workflow_run events and permission to merge workflow-file changes.
+  if [ -n "${MERGE_TOKEN:-}" ]; then
+    if merge_result=$(GH_TOKEN="$MERGE_TOKEN" gh pr merge "$number" --repo "$REPO" --squash --delete-branch 2>&1); then
+      merge_status=0
+    else
+      merge_status=$?
+    fi
+    printf '%s\n' "$merge_result"
+  else
+    merge_status=0
+    gh pr merge "$number" --repo "$REPO" --squash --delete-branch || merge_status=$?
+  fi
+  if [ "$merge_status" -eq 0 ]; then
     merged_any=1
     echo "[auto-merge] #${number} merged"
     # One car per sweep: let CI verify this on the base before the next couples.
