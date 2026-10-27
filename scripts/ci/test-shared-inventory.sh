@@ -191,5 +191,26 @@ else
   no "no baseline committed at $BASE"
 fi
 
+# ── automatic triggers must not depend on a manual-only input ───────────────
+printf 'workflow admission\n'
+workflow="$HERE/../../.github/workflows/shared-inventory.yml"
+automatic_gate="github.event_name != 'workflow_dispatch' || inputs.strict != false"
+gate_count=$(grep -Fc "$automatic_gate" "$workflow" || true)
+if [ "$gate_count" -eq 2 ]; then
+  ok 'both ratchets admit schedule and release events without workflow_dispatch inputs'
+else
+  no "both ratchets admit automatic events (found $gate_count guarded steps)"
+fi
+
+should_check() {
+  local event="$1" strict="$2"
+  [ "$event" != workflow_dispatch ] || [ "$strict" != false ]
+}
+if should_check repository_dispatch false && should_check schedule false && should_check workflow_dispatch true && ! should_check workflow_dispatch false; then
+  ok 'automatic events run strict checks; only an explicit manual false opts out'
+else
+  no 'strict-check admission truth table'
+fi
+
 printf '\n%d passed, %d failed\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
