@@ -357,6 +357,16 @@ echo "auto-merge sweep — coverage ported from orangecat"
 merges() { grep -c '^pr merge' "$GH_LOG" 2>/dev/null; }
 rearms() { grep -c '^workflow run ci.yml' "$GH_LOG" 2>/dev/null; }
 package_rearms() { grep -c '^workflow run internal-currency.yml' "$GH_LOG" 2>/dev/null; }
+inventory_rearms() { grep -c '^workflow run shared-inventory.yml' "$GH_LOG" 2>/dev/null; }
+
+# The sweep's caller must re-arm both consumers when the registry changes:
+# GITHUB_TOKEN merges do not emit the push events they normally rely on.
+if grep -Fq 'REARM_IF_FILES: registers/packages.json .github/workflows/internal-currency.yml .github/workflows/shared-inventory.yml .github/workflows/auto-merge.yml' .github/workflows/auto-merge.yml \
+  && grep -Fq 'REARM_IF_WORKFLOWS: internal-currency.yml shared-inventory.yml' .github/workflows/auto-merge.yml; then
+  ok 'registry merge re-arm config includes currency and shared inventory'
+else
+  no 'registry merge re-arm config includes currency and shared inventory'
+fi
 
 # 12. A base run still in progress is not a verdict either way — defer, and do
 #     NOT re-run it (re-running an in-flight run would cancel it).
@@ -502,21 +512,21 @@ fi
 
 # 19c. A GITHUB_TOKEN merge of the package registry suppresses push events, so
 #      explicitly dispatch the reconciler for a PR that changes its input.
-if RS_REARM_IF_FILES='registers/packages.json .github/workflows/internal-currency.yml .github/workflows/auto-merge.yml' \
-   RS_REARM_IF_WORKFLOWS=internal-currency.yml RS_FILES=registers/packages.json \
+if RS_REARM_IF_FILES='registers/packages.json .github/workflows/internal-currency.yml .github/workflows/shared-inventory.yml .github/workflows/auto-merge.yml' \
+   RS_REARM_IF_WORKFLOWS='internal-currency.yml shared-inventory.yml' RS_FILES=registers/packages.json \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -ge 1 ] && [ "$(package_rearms)" -eq 1 ] \
-    && ok 're-arms package currency after a registry-changing merge' \
-    || no 're-arms package currency after a registry-changing merge'
+  [ "$(merges)" -ge 1 ] && [ "$(package_rearms)" -eq 1 ] && [ "$(inventory_rearms)" -eq 1 ] \
+    && ok 're-arms currency and package inventory after a registry-changing merge' \
+    || no 're-arms currency and package inventory after a registry-changing merge'
 fi
 
 # 19d. Ordinary Fleet merges do not need a full 22-repo reconciliation run.
-if RS_REARM_IF_FILES='registers/packages.json .github/workflows/internal-currency.yml .github/workflows/auto-merge.yml' \
-   RS_REARM_IF_WORKFLOWS=internal-currency.yml RS_FILES=README.md \
+if RS_REARM_IF_FILES='registers/packages.json .github/workflows/internal-currency.yml .github/workflows/shared-inventory.yml .github/workflows/auto-merge.yml' \
+   RS_REARM_IF_WORKFLOWS='internal-currency.yml shared-inventory.yml' RS_FILES=README.md \
    RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  [ "$(merges)" -ge 1 ] && [ "$(package_rearms)" -eq 0 ] \
-    && ok 'does not re-arm package currency for unrelated merges' \
-    || no 'does not re-arm package currency for unrelated merges'
+  [ "$(merges)" -ge 1 ] && [ "$(package_rearms)" -eq 0 ] && [ "$(inventory_rearms)" -eq 0 ] \
+    && ok 'does not re-arm package workflows for unrelated merges' \
+    || no 'does not re-arm package workflows for unrelated merges'
 fi
 
 echo "auto-merge sweep — Dependabot"

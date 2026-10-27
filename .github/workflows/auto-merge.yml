@@ -66,9 +66,9 @@ jobs:
           # merge made with the default GITHUB_TOKEN. Keep this in sync when a
           # push-triggered workflow is added.
           REARM_WORKFLOWS: ci.yml
-          # The currency workflow has a package-register push trigger, but
-          # automated PR merges use GITHUB_TOKEN and suppress that event. Wake
-          # it explicitly when the registry or its trigger changes.
-          REARM_IF_FILES: registers/packages.json .github/workflows/internal-currency.yml .github/workflows/auto-merge.yml
-          REARM_IF_WORKFLOWS: internal-currency.yml
+          # Currency and inventory both have package-register push triggers,
+          # but automated PR merges use GITHUB_TOKEN and suppress those events.
+          # Wake both consumers when the registry or either trigger changes.
+          REARM_IF_FILES: registers/packages.json .github/workflows/internal-currency.yml .github/workflows/shared-inventory.yml .github/workflows/auto-merge.yml
+          REARM_IF_WORKFLOWS: internal-currency.yml shared-inventory.yml
         run: bash scripts/ci/auto-merge-sweep.sh
