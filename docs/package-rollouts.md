@@ -159,8 +159,13 @@ this missing workflow to existing packages through their normal checked PRs.
 ## Different integration classes
 
 A package policy may add `additionalCanaries`, each with its own `canary`,
-`bootstrapPr`, checks and receipt/importer configuration. Each designated PR
-can enter its own canary after its exact candidate checks. Every representative
+`canaryAdmission`, checks and receipt/importer configuration. With
+`canaryAdmission: "verified-candidate"`, each real candidate PR in the designated
+canary repository may enter after its exact configured checks. This applies to
+every release: a historical bootstrap PR number must not prevent the next
+automated update. Blocked artifacts and candidate checks still apply first.
+Legacy policies without this admission mode retain their exact `bootstrapPr`
+restriction. Every representative
 must deploy the same artifact, pass its configured checks and complete the full
 observation period before an ordinary consumer can promote. Adding an embedded
 page representative therefore supplements, rather than replaces, a workspace

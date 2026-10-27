@@ -480,3 +480,20 @@ test("each representative can bootstrap independently but all must qualify for d
   assert.deepEqual(await check({settings:multi,readCanary:async()=>({dependencies:{[name]:"0.4.1"},healthy:true,checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-22T12:00:00Z"})}),[]);
   assert.ok((await check({settings:multi,readCanary:async()=>({dependencies:{[name]:"0.4.1"},healthy:true,checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-24T11:00:00Z"})})).length, "additional representatives retain the full observation period");
 });
+
+test('verified canary admission supports successive release PRs without weakening candidate checks',async()=>{
+ const repeatable={...settings,packages:{[name]:{canary:'bitbaum/biaslens',canaryAdmission:'verified-candidate',candidateChecks:['ci.yml','browser-smoke.yml']}}};
+ for(const candidatePullRequest of [43,44])assert.deepEqual(await check({settings:repeatable,repo:'bitbaum/biaslens',candidatePullRequest,readCanary:()=>assert.fail('a tested canary must not wait for its own deployment')}),[]);
+ assert.ok((await check({settings:repeatable,repo:'bitbaum/biaslens',candidatePullRequest:44,candidateChecks:['ci.yml']})).length);
+ for(const candidatePullRequest of [undefined,0,-1,1.5])assert.match((await check({settings:repeatable,repo:'bitbaum/biaslens',candidatePullRequest}))[0],/real candidate pull request/);
+ assert.match((await check({settings:{...repeatable,blocked:{[name]:['0.4.1']}},repo:'bitbaum/biaslens',candidatePullRequest:44}))[0],/release is blocked/);
+ assert.ok((await check({settings:repeatable,repo:'bitbaum/ordinary',candidatePullRequest:44,readCanary:async()=>null})).length);
+});
+test('each repeatable representative admits its own tested PR while downstream still requires every representative',async()=>{
+ const repeatable={...settings,packages:{[name]:{canary:'bitbaum/biaslens',canaryAdmission:'verified-candidate',additionalCanaries:[{canary:'bitbaum/embedded',canaryAdmission:'verified-candidate',candidateChecks:['ci.yml','case-browser.yml'],canaryChecks:['ci.yml','case-browser.yml']}]}}};
+ assert.deepEqual(await check({settings:repeatable,repo:'bitbaum/embedded',candidatePullRequest:88,candidateChecks:['ci.yml','case-browser.yml'],readCanary:()=>assert.fail('a tested representative must not wait for another representative')}),[]);
+ assert.ok((await check({settings:repeatable,repo:'bitbaum/embedded',candidatePullRequest:88,candidateChecks:['ci.yml']})).length);
+ const seen=[];
+ assert.ok((await check({settings:repeatable,readCanary:async repo=>{seen.push(repo);return repo==='bitbaum/biaslens'?{dependencies:{[name]:'0.4.1'},healthy:true,checks:['ci.yml','browser-smoke.yml'],deployedAt:'2026-10-22T12:00:00Z'}:null;}})).length);
+ assert.deepEqual(seen,['bitbaum/biaslens','bitbaum/embedded']);
+});

@@ -226,12 +226,15 @@ export async function assessRollout({
     }
     if (canaries.some((entry) => entry.canary === repo)) {
       if (
-        Number.isInteger(candidatePullRequest) &&
-        candidateConfig.bootstrapPr === candidatePullRequest
+        Number.isInteger(candidatePullRequest) && candidatePullRequest > 0 &&
+        (candidateConfig.canaryAdmission === "verified-candidate" ||
+          candidateConfig.bootstrapPr === candidatePullRequest)
       )
         continue;
       findings.push(
-        `${name}: canary consumer must use its configured bootstrap PR${candidateConfig.bootstrapPr ? ` #${candidateConfig.bootstrapPr}` : ""}`,
+        candidateConfig.canaryAdmission === "verified-candidate"
+          ? `${name}: canary consumer needs a real candidate pull request`
+          : `${name}: canary consumer must use its configured bootstrap PR${candidateConfig.bootstrapPr ? ` #${candidateConfig.bootstrapPr}` : ""}`,
       );
       continue;
     }
