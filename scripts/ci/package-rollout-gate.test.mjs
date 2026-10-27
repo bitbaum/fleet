@@ -4,6 +4,7 @@ import {
   lockedDependencies,
   assessRollout,
   successfulWorkflows,
+  successfulConsumerChecks,
   nestedSharedArtifacts,
   nestedSharedUpdates,
   nestedSharedChange,
@@ -513,4 +514,81 @@ test("static studio uses its actual publication-preview workflow for candidate p
  assert.deepEqual(await check({repo:"bitbaum/studio",settings:custom,candidateChecks:["deploy-site.yml"]}),[]);
  assert.ok((await check({repo:"bitbaum/studio",settings:custom,candidateChecks:[]})).length);
  assert.ok((await check({repo:"bitbaum/other",settings:custom,candidateChecks:["deploy-site.yml"]})).length);
+});
+
+test("combined consumer CI requires an actually successful browser job on the exact head", () => {
+  const sha = "a".repeat(40);
+  const requirement = "ci.yml#Local E2E Journeys";
+  const run = {
+    id: 42,
+    head_sha: sha,
+    path: ".github/workflows/ci.yml",
+    event: "pull_request",
+    status: "completed",
+    conclusion: "success",
+  };
+  const good = {
+    name: "Local E2E Journeys",
+    status: "completed",
+    conclusion: "success",
+  };
+  const check = (runs, jobs) =>
+    successfulConsumerChecks(runs, ["ci.yml", requirement], sha, () => jobs);
+  assert.deepEqual(check([run], [good]), ["ci.yml", requirement]);
+  for (const jobs of [
+    [],
+    [{ ...good, name: "Unit tests" }],
+    [{ ...good, conclusion: "skipped" }],
+    [{ ...good, conclusion: "failure" }],
+    [{ ...good, status: "in_progress", conclusion: null }],
+  ])
+    assert.deepEqual(check([run], jobs), ["ci.yml"]);
+  assert.deepEqual(check([{ ...run, head_sha: "b".repeat(40) }], [good]), []);
+  assert.deepEqual(
+    check([{ ...run, conclusion: null, status: "in_progress" }, run], [good]),
+    [],
+  );
+  assert.deepEqual(check([{ ...run, conclusion: "failure" }, run], [good]), []);
+  assert.throws(
+    () =>
+      successfulConsumerChecks([run], [requirement], sha, () => {
+        throw new Error("API unavailable");
+      }),
+    /API unavailable/,
+  );
+});
+
+test("multiple named jobs reuse the exact run and reject a missing guard", () => {
+  const sha = "a".repeat(40);
+  const run = {
+    id: 42,
+    head_sha: sha,
+    path: ".github/workflows/ci.yml",
+    event: "push",
+    status: "completed",
+    conclusion: "success",
+  };
+  let reads = 0;
+  const evidence = successfulConsumerChecks(
+    [run],
+    ["ci.yml#Browser", "ci.yml#Account guard"],
+    sha,
+    () => {
+      reads++;
+      return [{ name: "Browser", status: "completed", conclusion: "success" }];
+    },
+  );
+  assert.equal(reads, 1);
+  assert.deepEqual(evidence, ["ci.yml", "ci.yml#Browser"]);
+  assert.deepEqual(
+    successfulConsumerChecks(
+      [{ ...run, event: "workflow_run" }],
+      ["ci.yml#Browser"],
+      sha,
+      () => {
+        throw new Error("must not read unrelated run");
+      },
+    ),
+    [],
+  );
 });

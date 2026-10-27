@@ -406,10 +406,57 @@ export function successfulWorkflows(runs) {
   }
   return passed;
 }
+/** A named browser job can certify an existing combined CI workflow. */
+export function successfulConsumerChecks(runs, requirements, sha, readJobs) {
+  const exactRuns = runs.filter((run) => run.head_sha === sha);
+  const passed = successfulWorkflows(exactRuns);
+  const jobsByRun = new Map();
+  for (const requirement of requirements) {
+    const separator = requirement.indexOf("#");
+    if (separator < 0) continue;
+    const workflow = requirement.slice(0, separator);
+    const jobName = requirement.slice(separator + 1);
+    if (!workflow || !jobName)
+      throw new Error("Invalid named consumer job requirement");
+    if (!passed.includes(workflow)) continue;
+    const run = exactRuns.find(
+      (run) =>
+        ["push", "pull_request", "workflow_dispatch"].includes(run.event) &&
+        run.path?.split("/").at(-1) === workflow,
+    );
+    if (!run || run.status !== "completed" || run.conclusion !== "success")
+      continue;
+    if (!jobsByRun.has(run.id)) jobsByRun.set(run.id, readJobs(run));
+    const matches = jobsByRun.get(run.id).filter((job) => job.name === jobName);
+    if (
+      matches.length &&
+      matches.every(
+        (job) => job.status === "completed" && job.conclusion === "success",
+      )
+    )
+      passed.push(requirement);
+  }
+  return passed;
+}
 function greenWorkflows(repo, sha) {
-  return successfulWorkflows(
-    api(`repos/${repo}/actions/runs?head_sha=${sha}&per_page=100`)
-      .workflow_runs,
+  const runs = api(
+    `repos/${repo}/actions/runs?head_sha=${sha}&per_page=100`,
+  ).workflow_runs;
+  return successfulConsumerChecks(
+    runs,
+    policy.consumerChecks?.[repo] ?? [],
+    sha,
+    (run) => {
+      const response = api(
+        `repos/${repo}/actions/runs/${run.id}/jobs?filter=latest&per_page=100`,
+      );
+      if (
+        !Array.isArray(response.jobs) ||
+        response.total_count > response.jobs.length
+      )
+        throw new Error(`${repo}: incomplete consumer job evidence`);
+      return response.jobs;
+    },
   );
 }
 /** Evidence is specific to the importer and receipt projects. */

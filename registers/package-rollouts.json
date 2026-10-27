@@ -323,7 +323,8 @@
       "ci.yml"
     ],
     "bitbaum/evig": [
-      "ci.yml"
+      "ci.yml",
+      "ci.yml#Local E2E Journeys"
     ]
   },
   "managedConsumerMirrors": {
