@@ -216,6 +216,9 @@ eq 2 "$status" "HTTP 403 is unavailable evidence rather than an empty doc"
 grep -q 'Resource not accessible' <<<"$GH_READ_FAILURE" \
   && ok "the original permission diagnostic survives gh_check_file" \
   || no "the original permission diagnostic survives gh_check_file"
+grep -q 'if gh_check_file .* > "\$doc_file"' "$SCRIPT" \
+  && ok "the organization scan calls gh_check_file in the parent shell" \
+  || no "the organization scan must preserve read errors in the parent shell"
 AUDIT_TRANSPORT_FIXTURE=malformed
 if gh_check_file example README.md master >/dev/null; then no "malformed file encoding must fail"; else ok "malformed file encoding fails"; fi
 READ_RETRY_COUNTER="$(mktemp)"

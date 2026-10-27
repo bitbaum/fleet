@@ -206,6 +206,7 @@ gh_default_branch() {
 gh_check_file() {
   local repo="$1" path="$2" branch="$3"
   local private="${4:-true}" content response status body encoded_branch encoded_path response_file
+  GH_READ_FAILURE=''
   if [[ "$private" == false ]]; then
     encoded_branch="${branch//\//%2F}"
     encoded_path="${path// /%20}"
@@ -399,10 +400,17 @@ else
     # retired auth rule after the root files were fixed. A scan that only
     # reads AGENTS.md misses the page AGENTS.md tells the agent to open next.
     for file in README.md CLAUDE.md AGENTS.md .claude/CLAUDE.md docs/UNIFIED_AUTH.md docs/SHARED_CONTEXT.md; do
-      if content="$(gh_check_file "$repo" "$file" "$branch" "$private")"; then
+      # Keep gh_check_file in this shell so its original private-read failure
+      # survives for the fail-closed diagnostic below. Command substitution
+      # would run it in a subshell and erase GH_READ_FAILURE.
+      doc_file="$(mktemp)"
+      if gh_check_file "$repo" "$file" "$branch" "$private" > "$doc_file"; then
+        content="$(cat "$doc_file")"
+        rm -f "$doc_file"
         [ -n "$content" ] || continue
       else
         status=$?
+        rm -f "$doc_file"
         if [[ "$status" == 4 ]]; then continue; fi
         detail="${GH_READ_FAILURE:-raw source unavailable}"
         detail="${detail//$'\n'/ }"
