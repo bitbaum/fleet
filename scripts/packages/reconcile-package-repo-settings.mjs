@@ -44,20 +44,33 @@ export function reconcileRepositories(repos, run = gh) {
   let changed = 0;
   for (const repo of repos) {
     const current = JSON.parse(run(["api", `repos/${repo}`]));
-    if (current.full_name !== repo || typeof current.allow_auto_merge !== "boolean")
+    if (
+      current.full_name !== repo ||
+      typeof current.allow_auto_merge !== "boolean" ||
+      typeof current.delete_branch_on_merge !== "boolean"
+    )
       throw new Error(`${repo}: repository settings response is incomplete`);
-    if (current.allow_auto_merge) {
-      console.log(`✓ ${repo}: auto-merge already enabled`);
+    if (current.allow_auto_merge && current.delete_branch_on_merge) {
+      console.log(`✓ ${repo}: auto-merge and head-branch cleanup already enabled`);
       continue;
     }
     if (DRY_RUN) {
-      console.log(`→ ${repo}: would enable auto-merge`);
+      console.log(`→ ${repo}: would enable auto-merge and delete merged head branches`);
       continue;
     }
-    run(["repo", "edit", repo, "--enable-auto-merge"]);
+    run([
+      "repo",
+      "edit",
+      repo,
+      "--enable-auto-merge",
+      "--delete-branch-on-merge",
+    ]);
     const verified = JSON.parse(run(["api", `repos/${repo}`]));
-    if (verified.allow_auto_merge !== true)
-      throw new Error(`${repo}: GitHub did not retain the auto-merge setting`);
+    if (
+      verified.allow_auto_merge !== true ||
+      verified.delete_branch_on_merge !== true
+    )
+      throw new Error(`${repo}: GitHub did not retain the package merge settings`);
     console.log(`✓ ${repo}: enabled and verified`);
     changed++;
   }

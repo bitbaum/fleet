@@ -34,19 +34,25 @@ throws(() => parseRepositories('{"packages":[{"name":"x","repo":"https://github.
 console.log("settings reconciliation");
 const calls = [];
 let enabled = false;
+let deleteBranches = false;
 const fakeGh = (args) => {
   calls.push(args);
   if (args[0] === "api")
-    return JSON.stringify({ full_name: args[1].slice("repos/".length), allow_auto_merge: enabled });
-  if (args[0] === "repo" && args.includes("--enable-auto-merge")) {
+    return JSON.stringify({
+      full_name: args[1].slice("repos/".length),
+      allow_auto_merge: enabled,
+      delete_branch_on_merge: deleteBranches,
+    });
+  if (args[0] === "repo" && args.includes("--enable-auto-merge") && args.includes("--delete-branch-on-merge")) {
     enabled = true;
+    deleteBranches = true;
     return "";
   }
   throw new Error(`unexpected command: ${args.join(" ")}`);
 };
 const result = reconcileRepositories(["bitbaum/example"], fakeGh);
-ok(result.changed === 1 && enabled, "a disabled repo is enabled");
-ok(calls.some((args) => args[0] === "repo" && args.includes("--enable-auto-merge")), "the GitHub CLI receives the explicit setting");
+ok(result.changed === 1 && enabled && deleteBranches, "both package merge settings are enabled");
+ok(calls.some((args) => args[0] === "repo" && args.includes("--enable-auto-merge") && args.includes("--delete-branch-on-merge")), "the GitHub CLI receives both explicit settings");
 calls.length = 0;
 const already = reconcileRepositories(["bitbaum/example"], fakeGh);
 ok(already.changed === 0 && calls.length === 1, "an enabled repo is left untouched");
