@@ -405,7 +405,7 @@ jobs:
         run: |
           node --test scripts/ci/package-composition-audit.test.mjs scripts/ci/package-rollout-gate.test.mjs scripts/ci/package-rollout-cli.test.mjs scripts/ci/package-canary-audit.test.mjs scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs scripts/ci/currency-toolchain.test.mjs scripts/ci/canary-currency-plan.test.mjs scripts/ci/currency-managed-mirrors.test.mjs
           node --test scripts/test/auth-journey.test.mjs scripts/test/auth-browser.test.mjs scripts/test/auth-totp.test.mjs
-          node --test scripts/ci/release-receipt.test.mjs
+          node --test scripts/ci/release-receipt.test.mjs scripts/ci/verify-live-release-receipt.test.mjs
           bash scripts/templates/test-app-template.sh
 
       # Drift guard. The fleet is on v7; templates handing out v4 is exactly
