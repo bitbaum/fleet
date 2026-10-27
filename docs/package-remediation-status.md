@@ -10,7 +10,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 
 | ID | Work | State | Next action / acceptance |
 | --- | --- | --- | --- |
-| A1 | Causius actual-page lifecycle and ChatKit scrolling | implementing | Reconcile newer main; close the page/panel/full-screen regressions and authenticated matter test; remove diagnostics; release/deploy/verify. ChatKit #38 remains draft. |
+| A1 | Causius actual-page lifecycle and ChatKit scrolling | implementing | ChatKit #38 merged after 98 unit/render tests and browser checks; actual authenticated Causius phone/desktop tests pass locally after its lifecycle fix. Released-artifact consumer tests and deployment proof remain open. |
 | B1 | Complete public/private/nested/fork census | open | Refresh every manifest, lock root, account flow, chat/model route and local package; generate per-consumer tasks from existing producers. |
 | B2 | Reconcile outstanding PRs and worktrees | implementing | Preserve newer owner work, deduplicate candidates and track superseded targets. |
 | C1 | All-kit verified release paths and publication | implementing | Resolve AccountKit npm authentication or retain supported immutable Git; verify all release artifacts and aliases. |
@@ -38,7 +38,8 @@ artifact, evidence, next action and any blocker. Private task details stay priva
   It certifies that tested deployment, not every later artifact or other app.
 - Multiple local ChatKit layout/touch journeys pass, but Causius's authenticated
   case-page test exposed repeated reloads and reply-completion movement. The
-  incident remains open until deployed proof exists.
+  lifecycle and shared fixes now pass locally; the incident remains open until
+  released-artifact and deployed proof exist.
 - Package-page publication and CI passing are not universal app integration proof.
 - GitHub maintenance administration is available. npm/provider-console authority
   is separately assessed; no broad credential request is implied.
