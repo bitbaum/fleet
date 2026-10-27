@@ -24,7 +24,7 @@ minimumReleaseAgeExclude:
   - limitkit
   - bip-kit
   - "@bitbaum/sitekit@0.4.0"
-  - "@bitbaum/chatkit@0.15.3 || 0.19.0 || 0.20.0 || 0.20.1"
+  - "@bitbaum/chatkit@0.15.3 || 0.19.0 || 0.20.0 || 0.20.1 || 0.21.0"
   - "@bitbaum/accountkit@0.8.0"
 
 # drizzle-kit still reaches esbuild <=0.24 through the legacy @esbuild-kit
