@@ -318,6 +318,12 @@
   "consumerChecks": {
     "bitbaum/bitbaum": [
       "deploy-site.yml"
+    ],
+    "bitbaum/orangecat": [
+      "ci.yml"
+    ],
+    "bitbaum/evig": [
+      "ci.yml"
     ]
   },
   "managedConsumerMirrors": {
