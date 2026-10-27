@@ -230,6 +230,14 @@ test('actual workflow mutation rejects stale source/declarations and updates opt
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('currency workflow formats pnpm workspace files after lock regeneration', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(new URL('../../.github/workflows/internal-currency.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /pnpm may rewrite a workspace catalog entry with single quotes/);
+  assert.match(workflow, /workspace_file="\$project_dir\/pnpm-workspace\.yaml"/);
+  assert.match(workflow, /"\$prettier" --write "\$workspace_file"/);
+});
+
 test('automatic currency events are not suppressed by the manual dry-run input', async () => {
   const { readFileSync } = await import('node:fs');
   const workflow = readFileSync(new URL('../../.github/workflows/internal-currency.yml', import.meta.url), 'utf8');
