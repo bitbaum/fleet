@@ -2,30 +2,14 @@ import { execFileSync } from 'node:child_process';
 import { posix } from 'node:path';
 import { manifestPaths } from './shared-registry-audit.mjs';
 import { lockedDependencies, lockedNpmDependencies } from './package-rollout-gate.mjs';
+import { withGitHubReadRetry } from './github-api-read.mjs';
 
-const waitSync = milliseconds => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
-
-function retryable(error) {
-  const detail = `${error.stderr ?? ''}\n${error.message ?? ''}`;
-  return /HTTP (?:429|5\d\d)|timed out|ECONNRESET/.test(detail)
-    || (/HTTP 403/.test(detail) && /secondary rate limit|abuse detection|temporarily rate limited/i.test(detail));
-}
-
-export function githubJson(path, { run = execFileSync, wait = waitSync } = {}) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      return JSON.parse(run('gh', ['api', path], {
-        encoding: 'utf8', timeout: 30_000, maxBuffer: 64 * 1024 * 1024,
-        stdio: ['ignore', 'pipe', 'pipe'],
-      }));
-    } catch (error) {
-      if (attempt === 2 || !retryable(error)) throw error;
-      // Secondary limits arrive as 403s. Give the shared org token time to
-      // recover instead of immediately repeating the same burst. Auth and
-      // permission 403s still fail closed without retrying.
-      wait(attempt === 0 ? 10_000 : 30_000);
-    }
-  }
+export function githubJson(path, { run = execFileSync, wait } = {}) {
+  const output = withGitHubReadRetry(() => run('gh', ['api', path], {
+    encoding: 'utf8', timeout: 30_000, maxBuffer: 64 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }), { wait });
+  return JSON.parse(output);
 }
 
 function rawFile(owner, repo, path, commit) {

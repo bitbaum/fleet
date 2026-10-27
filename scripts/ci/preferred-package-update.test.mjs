@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { preferredPackageUpdate, immutableGitArtifact } from './preferred-package-update.mjs';
 import { repositoriesForCurrency, currencySnapshot, githubJson } from './currency-snapshot.mjs';
+import { withGitHubReadRetry } from './github-api-read.mjs';
 const sha = 'a'.repeat(40), sourceSha = 'b'.repeat(40);
 const target = { name: '@bitbaum/design-tokens', repo: 'https://github.com/bitbaum/design-tokens', version: '1.2.0', release: { source: 'git', commit: sha } };
 const input = { repo: 'app', path: 'desktop/template/package.json', name: '@fleet/tokens', from: 'npm:@bitbaum/design-tokens@^1.1.0', identity: { packageName: target.name, range: '^1.1.0' }, currentVersion: '1.1.0', target, sourceSha };
@@ -90,6 +91,29 @@ test('permission 403 fails immediately instead of masking missing access', () =>
     run: () => { calls++; throw error; },
     wait: () => assert.fail('permission errors must not be retried'),
   }), /Command failed/);
+  assert.equal(calls, 1);
+});
+test('shared read retry handles secondary limits but never retries permission failures', () => {
+  let calls = 0;
+  const waits = [];
+  const result = withGitHubReadRetry(() => {
+    calls++;
+    if (calls === 1) {
+      const error = new Error('command failed');
+      error.stderr = Buffer.from('You have exceeded a secondary rate limit (HTTP 403)');
+      throw error;
+    }
+    return 'read succeeded';
+  }, { wait: milliseconds => waits.push(milliseconds) });
+  assert.equal(result, 'read succeeded');
+  assert.deepEqual(waits, [10_000]);
+
+  calls = 0;
+  const denied = new Error('command failed');
+  denied.stderr = Buffer.from('Resource not accessible by integration (HTTP 403)');
+  assert.throws(() => withGitHubReadRetry(() => { calls++; throw denied; }, {
+    wait: () => assert.fail('permission failures must not be retried'),
+  }), /command failed/);
   assert.equal(calls, 1);
 });
 function snapshotFixture({ truncated = false, missing = false, npm = false } = {}) {
