@@ -17,6 +17,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | C2 | Release notification and consumer propagation | validating | The canonical `v0.8.0` tag notification succeeded (AccountKit 40487347801) and dispatched Fleet currency run 40487371026, now in progress. Fleet #279 merged as 0724f24 after fixing bounded, fail-closed reads; its required CI passed. Complete generated PRs, exact app gates and deployments from this release cycle. |
 | C3 | Multiple representative integration classes | validating | Fleet #249/#250/#257 merged; Kivvi and authenticated embedded Causius use npm ChatKit 0.17.1 with successful deployed receipts. Reconcile remaining kit representative classes. |
 | C4 | Protected branches and compatible automated writers | implementing | Causius, Heidi and Fleet required checks are applied and verified. Fleet registry/readings/origin writers create generated PRs; all three operational runs passed (40468652046/40468655648/40468660020). Bitbaum #148 and Fleet #270 convert site snapshots to a pinned first-party generated-PR helper; its latest production publish is still running. Verify an actual generated snapshot PR and assess package-release writers before extending branch enforcement. |
+| C5 | Package repository merge defaults | implementing | Current audit: 5/17 package repos allow auto-merge and 2/17 delete merged head branches. Fleet #286 adds verified daily reconciliation, new-repo defaults, and fixes PAT-backed behind-branch refresh so checks run. Merge after current CI/gate; then dispatch the reconciler and verify all 17 settings. |
 | D1 | Shared account lifecycle and current reference apps | implementing | Causius shared mail was present on disk but absent from its running process. Canonical launch regeneration and guarded restart repaired it; #58/#59 merged. Production verification/reset delivery, browser reset, revocation, identity continuity and token reuse checks passed; synthetic account deleted. Inspect remaining deployed runtime/config mismatches and reconcile reference artifacts. |
 | D2 | Shared social broker and provider parity | open | Inspect intended broker/configuration; verify OrangeCat/Google/GitHub/X and local fallbacks, or name exact external blockers. |
 | D3 | Diplodoctor and organization extensions | implementing | Diplodoctor #32 merged/deployed fd1c72b with exact AccountKit 0.8.0 Git artifact, 13 Postgres tests, seven browser journeys and passing external live check. Continue organization parity, SiteKit shell adoption and social-provider verification. |
@@ -136,3 +137,25 @@ and branch-policy audits before treating this as an organization-wide control.
   with five already-baselined contradictions and no new findings. The next
   AccountKit-triggered Fleet currency run is still in progress; this does not
   yet prove consumer PRs or deployments.
+
+## 2026-10-27 repository-setting and API-load follow-through
+
+- Screenshots of GitHub's Pull Requests settings show that `Allow auto-merge`
+  is a repository-level capability, while automatic head-branch deletion is a
+  separate repository-level option. They do not turn on by default from a
+  checked-in workflow. The live registry audit found auto-merge enabled in 5
+  of 17 package repositories and head-branch deletion in 2 of 17. Fleet #286
+  adds a fail-closed reconciler and read-back verification to the existing
+  `package-repos.yml` workflow, and enables both options when creating future
+  package repositories. It is still pending merge and production application.
+- Fleet's behind-branch update used the repository `GITHUB_TOKEN`, which
+  produces `action_required` pull-request runs without jobs. #286 changes that
+  one write to use the same shared PAT as the eventual merge; without the PAT,
+  the sweep leaves the branch untouched. The real test suite covers both paths.
+- The full organization drift census ran in ordinary Fleet PR CI and collided
+  with the internal package-currency census at GitHub's primary API limit. The
+  global scan now has a dedicated daily workflow and runs on shared-truth
+  register/checker changes; changed app documents remain checked by the
+  existing per-PR docs gate. This reduces redundant org-wide reads. The
+  dedicated schedule and the current Fleet PR checks still need successful
+  production runs before this adjustment is considered operationally proven.
