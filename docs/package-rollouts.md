@@ -190,3 +190,12 @@ current, its ordinary updates are planned normally. Additional representatives
 and nested importers follow the same rule. This changes batching, not admission:
 exact-artifact candidate checks, blocked releases and downstream deployment
 evidence remain required.
+
+## Consumer verification workflows
+
+`consumerChecks` binds a repository to its actual verification workflows when
+its build differs from the normal app template. The static studio runs its
+unit, source, accessibility and browser checks in `deploy-site.yml`; it does
+not have `ci.yml` or `browser-smoke.yml`. Candidate proof must come from that
+workflow on the candidate commit. Other repositories retain package-specific
+requirements, and representative deployment proof is still required.

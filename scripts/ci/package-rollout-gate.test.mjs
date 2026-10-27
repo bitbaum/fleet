@@ -507,3 +507,10 @@ test("workspace canary evidence is cached separately for each importer and recei
   assert.notEqual(web, canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web", receiptProjects:["apps/web","packages/ai"]}, checks));
   assert.equal(web, canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web"}, checks));
 });
+
+test("static studio uses its actual publication-preview workflow for candidate proof", async () => {
+ const custom={...settings,consumerChecks:{"bitbaum/studio":["deploy-site.yml"]}};
+ assert.deepEqual(await check({repo:"bitbaum/studio",settings:custom,candidateChecks:["deploy-site.yml"]}),[]);
+ assert.ok((await check({repo:"bitbaum/studio",settings:custom,candidateChecks:[]})).length);
+ assert.ok((await check({repo:"bitbaum/other",settings:custom,candidateChecks:["deploy-site.yml"]})).length);
+});

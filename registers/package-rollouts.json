@@ -314,5 +314,10 @@
     "bitbaum/substrata": "https://substrata.orangecat.ch/.well-known/fleet-release.json",
     "bitbaum/heidi": "https://heidi.orangecat.ch/.well-known/fleet-release.json",
     "bitbaum/causius": "https://causius.orangecat.ch/.well-known/fleet-release.json"
+  },
+  "consumerChecks": {
+    "bitbaum/bitbaum": [
+      "deploy-site.yml"
+    ]
   }
 }
