@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T07:58:06.256Z",
+  "generatedAt": "2026-10-27T10:19:27.575Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -116,10 +116,10 @@
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
       "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.17.1",
+      "version": "0.18.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.17.1"
+        "command": "pnpm add @bitbaum/chatkit@^0.18.0"
       },
       "adopters": 17,
       "adopterNames": [
@@ -143,7 +143,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.17.1"
+        "version": "0.18.0"
       }
     },
     {
@@ -186,8 +186,8 @@
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
       "version": "0.8.0",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#a303242f586d7ac2b2568bbe8d3da94d8b0be768"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.8.0"
       },
       "adopters": 13,
       "adopterNames": [
@@ -206,9 +206,8 @@
         "surf-your-life"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.8.0",
-        "commit": "a303242f586d7ac2b2568bbe8d3da94d8b0be768"
+        "source": "npm",
+        "version": "0.8.0"
       }
     },
     {
@@ -421,17 +420,16 @@
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
       "version": "0.2.0",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/chartkit#b54b26715e569f4c18e758a14c124f5676e1e514"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.2.0"
       },
       "adopters": 1,
       "adopterNames": [
         "substrata"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.2.0",
-        "commit": "b54b26715e569f4c18e758a14c124f5676e1e514"
+        "source": "npm",
+        "version": "0.2.0"
       }
     },
     {
