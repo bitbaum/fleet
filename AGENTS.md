@@ -337,8 +337,8 @@ committed baseline of 0. Nothing was wrong with any single one of them. A
 ratchet does not die disputed, it dies drowned: a gate whose number is mostly
 noise gets muted, and every true finding inside it is muted with it.
 
-**The rule is in `~/.claude/CLAUDE.md`: tear the experiment down in the same
-session that created it, repo included — not archived, not left private, gone.**
+**Remove a throwaway experiment in the same session that created it, including
+its repository. Do not archive it or leave it private as a substitute for removal.**
 Per-site teardown is `loki: scripts/hetzner/retire-site.sh`, which also
 owns the Caddy vhost and the `apps.conf` row. None of that is restated here.
 
