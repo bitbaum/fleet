@@ -16,7 +16,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | C1 | All-kit verified release paths and publication | implementing | Resolve AccountKit npm authentication or retain supported immutable Git; verify all release artifacts and aliases. |
 | C2 | Release notification and consumer propagation | validating | Fleet #247/#258 merged; actual inventory run 40449285359 passed publication and dispatch after concurrent-main retry repair. Resolve staged npm publication visibility and complete the entire second-cycle deployment path. |
 | C3 | Multiple representative integration classes | validating | Fleet #249/#250/#257 merged; Kivvi and authenticated embedded Causius use npm ChatKit 0.17.1 with successful deployed receipts. Reconcile remaining kit representative classes. |
-| C4 | Protected branches and compatible automated writers | implementing | Causius/Heidi strict verify + account lifecycle checks enforced for admins and read back (run 40452397109). Fleet registry/readings/origin writers are being converted to generated PRs before Fleet enforcement. Bitbaum and package-release writers remain open. |
+| C4 | Protected branches and compatible automated writers | implementing | Causius/Heidi strict verify + account lifecycle checks enforced for admins and read back (run 40452397109). Fleet registry/readings/origin writers now create generated PRs; all three operational runs passed (40468652046/40468655648/40468660020). Fleet verify + rendered-starter enforcement is next. Bitbaum and package-release writers remain open. |
 | D1 | Shared account lifecycle and current reference apps | implementing | Causius shared mail was present on disk but absent from its running process. Canonical launch regeneration and guarded restart repaired it; #58/#59 merged. Production verification/reset delivery, browser reset, revocation, identity continuity and token reuse checks passed; synthetic account deleted. Inspect remaining deployed runtime/config mismatches and reconcile reference artifacts. |
 | D2 | Shared social broker and provider parity | open | Inspect intended broker/configuration; verify OrangeCat/Google/GitHub/X and local fallbacks, or name exact external blockers. |
 | D3 | Diplodoctor and organization extensions | implementing | Diplodoctor #32 merged/deployed fd1c72b with exact AccountKit 0.8.0 Git artifact, 13 Postgres tests, seven browser journeys and passing external live check. Continue organization parity, SiteKit shell adoption and social-provider verification. |
@@ -37,7 +37,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
   delivery, token reuse rejection, session revocation and identity continuity.
   It certifies that tested deployment, not every later artifact or other app.
 - Causius deployed ChatKit 0.17.1 and app lifecycle repair passed actual phone
-  and desktop synthetic matter journeys. Its separate production mail gap remains
+  and desktop synthetic matter journeys. Its separate production mail gap
   was subsequently repaired under D1 and independently verified with controlled
   verification/reset delivery, revocation and identity-continuity checks. This
   does not certify other apps or social-provider availability.
