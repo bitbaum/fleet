@@ -205,6 +205,9 @@ jobs:
       - name: Authenticated product integration checks
         run: node --test scripts/test/auth-integration.test.mjs
 
+      - name: Generated PR ownership and workflow admission
+        run: node --test scripts/ci/generated-pr.test.mjs
+
       - name: Registry publication concurrency and recovery
         run: node --test scripts/ci/publish-package-registry.test.mjs
 

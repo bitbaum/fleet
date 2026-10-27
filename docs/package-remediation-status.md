@@ -81,8 +81,9 @@ conversion before those repositories enter this enforcement wave.
 
 ## Generated Fleet writers
 
-Registry, readings and origin-proof refreshes open generated PRs, with the PR
-creation action pinned to its verified v8.1.1 commit. Changed registry facts are
+Registry, readings and origin-proof refreshes open generated PRs, using the existing GitHub CLI branch/lease approach. The initial third-party
+action was rejected by organization policy during operational testing and was
+replaced without relaxing that policy. Changed registry facts are
 not announced to the public catalogue until they have landed on main. A main
 registry merge triggers a fresh inventory run; unchanged facts retry missed
 catalogue notifications with the exact landed SHA. The CI writer check now
