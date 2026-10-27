@@ -15,17 +15,17 @@ importers:
         specifier: ^1.7.7
         version: 1.7.7(@better-auth/core@1.7.7(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-call@1.4.0(zod@4.6.6))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.2)(better-auth@1.7.7(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@types/pg@8.23.1)(kysely@0.29.6)(pg@8.23.1))(next@16.4.1(@babel/core@7.29.7)(@types/node@26.6.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(pg@8.23.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@4.1.11(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))))(better-call@1.4.0(zod@4.6.6))(nanostores@1.5.5)
       '@bitbaum/accountkit':
-        specifier: github:bitbaum/accountkit#d9c311e54fe97442f367874cfaa0ef451ba0f2bd
-        version: https://codeload.github.com/bitbaum/accountkit/tar.gz/d9c311e54fe97442f367874cfaa0ef451ba0f2bd(fcc7693e8d81c9363710d2a1bf759bd1)
+        specifier: ^0.8.0
+        version: 0.8.0(fcc7693e8d81c9363710d2a1bf759bd1)
       '@bitbaum/ai-kit':
         specifier: ^1.21.4
         version: 1.21.4(react@19.3.0)
       '@bitbaum/chatkit':
-        specifier: ^0.15.3
-        version: 0.15.3(react@19.3.0)
+        specifier: ^0.19.0
+        version: 0.19.0(react@19.3.0)
       '@bitbaum/design-tokens':
-        specifier: github:bitbaum/design-tokens#5c31f48743dabf9294bf9380a15862b4efbc68a0
-        version: https://codeload.github.com/bitbaum/design-tokens/tar.gz/5c31f48743dabf9294bf9380a15862b4efbc68a0
+        specifier: ^1.2.0
+        version: 1.2.0
       '@bitbaum/mail-kit':
         specifier: ^0.2.0
         version: 0.2.0
@@ -265,9 +265,8 @@ packages:
   '@better-fetch/fetch@1.3.2':
     resolution: {integrity: sha512-Gs7n99b5tqUC6cQAPbV0uED3IraHB6xQbHLQ/C3l7ZFafHScOx9pQ+DYmP5blbLFShVWLqxNUlI9wi4xU/X+ow==}
 
-  '@bitbaum/accountkit@https://codeload.github.com/bitbaum/accountkit/tar.gz/d9c311e54fe97442f367874cfaa0ef451ba0f2bd':
-    resolution: {gitHosted: true, integrity: sha512-/kdIUtgKuBd5nQ4f83ifXAVL8b22aBUsSqqipG3JgsRhBZqcYoVc9j7Wm1C1BQ7BC7LqzppEuiUVPZpafJU5Rw==, tarball: https://codeload.github.com/bitbaum/accountkit/tar.gz/d9c311e54fe97442f367874cfaa0ef451ba0f2bd}
-    version: 0.6.3
+  '@bitbaum/accountkit@0.8.0':
+    resolution: {integrity: sha512-vHQBkiL86Tf2EwXUGsWmzu+1QSg3PtT2uWX4frmc3RbB1tm7EHjvptWORF77MQc6seyNNi39uO+brqgJcegtyA==}
     engines: {node: '>=20'}
     peerDependencies:
       '@better-auth/passkey': ^1.7.10
@@ -297,16 +296,15 @@ packages:
       react:
         optional: true
 
-  '@bitbaum/chatkit@0.15.3':
-    resolution: {integrity: sha512-kOj3xYT0VTNVfGppGuUYiFoAYaFsLdsNKdXWrkEvYnBa/UJqSH+3LSmpiI+C9aAyFh1kBlhyrJAxYETltP2/BA==}
+  '@bitbaum/chatkit@0.19.0':
+    resolution: {integrity: sha512-bM0cefE0+25BV+MDrgt1L6XcFhKUdmSULQj8uMaHVYkUvoUZGaLfXvAacc9gFYRScUIOhWE4NycmclLuVYdcDA==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
       react: '>=18'
 
-  '@bitbaum/design-tokens@https://codeload.github.com/bitbaum/design-tokens/tar.gz/5c31f48743dabf9294bf9380a15862b4efbc68a0':
-    resolution: {gitHosted: true, integrity: sha512-+mbpCQtD9yphGFDOIDP0HSRabf/w4loKc0OYd1bfFAr7GBSiVGk7IRzukbKOuxGuH3WVkYgsHM7m2RXiEfKhIA==, tarball: https://codeload.github.com/bitbaum/design-tokens/tar.gz/5c31f48743dabf9294bf9380a15862b4efbc68a0}
-    version: 1.2.0
+  '@bitbaum/design-tokens@1.2.0':
+    resolution: {integrity: sha512-13TSrgYbEzSqt5FNfW3HSJIFcenUto8nKlk4J4IUsepL0gsTBoZ0YDMiJTaJKmR8sPPmcCS94Z/xgUBQW43itw==}
     engines: {node: '>=20'}
 
   '@bitbaum/mail-kit@0.2.0':
@@ -3756,7 +3754,7 @@ snapshots:
 
   '@better-fetch/fetch@1.3.2': {}
 
-  '@bitbaum/accountkit@https://codeload.github.com/bitbaum/accountkit/tar.gz/d9c311e54fe97442f367874cfaa0ef451ba0f2bd(fcc7693e8d81c9363710d2a1bf759bd1)':
+  '@bitbaum/accountkit@0.8.0(fcc7693e8d81c9363710d2a1bf759bd1)':
     dependencies:
       limitkit: 0.2.0
       react: 19.3.0
@@ -3777,11 +3775,11 @@ snapshots:
     transitivePeerDependencies:
       - canvas
 
-  '@bitbaum/chatkit@0.15.3(react@19.3.0)':
+  '@bitbaum/chatkit@0.19.0(react@19.3.0)':
     dependencies:
       react: 19.3.0
 
-  '@bitbaum/design-tokens@https://codeload.github.com/bitbaum/design-tokens/tar.gz/5c31f48743dabf9294bf9380a15862b4efbc68a0': {}
+  '@bitbaum/design-tokens@1.2.0': {}
 
   '@bitbaum/mail-kit@0.2.0': {}
 
