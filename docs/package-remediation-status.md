@@ -29,7 +29,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | F1 | Starters, templates and package selection gates | implementing | Verify generated consistency and new-project composition; remove contradictory instructions. |
 | F2 | Code-to-document/marketing claim dependencies | open | Generate derived claims, track editorial effects, verify actual public availability and correction history. |
 | F3 | Package reference pages and authored histories | validating | Bitbaum #146/#147 published and repaired 17 package references; all 17 public source/version contracts passed. AccountKit #31 adds release-sourced history; confirm its current publication and inventory the remaining package changelogs from verified release sources. |
-| G1 | Deployment evidence, observations and recovery | implementing | Public receipt coverage improved through verified Loki/Evig deployments, DataCat browser gating and Camille/Surf fixes. OrangeCat #1456 and Bitbaum #167 are validating. Recheck Substrata availability, then complete current-artifact user journeys and recovery evidence. |
+| G1 | Deployment evidence, observations and recovery | implementing | All 20 public apps have produced verified receipts during this pass; OrangeCat's exact served comparison passed in 40596409161. Complete current-artifact user journeys, private deployment evidence and recovery observations; a receipt does not certify those journeys. |
 | G2 | Second automated update cycle and final reconciliation | open | Demonstrate another real release progressing without owner intervention; rescan estate and close only evidenced tasks. |
 
 ## Established evidence and limitations
@@ -271,3 +271,81 @@ The full completion plan remains open: applicable package adoption, social broke
 and provider parity, specialized auth migrations, current-artifact chat/account
 journeys, security upgrades, authored histories and semantic claim dependencies
 still require evidence. Receipt availability alone does not close those tasks.
+
+
+## 2026-10-27 public receipt milestone and targeted security follow-through
+
+- All 20 public applications have produced valid artifact receipts during this
+  execution pass. The last complete local scan observed 19/20; OrangeCat's
+  subsequent deployment `40596409161` successfully generated and served the
+  final receipt and compared it against the exact staged contract. This is
+  evidence collected over the pass, not a claim of continuous simultaneous
+  availability or complete account/chat journey coverage.
+- OrangeCat #1456/#1457 deployed `79fcf1afce81ee7bc682eb60e5d0b598390bd84f`.
+  The first production exercise stopped before shipping because the producer
+  could not identify local workspace dependencies. Fleet #302 fixes that class
+  centrally: installed real paths, tracked manifests, package names/versions and
+  locked links must agree inside the clean checkout. Local packages are tied
+  to the immutable owning commit. All 44 rollout/receipt tests passed, including
+  real root/nested workspace and rejection fixtures. OrangeCat's final receipt
+  certifies 13 shared artifacts; the successful deploy includes the actual
+  served-copy comparison.
+- Bitbaum #167 published generator/package receipts in `40593111199`.
+  The served receipt identifies its clean generator commit and package lock;
+  refreshed catalogue data remains subject to separate fresh-source and page
+  checks. The deployed-only receipt is excluded from generated snapshot PRs.
+- Substrata's homepage and receipt timed out during the scan. Its existing
+  CI-gated redeployment `40593088482` passed and the receipt returned HTTP 200
+  again. Availability was restored; the underlying timeout cause is not proven.
+- Botsmann #239 merged and deployed. Its browser workflow now tests the actual
+  standalone production entrypoint at phone and desktop widths, no-JavaScript
+  article reading, contents navigation, and an actual failed contact request.
+  Six browser journeys and full app verification passed. The form now calls
+  its real API; an unsaved request returns an error and preserves the draft
+  rather than pretending that it was received. This is not email-delivery or
+  full bot/auth journey certification. Its stale agent instructions now point
+  to the canonical Fleet policy and actual Vitest/pnpm/deploy commands.
+- Botsmann #238 subsequently passed its required CI/browser gates and merged;
+  deployment `40596944048` passed. The earlier missing-browser hold was
+  resolved by real app coverage, not by waiving the rollout policy.
+- A scoped read of 38 public root/known nested lockfiles found older sanitizer
+  versions in BIP Kit, Botsmann and Loki and vulnerable Sentry versions in Loki,
+  Petvity and Surf Your Life. It is not a complete private/native/development
+  dependency security census. Targeted patches preserve the existing auth
+  adapters, telemetry settings and package safeguards:
+  - Botsmann #240: DOMPurify 3.4.17; production audit has no critical/high
+    findings. Deployment `40595259225` passed before the later package rollout.
+  - BIP Kit #52: sanitizer and brace-expansion patches in the peer/test lock;
+    full verify and all 213 tests passed. Final audit has no critical/high/
+    moderate findings and one low finding. This lock-only change does not
+    update consumers or require a new package API release.
+  - Surf Your Life #103: Sentry 10.75.2; canonical CI and production deployment
+    `40596548928` passed.
+  - Petvity #121: Sentry 10.75.2; canonical CI and production deployment
+    `40596655607` passed.
+  - Loki #1451: Sentry 10.75.2 and DOMPurify 3.4.17. Exact PR CI passed and
+    the checked sweep merged it. Main CI `40596983235` and its deployment are
+    still pending. Its root production audit has no critical/high findings;
+    this does not clear the separate desktop/development dependency findings.
+- ChatKit 0.21.0 was observed in both representative canary receipts and the
+  Heidi/Substrata receipts. Causius #66 and Kivvi #160 are owner/agent canary
+  adoption branches; their existence alone does not prove a fully unattended
+  release cycle. Keep G2 open until the full configured cycle is evidenced.
+- PayKit's saved npm authorization is acknowledged. The last actual diagnostic
+  `40543445302` obtained the expected GitHub identity, but npm rejected the
+  exchange with HTTP 404. This session has no npm maintainer administration
+  connection to inspect the saved binding; no successful publication is
+  claimed and repeated identical retries are not evidence of progress.
+
+The replacement execution workspace failed to provision; its outbound shell
+networking had also started returning 503. Connected GitHub access remained
+usable, so the last two prepared patches were uploaded with exact blob/tree hash
+checks and continue through the existing CI/merge/deploy chain. This limits
+further local implementation and fresh direct-live scans until execution access
+is restored; it does not invalidate the completed production checks above.
+
+The full plan is not complete. Applicability/adoption review, social-broker and
+provider parity, specialized auth migrations, remaining current-artifact user
+journeys, broader security work, authored histories, semantic claim dependencies
+and the final unattended-cycle reconciliation remain open. Package installation,
+a green package page, or receipt availability is not a substitute for them.
