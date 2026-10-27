@@ -89,12 +89,14 @@ export function render(text, decl) {
 const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'inherit'], encoding: 'utf8', ...opts });
 
-function repoExists(name) {
+export function repoExists(name, execute = run) {
   try {
-    run('gh', ['api', `repos/${ORG}/${name}`, '--silent']);
+    execute('gh', ['api', `repos/${ORG}/${name}`, '--silent']);
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    const detail = `${error.stderr ?? ''}\n${error.message ?? ''}`;
+    if (/\bHTTP 404\b|"status"\s*:\s*"?404\b/i.test(detail)) return false;
+    throw new Error(`could not determine whether ${ORG}/${name} exists: ${detail.trim()}`);
   }
 }
 
