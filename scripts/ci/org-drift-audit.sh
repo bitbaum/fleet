@@ -206,11 +206,17 @@ repo_ref() {
 
 # fetch_apps_conf — retrieve the current apps.conf from loki
 fetch_apps_conf() {
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "# apps.conf unavailable: gh not found" >&2
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "# apps.conf unavailable: curl not found" >&2
     return 1
   fi
-  gh api repos/bitbaum/loki/contents/scripts/hetzner/apps.conf --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || {
+  # This public source is read by every Fleet CI run. Pulling its raw bytes
+  # avoids consuming GitHub's secondary API quota alongside the 61-repo
+  # currency census; retries are bounded and the caller still fails closed.
+  curl --fail --silent --show-error --location \
+    --retry 3 --retry-all-errors --retry-delay 1 --retry-max-time 30 \
+    --connect-timeout 10 --max-time 30 \
+    https://raw.githubusercontent.com/bitbaum/loki/main/scripts/hetzner/apps.conf || {
     echo "# apps.conf unavailable: fetch failed" >&2
     return 1
   }

@@ -3,17 +3,42 @@ import { posix } from 'node:path';
 import { manifestPaths } from './shared-registry-audit.mjs';
 import { lockedDependencies, lockedNpmDependencies } from './package-rollout-gate.mjs';
 
-export function githubJson(path) {
+const waitSync = milliseconds => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+
+function retryable(error) {
+  const detail = `${error.stderr ?? ''}\n${error.message ?? ''}`;
+  return /HTTP (?:429|5\d\d)|timed out|ECONNRESET/.test(detail)
+    || (/HTTP 403/.test(detail) && /secondary rate limit|abuse detection|temporarily rate limited/i.test(detail));
+}
+
+export function githubJson(path, { run = execFileSync, wait = waitSync } = {}) {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      return JSON.parse(execFileSync('gh', ['api', path], {
+      return JSON.parse(run('gh', ['api', path], {
         encoding: 'utf8', timeout: 30_000, maxBuffer: 64 * 1024 * 1024,
         stdio: ['ignore', 'pipe', 'pipe'],
       }));
     } catch (error) {
-      if (attempt === 2 || !/HTTP (?:401|429|5\d\d)|timed out|ECONNRESET/.test(String(error.stderr ?? error.message))) throw error;
+      if (attempt === 2 || !retryable(error)) throw error;
+      // Secondary limits arrive as 403s. Give the shared org token time to
+      // recover instead of immediately repeating the same burst. Auth and
+      // permission 403s still fail closed without retrying.
+      wait(attempt === 0 ? 10_000 : 30_000);
     }
   }
+}
+
+function rawFile(owner, repo, path, commit) {
+  const encoded = path.split('/').map(encodeURIComponent).join('/');
+  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${commit}/${encoded}`;
+  return execFileSync('curl', [
+    '--fail', '--silent', '--show-error', '--location',
+    '--retry', '3', '--retry-all-errors', '--retry-delay', '1', '--retry-max-time', '30',
+    '--connect-timeout', '10', '--max-time', '30', url,
+  ], {
+    encoding: 'utf8', timeout: 45_000, maxBuffer: 64 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 }
 
 /** Public automation cannot publish private repository names in its matrix/log. */
@@ -33,7 +58,7 @@ export function currencyRepositories(owner, includePrivate = false, request = gi
 }
 
 /** One immutable tree: a moving default branch cannot mix manifests and locks. */
-export function currencySnapshot(owner, repo, request = githubJson) {
+export function currencySnapshot(owner, repo, request = githubJson, readFile = rawFile) {
   const prefix = `repos/${owner}/${repo}`;
   const commit = request(`${prefix}/commits/HEAD`).sha;
   if (!/^[0-9a-f]{40}$/.test(commit ?? '')) throw new Error('Missing source commit');
@@ -43,11 +68,7 @@ export function currencySnapshot(owner, repo, request = githubJson) {
   const cache = new Map();
   function read(path) {
     if (!files.has(path)) throw new Error(`Missing tracked file: ${path}`);
-    if (!cache.has(path)) {
-      const file = request(`${prefix}/contents/${path}?ref=${commit}`);
-      if (file.encoding !== 'base64' || typeof file.content !== 'string') throw new Error(`Unreadable file: ${path}`);
-      cache.set(path, Buffer.from(file.content, 'base64').toString('utf8'));
-    }
+    if (!cache.has(path)) cache.set(path, readFile(owner, repo, path, commit));
     return cache.get(path);
   }
   return {

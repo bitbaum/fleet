@@ -257,7 +257,15 @@ async function main() {
         }
       }
     } catch (error) {
-      unreadable.push(`${repo}: ${error.message}`);
+      // gh's exec error message says only "Command failed". Preserve its
+      // bounded stderr so a rate limit can be distinguished from permission,
+      // repository, and source-file failures. Currency scans cover public
+      // repositories only; redact credential-shaped strings defensively.
+      const detail = String(error.stderr ?? error.message ?? error)
+        .trim()
+        .replace(/(?:gh[op]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+)/g, '[redacted]')
+        .slice(0, 500);
+      unreadable.push(`${repo}: ${detail}`);
     }
   }
   // Never act on a partial census: API/manifest/lock failures are unknown, not current.

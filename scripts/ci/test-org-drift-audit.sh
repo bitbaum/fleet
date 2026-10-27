@@ -89,6 +89,16 @@ git -C "$D" update-ref refs/remotes/origin/main HEAD
 eq origin/main "$(repo_ref "$D")" "origin/main wins"
 
 echo
+echo "fetch_apps_conf — use the public source without GitHub API quota"
+curl() {
+  [ "${@: -1}" = 'https://raw.githubusercontent.com/bitbaum/loki/main/scripts/hetzner/apps.conf' ] || return 2
+  printf 'name|4001|example.orangecat.ch|/home/g/dev/example-repo|.|db|owner|kind|status|-|-|-\n'
+}
+fetched="$(fetch_apps_conf)"
+eq 'name|4001|example.orangecat.ch|/home/g/dev/example-repo|.|db|owner|kind|status|-|-|-' "$fetched" "reads the live door register from raw GitHub"
+unset -f curl
+
+echo
 echo "parse_apps_conf_doors — extract domain→repo mappings"
 APPS_CONF='# comment
 name|4001|example.orangecat.ch|/home/g/dev/example-repo|.|db|owner|kind|status|-|-|-
