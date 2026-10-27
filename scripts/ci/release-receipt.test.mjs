@@ -237,3 +237,36 @@ test("CLI uses the clean checked-out commit, requires public scope and rejects u
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("CLI attests nested independent lock roots without confusing project identity with importer identity", async () => {
+  const { mkdtempSync, writeFileSync, mkdirSync, readFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { execFileSync, spawnSync } = await import("node:child_process");
+  const { fileURLToPath } = await import("node:url");
+  for (const manager of ["pnpm", "npm"]) {
+    const root = mkdtempSync(join(tmpdir(), "fleet-nested-receipt-"));
+    try {
+      const project = join(root, "frontend");
+      mkdirSync(join(project, "node_modules/chat"), { recursive: true });
+      writeFileSync(join(root, ".gitignore"), "node_modules/\n");
+      writeFileSync(join(project, "package.json"), JSON.stringify(manifest));
+      writeFileSync(join(project, "node_modules/chat/package.json"), JSON.stringify({ name, version: "0.15.2" }));
+      if (manager === "pnpm") writeFileSync(join(project, "pnpm-lock.yaml"), pnpmLock);
+      else writeFileSync(join(project, "package-lock.json"), JSON.stringify({
+        lockfileVersion: 3, packages: { "node_modules/chat": { version: "0.15.2" }, "node_modules/unrelated": { version: "1.0.1" } },
+      }));
+      const git = (...args) => execFileSync("git", ["-C", root, ...args], { stdio: "pipe" });
+      git("init", "--quiet"); git("add", ".");
+      git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "nested fixture");
+      const output = join(root, "receipt.json");
+      const result = spawnSync(process.execPath, [fileURLToPath(new URL("./release-receipt.mjs", import.meta.url)),
+        "--public", "--root", root, "--dir", project, "--repo", input.repo, "--output", output], { encoding: "utf8" });
+      assert.equal(result.status, 0, `${manager}: ${result.stderr}`);
+      const receipt = JSON.parse(readFileSync(output, "utf8"));
+      assert.equal(receipt.project, "frontend");
+      assert.deepEqual(receipt.projects, ["frontend"]);
+      assert.deepEqual(receipt.artifacts, { [name]: "0.15.2" });
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});

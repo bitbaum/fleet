@@ -213,3 +213,10 @@ and branch-policy audits before treating this as an organization-wide control.
   importer scope, artifact maps, unavailable responses and invalid JSON fail.
   This is a reusable deployment check; adding it does not certify an app
   until its real deployed verification passes.
+- Botsmann, Petvity and Skif gated redeployments passed and now serve receipts;
+  the follow-up public scan reached 11/20. DataCat deployed successfully but
+  exposed a shared producer bug: source project `frontend` was used as a lock
+  importer even though its independent frontend lockfile's importer is `.`.
+  Fleet #293 separates source identity from lock-relative importer identity.
+  Regression CLI fixtures cover both pnpm and npm independent nested locks;
+  DataCat receipt/deployment verification remains pending that repair.
