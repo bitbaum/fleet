@@ -207,3 +207,19 @@ unit, source, accessibility and browser checks in `deploy-site.yml`; it does
 not have `ci.yml` or `browser-smoke.yml`. Candidate proof must come from that
 workflow on the candidate commit. Other repositories retain package-specific
 requirements, and representative deployment proof is still required.
+
+
+### Browser jobs inside combined consumer CI
+
+`consumerChecks` may require `workflow.yml#Exact job name` alongside the workflow.
+This accepts an existing combined CI without duplicating browser runs. The gate
+requires the newest eligible workflow on the exact candidate commit, overall
+success, and a completed successful job with that exact name. Missing, renamed,
+skipped, failed or unreadable job evidence holds promotion. It does not borrow
+another commit's browser results.
+
+Evig's `ci.yml#Local E2E Journeys` runs a disposable database, applies migrations,
+seeds accounts, builds and starts the app, and runs its actual browser journeys
+and authorization guards. Optional production smoke jobs that skip without
+credentials do not satisfy this requirement. Canary artifacts, deployment proof
+and all other rollout requirements remain in force.

@@ -4,6 +4,7 @@ import {
   lockedDependencies,
   assessRollout,
   successfulWorkflows,
+  successfulConsumerChecks,
   nestedSharedArtifacts,
   nestedSharedUpdates,
   nestedSharedChange,
@@ -33,18 +34,39 @@ test("only consumer behavior files require browser candidate proof", () => {
   );
   assert.equal(
     hasConsumerSourceChanges(
-      [{ filename: "packages/ai/package.json" }, { filename: "apps/web/page.tsx" }],
+      [
+        { filename: "packages/ai/package.json" },
+        { filename: "apps/web/page.tsx" },
+      ],
       "packages/ai",
     ),
     false,
   );
 });
 test("aliases cannot escape first-party artifact checks", () => {
-  assert.equal(dependencyIdentity("sitekit", "npm:@bitbaum/sitekit@^0.4.2"), name);
-  assert.equal(dependencyIdentity("@fleet/ai-forms", "github:bitbaum/ai-forms#v0.1.3"), "ai-forms");
-  assert.deepEqual(lockedDependencies({ dependencies: { sitekit: "npm:@bitbaum/sitekit@^0.4.2" } },
-    "importers:\n  .:\n    dependencies:\n      sitekit:\n        specifier: npm:@bitbaum/sitekit@^0.4.2\n        version: '@bitbaum/sitekit@0.4.2(react@19)'\n"), { [name]: "0.4.2" });
-  assert.throws(() => lockedDependencies({ dependencies: { sitekit: "npm:@bitbaum/sitekit@^0.4.2" } }, "importers:\n  .:\n"), /Missing locked artifact/);
+  assert.equal(
+    dependencyIdentity("sitekit", "npm:@bitbaum/sitekit@^0.4.2"),
+    name,
+  );
+  assert.equal(
+    dependencyIdentity("@fleet/ai-forms", "github:bitbaum/ai-forms#v0.1.3"),
+    "ai-forms",
+  );
+  assert.deepEqual(
+    lockedDependencies(
+      { dependencies: { sitekit: "npm:@bitbaum/sitekit@^0.4.2" } },
+      "importers:\n  .:\n    dependencies:\n      sitekit:\n        specifier: npm:@bitbaum/sitekit@^0.4.2\n        version: '@bitbaum/sitekit@0.4.2(react@19)'\n",
+    ),
+    { [name]: "0.4.2" },
+  );
+  assert.throws(
+    () =>
+      lockedDependencies(
+        { dependencies: { sitekit: "npm:@bitbaum/sitekit@^0.4.2" } },
+        "importers:\n  .:\n",
+      ),
+    /Missing locked artifact/,
+  );
 });
 const settings = {
   soakHours: 24,
@@ -92,7 +114,10 @@ test("canary requires browser and CI proof", async () => {
   );
 });
 test("only the configured PR may bootstrap its own package canary", async () => {
-  assert.deepEqual(await check({ repo: "bitbaum/biaslens", candidatePullRequest: 42 }), []);
+  assert.deepEqual(
+    await check({ repo: "bitbaum/biaslens", candidatePullRequest: 42 }),
+    [],
+  );
   assert.match(
     (await check({ repo: "bitbaum/biaslens", candidatePullRequest: 43 }))[0],
     /configured bootstrap PR #42/,
@@ -127,7 +152,10 @@ test("dependency-only UI package bumps use CI while source changes require brows
       }),
     });
   assert.deepEqual(await run(false, ["ci.yml"]), []);
-  assert.match((await run(true, ["ci.yml"]))[0], /ci.yml and browser-smoke.yml/);
+  assert.match(
+    (await run(true, ["ci.yml"]))[0],
+    /ci.yml and browser-smoke.yml/,
+  );
   assert.deepEqual(await run(true, ["ci.yml", "browser-smoke.yml"]), []);
 });
 test("template consumers may use full CI plus the exact canary soak", async () => {
@@ -146,7 +174,7 @@ test("template consumers may use full CI plus the exact canary soak", async () =
     readCanary: async () => ({
       dependencies: { [name]: "0.4.1" },
       healthy: true,
-        checks: ["ci.yml", "browser-smoke.yml"],
+      checks: ["ci.yml", "browser-smoke.yml"],
       deployedAt: "2026-10-24T11:30:00Z",
     }),
   });
@@ -200,7 +228,10 @@ test("package policy may require only checks meaningful to its surface", async (
       }),
     });
   assert.deepEqual(await finding(["ci.yml"], ["ci.yml"]), []);
-  assert.match((await finding([], ["ci.yml"]))[0], /consumer needs successful ci.yml/);
+  assert.match(
+    (await finding([], ["ci.yml"]))[0],
+    /consumer needs successful ci.yml/,
+  );
   assert.match((await finding(["ci.yml"], []))[0], /pass CI\/browser checks/);
 });
 test("a workspace canary is the package-specific bootstrap for its importer", async () => {
@@ -224,7 +255,9 @@ test("a workspace canary is the package-specific bootstrap for its importer", as
     settings: workspacePolicy,
     now,
     readCanary: async () => {
-      assert.fail("the configured bootstrap canary must not require its own soak");
+      assert.fail(
+        "the configured bootstrap canary must not require its own soak",
+      );
     },
   });
   assert.deepEqual(findings, []);
@@ -348,7 +381,11 @@ test("canary deployment evidence binds checks, receipt, and lock to the exact SH
     canary: "bitbaum/biaslens",
     tip,
     dependencies,
-    deploy: { conclusion: "success", head_sha: tip, updated_at: receipt.createdAt },
+    deploy: {
+      conclusion: "success",
+      head_sha: tip,
+      updated_at: receipt.createdAt,
+    },
     checks: ["ci.yml", "browser-smoke.yml"],
     receiptUrl: "https://example.test/.well-known/fleet-release.json",
     lock,
@@ -365,7 +402,11 @@ test("canary deployment evidence binds checks, receipt, and lock to the exact SH
     canary: "bitbaum/biaslens",
     tip,
     dependencies,
-    deploy: { conclusion: "success", head_sha: "b".repeat(40), updated_at: receipt.createdAt },
+    deploy: {
+      conclusion: "success",
+      head_sha: "b".repeat(40),
+      updated_at: receipt.createdAt,
+    },
     checks: ["ci.yml", "browser-smoke.yml"],
   });
   assert.equal(wrongCommit.healthy, false);
@@ -395,11 +436,16 @@ test("workspace receipts may cover a broader release project than the package im
     receiptDependencies,
     receiptProject: "apps/web",
     receiptProjects: ["apps/web", "packages/ai"],
-    deploy: { conclusion: "success", head_sha: tip, updated_at: receipt.createdAt },
+    deploy: {
+      conclusion: "success",
+      head_sha: tip,
+      updated_at: receipt.createdAt,
+    },
     checks: ["ci.yml", "browser-smoke.yml"],
     receiptUrl: "https://example.test/.well-known/fleet-release.json",
     lock,
-    fetchImpl: async () => new Response(JSON.stringify(receipt), { status: 200 }),
+    fetchImpl: async () =>
+      new Response(JSON.stringify(receipt), { status: 200 }),
   });
   assert.equal(result.healthy, true);
   assert.deepEqual(result.dependencies, dependencies);
@@ -409,13 +455,17 @@ test("retired nested workspace importers are safe while nested package updates s
   const lock = (version) =>
     `importers:\n  .:\n    dependencies:\n  packages/chartkit:\n    devDependencies:\n      '@bitbaum/design-tokens':\n        specifier: ^1.1.0\n        version: ${version}\n\npackages:\n`;
   const before = lock("1.1.0");
-  assert.deepEqual(nestedSharedUpdates(before, "importers:\n  .:\n\npackages:\n"), []);
+  assert.deepEqual(
+    nestedSharedUpdates(before, "importers:\n  .:\n\npackages:\n"),
+    [],
+  );
   assert.deepEqual(nestedSharedUpdates(before, lock("1.2.0")), [
     ["packages/chartkit", "@bitbaum/design-tokens", "1.2.0"],
   ]);
-  assert.deepEqual(nestedSharedUpdates("importers:\n  .:\n\npackages:\n", lock("1.1.0")), [
-    ["packages/chartkit", "@bitbaum/design-tokens", "1.1.0"],
-  ]);
+  assert.deepEqual(
+    nestedSharedUpdates("importers:\n  .:\n\npackages:\n", lock("1.1.0")),
+    [["packages/chartkit", "@bitbaum/design-tokens", "1.1.0"]],
+  );
 });
 
 test("standalone nested manifests and locks cannot bypass the root gate", () => {
@@ -461,56 +511,373 @@ test("obsolete AccountKit downgrade is blocked even for its bootstrap canary", a
       before: { "@bitbaum/accountkit": "current" },
       after: { "@bitbaum/accountkit": artifact },
       candidateChecks: ["ci.yml", "browser-smoke.yml"],
-      readCanary: async () => { throw new Error("blocked artifacts must not read canary evidence"); },
+      readCanary: async () => {
+        throw new Error("blocked artifacts must not read canary evidence");
+      },
     });
-    assert.ok(findings.some((finding) => finding.includes("release is blocked")));
+    assert.ok(
+      findings.some((finding) => finding.includes("release is blocked")),
+    );
   }
 });
 
 test("each representative can bootstrap independently but all must qualify for downstream promotion", async () => {
-  const multi = { ...settings, packages: { [name]: { ...settings.packages[name], additionalCanaries: [{ canary: "bitbaum/case-app", bootstrapPr: 7, candidateChecks: ["ci.yml", "case-browser.yml"], canaryChecks: ["ci.yml", "case-browser.yml"] }] } } };
-  assert.deepEqual(await check({settings:multi, repo:"bitbaum/case-app", candidatePullRequest:7, candidateChecks:["ci.yml", "case-browser.yml"]}),[]);
-  assert.ok((await check({settings:multi, repo:"bitbaum/case-app", candidatePullRequest:8, candidateChecks:["ci.yml", "case-browser.yml"]})).length);
-  assert.ok((await check({settings:multi, repo:"bitbaum/case-app", candidatePullRequest:7, candidateChecks:["ci.yml"]})).length);
-  const calls=[];
-  const evidence=async (repo)=> {calls.push(repo); return {dependencies:{[name]:"0.4.1"},healthy:repo!=="bitbaum/case-app",checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-22T12:00:00Z"};};
-  const result=await check({settings:multi,readCanary:evidence});
-  assert.deepEqual(calls,["bitbaum/biaslens","bitbaum/case-app"]);
-  assert.equal(result.length,1);assert.match(result[0],/case-app/);
-  assert.deepEqual(await check({settings:multi,readCanary:async()=>({dependencies:{[name]:"0.4.1"},healthy:true,checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-22T12:00:00Z"})}),[]);
-  assert.ok((await check({settings:multi,readCanary:async()=>({dependencies:{[name]:"0.4.1"},healthy:true,checks:["ci.yml","browser-smoke.yml","case-browser.yml"],deployedAt:"2026-10-24T11:00:00Z"})})).length, "additional representatives retain the full observation period");
+  const multi = {
+    ...settings,
+    packages: {
+      [name]: {
+        ...settings.packages[name],
+        additionalCanaries: [
+          {
+            canary: "bitbaum/case-app",
+            bootstrapPr: 7,
+            candidateChecks: ["ci.yml", "case-browser.yml"],
+            canaryChecks: ["ci.yml", "case-browser.yml"],
+          },
+        ],
+      },
+    },
+  };
+  assert.deepEqual(
+    await check({
+      settings: multi,
+      repo: "bitbaum/case-app",
+      candidatePullRequest: 7,
+      candidateChecks: ["ci.yml", "case-browser.yml"],
+    }),
+    [],
+  );
+  assert.ok(
+    (
+      await check({
+        settings: multi,
+        repo: "bitbaum/case-app",
+        candidatePullRequest: 8,
+        candidateChecks: ["ci.yml", "case-browser.yml"],
+      })
+    ).length,
+  );
+  assert.ok(
+    (
+      await check({
+        settings: multi,
+        repo: "bitbaum/case-app",
+        candidatePullRequest: 7,
+        candidateChecks: ["ci.yml"],
+      })
+    ).length,
+  );
+  const calls = [];
+  const evidence = async (repo) => {
+    calls.push(repo);
+    return {
+      dependencies: { [name]: "0.4.1" },
+      healthy: repo !== "bitbaum/case-app",
+      checks: ["ci.yml", "browser-smoke.yml", "case-browser.yml"],
+      deployedAt: "2026-10-22T12:00:00Z",
+    };
+  };
+  const result = await check({ settings: multi, readCanary: evidence });
+  assert.deepEqual(calls, ["bitbaum/biaslens", "bitbaum/case-app"]);
+  assert.equal(result.length, 1);
+  assert.match(result[0], /case-app/);
+  assert.deepEqual(
+    await check({
+      settings: multi,
+      readCanary: async () => ({
+        dependencies: { [name]: "0.4.1" },
+        healthy: true,
+        checks: ["ci.yml", "browser-smoke.yml", "case-browser.yml"],
+        deployedAt: "2026-10-22T12:00:00Z",
+      }),
+    }),
+    [],
+  );
+  assert.ok(
+    (
+      await check({
+        settings: multi,
+        readCanary: async () => ({
+          dependencies: { [name]: "0.4.1" },
+          healthy: true,
+          checks: ["ci.yml", "browser-smoke.yml", "case-browser.yml"],
+          deployedAt: "2026-10-24T11:00:00Z",
+        }),
+      })
+    ).length,
+    "additional representatives retain the full observation period",
+  );
 });
 
-test('verified canary admission supports successive release PRs without weakening candidate checks',async()=>{
- const repeatable={...settings,packages:{[name]:{canary:'bitbaum/biaslens',canaryAdmission:'verified-candidate',candidateChecks:['ci.yml','browser-smoke.yml']}}};
- for(const candidatePullRequest of [43,44])assert.deepEqual(await check({settings:repeatable,repo:'bitbaum/biaslens',candidatePullRequest,readCanary:()=>assert.fail('a tested canary must not wait for its own deployment')}),[]);
- assert.ok((await check({settings:repeatable,repo:'bitbaum/biaslens',candidatePullRequest:44,candidateChecks:['ci.yml']})).length);
- for(const candidatePullRequest of [undefined,0,-1,1.5])assert.match((await check({settings:repeatable,repo:'bitbaum/biaslens',candidatePullRequest}))[0],/real candidate pull request/);
- assert.match((await check({settings:{...repeatable,blocked:{[name]:['0.4.1']}},repo:'bitbaum/biaslens',candidatePullRequest:44}))[0],/release is blocked/);
- assert.ok((await check({settings:repeatable,repo:'bitbaum/ordinary',candidatePullRequest:44,readCanary:async()=>null})).length);
+test("verified canary admission supports successive release PRs without weakening candidate checks", async () => {
+  const repeatable = {
+    ...settings,
+    packages: {
+      [name]: {
+        canary: "bitbaum/biaslens",
+        canaryAdmission: "verified-candidate",
+        candidateChecks: ["ci.yml", "browser-smoke.yml"],
+      },
+    },
+  };
+  for (const candidatePullRequest of [43, 44])
+    assert.deepEqual(
+      await check({
+        settings: repeatable,
+        repo: "bitbaum/biaslens",
+        candidatePullRequest,
+        readCanary: () =>
+          assert.fail("a tested canary must not wait for its own deployment"),
+      }),
+      [],
+    );
+  assert.ok(
+    (
+      await check({
+        settings: repeatable,
+        repo: "bitbaum/biaslens",
+        candidatePullRequest: 44,
+        candidateChecks: ["ci.yml"],
+      })
+    ).length,
+  );
+  for (const candidatePullRequest of [undefined, 0, -1, 1.5])
+    assert.match(
+      (
+        await check({
+          settings: repeatable,
+          repo: "bitbaum/biaslens",
+          candidatePullRequest,
+        })
+      )[0],
+      /real candidate pull request/,
+    );
+  assert.match(
+    (
+      await check({
+        settings: { ...repeatable, blocked: { [name]: ["0.4.1"] } },
+        repo: "bitbaum/biaslens",
+        candidatePullRequest: 44,
+      })
+    )[0],
+    /release is blocked/,
+  );
+  assert.ok(
+    (
+      await check({
+        settings: repeatable,
+        repo: "bitbaum/ordinary",
+        candidatePullRequest: 44,
+        readCanary: async () => null,
+      })
+    ).length,
+  );
 });
-test('each repeatable representative admits its own tested PR while downstream still requires every representative',async()=>{
- const repeatable={...settings,packages:{[name]:{canary:'bitbaum/biaslens',canaryAdmission:'verified-candidate',additionalCanaries:[{canary:'bitbaum/embedded',canaryAdmission:'verified-candidate',candidateChecks:['ci.yml','case-browser.yml'],canaryChecks:['ci.yml','case-browser.yml']}]}}};
- assert.deepEqual(await check({settings:repeatable,repo:'bitbaum/embedded',candidatePullRequest:88,candidateChecks:['ci.yml','case-browser.yml'],readCanary:()=>assert.fail('a tested representative must not wait for another representative')}),[]);
- assert.ok((await check({settings:repeatable,repo:'bitbaum/embedded',candidatePullRequest:88,candidateChecks:['ci.yml']})).length);
- const seen=[];
- assert.ok((await check({settings:repeatable,readCanary:async repo=>{seen.push(repo);return repo==='bitbaum/biaslens'?{dependencies:{[name]:'0.4.1'},healthy:true,checks:['ci.yml','browser-smoke.yml'],deployedAt:'2026-10-22T12:00:00Z'}:null;}})).length);
- assert.deepEqual(seen,['bitbaum/biaslens','bitbaum/embedded']);
+test("each repeatable representative admits its own tested PR while downstream still requires every representative", async () => {
+  const repeatable = {
+    ...settings,
+    packages: {
+      [name]: {
+        canary: "bitbaum/biaslens",
+        canaryAdmission: "verified-candidate",
+        additionalCanaries: [
+          {
+            canary: "bitbaum/embedded",
+            canaryAdmission: "verified-candidate",
+            candidateChecks: ["ci.yml", "case-browser.yml"],
+            canaryChecks: ["ci.yml", "case-browser.yml"],
+          },
+        ],
+      },
+    },
+  };
+  assert.deepEqual(
+    await check({
+      settings: repeatable,
+      repo: "bitbaum/embedded",
+      candidatePullRequest: 88,
+      candidateChecks: ["ci.yml", "case-browser.yml"],
+      readCanary: () =>
+        assert.fail(
+          "a tested representative must not wait for another representative",
+        ),
+    }),
+    [],
+  );
+  assert.ok(
+    (
+      await check({
+        settings: repeatable,
+        repo: "bitbaum/embedded",
+        candidatePullRequest: 88,
+        candidateChecks: ["ci.yml"],
+      })
+    ).length,
+  );
+  const seen = [];
+  assert.ok(
+    (
+      await check({
+        settings: repeatable,
+        readCanary: async (repo) => {
+          seen.push(repo);
+          return repo === "bitbaum/biaslens"
+            ? {
+                dependencies: { [name]: "0.4.1" },
+                healthy: true,
+                checks: ["ci.yml", "browser-smoke.yml"],
+                deployedAt: "2026-10-22T12:00:00Z",
+              }
+            : null;
+        },
+      })
+    ).length,
+  );
+  assert.deepEqual(seen, ["bitbaum/biaslens", "bitbaum/embedded"]);
 });
 
 test("workspace canary evidence is cached separately for each importer and receipt configuration", async () => {
-  const {canaryEvidenceKey} = await import("./package-rollout-gate.mjs");
+  const { canaryEvidenceKey } = await import("./package-rollout-gate.mjs");
   const checks = ["ci.yml", "browser-smoke.yml"];
-  const ai = canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"packages/ai", receiptProject:"apps/web"}, checks);
-  const web = canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web"}, checks);
+  const ai = canaryEvidenceKey(
+    "bitbaum/kivvi",
+    { canaryImporter: "packages/ai", receiptProject: "apps/web" },
+    checks,
+  );
+  const web = canaryEvidenceKey(
+    "bitbaum/kivvi",
+    { canaryImporter: "apps/web", receiptProject: "apps/web" },
+    checks,
+  );
   assert.notEqual(ai, web);
-  assert.notEqual(web, canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web", receiptProjects:["apps/web","packages/ai"]}, checks));
-  assert.equal(web, canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web"}, checks));
+  assert.notEqual(
+    web,
+    canaryEvidenceKey(
+      "bitbaum/kivvi",
+      {
+        canaryImporter: "apps/web",
+        receiptProject: "apps/web",
+        receiptProjects: ["apps/web", "packages/ai"],
+      },
+      checks,
+    ),
+  );
+  assert.equal(
+    web,
+    canaryEvidenceKey(
+      "bitbaum/kivvi",
+      { canaryImporter: "apps/web", receiptProject: "apps/web" },
+      checks,
+    ),
+  );
 });
 
 test("static studio uses its actual publication-preview workflow for candidate proof", async () => {
- const custom={...settings,consumerChecks:{"bitbaum/studio":["deploy-site.yml"]}};
- assert.deepEqual(await check({repo:"bitbaum/studio",settings:custom,candidateChecks:["deploy-site.yml"]}),[]);
- assert.ok((await check({repo:"bitbaum/studio",settings:custom,candidateChecks:[]})).length);
- assert.ok((await check({repo:"bitbaum/other",settings:custom,candidateChecks:["deploy-site.yml"]})).length);
+  const custom = {
+    ...settings,
+    consumerChecks: { "bitbaum/studio": ["deploy-site.yml"] },
+  };
+  assert.deepEqual(
+    await check({
+      repo: "bitbaum/studio",
+      settings: custom,
+      candidateChecks: ["deploy-site.yml"],
+    }),
+    [],
+  );
+  assert.ok(
+    (
+      await check({
+        repo: "bitbaum/studio",
+        settings: custom,
+        candidateChecks: [],
+      })
+    ).length,
+  );
+  assert.ok(
+    (
+      await check({
+        repo: "bitbaum/other",
+        settings: custom,
+        candidateChecks: ["deploy-site.yml"],
+      })
+    ).length,
+  );
+});
+
+test("combined consumer CI requires an actually successful browser job on the exact head", () => {
+  const sha = "a".repeat(40);
+  const requirement = "ci.yml#Local E2E Journeys";
+  const run = {
+    id: 42,
+    head_sha: sha,
+    path: ".github/workflows/ci.yml",
+    event: "pull_request",
+    status: "completed",
+    conclusion: "success",
+  };
+  const good = {
+    name: "Local E2E Journeys",
+    status: "completed",
+    conclusion: "success",
+  };
+  const check = (runs, jobs) =>
+    successfulConsumerChecks(runs, ["ci.yml", requirement], sha, () => jobs);
+  assert.deepEqual(check([run], [good]), ["ci.yml", requirement]);
+  for (const jobs of [
+    [],
+    [{ ...good, name: "Unit tests" }],
+    [{ ...good, conclusion: "skipped" }],
+    [{ ...good, conclusion: "failure" }],
+    [{ ...good, status: "in_progress", conclusion: null }],
+  ])
+    assert.deepEqual(check([run], jobs), ["ci.yml"]);
+  assert.deepEqual(check([{ ...run, head_sha: "b".repeat(40) }], [good]), []);
+  assert.deepEqual(
+    check([{ ...run, conclusion: null, status: "in_progress" }, run], [good]),
+    [],
+  );
+  assert.deepEqual(check([{ ...run, conclusion: "failure" }, run], [good]), []);
+  assert.throws(
+    () =>
+      successfulConsumerChecks([run], [requirement], sha, () => {
+        throw new Error("API unavailable");
+      }),
+    /API unavailable/,
+  );
+});
+
+test("multiple named jobs reuse the exact run and reject a missing guard", () => {
+  const sha = "a".repeat(40);
+  const run = {
+    id: 42,
+    head_sha: sha,
+    path: ".github/workflows/ci.yml",
+    event: "push",
+    status: "completed",
+    conclusion: "success",
+  };
+  let reads = 0;
+  const evidence = successfulConsumerChecks(
+    [run],
+    ["ci.yml#Browser", "ci.yml#Account guard"],
+    sha,
+    () => {
+      reads++;
+      return [{ name: "Browser", status: "completed", conclusion: "success" }];
+    },
+  );
+  assert.equal(reads, 1);
+  assert.deepEqual(evidence, ["ci.yml", "ci.yml#Browser"]);
+  assert.deepEqual(
+    successfulConsumerChecks(
+      [{ ...run, event: "workflow_run" }],
+      ["ci.yml#Browser"],
+      sha,
+      () => {
+        throw new Error("must not read unrelated run");
+      },
+    ),
+    [],
+  );
 });
