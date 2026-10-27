@@ -16,7 +16,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | C1 | All-kit verified release paths and publication | implementing | Resolve AccountKit npm authentication or retain supported immutable Git; verify all release artifacts and aliases. |
 | C2 | Release notification and consumer propagation | validating | Fleet #247/#258 merged; actual inventory run 40449285359 passed publication and dispatch after concurrent-main retry repair. Resolve staged npm publication visibility and complete the entire second-cycle deployment path. |
 | C3 | Multiple representative integration classes | validating | Fleet #249/#250/#257 merged; Kivvi and authenticated embedded Causius use npm ChatKit 0.17.1 with successful deployed receipts. Reconcile remaining kit representative classes. |
-| C4 | Protected branches and compatible automated writers | open | Maintenance admin access proven by #246. Inspect rulesets; migrate direct writers before enforcing required checks for admins. |
+| C4 | Protected branches and compatible automated writers | implementing | Causius/Heidi strict verify + account lifecycle checks enforced for admins and read back (run 40452397109). Fleet registry/readings/origin writers are being converted to generated PRs before Fleet enforcement. Bitbaum and package-release writers remain open. |
 | D1 | Shared account lifecycle and current reference apps | implementing | Causius shared mail was present on disk but absent from its running process. Canonical launch regeneration and guarded restart repaired it; #58/#59 merged. Production verification/reset delivery, browser reset, revocation, identity continuity and token reuse checks passed; synthetic account deleted. Inspect remaining deployed runtime/config mismatches and reconcile reference artifacts. |
 | D2 | Shared social broker and provider parity | open | Inspect intended broker/configuration; verify OrangeCat/Google/GitHub/X and local fallbacks, or name exact external blockers. |
 | D3 | Diplodoctor and organization extensions | implementing | Diplodoctor #32 merged/deployed fd1c72b with exact AccountKit 0.8.0 Git artifact, 13 Postgres tests, seven browser journeys and passing external live check. Continue organization parity, SiteKit shell adoption and social-provider verification. |
@@ -78,3 +78,14 @@ and push restrictions are preserved; force pushes and deletion are disabled.
 Default action is read-only. Active inherited rulesets or incomplete/stale main
 checks stop enforcement. Fleet/Bitbaum/package-release writers still require
 conversion before those repositories enter this enforcement wave.
+
+## Generated Fleet writers
+
+Registry, readings and origin-proof refreshes open generated PRs, with the PR
+creation action pinned to its verified v8.1.1 commit. Changed registry facts are
+not announced to the public catalogue until they have landed on main. A main
+registry merge triggers a fresh inventory run; unchanged facts retry missed
+catalogue notifications with the exact landed SHA. The CI writer check now
+explicitly forbids direct main workflow writers, including ones that re-arm CI.
+Feature-branch currency updates remain allowed. Production exercise of the
+converted writers and Fleet enforcement are still pending.

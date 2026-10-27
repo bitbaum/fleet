@@ -52,6 +52,8 @@
 #   bash scripts/ci/check-rearm.sh [workflow-dir]     (default .github/workflows)
 set -euo pipefail
 
+mode=rearm
+if [[ "${1:-}" == --forbid-main-writers ]]; then mode=forbid; shift; fi
 dir="${1:-.github/workflows}"
 
 # Is this `git push` line targeting the current branch or main?
@@ -143,6 +145,17 @@ for f in "$dir"/*.yml; do
     bad=1
   fi
 done
+
+# Fleet's generated writers now open PRs. In this mode zero writers is the
+# required state, and even a correctly re-armed main writer is a regression.
+if [[ "$mode" == forbid ]]; then
+  if [[ "$checked" -gt 0 ]]; then
+    echo "Direct main writers are forbidden; use the normal generated PR path." >&2
+    exit 1
+  fi
+  echo "no direct main workflow writers: ok ($exempt feature-branch writers)"
+  exit 0
+fi
 
 # A predicate that matches nothing passes exactly as quietly as one that works.
 # The three main-pushing workflows are the floor; if they vanish, say so.

@@ -237,6 +237,17 @@ jobs:
 YAML
 expect_red "a directory with no main-pushing workflow at all" "$d"
 
+if bash "$gate" --forbid-main-writers "$d" >/dev/null 2>&1; then
+  pass "explicit no-writer policy accepts a quiet directory"
+else
+  fail "explicit no-writer policy" "quiet directory rejected"
+fi
+if bash "$gate" --forbid-main-writers "$work/only_good" >/dev/null 2>&1; then
+  fail "explicit no-writer policy" "allowed a direct main writer with a re-arm"
+else
+  pass "explicit no-writer policy rejects even a re-armed direct main writer"
+fi
+
 echo
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) FAILED" >&2
