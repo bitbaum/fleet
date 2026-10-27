@@ -13,7 +13,8 @@ function run(fixture, authorized=true) {
     const common=`const fs=require('node:fs'), state=process.env.FIXTURE_STATE, f=JSON.parse(process.env.FIXTURE), s=JSON.parse(fs.readFileSync(state)), args=process.argv.slice(2);const save=()=>fs.writeFileSync(state,JSON.stringify(s));`;
     writeFileSync(join(dir,"git"),`#!${process.execPath}\n${common}
 s.commands.push(['git',...args]);
-if(args[0]==='fetch') s.attempt++;
+if(args[0]==='status' && f.dirty) console.log(' M tracked-file');
+else if(args[0]==='fetch') s.attempt++;
 else if(args[0]==='diff') {save();process.exit(f.changed===false?0:1);}
 else if(args[0]==='push') {s.pushes++;if(s.pushes<=(f.races??0)||f.permission){save();console.error(f.permission?'HTTP 403 permission denied':'[rejected] main -> main (fetch first)');process.exit(1);}}
 else if(args[0]==='rev-parse') console.log(String(s.attempt).repeat(40));
@@ -36,3 +37,5 @@ test('catalogue failure still re-arms CI and remains red for recovery',()=>{cons
 test('failed CI re-arm remains visible',()=>{assert.equal(run({ciFailure:true}).status,1);});
 test('generation failure cannot push or dispatch',()=>{const r=run({generationFailure:true});assert.equal(r.status,1);assert.equal(r.state.pushes,0);assert.equal(calls(r,'gh').length,0);});
 test('local worktrees cannot accidentally execute the disposable-checkout reset',()=>{const r=run({},false);assert.equal(r.status,1);assert.equal(calls(r,'git').length,0);});
+
+test("dirty tracked state is never discarded",()=>{const r=run({dirty:true});assert.equal(r.status,1);assert.equal(r.state.attempt,0);assert.ok(!calls(r,"git").some(c=>c[1]==="reset"));});
