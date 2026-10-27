@@ -215,9 +215,9 @@ export async function assessRollout({
     }
     const canaries = [config, ...(config.additionalCanaries ?? [])];
     const candidateConfig = canaries.find((entry) => entry.canary === repo) ?? config;
-    const candidateRequired = candidateSourceChanged
+    const candidateRequired = settings.consumerChecks?.[repo] ?? (candidateSourceChanged
       ? (candidateConfig.candidateChecks ?? requiredChecks)
-      : (candidateConfig.candidateDependencyChecks ?? candidateConfig.candidateChecks ?? requiredChecks);
+      : (candidateConfig.candidateDependencyChecks ?? candidateConfig.candidateChecks ?? requiredChecks));
     if (!candidateRequired.every((check) => candidateChecks.includes(check))) {
       findings.push(
         `${name}: consumer needs successful ${candidateRequired.join(" and ")} workflows on this commit`,
