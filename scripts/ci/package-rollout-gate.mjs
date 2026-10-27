@@ -141,8 +141,7 @@ export function nestedSharedUpdates(beforeLock, afterLock) {
     ]),
   );
   return nestedSharedArtifacts(afterLock).filter(
-    ([importer, name, version]) =>
-      before.get(`${importer}\0${name}`) !== version,
+    ([importer, name, version]) => before.get(`${importer}\0${name}`) !== version,
   );
 }
 export function nestedSharedChange(files, readManifest) {
@@ -173,7 +172,8 @@ export function nestedSharedChange(files, readManifest) {
     if (!afterManifest) continue;
     const before = sharedSpecs(beforeManifest),
       after = sharedSpecs(afterManifest);
-    if (isLock && Object.keys(after).length) return true;
+    if (isLock && Object.keys(after).length)
+      return true;
     if (isManifest && JSON.stringify(before) !== JSON.stringify(after))
       return true;
   }
@@ -214,15 +214,10 @@ export async function assessRollout({
       continue;
     }
     const canaries = [config, ...(config.additionalCanaries ?? [])];
-    const candidateConfig =
-      canaries.find((entry) => entry.canary === repo) ?? config;
-    const candidateRequired =
-      settings.consumerChecks?.[repo] ??
-      (candidateSourceChanged
-        ? (candidateConfig.candidateChecks ?? requiredChecks)
-        : (candidateConfig.candidateDependencyChecks ??
-          candidateConfig.candidateChecks ??
-          requiredChecks));
+    const candidateConfig = canaries.find((entry) => entry.canary === repo) ?? config;
+    const candidateRequired = settings.consumerChecks?.[repo] ?? (candidateSourceChanged
+      ? (candidateConfig.candidateChecks ?? requiredChecks)
+      : (candidateConfig.candidateDependencyChecks ?? candidateConfig.candidateChecks ?? requiredChecks));
     if (!candidateRequired.every((check) => candidateChecks.includes(check))) {
       findings.push(
         `${name}: consumer needs successful ${candidateRequired.join(" and ")} workflows on this commit`,
@@ -231,8 +226,7 @@ export async function assessRollout({
     }
     if (canaries.some((entry) => entry.canary === repo)) {
       if (
-        Number.isInteger(candidatePullRequest) &&
-        candidatePullRequest > 0 &&
+        Number.isInteger(candidatePullRequest) && candidatePullRequest > 0 &&
         (candidateConfig.canaryAdmission === "verified-candidate" ||
           candidateConfig.bootstrapPr === candidatePullRequest)
       )
@@ -246,17 +240,13 @@ export async function assessRollout({
     }
     // Every integration class must qualify before downstream promotion.
     for (const representative of canaries) {
-      const canary = await readCanary(
-        representative.canary,
-        representative,
-        name,
-      );
+      const canary = await readCanary(representative.canary, representative, name);
       if (
         !canary ||
         canary.dependencies[name] !== version ||
         !canary.healthy ||
-        !(representative.canaryChecks ?? ["ci.yml", "browser-smoke.yml"]).every(
-          (check) => canary.checks?.includes(check),
+        !(representative.canaryChecks ?? ["ci.yml", "browser-smoke.yml"]).every((check) =>
+          canary.checks?.includes(check),
         ) ||
         now - Date.parse(canary.deployedAt) < settings.soakHours * 3600000 ||
         !Number.isFinite(Date.parse(canary.deployedAt))
@@ -272,16 +262,13 @@ export async function assessRollout({
 export function hasConsumerSourceChanges(files, prefix = "") {
   const normalizedPrefix = prefix ? `${prefix.replace(/\/$/, "")}/` : "";
   return files.some(({ filename }) => {
-    if (normalizedPrefix && !filename.startsWith(normalizedPrefix))
-      return false;
+    if (normalizedPrefix && !filename.startsWith(normalizedPrefix)) return false;
     const relative = normalizedPrefix
       ? filename.slice(normalizedPrefix.length)
       : filename;
     if (!relative) return false;
     if (
-      /(^|\/)(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|package-lock\.json|npm-shrinkwrap\.json|package-plan\.json)$/.test(
-        relative,
-      ) ||
+      /(^|\/)(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|package-lock\.json|npm-shrinkwrap\.json|package-plan\.json)$/.test(relative) ||
       relative.startsWith(".github/workflows/") ||
       relative.startsWith("docs/") ||
       /(?:^|\/)README(?:\.[^/]*)?$/i.test(relative) ||
@@ -393,25 +380,18 @@ function canaryDepsAt(repo, ref, config) {
   if (
     typeof importer !== "string" ||
     importer.startsWith("/") ||
-    importer
-      .split("/")
-      .some((part) => !part || part === "." || part === "..") ||
+    importer.split("/").some((part) => !part || part === "." || part === "..") ||
     importer.includes("\\")
   )
     throw new Error(`${repo}: invalid canary importer path`);
   return workspaceDepsAt(repo, ref, importer);
 }
 function receiptDepsAt(repo, ref, config) {
-  const projects =
-    config.receiptProjects ??
-    (config.receiptProject ? [config.receiptProject] : null);
+  const projects = config.receiptProjects ?? (config.receiptProject ? [config.receiptProject] : null);
   if (!projects) return canaryDepsAt(repo, ref, config);
   if (!Array.isArray(projects) || projects.length === 0)
     throw new Error(`${repo}: invalid receipt projects`);
-  return Object.assign(
-    {},
-    ...projects.map((project) => workspaceDepsAt(repo, ref, project)),
-  );
+  return Object.assign({}, ...projects.map((project) => workspaceDepsAt(repo, ref, project)));
 }
 export function successfulWorkflows(runs) {
   const seen = new Set(),
@@ -481,13 +461,8 @@ function greenWorkflows(repo, sha) {
 }
 /** Evidence is specific to the importer and receipt projects. */
 export function canaryEvidenceKey(canary, config, requiredChecks) {
-  return JSON.stringify([
-    canary,
-    config.canaryImporter ?? null,
-    config.receiptProject ?? null,
-    config.receiptProjects ?? null,
-    requiredChecks,
-  ]);
+  return JSON.stringify([canary, config.canaryImporter ?? null, config.receiptProject ?? null,
+    config.receiptProjects ?? null, requiredChecks]);
 }
 
 /** Shared by root and starter consumers: a green deploy cannot override a stale receipt. */
@@ -598,17 +573,11 @@ async function main() {
         before: beforeTemplate,
         after: afterTemplate,
         candidateChecks: greenWorkflows(repo, pr.head.sha),
-        candidateSourceChanged: hasConsumerSourceChanges(
-          files,
-          "templates/app",
-        ),
+        candidateSourceChanged: hasConsumerSourceChanges(files, "templates/app"),
         candidatePullRequest: Number(number),
         requiredChecks: ["ci.yml"],
         readCanary: async (canary, config) => {
-          const requiredChecks = config.canaryChecks ?? [
-            "ci.yml",
-            "browser-smoke.yml",
-          ];
+          const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
           const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
           if (cache.has(cacheKey)) return cache.get(cacheKey);
           const branch = api(`repos/${canary}`).default_branch;
@@ -701,9 +670,7 @@ async function main() {
     const changedNested = Object.keys(afterNested).some(
       (name) =>
         beforeNested[name] !== afterNested[name] &&
-        (known.has(name) ||
-          name.startsWith("@bitbaum/") ||
-          policy.packages[name]),
+        (known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name]),
     );
     if (!changedNested) continue;
     const findings = await assessRollout({
@@ -715,10 +682,7 @@ async function main() {
       candidatePullRequest: Number(number),
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
-        const requiredChecks = config.canaryChecks ?? [
-          "ci.yml",
-          "browser-smoke.yml",
-        ];
+        const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
         const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
         if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
         const branch = api(`repos/${canary}`).default_branch;
@@ -757,9 +721,7 @@ async function main() {
     const changedNested = Object.keys(afterNested).some(
       (name) =>
         beforeNested[name] !== afterNested[name] &&
-        (known.has(name) ||
-          name.startsWith("@bitbaum/") ||
-          policy.packages[name]),
+        (known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name]),
     );
     if (!changedNested) continue;
     const findings = await assessRollout({
@@ -771,10 +733,7 @@ async function main() {
       candidatePullRequest: Number(number),
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
-        const requiredChecks = config.canaryChecks ?? [
-          "ci.yml",
-          "browser-smoke.yml",
-        ];
+        const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
         const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
         if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
         const branch = api(`repos/${canary}`).default_branch;
@@ -824,10 +783,7 @@ async function main() {
     candidateSourceChanged: hasConsumerSourceChanges(files),
     candidatePullRequest: Number(number),
     readCanary: async (canary, config) => {
-      const requiredChecks = config.canaryChecks ?? [
-        "ci.yml",
-        "browser-smoke.yml",
-      ];
+      const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
       const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
       if (cache.has(cacheKey)) return cache.get(cacheKey);
       const branch = api(`repos/${canary}`).default_branch;
