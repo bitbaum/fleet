@@ -4,6 +4,21 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 export const CONFIG = {
+  site: {
+    repo: "bitbaum/bitbaum",
+    branch: "fleet/generated-site-snapshots",
+    paths: [
+      "site/origin.snapshot.json",
+      "site/readings.snapshot.json",
+      "site/map.snapshot.json",
+      "site/packages.snapshot.json",
+      "site/package-records.snapshot.json",
+      "site/live.snapshot.json",
+      "site/dist",
+      "docs/CAST.md",
+    ],
+    title: "chore(site): refresh published source snapshots",
+  },
   registry: {
     branch: "fleet/generated-package-registry",
     paths: ["registers/packages.json"],
@@ -39,11 +54,11 @@ function main() {
   if (!config) throw new Error("Unknown generated update");
   if (
     process.env.GITHUB_ACTIONS !== "true" ||
-    process.env.GITHUB_REPOSITORY !== "bitbaum/fleet" ||
+    process.env.GITHUB_REPOSITORY !== (config.repo ?? "bitbaum/fleet") ||
     process.env.GITHUB_REF !== "refs/heads/main"
   )
     throw new Error(
-      "Generated PR writer requires the disposable Fleet main checkout",
+      "Generated PR writer requires its configured repository main checkout",
     );
   if (!process.env.GH_TOKEN) throw new Error("Maintenance token is required");
   const run = (cmd, args) => {
@@ -72,7 +87,7 @@ function main() {
     git("diff", "--cached", "--name-only").split("\n").filter(Boolean),
     config,
   );
-  const repo = "bitbaum/fleet",
+  const repo = config.repo ?? "bitbaum/fleet",
     branch = config.branch;
   const prs = JSON.parse(
     gh(
