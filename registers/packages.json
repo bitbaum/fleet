@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T03:33:34.689Z",
+  "generatedAt": "2026-10-27T07:58:06.256Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -180,6 +180,38 @@
       }
     },
     {
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
+      "version": "0.8.0",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/accountkit#a303242f586d7ac2b2568bbe8d3da94d8b0be768"
+      },
+      "adopters": 13,
+      "adopterNames": [
+        "biaslens",
+        "causius",
+        "datacat",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "loki",
+        "petvity",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life"
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.8.0",
+        "commit": "a303242f586d7ac2b2568bbe8d3da94d8b0be768"
+      }
+    },
+    {
       "slug": "design-tokens",
       "name": "@bitbaum/design-tokens",
       "repo": "https://github.com/bitbaum/design-tokens",
@@ -208,37 +240,6 @@
       "release": {
         "source": "npm",
         "version": "1.2.0"
-      }
-    },
-    {
-      "slug": "accountkit",
-      "name": "@bitbaum/accountkit",
-      "repo": "https://github.com/bitbaum/accountkit",
-      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.8.0",
-      "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#a303242f586d7ac2b2568bbe8d3da94d8b0be768"
-      },
-      "adopters": 12,
-      "adopterNames": [
-        "biaslens",
-        "causius",
-        "datacat",
-        "evig",
-        "fleet",
-        "heidi",
-        "loki",
-        "petvity",
-        "skif",
-        "solon",
-        "substrata",
-        "surf-your-life"
-      ],
-      "release": {
-        "source": "git",
-        "tag": "v0.8.0",
-        "commit": "a303242f586d7ac2b2568bbe8d3da94d8b0be768"
       }
     },
     {
@@ -418,18 +419,19 @@
       "name": "@bitbaum/chartkit",
       "repo": "https://github.com/bitbaum/chartkit",
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.1.1"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chartkit#b54b26715e569f4c18e758a14c124f5676e1e514"
       },
       "adopters": 1,
       "adopterNames": [
         "substrata"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.1.1"
+        "source": "git",
+        "tag": "v0.2.0",
+        "commit": "b54b26715e569f4c18e758a14c124f5676e1e514"
       }
     },
     {
