@@ -213,6 +213,9 @@ eq 4 "$status" "only HTTP 404 identifies an absent file"
 AUDIT_TRANSPORT_FIXTURE=denied
 gh_check_file example README.md master >/dev/null; status=$?
 eq 2 "$status" "HTTP 403 is unavailable evidence rather than an empty doc"
+grep -q 'Resource not accessible' <<<"$GH_READ_FAILURE" \
+  && ok "the original permission diagnostic survives gh_check_file" \
+  || no "the original permission diagnostic survives gh_check_file"
 AUDIT_TRANSPORT_FIXTURE=malformed
 if gh_check_file example README.md master >/dev/null; then no "malformed file encoding must fail"; else ok "malformed file encoding fails"; fi
 READ_RETRY_COUNTER="$(mktemp)"

@@ -205,7 +205,7 @@ gh_default_branch() {
 # gh_check_file <repo> <path> <branch> — fetch and check one file
 gh_check_file() {
   local repo="$1" path="$2" branch="$3"
-  local private="${4:-true}" content response status body encoded_branch encoded_path
+  local private="${4:-true}" content response status body encoded_branch encoded_path response_file
   if [[ "$private" == false ]]; then
     encoded_branch="${branch//\//%2F}"
     encoded_path="${path// /%20}"
@@ -219,10 +219,19 @@ gh_check_file() {
     printf '%s' "$body"
     return 0
   fi
-  if content="$(gh_read api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content')"; then
+  # Do not put gh_read in command substitution: that runs in a subshell, so
+  # GH_READ_FAILURE (the diagnostic for a permission, quota, or transport
+  # failure) disappears exactly when the caller needs it. Redirecting to a
+  # temporary file keeps the retry helper in this shell and preserves the
+  # fail-closed distinction between absent docs and unreadable evidence.
+  response_file="$(mktemp)"
+  if gh_read api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' > "$response_file"; then
+    content="$(cat "$response_file")"
+    rm -f "$response_file"
     :
   else
     status=$?
+    rm -f "$response_file"
     [[ "$status" == 4 ]] && return 4
     return 2
   fi
