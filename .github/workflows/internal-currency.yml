@@ -232,6 +232,21 @@ jobs:
             fi
           done
 
+          # pnpm may rewrite a workspace catalog entry with single quotes even
+          # when the consumer's formatter requires double quotes. Run that
+          # project's already-installed Prettier on the workspace config so a
+          # mechanical package bump does not produce a style-only red PR.
+          for root in "${INSTALL_ROOTS[@]}"; do
+            manager="${root%%:*}"
+            project_dir="${root#*:}"
+            workspace_file="$project_dir/pnpm-workspace.yaml"
+            prettier="$project_dir/node_modules/.bin/prettier"
+            if [ "$manager" = "pnpm" ] && [ -f "$workspace_file" ] && [ -x "$prettier" ]; then
+              echo "Formatting generated workspace config with $prettier"
+              "$prettier" --write "$workspace_file"
+            fi
+          done
+
       - name: Open or update the pull request
         env:
           GH_TOKEN: ${{ secrets.FLEET_PAT }}
