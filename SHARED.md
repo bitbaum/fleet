@@ -41,6 +41,17 @@ runs the package's own `verify`, and only then creates the repo and tags
 directly — a file added to the template later reaches it as a pull request
 that adds only what it lacks (`scripts/packages/sync-package-template.mjs`).
 
+The `auto-merge.yml` file is only the workflow caller; it cannot enable
+GitHub's repository-level **Allow auto-merge** or **Automatically delete head
+branches** settings. Package creation turns both on, and the daily
+`package-repos.yml` reconciliation checks all registered package repositories
+and repairs them with `FLEET_PAT`. Its test is part of Fleet CI, so a future
+change cannot silently remove this guarantee. The central sweep remains the
+merge authority. It refreshes behind PR branches with `FLEET_PAT` so GitHub
+starts the required checks; if that token is unavailable, it leaves the branch
+untouched. GitHub deletes the merged head branch separately after a successful
+merge.
+
 **Releasing** is `release.yml` in the package repo: Loki's package page
 ("Release vX.Y.Z", for the package's owner) or the Actions tab starts it. It
 refuses unless main's CI is green on the commit, raises the version, runs

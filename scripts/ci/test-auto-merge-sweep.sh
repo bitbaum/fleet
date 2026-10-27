@@ -57,7 +57,9 @@ run_sweep() {
   TOKEN_LOG="$dir/token-calls.log"
   : > "$GH_LOG"
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
-  printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
+  local view_json="${RS_VIEW:-}"
+  [ -n "$view_json" ] || view_json='{"mergeable":"MERGEABLE","mergeStateStatus":"CLEAN"}'
+  printf '%s\n' "$view_json" > "$dir/view.json"
   printf '%b\n' "${RS_REDJOBS:-Some Red Job}" > "$dir/redjobs.txt"
   # RS_AUTHOR "login/type" and RS_BODY shape the pull itself; RS_FILES (one
   # path per line) is what the files endpoint lists.
@@ -100,7 +102,9 @@ DOCS
   # RS_COMPARE: authors of the commits between a run's sha and the tip, as the
   # sweep's --jq would join them. Empty = the compare call fails.
   local compare="${RS_COMPARE:-}"
-  RS_DOCS=""; RS_DOCS_COMMENTS=""; RS_COMPARE=""
+  local merge_token="${RS_MERGE_TOKEN:-shared-merge-token}"
+  [ "$merge_token" != "__none__" ] || merge_token=""
+  RS_DOCS=""; RS_DOCS_COMMENTS=""; RS_COMPARE=""; RS_MERGE_TOKEN=""
   RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
   RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""; RS_REARM_IF_FILES=""; RS_REARM_IF_WORKFLOWS=""
 
@@ -137,11 +141,11 @@ case "\$ARGS" in
   "api repos/"*"/pulls/"*"/reviews"*) cat "$dir/reviews.json" ;;
   "api repos/"*"/collaborators/"*"/permission"*) cat "$dir/perm.txt" ;;
   "api repos/"*"/pulls/"*"/files"*)  cat "$dir/files.txt" ;;
+  "api -X PUT"*"update-branch"*)    echo "updated" ;;
   "api repos/"*"/pulls/"*)          cat "$dir/assoc.txt" ;;
   "pr view"*"--json commits"*)      cat "$dir/commits.json" ;;
   "pr view"*)                       cat "$dir/view.json" ;;
   "pr merge"*)                      echo "merged" ;;
-  "api -X PUT"*"update-branch"*)    echo "updated" ;;
   "workflow run"*)                  echo "dispatched" ;;
   *) echo "UNHANDLED gh call: \$ARGS" >&2; exit 1 ;;
 esac
@@ -152,7 +156,7 @@ FAKE
   chmod +x "$dir/rollout"
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
-        GH_TOKEN=repo-token MERGE_TOKEN=shared-merge-token TOKEN_LOG="$TOKEN_LOG" \
+        GH_TOKEN=repo-token MERGE_TOKEN="$merge_token" TOKEN_LOG="$TOKEN_LOG" \
         DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" REARM_POLL_SECONDS=0 \
         REARM_IF_FILES="$rearm_if_files" REARM_IF_WORKFLOWS="$rearm_if_workflows" \
         PACKAGE_ROLLOUT_CMD="$dir/rollout" \
@@ -481,19 +485,46 @@ fi
 
 # 17. A green base merges a green PR without ever asking which jobs failed —
 #     the carve-out must be invisible on the happy path.
-if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+if RS_PRS="$(pr_fixture 'lint' | sed 's/mergeStateStatus":"UNSTABLE"/mergeStateStatus":"CLEAN"/')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] \
     && ok 'a green base merges normally, never consulting the carve-out' \
     || no 'a green base merges normally, never consulting the carve-out'
 fi
 
-# The many API reads use the repository's isolated GITHUB_TOKEN quota; only
-# the merge write uses the shared token, preserving workflow_run dispatch.
-if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
-  if awk -F '\t' '$2 ~ /^pr merge/ { if ($1 == "shared-merge-token") merge=1; else bad=1; next } $1 != "repo-token" { bad=1 } END { exit !(merge && !bad) }' "$TOKEN_LOG"; then
-    ok 'uses the repository token for API calls and the shared token only for merge'
+# The many API reads use the repository's isolated GITHUB_TOKEN quota; branch
+# refreshes and merges use the shared token so GitHub starts the resulting CI.
+if RS_PRS="$(pr_fixture 'lint' | sed 's/mergeStateStatus":"UNSTABLE"/mergeStateStatus":"CLEAN"/')" run_sweep success '' 1; then
+  if awk -F '\t' '$2 ~ /^pr merge/ { if ($1 == "shared-merge-token") merge=1; else bad=1; next } $2 ~ /^api -X PUT .*update-branch/ { if ($1 != "shared-merge-token") bad=1; next } $1 != "repo-token" { bad=1 } END { exit !(merge && !bad) }' "$TOKEN_LOG"; then
+    ok 'uses the repository token for reads and the shared token for branch updates and merge'
   else
-    no 'uses the repository token for API calls and the shared token only for merge'
+    no 'uses the repository token for reads and the shared token for branch updates and merge'
+  fi
+fi
+
+# 17a. A refreshed PR head needs a real CI run. GITHUB_TOKEN produces a
+#      pull_request run with action_required and no jobs, so use the shared PAT
+#      for this one write as well as the eventual merge.
+if RS_PRS="$(pr_fixture 'lint' | sed 's/mergeStateStatus":"UNSTABLE"/mergeStateStatus":"BEHIND"/')" \
+   RS_VIEW='{"mergeable":"MERGEABLE","mergeStateStatus":"BEHIND"}' \
+   run_sweep success '' 1; then
+  if awk -F '\t' '$2 ~ /^api -X PUT .*update-branch/ && $1 == "shared-merge-token" { update=1 } END { exit !update }' "$TOKEN_LOG"; then
+    ok 'updates a behind PR with the shared token so its required CI can run'
+  else
+    no 'updates a behind PR with the shared token so its required CI can run'
+  fi
+  [ "$(merges)" -eq 0 ] && ok 'a behind PR still waits for its refreshed checks' \
+    || no 'a behind PR still waits for its refreshed checks'
+fi
+
+# 17b. Without the shared write token, leave a behind branch alone. Updating
+#      it with GITHUB_TOKEN would suppress the required pull_request CI run.
+if RS_PRS="$(pr_fixture 'lint' | sed 's/mergeStateStatus":"UNSTABLE"/mergeStateStatus":"BEHIND"/')" \
+   RS_VIEW='{"mergeable":"MERGEABLE","mergeStateStatus":"BEHIND"}' \
+   RS_MERGE_TOKEN='__none__' run_sweep success '' 1; then
+  if ! grep -q 'api -X PUT .*update-branch' "$GH_LOG"; then
+    ok 'leaves a behind PR untouched when the shared write token is unavailable'
+  else
+    no 'leaves a behind PR untouched when the shared write token is unavailable'
   fi
 fi
 
