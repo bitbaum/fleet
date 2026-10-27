@@ -180,3 +180,13 @@ account lifecycle assertions still run. The check receives an authenticated
 browser, not customer credentials. Missing/invalid scripts and failed assertions
 fail the workflow. Product tests may intercept model routes with synthetic data
 while exercising their actual page, components, styles and scrolling layout.
+
+## Avoiding cross-canary dependency cycles
+
+Currency planning first proposes the packages for which a repository is a
+designated representative. Other dependency updates in that repository are
+deferred to the next reconciliation. Once those representative packages are
+current, its ordinary updates are planned normally. Additional representatives
+and nested importers follow the same rule. This changes batching, not admission:
+exact-artifact candidate checks, blocked releases and downstream deployment
+evidence remain required.

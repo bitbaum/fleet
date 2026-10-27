@@ -81,7 +81,7 @@ jobs:
       - name: Self-test the reconciler first
         run: |
           node scripts/ci/test-currency-reconciler.mjs
-          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs scripts/ci/currency-toolchain.test.mjs
+          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs scripts/ci/currency-toolchain.test.mjs scripts/ci/canary-currency-plan.test.mjs
 
       - name: What is behind?
         id: plan
@@ -101,6 +101,7 @@ jobs:
             console.log("## Internal package currency\n");
             console.log(`${plan.length} repositories have planned updates. Unchecked evidence is reported in the job log.\n`);
             for (const entry of plan) {
+              if (entry.deferredBumps?.length) console.log(`  Deferred ${entry.deferredBumps.length} ordinary updates until this representative is current.`);
               console.log(`- ${entry.repo}: ${entry.bumps.map(b => `${b.name} → ${b.latest}`).join(", ")}`);
             }
           ' "$matrix_file" >> "$GITHUB_STEP_SUMMARY"
