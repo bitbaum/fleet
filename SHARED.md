@@ -47,7 +47,10 @@ branches** settings. Package creation turns both on, and the daily
 `package-repos.yml` reconciliation checks all registered package repositories
 and repairs them with `FLEET_PAT`. Its test is part of Fleet CI, so a future
 change cannot silently remove this guarantee. The central sweep remains the
-merge authority; it also updates behind PR branches itself.
+merge authority. It refreshes behind PR branches with `FLEET_PAT` so GitHub
+starts the required checks; if that token is unavailable, it leaves the branch
+untouched. GitHub deletes the merged head branch separately after a successful
+merge.
 
 **Releasing** is `release.yml` in the package repo: Loki's package page
 ("Release vX.Y.Z", for the package's owner) or the Actions tab starts it. It
