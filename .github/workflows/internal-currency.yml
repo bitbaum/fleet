@@ -115,7 +115,10 @@ jobs:
 
   bump:
     needs: plan
-    if: ${{ needs.plan.outputs.any == 'true' && inputs.go != false }}
+    # `inputs` only exists for workflow_dispatch; comparing its absent value
+    # with `false` also suppresses schedule and repository_dispatch runs.
+    # Keep the manual dry-run switch, and allow every automatic trigger to act.
+    if: ${{ needs.plan.outputs.any == 'true' && (github.event_name != 'workflow_dispatch' || inputs.go == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # One repo failing to bump must not stop the others. A repo whose install
