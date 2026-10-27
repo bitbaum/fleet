@@ -42,3 +42,17 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 - Package-page publication and CI passing are not universal app integration proof.
 - GitHub maintenance administration is available. npm/provider-console authority
   is separately assessed; no broad credential request is implied.
+
+## Required-check enforcement wave
+
+Causius and Heidi have verified `verify` and `account / lifecycle` checks and no
+workflow writing directly to their default branches. The opt-in
+`app-required-checks.yml` first inspects maintenance administration, applied
+rulesets and exact-main check results. Its apply action requires both checks
+from GitHub Actions, including for administrators, and requires an up-to-date
+branch. The existing sweep updates behind branches. Existing stronger review
+and push restrictions are preserved; force pushes and deletion are disabled.
+
+Default action is read-only. Active inherited rulesets or incomplete/stale main
+checks stop enforcement. Fleet/Bitbaum/package-release writers still require
+conversion before those repositories enter this enforcement wave.
