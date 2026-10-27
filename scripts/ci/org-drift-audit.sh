@@ -165,25 +165,36 @@ gh_list_repos() {
 
 # gh_default_branch <repo> — get default branch name
 gh_default_branch() {
-  gh api "repos/$ORG/$1" --jq '.default_branch' 2>/dev/null
+  local branch attempt
+  for attempt in 1 2; do
+    if branch="$(gh api "repos/$ORG/$1" --jq '.default_branch' 2>/dev/null)" && [[ -n "$branch" && "$branch" != null ]]; then
+      printf '%s\n' "$branch"
+      return 0
+    fi
+  done
+  return 2
 }
 
 # gh_check_file <repo> <path> <branch> — fetch and check one file
 gh_check_file() {
   local repo="$1" path="$2" branch="$3"
-  local content diagnostic status
+  local content diagnostic attempt
   diagnostic="$(mktemp)"
-  if content="$(gh api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' 2>"$diagnostic")"; then
-    rm -f "$diagnostic"
-    printf '%s' "$content" | base64 -d 2>/dev/null
-  else
-    status=2
-    # Only a genuine absent file is empty evidence. Auth/rate/network failures
-    # must never erase an exception or certify a document as clean.
-    if grep -q '(HTTP 404)' "$diagnostic"; then status=4; fi
-    rm -f "$diagnostic"
-    return "$status"
-  fi
+  for attempt in 1 2; do
+    if content="$(gh api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' 2>"$diagnostic")"; then
+      rm -f "$diagnostic"
+      printf '%s' "$content" | base64 -d 2>/dev/null
+      return $?
+    fi
+    # Only a genuine absent file is empty evidence. Retry one transient read
+    # through the same identity; persistent failures remain unknown, never clean.
+    if grep -q '(HTTP 404)' "$diagnostic"; then
+      rm -f "$diagnostic"
+      return 4
+    fi
+  done
+  rm -f "$diagnostic"
+  return 2
 }
 
 # repo_ref <dir> — audit the shared default branch, not a local feature branch
@@ -244,6 +255,20 @@ PATTERN="$( { forbidden_patterns; retired_patterns; } | paste -sd'|' - )"
 
 new_hits=(); seen_keys=(); scanned_repos=()
 declare -A doors=()
+
+# The local pre-push helper may run outside any Fleet checkout. That is an
+# explicit skip, not a remote coverage claim, and must need no network.
+if [[ "$USE_LOCAL" == 1 ]]; then
+  local_root="${DEV_ROOT:-$HOME/dev}"
+  local_checkout=false
+  for gitdir in "$local_root"/*/.git; do
+    if [[ -d "$gitdir" ]]; then local_checkout=true; break; fi
+  done
+  if [[ "$local_checkout" == false ]]; then
+    echo "⊘ org-drift audit SKIPPED — no fleet checkout under $local_root."
+    exit 0
+  fi
+fi
 
 # Fetch apps.conf and parse door mappings
 if APPS_CONF="$(fetch_apps_conf)"; then

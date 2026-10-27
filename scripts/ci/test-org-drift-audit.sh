@@ -185,6 +185,7 @@ gh() {
     denied) echo 'gh: Resource not accessible (HTTP 403)' >&2; return 1 ;;
     success) printf '%s\n' SGVsbG8= ;;
     malformed) printf '%s\n' '!invalid!' ;;
+    transient) if [[ ! -f "$READ_RETRY_COUNTER" ]]; then touch "$READ_RETRY_COUNTER"; return 1; fi; printf '%s\n' SGVsbG8= ;;
   esac
 }
 AUDIT_TRANSPORT_FIXTURE=branch
@@ -201,6 +202,11 @@ gh_check_file example README.md master >/dev/null; status=$?
 eq 2 "$status" "HTTP 403 is unavailable evidence rather than an empty doc"
 AUDIT_TRANSPORT_FIXTURE=malformed
 if gh_check_file example README.md master >/dev/null; then no "malformed file encoding must fail"; else ok "malformed file encoding fails"; fi
+READ_RETRY_COUNTER="$(mktemp)"
+rm -f "$READ_RETRY_COUNTER"
+AUDIT_TRANSPORT_FIXTURE=transient
+eq Hello "$(gh_check_file example README.md master)" "one transient read retries with the same identity"
+rm -f "$READ_RETRY_COUNTER"
 unset -f gh
 
 echo
