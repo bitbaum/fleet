@@ -29,7 +29,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | F1 | Starters, templates and package selection gates | implementing | Verify generated consistency and new-project composition; remove contradictory instructions. |
 | F2 | Code-to-document/marketing claim dependencies | open | Generate derived claims, track editorial effects, verify actual public availability and correction history. |
 | F3 | Package reference pages and authored histories | validating | Bitbaum #146/#147 published and repaired 17 package references; all 17 public source/version contracts passed. AccountKit #31 adds release-sourced history; confirm its current publication and inventory the remaining package changelogs from verified release sources. |
-| G1 | Deployment evidence, observations and recovery | open | Collect exact receipts and deployed user journeys for each consumer; retain observation periods and recovery evidence. |
+| G1 | Deployment evidence, observations and recovery | implementing | Public receipt coverage improved through verified Loki/Evig deployments, DataCat browser gating and Camille/Surf fixes. OrangeCat #1456 and Bitbaum #167 are validating. Recheck Substrata availability, then complete current-artifact user journeys and recovery evidence. |
 | G2 | Second automated update cycle and final reconciliation | open | Demonstrate another real release progressing without owner intervention; rescan estate and close only evidenced tasks. |
 
 ## Established evidence and limitations
@@ -220,3 +220,54 @@ and branch-policy audits before treating this as an organization-wide control.
   Fleet #293 separates source identity from lock-relative importer identity.
   Regression CLI fixtures cover both pnpm and npm independent nested locks;
   DataCat receipt/deployment verification remains pending that repair.
+
+
+## 2026-10-27 exact deployed-artifact follow-through
+
+- Fleet #294 declares Loki's pinned starter mirror as owned by Fleet and updated
+  through its dedicated sync workflow. Currency still audits that mirror but no
+  longer edits it independently. It also wires the existing `FLEET_PAT` into
+  Fleet's own behind-branch refresh, which had stranded the generated PR queue.
+  The source/ownership and merge-sweep regressions passed before merge.
+- Loki #1447/#1448 merged. The custom deployment now stages the shared receipt,
+  exempts only its exact public path from the auth proxy, and compares the
+  served receipt with the staged artifact. Deployment `40552120096` passed;
+  a later successful deployment also serves a valid receipt. The route tests
+  preserve protection of neighboring and suffixed paths.
+- Evig #604 merged after its full CI, database/browser journeys and security
+  checks passed. Its custom deployment stages the receipt inside the release
+  tree and verifies the served copy. Deployment `40551084063` passed and the
+  public receipt is available. No account-engine migration is inferred.
+- DataCat #299 adds actual shared-article browser journeys at phone and desktop
+  widths, including server-rendered content and navigation. Browser run
+  `40549639939` and canonical frontend CI passed; the rollout gate is retained.
+  The supported Ubuntu LTS runner avoids the locked browser's unsupported
+  ubuntu-latest transition. DataCat now serves a valid nested-project receipt.
+- Surf Your Life #102 merged and deployed (`40591687581`). Only the exact
+  receipt path bypasses login and locale redirection. Full verification passed
+  all 894 tests, including eight real Next matcher checks; its public receipt
+  is now readable. Adjacent paths remain protected.
+- Camille #45 merged and deployed (`40591902682`). Reproducing Next's own type
+  generator showed that tracked declarations changed during build; a compiler
+  cache was also tracked. Machine-owned declaration formatting is preserved,
+  the cache is untracked, and CI checks clean tracked source after build.
+  Full verification, four content tests, production build and clean-source
+  receipt generation passed. The actual public receipt is now available.
+- OrangeCat #1456 proposes shared exact-checkout receipts for its custom
+  artifact deployment, a post-deploy served comparison, and a public asset
+  assembly correction. Bitbaum #167 proposes generator-package receipts with
+  an explicit distinction between generator source and refreshed catalogue
+  data. Both remain pending their required CI, merge and real deployment;
+  neither is counted as production verified.
+- Read-only scans observed valid receipts for 18 distinct public applications;
+  the latest complete scan returned 17/20 because Substrata timed out. This is
+  an availability finding to investigate, not evidence of a valid current
+  Substrata deployment. OrangeCat and Bitbaum still lack served receipts.
+- Botsmann #238 remains held by the real rollout gate because the required
+  browser workflow is absent. Add the actual app journeys rather than waive
+  that requirement. Current receipt still shows older shared artifacts.
+
+The full completion plan remains open: applicable package adoption, social broker
+and provider parity, specialized auth migrations, current-artifact chat/account
+journeys, security upgrades, authored histories and semantic claim dependencies
+still require evidence. Receipt availability alone does not close those tasks.
