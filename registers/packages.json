@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T20:50:20.476Z",
+  "generatedAt": "2026-10-27T21:14:35.229Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -116,10 +116,10 @@
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
       "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.20.1",
+      "version": "0.21.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.20.1"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chatkit#3addba4e4a8aa43901cc6d4bafd46e9199f8a973"
       },
       "adopters": 17,
       "adopterNames": [
@@ -142,8 +142,9 @@
         "vitareba"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.20.1"
+        "source": "git",
+        "tag": "v0.21.0",
+        "commit": "3addba4e4a8aa43901cc6d4bafd46e9199f8a973"
       }
     },
     {
