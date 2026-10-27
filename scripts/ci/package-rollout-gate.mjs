@@ -412,6 +412,12 @@ function greenWorkflows(repo, sha) {
       .workflow_runs,
   );
 }
+/** Evidence is specific to the importer and receipt projects. */
+export function canaryEvidenceKey(canary, config, requiredChecks) {
+  return JSON.stringify([canary, config.canaryImporter ?? null, config.receiptProject ?? null,
+    config.receiptProjects ?? null, requiredChecks]);
+}
+
 /** Shared by root and starter consumers: a green deploy cannot override a stale receipt. */
 export async function canaryDeploymentEvidence({
   canary,
@@ -525,7 +531,7 @@ async function main() {
         requiredChecks: ["ci.yml"],
         readCanary: async (canary, config) => {
           const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
-          const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+          const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
           if (cache.has(cacheKey)) return cache.get(cacheKey);
           const branch = api(`repos/${canary}`).default_branch;
           const tip = api(`repos/${canary}/commits/${branch}`).sha;
@@ -630,7 +636,7 @@ async function main() {
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
-        const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+        const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
         if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
         const branch = api(`repos/${canary}`).default_branch;
         const tip = api(`repos/${canary}/commits/${branch}`).sha;
@@ -681,7 +687,7 @@ async function main() {
       requiredChecks: ["ci.yml"],
       readCanary: async (canary, config) => {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
-        const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+        const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
         if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
         const branch = api(`repos/${canary}`).default_branch;
         const tip = api(`repos/${canary}/commits/${branch}`).sha;
@@ -731,7 +737,7 @@ async function main() {
     candidatePullRequest: Number(number),
     readCanary: async (canary, config) => {
       const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
-      const cacheKey = `${canary}:${requiredChecks.join(",")}`;
+      const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
       if (cache.has(cacheKey)) return cache.get(cacheKey);
       const branch = api(`repos/${canary}`).default_branch;
       const tip = api(`repos/${canary}/commits/${branch}`).sha;

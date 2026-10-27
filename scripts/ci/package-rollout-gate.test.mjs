@@ -497,3 +497,13 @@ test('each repeatable representative admits its own tested PR while downstream s
  assert.ok((await check({settings:repeatable,readCanary:async repo=>{seen.push(repo);return repo==='bitbaum/biaslens'?{dependencies:{[name]:'0.4.1'},healthy:true,checks:['ci.yml','browser-smoke.yml'],deployedAt:'2026-10-22T12:00:00Z'}:null;}})).length);
  assert.deepEqual(seen,['bitbaum/biaslens','bitbaum/embedded']);
 });
+
+test("workspace canary evidence is cached separately for each importer and receipt configuration", async () => {
+  const {canaryEvidenceKey} = await import("./package-rollout-gate.mjs");
+  const checks = ["ci.yml", "browser-smoke.yml"];
+  const ai = canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"packages/ai", receiptProject:"apps/web"}, checks);
+  const web = canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web"}, checks);
+  assert.notEqual(ai, web);
+  assert.notEqual(web, canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web", receiptProjects:["apps/web","packages/ai"]}, checks));
+  assert.equal(web, canaryEvidenceKey("bitbaum/kivvi", {canaryImporter:"apps/web", receiptProject:"apps/web"}, checks));
+});
