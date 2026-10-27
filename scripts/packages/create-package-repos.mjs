@@ -200,9 +200,9 @@ function publish(decl, { pkgDir, pkg, sha }) {
   // Merge settings the auto-merge sweep relies on. Best effort: a token that
   // may create a repo but not edit its settings must not undo the creation.
   try {
-    run('gh', ['repo', 'edit', `${ORG}/${decl.name}`, '--enable-squash-merge', '--delete-branch-on-merge']);
+    run('gh', ['repo', 'edit', `${ORG}/${decl.name}`, '--enable-squash-merge', '--delete-branch-on-merge', '--enable-auto-merge']);
   } catch {
-    console.log(`  ! could not set merge settings on ${ORG}/${decl.name}; set squash merge + delete branch on merge`);
+    console.log(`  ! could not set merge settings on ${ORG}/${decl.name}; set squash merge, auto-merge and delete branch on merge`);
   }
 }
 

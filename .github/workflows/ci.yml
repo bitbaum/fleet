@@ -191,6 +191,9 @@ jobs:
       - name: Declared package repos are created safely, or not at all
         run: node scripts/packages/test-create-package-repos.mjs
 
+      - name: Package repository settings stay enabled and fail closed
+        run: node scripts/packages/test-reconcile-package-repo-settings.mjs
+
       # Every package repo is rendered from templates/package, and existing
       # ones are offered its missing files by pull request. So the template's
       # workflows must parse and hold valid shell (they fail far from here

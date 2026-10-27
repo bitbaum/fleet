@@ -1,5 +1,5 @@
 {
-  "$comment": "Package repos that must exist. Declaring one here IS creating it: on merge, .github/workflows/package-repos.yml runs scripts/packages/create-package-repos.mjs, which copies source.path from source.repo, makes it standalone (templates/package), runs its own verify, then creates bitbaum/<name> and tags v<version>. An existing repo is never touched \u2014 after creation it changes through its own pull requests.",
+  "$comment": "Package repos that must exist. Declaring one here IS creating it: on merge, .github/workflows/package-repos.yml runs scripts/packages/create-package-repos.mjs, which copies source.path from source.repo, makes it standalone (templates/package), runs its own verify, then creates bitbaum/<name> and tags v<version>. Creation enables the repository auto-merge setting; the daily Fleet reconciliation keeps that setting enabled for every package in registers/packages.json. Existing source files change only through pull requests.",
   "repos": [
     {
       "name": "searchkit",

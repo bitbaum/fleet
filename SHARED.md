@@ -41,6 +41,12 @@ runs the package's own `verify`, and only then creates the repo and tags
 directly — a file added to the template later reaches it as a pull request
 that adds only what it lacks (`scripts/packages/sync-package-template.mjs`).
 
+The `auto-merge.yml` file is only the workflow caller; it cannot enable
+GitHub's repository-level **Allow auto-merge** setting. Package creation turns
+that setting on, and the daily `package-repos.yml` reconciliation checks all
+registered package repositories and repairs it with `FLEET_PAT`. Its test is
+part of Fleet CI, so a future change cannot silently remove this guarantee.
+
 **Releasing** is `release.yml` in the package repo: Loki's package page
 ("Release vX.Y.Z", for the package's owner) or the Actions tab starts it. It
 refuses unless main's CI is green on the commit, raises the version, runs
