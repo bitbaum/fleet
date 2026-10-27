@@ -828,7 +828,13 @@ for number in $(printf '%s' "$prs_json" | jq -r 'sort_by(.number) | .[].number')
   # same reason only one PR is merged per sweep.
   if [ "$state" = "BEHIND" ]; then
     echo "[auto-merge] #${number} is behind ${BASE_BRANCH} — updating it before merging: ${title}"
-    if gh api -X PUT "repos/${REPO}/pulls/${number}/update-branch" --silent 2>/dev/null; then
+    # Updating the PR head is a write, just like merging. A GITHUB_TOKEN update
+    # produces a pull_request run that GitHub marks action_required without
+    # creating jobs; the checks the sweep is waiting for never start. Use the
+    # owner-scoped token when available so the refreshed head gets real CI.
+    if [ -z "${MERGE_TOKEN:-}" ]; then
+      echo "[auto-merge] #${number} needs the shared write token to refresh its branch and start CI — leaving it untouched" >&2
+    elif GH_TOKEN="$MERGE_TOKEN" gh api -X PUT "repos/${REPO}/pulls/${number}/update-branch" --silent 2>/dev/null; then
       echo "[auto-merge] #${number} updated; its checks now run against current ${BASE_BRANCH}"
     else
       echo "[auto-merge] #${number} update-branch failed — leaving for the next sweep" >&2

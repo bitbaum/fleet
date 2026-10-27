@@ -72,8 +72,8 @@ on:
     secrets:
       token:
         description: >
-          Token for merging. GITHUB_TOKEN works for most repos but CANNOT merge
-          a PR that touches .github/workflows — pass a PAT where that matters.
+          Token for refreshing PR branches and merging. A PAT ensures branch
+          updates start CI, and can merge a PR that touches .github/workflows.
         required: false
 
 permissions:
@@ -107,8 +107,9 @@ jobs:
       - name: Sweep
         env:
           # Use the isolated per-repository quota for polling and checks. The
-          # optional organization token is needed only for the merge write,
-          # where it preserves workflow_run events after the merge.
+          # optional organization token is used for branch refresh and merge
+          # writes: GITHUB_TOKEN updates do not start the checks we need, and
+          # cannot merge a PR that touches workflow files.
           GH_TOKEN: ${{ github.token }}
           MERGE_TOKEN: ${{ secrets.token }}
           GH_REPO: ${{ github.repository }}
