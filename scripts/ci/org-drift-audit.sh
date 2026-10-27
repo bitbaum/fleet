@@ -146,7 +146,35 @@ in_baseline() {
   return 1
 }
 
-# gh_list_repos — list repos in the org
+# gh_read <gh arguments...> — a bounded retry for an idempotent GitHub read
+#
+# Secondary API limits arrive as HTTP 403, but ordinary permission 403s are
+# permanent. Retry only recognized transient responses and preserve the final
+# diagnostic so the caller can distinguish unavailable evidence from absence.
+GH_READ_FAILURE=''
+gh_read() {
+  local output status attempt
+  for attempt in 1 2 3; do
+    if output="$(gh "$@" 2>&1)"; then
+      GH_READ_FAILURE=''
+      printf '%s' "$output"
+      return 0
+    else
+      status=$?
+    fi
+    GH_READ_FAILURE="$output"
+    [[ "$output" == *'(HTTP 404)'* ]] && return 4
+    if [[ "$output" =~ HTTP\ (429|5[0-9][0-9]) || "$output" =~ (secondary\ rate\ limit|rate\ limit\ exceeded|abuse\ detection|temporarily\ rate\ limited|timed\ out|ECONNRESET) ]]; then
+      [ "$attempt" -lt 3 ] || return "$status"
+      sleep "$((attempt * 10))"
+      continue
+    fi
+    return "$status"
+  done
+  return 1
+}
+
+# gh_list_repos — list names, visibility and default branches in one query
 #
 # `--no-archived` is load-bearing, not tidiness. Archiving is how this fleet
 # retires a repo, and six of the seven org sweeps already skip archived ones —
@@ -157,44 +185,48 @@ in_baseline() {
 # scaffolds appeared in two days, and a sweep whose findings are mostly noise
 # gets muted along with everything true inside it.
 gh_list_repos() {
-  gh repo list "$ORG" --limit 1000 --no-archived --json name --jq '.[].name' 2>/dev/null || {
-    echo "gh repo list failed" >&2
+  local rows
+  rows="$(gh_read repo list "$ORG" --limit 1000 --no-archived --json name,isPrivate,defaultBranchRef --jq '.[] | [.name, (.defaultBranchRef.name // ""), (.isPrivate | tostring)] | @tsv')" || {
+    echo "gh repo list failed: $GH_READ_FAILURE" >&2
     return 1
   }
+  [ -n "$rows" ] || { echo "gh repo list returned no repositories" >&2; return 1; }
+  printf '%s\n' "$rows"
 }
 
 # gh_default_branch <repo> — get default branch name
 gh_default_branch() {
-  local branch attempt
-  for attempt in 1 2; do
-    if branch="$(gh api "repos/$ORG/$1" --jq '.default_branch' 2>/dev/null)" && [[ -n "$branch" && "$branch" != null ]]; then
-      printf '%s\n' "$branch"
-      return 0
-    fi
-  done
-  return 2
+  local branch
+  branch="$(gh_read api "repos/$ORG/$1" --jq '.default_branch')" || return 2
+  [[ -n "$branch" && "$branch" != null ]] || return 2
+  printf '%s\n' "$branch"
 }
 
 # gh_check_file <repo> <path> <branch> — fetch and check one file
 gh_check_file() {
   local repo="$1" path="$2" branch="$3"
-  local content diagnostic attempt
-  diagnostic="$(mktemp)"
-  for attempt in 1 2; do
-    if content="$(gh api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' 2>"$diagnostic")"; then
-      rm -f "$diagnostic"
-      printf '%s' "$content" | base64 -d 2>/dev/null
-      return $?
-    fi
-    # Only a genuine absent file is empty evidence. Retry one transient read
-    # through the same identity; persistent failures remain unknown, never clean.
-    if grep -q '(HTTP 404)' "$diagnostic"; then
-      rm -f "$diagnostic"
-      return 4
-    fi
-  done
-  rm -f "$diagnostic"
-  return 2
+  local private="${4:-true}" content response status body encoded_branch encoded_path
+  if [[ "$private" == false ]]; then
+    encoded_branch="${branch//\//%2F}"
+    encoded_path="${path// /%20}"
+    response="$(curl --fail --silent --show-error --location --retry 3 --retry-delay 1 --max-time 20 \
+      --write-out $'\n%{http_code}' "https://raw.githubusercontent.com/$ORG/$repo/$encoded_branch/$encoded_path" 2>/dev/null)" || status=$?
+    status="${status:-0}"
+    local http_code="${response##*$'\n'}"
+    body="${response%$'\n'*}"
+    [[ "$http_code" == 404 ]] && return 4
+    [[ "$status" == 0 && "$http_code" == 200 ]] || return 2
+    printf '%s' "$body"
+    return 0
+  fi
+  if content="$(gh_read api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content')"; then
+    :
+  else
+    status=$?
+    [[ "$status" == 4 ]] && return 4
+    return 2
+  fi
+  printf '%s' "$content" | base64 -d 2>/dev/null
 }
 
 # repo_ref <dir> — audit the shared default branch, not a local feature branch
@@ -206,11 +238,17 @@ repo_ref() {
 
 # fetch_apps_conf — retrieve the current apps.conf from loki
 fetch_apps_conf() {
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "# apps.conf unavailable: gh not found" >&2
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "# apps.conf unavailable: curl not found" >&2
     return 1
   fi
-  gh api repos/bitbaum/loki/contents/scripts/hetzner/apps.conf --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || {
+  # This public source is read by every Fleet CI run. Pulling its raw bytes
+  # avoids consuming GitHub's secondary API quota alongside the 61-repo
+  # currency census; retries are bounded and the caller still fails closed.
+  curl --fail --silent --show-error --location \
+    --retry 3 --retry-all-errors --retry-delay 1 --retry-max-time 30 \
+    --connect-timeout 10 --max-time 30 \
+    https://raw.githubusercontent.com/bitbaum/loki/main/scripts/hetzner/apps.conf || {
     echo "# apps.conf unavailable: fetch failed" >&2
     return 1
   }
@@ -338,11 +376,12 @@ else
     echo "Org drift evidence incomplete: repository census unavailable." >&2
     exit 2
   fi
-  mapfile -t repos <<< "$repo_list"
-  for repo in "${repos[@]}"; do
+  mapfile -t repo_rows <<< "$repo_list"
+  for row in "${repo_rows[@]}"; do
+    IFS=$'\t' read -r repo branch private <<< "$row"
     [ -n "$repo" ] || continue
     scanned_repos+=("$repo")
-    if ! branch="$(gh_default_branch "$repo")" || [[ -z "$branch" || "$branch" == null ]]; then
+    if [[ -z "$branch" || "$branch" == null || ( "$private" != true && "$private" != false ) ]]; then
       echo "Org drift evidence incomplete: default branch unavailable for $repo." >&2
       exit 2
     fi
@@ -351,12 +390,16 @@ else
     # retired auth rule after the root files were fixed. A scan that only
     # reads AGENTS.md misses the page AGENTS.md tells the agent to open next.
     for file in README.md CLAUDE.md AGENTS.md .claude/CLAUDE.md docs/UNIFIED_AUTH.md docs/SHARED_CONTEXT.md; do
-      if content="$(gh_check_file "$repo" "$file" "$branch")"; then
+      if content="$(gh_check_file "$repo" "$file" "$branch" "$private")"; then
         [ -n "$content" ] || continue
       else
         status=$?
         if [[ "$status" == 4 ]]; then continue; fi
-        echo "Org drift evidence incomplete: $repo/$file could not be read." >&2
+        detail="${GH_READ_FAILURE:-raw source unavailable}"
+        detail="${detail//$'\n'/ }"
+        detail="${detail//$'\r'/ }"
+        detail="$(printf '%s' "$detail" | sed -E 's/(gho|ghp|github_pat)_[A-Za-z0-9_]+/[redacted]/g' | cut -c1-300)"
+        echo "Org drift evidence incomplete: $repo/$file could not be read ($detail)." >&2
         exit 2
       fi
       

@@ -3,6 +3,7 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { withGitHubReadRetry } from "./github-api-read.mjs";
 export const CONFIG = {
   site: {
     repo: "bitbaum/bitbaum",
@@ -63,10 +64,15 @@ function main() {
   if (!process.env.GH_TOKEN) throw new Error("Maintenance token is required");
   const run = (cmd, args) => {
     step = [cmd, ...args.slice(0, 2)].join(" ");
-    return execFileSync(cmd, args, {
+    const readOnly = cmd === "gh" && (
+      (args[0] === "pr" && ["list", "diff"].includes(args[1])) ||
+      (args[0] === "api" && String(args[1]).includes("/compare/"))
+    );
+    const execute = () => execFileSync(cmd, args, {
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+    });
+    return (readOnly ? withGitHubReadRetry(execute) : execute()).trim();
   };
   const git = (...args) => run("git", args),
     gh = (...args) => run("gh", args);
