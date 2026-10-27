@@ -50,12 +50,15 @@ export function reconcileRepositories(repos, run = gh) {
       typeof current.delete_branch_on_merge !== "boolean"
     )
       throw new Error(`${repo}: repository settings response is incomplete`);
-    if (current.allow_auto_merge && current.delete_branch_on_merge) {
+    const missing = [];
+    if (!current.allow_auto_merge) missing.push("auto-merge");
+    if (!current.delete_branch_on_merge) missing.push("delete-branch-on-merge");
+    if (missing.length === 0) {
       console.log(`✓ ${repo}: auto-merge and head-branch cleanup already enabled`);
       continue;
     }
     if (DRY_RUN) {
-      console.log(`→ ${repo}: would enable auto-merge and delete merged head branches`);
+      console.log(`→ ${repo}: would enable ${missing.join(" and ")}`);
       continue;
     }
     run([
