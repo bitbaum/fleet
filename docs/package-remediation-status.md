@@ -13,8 +13,8 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | A1 | Causius actual-page lifecycle and ChatKit scrolling | complete | ChatKit #38 released npm 0.17.1; Causius #57 deployed 635c55c with exact receipt. Actual authenticated synthetic matter journeys passed at 390/1280px including touch/wheel, working status and reply completion; test account deleted. Kivvi #154 deployed the same artifact. |
 | B1 | Complete public/private/nested/fork census | implementing | Source-level package capture covers all 61 active repositories, including all 9 private repositories and the fork. OpenClaw's checkout is incomplete, so its exact Git object tree was reviewed instead: 34,974 tracked paths, 180 package manifests and all lockfiles; no first-party kit references. Finish applicability/domain review and reconcile per-consumer candidates. |
 | B2 | Reconcile outstanding PRs and worktrees | implementing | Preserve newer owner work, deduplicate candidates and track superseded targets. |
-| C1 | All-kit verified release paths and publication | implementing | Resolve AccountKit npm authentication or retain supported immutable Git; verify all release artifacts and aliases. |
-| C2 | Release notification and consumer propagation | validating | Fleet #247/#258 merged; actual inventory run 40449285359 passed publication and dispatch after concurrent-main retry repair. Resolve staged npm publication visibility and complete the entire second-cycle deployment path. |
+| C1 | All-kit verified release paths and publication | implementing | AccountKit Trusted Publisher is configured. `@bitbaum/accountkit@0.8.0` is on npm with GitHub Actions provenance (publish run 40484264739); the canonical tag retry is a successful no-op (40487300526). Verify every other kit and supported alias path. |
+| C2 | Release notification and consumer propagation | validating | The canonical `v0.8.0` tag notification succeeded (AccountKit 40487347801) and dispatched Fleet currency run 40487371026, now in progress. Fleet #279 merged as 0724f24 after fixing bounded, fail-closed reads; its required CI passed. Complete generated PRs, exact app gates and deployments from this release cycle. |
 | C3 | Multiple representative integration classes | validating | Fleet #249/#250/#257 merged; Kivvi and authenticated embedded Causius use npm ChatKit 0.17.1 with successful deployed receipts. Reconcile remaining kit representative classes. |
 | C4 | Protected branches and compatible automated writers | implementing | Causius, Heidi and Fleet required checks are applied and verified. Fleet registry/readings/origin writers create generated PRs; all three operational runs passed (40468652046/40468655648/40468660020). Bitbaum #148 and Fleet #270 convert site snapshots to a pinned first-party generated-PR helper; its latest production publish is still running. Verify an actual generated snapshot PR and assess package-release writers before extending branch enforcement. |
 | D1 | Shared account lifecycle and current reference apps | implementing | Causius shared mail was present on disk but absent from its running process. Canonical launch regeneration and guarded restart repaired it; #58/#59 merged. Production verification/reset delivery, browser reset, revocation, identity continuity and token reuse checks passed; synthetic account deleted. Inspect remaining deployed runtime/config mismatches and reconcile reference artifacts. |
@@ -122,7 +122,17 @@ and branch-policy audits before treating this as an organization-wide control.
   object tree because the temporary working tree contains staged deletions; its
   manifests and lockfiles contain no first-party kit references. These are
   evidence gaps, not proof that the apps are broken.
-- AccountKit 0.8.0 is installed through an immutable Git commit in current
-  consumers; npm still advertises 0.6.3. Do not claim npm parity until its
-  Trusted Publisher path is configured and verified. The approved immutable Git
-  route remains usable in the meantime.
+- AccountKit 0.8.0 remains pinned to immutable Git in current consumers, and
+  npm now advertises 0.8.0. The successful npm publication has GitHub Actions
+  provenance; it was rerun from main commit `51f713e`, whose only changes after
+  the canonical `v0.8.0` source commit `a303242` are `README.md` and
+  `CHANGELOG.md`. A workflow run on the canonical tag then verified the release
+  notification path and started Fleet's consumer reconciliation. This proves
+  the AccountKit OIDC publisher and dispatch path, not every package's release
+  path or every consumer deployment.
+- Fleet #279 (`0724f24`) makes idempotent cross-repository reads resilient to
+  recognized transient limits while keeping permission failures fail-closed.
+  Required CI passed, and a local read-only scan completed all 61 repositories
+  with five already-baselined contradictions and no new findings. The next
+  AccountKit-triggered Fleet currency run is still in progress; this does not
+  yet prove consumer PRs or deployments.
