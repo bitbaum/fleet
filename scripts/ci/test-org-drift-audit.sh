@@ -89,6 +89,16 @@ git -C "$D" update-ref refs/remotes/origin/main HEAD
 eq origin/main "$(repo_ref "$D")" "origin/main wins"
 
 echo
+echo "fetch_apps_conf — use the public source without GitHub API quota"
+curl() {
+  [ "${@: -1}" = 'https://raw.githubusercontent.com/bitbaum/loki/main/scripts/hetzner/apps.conf' ] || return 2
+  printf 'name|4001|example.orangecat.ch|/home/g/dev/example-repo|.|db|owner|kind|status|-|-|-\n'
+}
+fetched="$(fetch_apps_conf)"
+eq 'name|4001|example.orangecat.ch|/home/g/dev/example-repo|.|db|owner|kind|status|-|-|-' "$fetched" "reads the live door register from raw GitHub"
+unset -f curl
+
+echo
 echo "parse_apps_conf_doors — extract domain→repo mappings"
 APPS_CONF='# comment
 name|4001|example.orangecat.ch|/home/g/dev/example-repo|.|db|owner|kind|status|-|-|-
@@ -179,15 +189,18 @@ RETIRED="$RETIRED_FIXTURE"
 # Transport failures must not be mistaken for missing docs or a main branch.
 gh() {
   case "$AUDIT_TRANSPORT_FIXTURE" in
+    list) printf 'example\tmaster\tfalse\n' ;;
     branch) printf '%s\n' master ;;
     branch-failure) return 1 ;;
     absent) echo 'gh: Not Found (HTTP 404)' >&2; return 1 ;;
     denied) echo 'gh: Resource not accessible (HTTP 403)' >&2; return 1 ;;
     success) printf '%s\n' SGVsbG8= ;;
     malformed) printf '%s\n' '!invalid!' ;;
-    transient) if [[ ! -f "$READ_RETRY_COUNTER" ]]; then touch "$READ_RETRY_COUNTER"; return 1; fi; printf '%s\n' SGVsbG8= ;;
+    transient) if [[ ! -f "$READ_RETRY_COUNTER" ]]; then touch "$READ_RETRY_COUNTER"; echo 'gh: exceeded secondary rate limit (HTTP 403)' >&2; return 1; fi; printf '%s\n' SGVsbG8= ;;
   esac
 }
+AUDIT_TRANSPORT_FIXTURE=list
+eq $'example\tmaster\tfalse' "$(gh_list_repos)" "one inventory read includes branch and visibility"
 AUDIT_TRANSPORT_FIXTURE=branch
 eq master "$(gh_default_branch example)" "default branch comes from observed metadata"
 AUDIT_TRANSPORT_FIXTURE=branch-failure
@@ -204,9 +217,30 @@ AUDIT_TRANSPORT_FIXTURE=malformed
 if gh_check_file example README.md master >/dev/null; then no "malformed file encoding must fail"; else ok "malformed file encoding fails"; fi
 READ_RETRY_COUNTER="$(mktemp)"
 rm -f "$READ_RETRY_COUNTER"
+sleep() { :; }
 AUDIT_TRANSPORT_FIXTURE=transient
 eq Hello "$(gh_check_file example README.md master)" "one transient read retries with the same identity"
+unset -f sleep
 rm -f "$READ_RETRY_COUNTER"
+echo
+echo "public documentation — read from the immutable raw source"
+curl() {
+  [ "${@: -1}" = 'https://raw.githubusercontent.com/bitbaum/example/master/README.md' ] || return 2
+  case "$AUDIT_TRANSPORT_FIXTURE" in
+    raw-public) printf 'Hello\n200' ;;
+    raw-absent) printf '\n404'; return 22 ;;
+    raw-failure) return 28 ;;
+  esac
+}
+AUDIT_TRANSPORT_FIXTURE=raw-public
+eq Hello "$(gh_check_file example README.md master false)" "public documents avoid per-file GitHub API reads"
+AUDIT_TRANSPORT_FIXTURE=raw-absent
+gh_check_file example README.md master false >/dev/null; status=$?
+eq 4 "$status" "a raw HTTP 404 identifies an absent public file"
+AUDIT_TRANSPORT_FIXTURE=raw-failure
+gh_check_file example README.md master false >/dev/null; status=$?
+eq 2 "$status" "a failed raw fetch is unavailable, not an absent file"
+unset -f curl
 unset -f gh
 
 echo

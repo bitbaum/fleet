@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { preferredPackageUpdate, immutableGitArtifact } from './preferred-package-update.mjs';
-import { repositoriesForCurrency, currencySnapshot } from './currency-snapshot.mjs';
+import { repositoriesForCurrency, currencySnapshot, githubJson } from './currency-snapshot.mjs';
+import { withGitHubReadRetry } from './github-api-read.mjs';
 const sha = 'a'.repeat(40), sourceSha = 'b'.repeat(40);
 const target = { name: '@bitbaum/design-tokens', repo: 'https://github.com/bitbaum/design-tokens', version: '1.2.0', release: { source: 'git', commit: sha } };
 const input = { repo: 'app', path: 'desktop/template/package.json', name: '@fleet/tokens', from: 'npm:@bitbaum/design-tokens@^1.1.0', identity: { packageName: target.name, range: '^1.1.0' }, currentVersion: '1.1.0', target, sourceSha };
@@ -63,6 +64,58 @@ test('public matrix never includes private or unknown visibility', () => {
   assert.deepEqual(repositoriesForCurrency(repos), ['public']);
   assert.deepEqual(repositoriesForCurrency(repos, true), ['public', 'secret', 'unknown']);
 });
+test('GitHub secondary-rate-limit 403 retries with bounded backoff', () => {
+  let calls = 0;
+  const waits = [];
+  const result = githubJson('repos/bitbaum/app/commits/HEAD', {
+    run: () => {
+      calls++;
+      if (calls === 1) {
+        const error = new Error('Command failed: gh api');
+        error.stderr = Buffer.from('gh: You have exceeded a secondary rate limit (HTTP 403)');
+        throw error;
+      }
+      return JSON.stringify({ sha: sourceSha });
+    },
+    wait: milliseconds => waits.push(milliseconds),
+  });
+  assert.deepEqual(result, { sha: sourceSha });
+  assert.equal(calls, 2);
+  assert.deepEqual(waits, [10_000]);
+});
+test('permission 403 fails immediately instead of masking missing access', () => {
+  let calls = 0;
+  const error = new Error('Command failed: gh api');
+  error.stderr = Buffer.from('gh: Resource not accessible by integration (HTTP 403)');
+  assert.throws(() => githubJson('repos/bitbaum/app/contents/package.json', {
+    run: () => { calls++; throw error; },
+    wait: () => assert.fail('permission errors must not be retried'),
+  }), /Command failed/);
+  assert.equal(calls, 1);
+});
+test('shared read retry handles secondary limits but never retries permission failures', () => {
+  let calls = 0;
+  const waits = [];
+  const result = withGitHubReadRetry(() => {
+    calls++;
+    if (calls === 1) {
+      const error = new Error('command failed');
+      error.stderr = Buffer.from('You have exceeded a secondary rate limit (HTTP 403)');
+      throw error;
+    }
+    return 'read succeeded';
+  }, { wait: milliseconds => waits.push(milliseconds) });
+  assert.equal(result, 'read succeeded');
+  assert.deepEqual(waits, [10_000]);
+
+  calls = 0;
+  const denied = new Error('command failed');
+  denied.stderr = Buffer.from('Resource not accessible by integration (HTTP 403)');
+  assert.throws(() => withGitHubReadRetry(() => { calls++; throw denied; }, {
+    wait: () => assert.fail('permission failures must not be retried'),
+  }), /command failed/);
+  assert.equal(calls, 1);
+});
 function snapshotFixture({ truncated = false, missing = false, npm = false } = {}) {
   const files = {
     'desktop/template/package.json': JSON.stringify({ dependencies: { '@fleet/tokens': input.from } }),
@@ -80,23 +133,26 @@ function snapshotFixture({ truncated = false, missing = false, npm = false } = {
     const file = path.split('/contents/')[1].split('?ref=')[0];
     return { encoding: 'base64', content: Buffer.from(files[file]).toString('base64') };
   };
-  return { request, requests };
+  return { request, requests, readFile: (_owner, _repo, path) => files[path] };
 }
 test('discovers nested template outside old known directories, reads actual workspace importer', () => {
   const fixture = snapshotFixture();
-  const snapshot = currencySnapshot('bitbaum', 'app', fixture.request);
+  const snapshot = currencySnapshot('bitbaum', 'app', fixture.request, fixture.readFile);
   assert.deepEqual(snapshot.paths, ['desktop/template/package.json']);
   assert.deepEqual(snapshot.artifacts(snapshot.paths[0], snapshot.manifest(snapshot.paths[0])), { [target.name]: '1.1.0' });
 });
 test('supports npm workspace hoisting evidence at the nearest lock root', () => {
-  const snapshot = currencySnapshot('bitbaum', 'app', snapshotFixture({ npm: true }).request);
+  const fixture = snapshotFixture({ npm: true });
+  const snapshot = currencySnapshot('bitbaum', 'app', fixture.request, fixture.readFile);
   assert.equal(snapshot.artifacts(snapshot.paths[0], snapshot.manifest(snapshot.paths[0]))[target.name], '1.1.0');
 });
 test('truncated tree cannot produce a partial update census', () => {
-  assert.throws(() => currencySnapshot('bitbaum', 'app', snapshotFixture({ truncated: true }).request), /truncated/);
+  const fixture = snapshotFixture({ truncated: true });
+  assert.throws(() => currencySnapshot('bitbaum', 'app', fixture.request, fixture.readFile), /truncated/);
 });
 test('missing lockfile is unknown evidence rather than an assumed manifest version', () => {
-  const snapshot = currencySnapshot('bitbaum', 'app', snapshotFixture({ missing: true }).request);
+  const fixture = snapshotFixture({ missing: true });
+  const snapshot = currencySnapshot('bitbaum', 'app', fixture.request, fixture.readFile);
   assert.throws(() => snapshot.artifacts(snapshot.paths[0], snapshot.manifest(snapshot.paths[0])), /Missing supported lockfile/);
 });
 
