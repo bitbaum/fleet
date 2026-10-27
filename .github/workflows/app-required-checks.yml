@@ -1,0 +1,29 @@
+name: App required-check policy
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Inspect or enforce verified app checks for Causius and Heidi
+        type: choice
+        options: [inspect, apply]
+        default: inspect
+permissions:
+  contents: read
+concurrency:
+  group: app-required-check-policy
+  cancel-in-progress: false
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node --test scripts/ci/app-required-checks.test.mjs
+      - name: Inspect or enforce exact app checks
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT }}
+          POLICY_ACTION: ${{ inputs.action }}
+        run: node scripts/ci/app-required-checks.mjs "$POLICY_ACTION"

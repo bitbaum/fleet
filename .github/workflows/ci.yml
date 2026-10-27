@@ -208,6 +208,9 @@ jobs:
       - name: Registry publication concurrency and recovery
         run: node --test scripts/ci/publish-package-registry.test.mjs
 
+      - name: Required app check policy regression tests
+        run: node --test scripts/ci/app-required-checks.test.mjs
+
       - name: Verified release notifications
         run: node scripts/packages/test-release-notify.mjs
 

@@ -64,3 +64,17 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 - Fleet currency run `40450759883` started downstream updates. Concurrent source
   changes correctly stop stale candidates; refresh the census rather than
   overriding newer changes. Estate-wide adoption remains incomplete.
+
+## Required-check enforcement wave
+
+Causius and Heidi have verified `verify` and `account / lifecycle` checks and no
+workflow writing directly to their default branches. The opt-in
+`app-required-checks.yml` first inspects maintenance administration, applied
+rulesets and exact-main check results. Its apply action requires both checks
+from GitHub Actions, including for administrators, and requires an up-to-date
+branch. The existing sweep updates behind branches. Existing stronger review
+and push restrictions are preserved; force pushes and deletion are disabled.
+
+Default action is read-only. Active inherited rulesets or incomplete/stale main
+checks stop enforcement. Fleet/Bitbaum/package-release writers still require
+conversion before those repositories enter this enforcement wave.
