@@ -11,7 +11,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | ID | Work | State | Next action / acceptance |
 | --- | --- | --- | --- |
 | A1 | Causius actual-page lifecycle and ChatKit scrolling | complete | ChatKit #38 released npm 0.17.1; Causius #57 deployed 635c55c with exact receipt. Actual authenticated synthetic matter journeys passed at 390/1280px including touch/wheel, working status and reply completion; test account deleted. Kivvi #154 deployed the same artifact. |
-| B1 | Complete public/private/nested/fork census | implementing | Current source capture covers 60/61 active repositories, including all 9 private repositories; the sole fork checkout is incomplete and excluded from source-level conclusions. Rebuild that checkout, finish applicability/domain review, and reconcile per-consumer candidates. |
+| B1 | Complete public/private/nested/fork census | implementing | Source-level package capture now covers all 61 active repositories, including all 9 private repositories and the fork. OpenClaw's incomplete worktree was excluded; its exact Git object tree was reviewed instead (34,974 paths, 180 manifests and all lockfiles, no first-party kit references). Finish applicability/domain review and reconcile per-consumer candidates. |
 | B2 | Reconcile outstanding PRs and worktrees | implementing | Preserve newer owner work, deduplicate candidates and track superseded targets. |
 | C1 | All-kit verified release paths and publication | implementing | Resolve AccountKit npm authentication or retain supported immutable Git; verify all release artifacts and aliases. |
 | C2 | Release notification and consumer propagation | validating | Fleet #247/#258 merged; actual inventory run 40449285359 passed publication and dispatch after concurrent-main retry repair. Resolve staged npm publication visibility and complete the entire second-cycle deployment path. |
@@ -117,8 +117,10 @@ and branch-policy audits before treating this as an organization-wide control.
 - The refreshed portfolio closure scan found 20 public applications with
   configured URLs, 8 current receipts and 12 unavailable receipts. It does not
   include private applications in the public report, and no current-deployment
-  account/chat journey is inferred from a receipt. Source review captured 60 of
-  61 active repositories; the fork needs a fresh complete checkout. These are
+  account/chat journey is inferred from a receipt. Source-level package capture
+  covers all 61 active repositories. The OpenClaw fork was checked from its exact
+  Git object tree because its temporary working tree contains staged deletions;
+  its manifests and lockfiles contain no first-party kit references. These are
   evidence gaps, not proof that the apps are broken.
 - AccountKit 0.8.0 is installed through an immutable Git commit in current
   consumers; npm still advertises 0.6.3. Do not claim npm parity until its
