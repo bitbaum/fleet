@@ -39,7 +39,7 @@ else if (path.includes('/pulls/1/files?')) result=[{filename:(project==='.'?'':p
 else if (path === 'repos/bitbaum/biaslens') result={default_branch:'main'};
 else if (path === 'repos/bitbaum/biaslens/commits/main') result={sha:tip};
 else if (path.includes('/actions/workflows/deploy.yml/runs?')) result={workflow_runs:[{conclusion:'success',head_sha:tip,updated_at:'2026-10-20T00:00:00Z'}]};
-else if (path.includes('/actions/runs?')) result={workflow_runs:['ci.yml','browser-smoke.yml'].map(p=>({path:'.github/workflows/'+p,event:'push',conclusion:'success'}))};
+else if (path.includes('/actions/runs?')) result={workflow_runs:['ci.yml','browser-smoke.yml'].map(p=>({path:'.github/workflows/'+p,event:'push',status:'completed',conclusion:'success',head_sha:new URL('https://api.github.com/'+path).searchParams.get('head_sha')}))};
 else if (path.includes('/contents/')) {
  const [repo,file,ref]=/^repos\\/([^/]+\\/[^/]+)\\/contents\\/(.+)\\?ref=(.+)$/.exec(path).slice(1);
  const prefix=project==='.'?'':project+'/';
@@ -137,8 +137,8 @@ else if(path.includes('/pulls/1/files?')) result=[{filename:'scripts/site-templa
 else if(path==='repos/bitbaum/kivvi') result={default_branch:'main'};
 else if(path==='repos/bitbaum/kivvi/commits/main') result={sha:tip};
 else if(path.includes('repos/bitbaum/kivvi/actions/workflows/deploy.yml/runs?')) result={workflow_runs:[{conclusion:'success',head_sha:tip,updated_at:new Date().toISOString()}]};
-else if(path.includes('repos/bitbaum/kivvi/actions/runs?')) result={workflow_runs:['ci.yml','browser-smoke.yml'].map(p=>({path:'.github/workflows/'+p,event:'push',conclusion:'success'}))};
-else if(path.includes('repos/bitbaum/loki/actions/runs?')) result={workflow_runs:[{path:'.github/workflows/ci.yml',event:'pull_request',conclusion:'success'}]};
+else if(path.includes('repos/bitbaum/kivvi/actions/runs?')) result={workflow_runs:['ci.yml','browser-smoke.yml'].map(p=>({path:'.github/workflows/'+p,event:'push',status:'completed',conclusion:'success',head_sha:new URL('https://api.github.com/'+path).searchParams.get('head_sha')}))};
+else if(path.includes('repos/bitbaum/loki/actions/runs?')) result={workflow_runs:[{path:'.github/workflows/ci.yml',event:'pull_request',status:'completed',conclusion:'success',head_sha:new URL('https://api.github.com/'+path).searchParams.get('head_sha')}]};
 else if(path.includes('/contents/')) {
  const [repo,file,ref]=/^repos\\/([^/]+\\/[^/]+)\\/contents\\/(.+)\\?ref=(.+)$/.exec(path).slice(1);
  let value=null;
