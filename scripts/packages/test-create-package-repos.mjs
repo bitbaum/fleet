@@ -9,7 +9,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { parseDeclarations, render, standalonePackageJson, toCreate, DEFAULT_PACKAGE_MANAGER } from './create-package-repos.mjs';
+import { parseDeclarations, render, standalonePackageJson, toCreate, repoExists, DEFAULT_PACKAGE_MANAGER } from './create-package-repos.mjs';
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log(`  ✓ ${m}`); pass++; };
@@ -33,6 +33,11 @@ eq(parseDeclarations(readFileSync(new URL('../../registers/package-repos.json', 
 console.log('targets');
 eq(toCreate([decl, { ...decl, name: 'newkit' }], ['searchkit']).map(d => d.name), ['newkit'], 'an existing repo is never a target');
 eq(toCreate([decl], ['searchkit']), [], 'nothing to do when every repo exists');
+
+console.log('repository existence checks');
+eq(repoExists('searchkit', () => ''), true, 'a successful GitHub read means the repo exists');
+eq(repoExists('searchkit', () => { throw Object.assign(new Error('gh: Not Found (HTTP 404)'), { stderr: 'gh: Not Found (HTTP 404)' }); }), false, 'an explicit 404 means the repo is missing');
+throws(() => repoExists('searchkit', () => { throw Object.assign(new Error('API rate limit exceeded (HTTP 403)'), { stderr: 'API rate limit exceeded (HTTP 403)' }); }), /could not determine whether bitbaum\/searchkit exists/, 'a rate limit fails closed instead of treating the repo as missing');
 
 console.log('standalone package.json');
 const source = {
