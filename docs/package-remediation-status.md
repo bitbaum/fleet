@@ -166,3 +166,25 @@ and branch-policy audits before treating this as an organization-wide control.
   explicit 404 as a missing repo; the rate-limited attempt made no repository
   changes. A subsequent run after quota recovery passed and applied all 17
   settings.
+
+## 2026-10-27 consumer rollout follow-through
+
+- Causius #62 merged, deployed successfully (`40535024086`), and its public
+  release receipt serves commit `e09cf2c6d618c17e1206728a1362599cc3585c85` with
+  AccountKit 0.8.0, AI Kit 1.21.4 and ChatKit 0.19.0. A successful receipt is
+  artifact/deployment evidence; it does not re-certify every account journey.
+- Currency run `40502355833` completed 20 consumer jobs successfully; Substrata
+  refused a stale source snapshot. Fresh run `40534819598` is reconciling the
+  estate again. Its Causius candidate became stale when #62 merged, so the
+  guarded refusal is expected; inspect current manifests rather than retrying
+  that obsolete plan.
+- Kivvi's current build exposed incompatible Recharts formatter annotations and
+  a private next-themes type import. PR #157 repairs them using contextual chart
+  types and props inferred from the public theme component. Full local
+  `pnpm verify` passes. CI, merge and the deployed receipt remain pending.
+- PayKit #7 aligned publishing with the working AccountKit OIDC path and
+  explicitly requests provenance. Real publish run `40534971260` still fails
+  with npm `ENEEDAUTH`. npm continues to advertise 0.1.0; v0.1.1 is available
+  as a verified Git release. Saved npm Trusted Publisher configuration cannot
+  be inspected or changed with this session's GitHub-only administration access.
+  Do not describe npm publication as complete or repeat identical failed runs.
