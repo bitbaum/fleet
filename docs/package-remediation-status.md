@@ -324,8 +324,8 @@ still require evidence. Receipt availability alone does not close those tasks.
   - Petvity #121: Sentry 10.75.2; canonical CI and production deployment
     `40596655607` passed.
   - Loki #1451: Sentry 10.75.2 and DOMPurify 3.4.17. Exact PR CI passed and
-    the checked sweep merged it. Main CI `40596983235` and its deployment are
-    still pending. Its root production audit has no critical/high findings;
+    the checked sweep merged it. Main CI `40596983235`, deployment `40597993281` and its served-receipt
+    comparison passed. Its root production audit has no critical/high findings;
     this does not clear the separate desktop/development dependency findings.
 - ChatKit 0.21.0 was observed in both representative canary receipts and the
   Heidi/Substrata receipts. Causius #66 and Kivvi #160 are owner/agent canary
