@@ -41,13 +41,8 @@ on:
         default: false
 
 permissions:
-  # write, only to commit proofs/origin — the derived record this workflow
-  # exists to produce. Same pattern as the register refresh in shared-inventory.
   contents: write
-  # dispatch ci.yml on the commit this workflow pushes. Without it the push
-  # lands with no CI run of its own and the auto-merge sweep blocks on
-  # "waiting for CI to catch up" — see the re-arm at the end of the job.
-  actions: write
+  pull-requests: write
 
 concurrency:
   group: origin-proof
@@ -104,38 +99,18 @@ jobs:
           GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
         run: node scripts/ci/origin-register.mjs --emit registers/origin.json | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit the proofs
-        run: |
-          set -euo pipefail
-          git add proofs/origin registers/origin.json
-          if git diff --cached --quiet; then
-            echo "nothing new to prove today"
-            exit 0
-          fi
-          git config user.name  "fleet-bot"
-          git config user.email "noreply@bitbaum.invalid"
-          git commit -m "chore(proofs): origin proof $(date -u +%F)"
-          git push
-          # RE-ARM CI ON THE COMMIT WE JUST PUSHED.
-          #
-          # A push made with GITHUB_TOKEN triggers no workflows, so main's CI
-          # never runs for this commit — and the auto-merge sweep refuses to
-          # merge anything while "main is at <tip> but the newest CI run is for
-          # <older>". Every bot commit therefore STALLS THE MERGE QUEUE until a
-          # human dispatches CI by hand, which nothing tells them to do.
-          #
-          # Hit four times in two days before anyone named it. It is the same
-          # re-arm the sweep already performs after its own merges, for exactly
-          # the same reason; the three workflows that commit to main just never
-          # got it.
-          #
-          # GITHUB_TOKEN deliberately, not FLEET_PAT: this run only needs a CI
-          # run to EXIST for the tip, and the sweep's schedule will pick it up.
-          # A PAT dispatch would additionally emit workflow_run and wake the
-          # sweep immediately — the cascade documented in loki CLAUDE.md, which
-          # is not wanted here.
-          #
-          # Never fatal: the commit is already pushed, and failing the step
-          # after that would report a proof as unwritten when it is written.
-          GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh workflow run ci.yml --ref main \
-            || echo "could not re-arm ci.yml — the sweep will block until it is dispatched" >&2
+      - name: Propose generated origin proofs through the normal merge gates
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.FLEET_PAT }}
+          branch: fleet/generated-origin-proof
+          delete-branch: true
+          add-paths: |
+            proofs/origin
+            registers/origin.json
+          commit-message: 'chore(registers): refresh origin proofs'
+          title: 'chore(registers): refresh origin proofs'
+          body: |
+            Refresh generated origin proofs from their canonical producers.
+            The generator ran in this workflow; exact-head CI, documentation and
+            rollout policy checks must pass through the normal Fleet merge sweep.

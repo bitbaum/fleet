@@ -361,31 +361,10 @@ jobs:
       - name: The secret-in-response sweep aggregates honestly
         run: bash scripts/audit/test-secret-in-response-sweep.sh
 
-      # A workflow that COMMITS TO MAIN must re-arm CI, or it stalls the queue.
-      #
-      # A push made with GITHUB_TOKEN triggers no workflows, so main gets no CI
-      # run for that commit and the auto-merge sweep refuses everything with
-      # "main is at <tip> but the newest CI run is for <older>" until a human
-      # dispatches CI by hand — which nothing tells them to do. Hit four times
-      # in two days (readings, then origin proof) before it was named, each
-      # time silently holding every open PR in the repo.
-      #
-      # The sweep already re-arms after its OWN merges for exactly this reason.
-      # The three workflows that commit to main simply never got the same line,
-      # and nothing noticed because each one looks fine in isolation.
-      #
-      # Inline like the other one-invariant gates here. Proven by mutation:
-      # deleting any of the three re-arms turns this red.
-      # Moved out of this file 2026-09-21 and narrowed, after it produced its
-      # first false positive: it keyed on `grep -q 'git push'`, which is
-      # coarser than the invariant its own name states, and demanded that a
-      # workflow pushing a FEATURE branch to ANOTHER repository dispatch
-      # fleet's CI. The gate was not wrong — it indexed more than it was
-      # trusted to cover — and the remedy is the one this file keeps reaching
-      # for: narrow it to the invariant, and put it where fixtures can reach
-      # it, exactly as the verify-contract rules live in verify-predicates.sh.
-      - name: Every workflow that pushes to main re-arms CI
-        run: bash scripts/ci/check-rearm.sh
+      # Generated registry/readings/proof changes use ordinary PRs. A direct
+      # main writer would bypass required checks even if it re-armed CI later.
+      - name: No workflow writes directly to main
+        run: bash scripts/ci/check-rearm.sh --forbid-main-writers
 
       # The narrowing is the change that most needs pinning from both sides: a
       # gate loosened until it stops complaining and a gate that cries wolf end
