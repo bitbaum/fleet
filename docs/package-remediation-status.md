@@ -11,12 +11,12 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | ID | Work | State | Next action / acceptance |
 | --- | --- | --- | --- |
 | A1 | Causius actual-page lifecycle and ChatKit scrolling | complete | ChatKit #38 released npm 0.17.1; Causius #57 deployed 635c55c with exact receipt. Actual authenticated synthetic matter journeys passed at 390/1280px including touch/wheel, working status and reply completion; test account deleted. Kivvi #154 deployed the same artifact. |
-| B1 | Complete public/private/nested/fork census | implementing | Captured all 61 active repositories at recorded source SHAs, including 9 private and 1 fork. Complete applicability/domain review and reconcile generated per-consumer candidates; source imports alone do not prove adoption. |
+| B1 | Complete public/private/nested/fork census | implementing | Current source capture covers 60/61 active repositories, including all 9 private repositories; the sole fork checkout is incomplete and excluded from source-level conclusions. Rebuild that checkout, finish applicability/domain review, and reconcile per-consumer candidates. |
 | B2 | Reconcile outstanding PRs and worktrees | implementing | Preserve newer owner work, deduplicate candidates and track superseded targets. |
 | C1 | All-kit verified release paths and publication | implementing | Resolve AccountKit npm authentication or retain supported immutable Git; verify all release artifacts and aliases. |
 | C2 | Release notification and consumer propagation | validating | Fleet #247/#258 merged; actual inventory run 40449285359 passed publication and dispatch after concurrent-main retry repair. Resolve staged npm publication visibility and complete the entire second-cycle deployment path. |
 | C3 | Multiple representative integration classes | validating | Fleet #249/#250/#257 merged; Kivvi and authenticated embedded Causius use npm ChatKit 0.17.1 with successful deployed receipts. Reconcile remaining kit representative classes. |
-| C4 | Protected branches and compatible automated writers | implementing | Causius/Heidi strict verify + account lifecycle checks enforced for admins and read back (run 40452397109). Fleet registry/readings/origin writers now create generated PRs; all three operational runs passed (40468652046/40468655648/40468660020). Fleet verify + rendered-starter enforcement is next. Bitbaum and package-release writers remain open. |
+| C4 | Protected branches and compatible automated writers | implementing | Causius, Heidi and Fleet required checks are applied and verified. Fleet registry/readings/origin writers create generated PRs; all three operational runs passed (40468652046/40468655648/40468660020). Bitbaum #148 and Fleet #270 convert site snapshots to a pinned first-party generated-PR helper; its latest production publish is still running. Verify an actual generated snapshot PR and assess package-release writers before extending branch enforcement. |
 | D1 | Shared account lifecycle and current reference apps | implementing | Causius shared mail was present on disk but absent from its running process. Canonical launch regeneration and guarded restart repaired it; #58/#59 merged. Production verification/reset delivery, browser reset, revocation, identity continuity and token reuse checks passed; synthetic account deleted. Inspect remaining deployed runtime/config mismatches and reconcile reference artifacts. |
 | D2 | Shared social broker and provider parity | open | Inspect intended broker/configuration; verify OrangeCat/Google/GitHub/X and local fallbacks, or name exact external blockers. |
 | D3 | Diplodoctor and organization extensions | implementing | Diplodoctor #32 merged/deployed fd1c72b with exact AccountKit 0.8.0 Git artifact, 13 Postgres tests, seven browser journeys and passing external live check. Continue organization parity, SiteKit shell adoption and social-provider verification. |
@@ -27,7 +27,7 @@ artifact, evidence, next action and any blocker. Private task details stay priva
 | E4 | Security, supported dependencies and runtime majors | implementing | Refresh advisories/current locks; separate compatible updates from tested major migrations and fork/native-ecosystem work. |
 | F1 | Starters, templates and package selection gates | implementing | Verify generated consistency and new-project composition; remove contradictory instructions. |
 | F2 | Code-to-document/marketing claim dependencies | open | Generate derived claims, track editorial effects, verify actual public availability and correction history. |
-| F3 | Package reference pages and authored histories | validating | Bitbaum #146 published 17 references; 102 served-page checks passed for that batch. Bitbaum #147 merged/deployed per-card source/version contract repair (22 tests; 102 browser checks); actual public contract passed all 17 cards. Complete missing authored histories without fabrication. |
+| F3 | Package reference pages and authored histories | validating | Bitbaum #146/#147 published and repaired 17 package references; all 17 public source/version contracts passed. AccountKit #31 adds release-sourced history; confirm its current publication and inventory the remaining package changelogs from verified release sources. |
 | G1 | Deployment evidence, observations and recovery | open | Collect exact receipts and deployed user journeys for each consumer; retain observation periods and recovery evidence. |
 | G2 | Second automated update cycle and final reconciliation | open | Demonstrate another real release progressing without owner intervention; rescan estate and close only evidenced tasks. |
 
@@ -88,5 +88,39 @@ not announced to the public catalogue until they have landed on main. A main
 registry merge triggers a fresh inventory run; unchanged facts retry missed
 catalogue notifications with the exact landed SHA. The CI writer check now
 explicitly forbids direct main workflow writers, including ones that re-arm CI.
-Feature-branch currency updates remain allowed. Production exercise of the
-converted writers and Fleet enforcement are still pending.
+Feature-branch currency updates remain allowed. Converted writers passed three
+production exercises and each produced a generated PR. Fleet's required-check
+application succeeded and read back on its default branch in run
+`40478077209`; the current main also enforces verification and the rendered
+starter check. Continue checking future runs and finish other repositories' writer
+and branch-policy audits before treating this as an organization-wide control.
+
+## 2026-10-27 continuation checkpoint
+
+- ChatKit 0.17.1 and the Causius, Kivvi, BiasLens, Substrata, Heidi and
+  Diplodoctor package artifacts are recorded in current public deployment
+  receipts. Causius #52 is the first receipt using AccountKit 0.8.0; its
+  production registration/recovery lifecycle must be re-certified against that
+  artifact. Diplodoctor's seven browser journeys and 13 database integration
+  tests were run against the deployed 0.8.0 candidate, while production social
+  provider parity remains unverified.
+- Fleet #264 makes verified canary candidates repeatable; #269 proposes a
+  package's canary update before its ordinary consumers. #274 separates evidence
+  by workspace importer, and #275 binds Bitbaum package candidates to its actual
+  site verification workflow. The corrected Bitbaum #145 preview/site journey
+  check is currently running; no merge is claimed until it passes and the normal
+  sweep admits it.
+- Bitbaum #148 now proposes checked generated snapshots through Fleet's pinned
+  first-party helper. The 2026-10-27 production build is still publishing and
+  must finish its live checks and create/refresh its generated PR before this
+  writer conversion is considered operationally proven.
+- The refreshed portfolio closure scan found 20 public applications with
+  configured URLs, 8 current receipts and 12 unavailable receipts. It does not
+  include private applications in the public report, and no current-deployment
+  account/chat journey is inferred from a receipt. Source review captured 60 of
+  61 active repositories; the fork needs a fresh complete checkout. These are
+  evidence gaps, not proof that the apps are broken.
+- AccountKit 0.8.0 is installed through an immutable Git commit in current
+  consumers; npm still advertises 0.6.3. Do not claim npm parity until its
+  Trusted Publisher path is configured and verified. The approved immutable Git
+  route remains usable in the meantime.
