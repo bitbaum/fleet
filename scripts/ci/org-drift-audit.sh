@@ -165,13 +165,36 @@ gh_list_repos() {
 
 # gh_default_branch <repo> — get default branch name
 gh_default_branch() {
-  gh api "repos/$ORG/$1" --jq '.default_branch' 2>/dev/null || echo "main"
+  local branch attempt
+  for attempt in 1 2; do
+    if branch="$(gh api "repos/$ORG/$1" --jq '.default_branch' 2>/dev/null)" && [[ -n "$branch" && "$branch" != null ]]; then
+      printf '%s\n' "$branch"
+      return 0
+    fi
+  done
+  return 2
 }
 
 # gh_check_file <repo> <path> <branch> — fetch and check one file
 gh_check_file() {
   local repo="$1" path="$2" branch="$3"
-  gh api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || true
+  local content diagnostic attempt
+  diagnostic="$(mktemp)"
+  for attempt in 1 2; do
+    if content="$(gh api "repos/$ORG/$repo/contents/$path?ref=$branch" --jq '.content' 2>"$diagnostic")"; then
+      rm -f "$diagnostic"
+      printf '%s' "$content" | base64 -d 2>/dev/null
+      return $?
+    fi
+    # Only a genuine absent file is empty evidence. Retry one transient read
+    # through the same identity; persistent failures remain unknown, never clean.
+    if grep -q '(HTTP 404)' "$diagnostic"; then
+      rm -f "$diagnostic"
+      return 4
+    fi
+  done
+  rm -f "$diagnostic"
+  return 2
 }
 
 # repo_ref <dir> — audit the shared default branch, not a local feature branch
@@ -233,11 +256,28 @@ PATTERN="$( { forbidden_patterns; retired_patterns; } | paste -sd'|' - )"
 new_hits=(); seen_keys=(); scanned_repos=()
 declare -A doors=()
 
+# The local pre-push helper may run outside any Fleet checkout. That is an
+# explicit skip, not a remote coverage claim, and must need no network.
+if [[ "$USE_LOCAL" == 1 ]]; then
+  local_root="${DEV_ROOT:-$HOME/dev}"
+  local_checkout=false
+  for gitdir in "$local_root"/*/.git; do
+    if [[ -d "$gitdir" ]]; then local_checkout=true; break; fi
+  done
+  if [[ "$local_checkout" == false ]]; then
+    echo "⊘ org-drift audit SKIPPED — no fleet checkout under $local_root."
+    exit 0
+  fi
+fi
+
 # Fetch apps.conf and parse door mappings
 if APPS_CONF="$(fetch_apps_conf)"; then
   while IFS='|' read -r domain repo; do
     doors["$domain"]="$repo"
   done < <(echo "$APPS_CONF" | parse_apps_conf_doors)
+else
+  echo "Org drift evidence incomplete: canonical door register unavailable." >&2
+  exit 2
 fi
 
 # Scan via GitHub API (default) or local checkouts (USE_LOCAL=1)
@@ -294,18 +334,31 @@ else
     exit 2
   fi
 
-  mapfile -t repos < <(gh_list_repos)
+  if ! repo_list="$(gh_list_repos)"; then
+    echo "Org drift evidence incomplete: repository census unavailable." >&2
+    exit 2
+  fi
+  mapfile -t repos <<< "$repo_list"
   for repo in "${repos[@]}"; do
     [ -n "$repo" ] || continue
     scanned_repos+=("$repo")
-    branch="$(gh_default_branch "$repo")"
+    if ! branch="$(gh_default_branch "$repo")" || [[ -z "$branch" || "$branch" == null ]]; then
+      echo "Org drift evidence incomplete: default branch unavailable for $repo." >&2
+      exit 2
+    fi
     
     # Root agent files, plus the two docs that have repeatedly restated a
     # retired auth rule after the root files were fixed. A scan that only
     # reads AGENTS.md misses the page AGENTS.md tells the agent to open next.
     for file in README.md CLAUDE.md AGENTS.md .claude/CLAUDE.md docs/UNIFIED_AUTH.md docs/SHARED_CONTEXT.md; do
-      content="$(gh_check_file "$repo" "$file" "$branch")"
-      [ -n "$content" ] || continue
+      if content="$(gh_check_file "$repo" "$file" "$branch")"; then
+        [ -n "$content" ] || continue
+      else
+        status=$?
+        if [[ "$status" == 4 ]]; then continue; fi
+        echo "Org drift evidence incomplete: $repo/$file could not be read." >&2
+        exit 2
+      fi
       
       path="$file"
       is_exempt_path "$path" && continue
