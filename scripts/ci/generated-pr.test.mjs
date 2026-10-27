@@ -31,7 +31,7 @@ function run(f = {}) {
         FIXTURE_STATE: state,
         FIXTURE: JSON.stringify(f),
         GITHUB_ACTIONS: f.local ? "false" : "true",
-        GITHUB_REPOSITORY: "bitbaum/fleet",
+        GITHUB_REPOSITORY: f.repo ?? "bitbaum/fleet",
         GITHUB_REF: f.branch ? "refs/heads/candidate" : "refs/heads/main",
         GH_TOKEN: "synthetic-maintenance",
       },
@@ -116,4 +116,25 @@ test("origin proofs permit their subtree but never other repository content", ()
     ),
   );
   assert.throws(() => assertOwnedPaths(["proofs/other/file"], CONFIG.origin));
+});
+
+test("site snapshots use only the studio repository and generated paths", () => {
+  const r = run({
+    key: "site",
+    repo: "bitbaum/bitbaum",
+    paths: [
+      "site/dist/packages/index.html",
+      "site/packages.snapshot.json",
+      "docs/CAST.md",
+    ],
+  });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(
+    pushes(r)[0].includes("HEAD:refs/heads/fleet/generated-site-snapshots"),
+  );
+  const create = r.calls.find((c) => c[0] === "gh" && c[2] === "create");
+  assert.equal(create[create.indexOf("--repo") + 1], "bitbaum/bitbaum");
+  assert.equal(run({ key: "site" }).status, 1);
+  assert.throws(() => assertOwnedPaths(["site/build.mjs"], CONFIG.site));
+  assert.throws(() => assertOwnedPaths(["site/chat/chat.tsx"], CONFIG.site));
 });
