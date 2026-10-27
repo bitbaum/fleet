@@ -56,7 +56,7 @@
         "apps/web",
         "packages/ai"
       ],
-      "bootstrapPr": 153,
+      "bootstrapPr": 154,
       "candidateChecks": [
         "ci.yml",
         "browser-smoke.yml"
@@ -67,6 +67,27 @@
       "canaryChecks": [
         "ci.yml",
         "browser-smoke.yml"
+      ],
+      "additionalCanaries": [
+        {
+          "canary": "bitbaum/causius",
+          "bootstrapPr": 57,
+          "candidateChecks": [
+            "ci.yml",
+            "browser-smoke.yml"
+          ],
+          "candidateDependencyChecks": [
+            "ci.yml",
+            "browser-smoke.yml"
+          ],
+          "canaryChecks": [
+            "ci.yml",
+            "browser-smoke.yml"
+          ],
+          "receiptProjects": [
+            "."
+          ]
+        }
       ]
     },
     "@bitbaum/design-tokens": {
@@ -273,6 +294,7 @@
     "bitbaum/biaslens": "https://biaslens.orangecat.ch/.well-known/fleet-release.json",
     "bitbaum/kivvi": "https://kivvi.orangecat.ch/.well-known/fleet-release.json",
     "bitbaum/substrata": "https://substrata.orangecat.ch/.well-known/fleet-release.json",
-    "bitbaum/heidi": "https://heidi.orangecat.ch/.well-known/fleet-release.json"
+    "bitbaum/heidi": "https://heidi.orangecat.ch/.well-known/fleet-release.json",
+    "bitbaum/causius": "https://causius.orangecat.ch/.well-known/fleet-release.json"
   }
 }
