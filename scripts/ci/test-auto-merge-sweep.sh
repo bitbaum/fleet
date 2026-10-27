@@ -54,6 +54,7 @@ run_sweep() {
   [ -n "${RS_HEADBRANCH:-}" ] && branch_field=",\"headBranch\":\"$RS_HEADBRANCH\""
   local dir; dir="$(mktemp -d)"
   GH_LOG="$dir/gh-calls.log"
+  TOKEN_LOG="$dir/token-calls.log"
   : > "$GH_LOG"
   printf '%s\n' "${RS_PRS:-[]}" > "$dir/prs.json"
   printf '%s\n' "${RS_VIEW:-{\"mergeable\":\"MERGEABLE\",\"mergeStateStatus\":\"CLEAN\"}}" > "$dir/view.json"
@@ -107,6 +108,7 @@ DOCS
 #!/usr/bin/env bash
 ARGS="\$*"
 echo "\$ARGS" >> "$GH_LOG"
+printf '%s\t%s\n' "\${GH_TOKEN:-}" "\$ARGS" >> "$TOKEN_LOG"
 case "\$ARGS" in
   *"/commits/"*)                    echo "$base_sha" ;;
   # Deploy-reconciler queries, matched BEFORE the generic CI one — ordering is
@@ -150,6 +152,7 @@ FAKE
   chmod +x "$dir/rollout"
   local out status
   out=$(PATH="$dir:$PATH" GH_REPO=bitbaum/fixture BASE_BRANCH=main \
+        GH_TOKEN=repo-token MERGE_TOKEN=shared-merge-token TOKEN_LOG="$TOKEN_LOG" \
         DEPLOY_WORKFLOW="$deploy_wf" LIVE_COMMIT_URL="$live_url" REARM_POLL_SECONDS=0 \
         REARM_IF_FILES="$rearm_if_files" REARM_IF_WORKFLOWS="$rearm_if_workflows" \
         PACKAGE_ROLLOUT_CMD="$dir/rollout" \
@@ -482,6 +485,16 @@ if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
   [ "$(merges)" -ge 1 ] \
     && ok 'a green base merges normally, never consulting the carve-out' \
     || no 'a green base merges normally, never consulting the carve-out'
+fi
+
+# The many API reads use the repository's isolated GITHUB_TOKEN quota; only
+# the merge write uses the shared token, preserving workflow_run dispatch.
+if RS_PRS="$(pr_fixture 'lint')" run_sweep success '' 1; then
+  if awk -F '\t' '$2 ~ /^pr merge/ { if ($1 == "shared-merge-token") merge=1; else bad=1; next } $1 != "repo-token" { bad=1 } END { exit !(merge && !bad) }' "$TOKEN_LOG"; then
+    ok 'uses the repository token for API calls and the shared token only for merge'
+  else
+    no 'uses the repository token for API calls and the shared token only for merge'
+  fi
 fi
 
 # 18. A PAT merge already triggers CI on push. Dispatching CI on top of that run
