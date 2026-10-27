@@ -104,6 +104,7 @@ export function currencySnapshot(owner, repo, request, readFile = rawFile, run =
   }
   return {
     commit, paths,
+    file: read,
     manifest: path => JSON.parse(read(path)),
     artifacts(path, manifest) {
       let dir = posix.dirname(path);

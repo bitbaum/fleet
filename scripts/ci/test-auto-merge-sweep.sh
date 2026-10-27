@@ -179,6 +179,14 @@ reruns() { grep -c '^run rerun' "$GH_LOG" 2>/dev/null; }
 
 echo "auto-merge sweep — base branch guard"
 
+# Fleet calls the script directly rather than through the reusable workflow.
+# Its production caller must supply the write identity the script requires.
+if grep -Fq 'MERGE_TOKEN: ${{ secrets.FLEET_PAT }}' "$HERE/../../.github/workflows/auto-merge.yml"; then
+  ok 'Fleet production caller supplies the shared write token'
+else
+  no 'Fleet production caller supplies the shared write token'
+fi
+
 # 1. A cancelled base run is NOT a verdict about the code. Treating it as one
 #    strands the queue, and only a merge can produce a new base run — so the
 #    guard blocks the very thing that would clear it.

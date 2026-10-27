@@ -81,7 +81,7 @@ jobs:
       - name: Self-test the reconciler first
         run: |
           node scripts/ci/test-currency-reconciler.mjs
-          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs scripts/ci/currency-toolchain.test.mjs scripts/ci/canary-currency-plan.test.mjs
+          node --test scripts/ci/git-package-currency.test.mjs scripts/ci/preferred-package-update.test.mjs scripts/ci/currency-toolchain.test.mjs scripts/ci/canary-currency-plan.test.mjs scripts/ci/currency-managed-mirrors.test.mjs
 
       - name: What is behind?
         id: plan
