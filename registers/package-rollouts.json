@@ -14,7 +14,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 92
     },
     "@bitbaum/ai-kit": {
       "canary": "bitbaum/kivvi",
@@ -31,7 +32,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 141
     },
     "@bitbaum/chartkit": {
       "canary": "bitbaum/substrata",
@@ -46,7 +48,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 252
     },
     "@bitbaum/chatkit": {
       "canary": "bitbaum/kivvi",
@@ -85,10 +88,12 @@
           "receiptProjects": [
             "."
           ],
-          "canaryAdmission": "verified-candidate"
+          "canaryAdmission": "verified-candidate",
+          "bootstrapPr": 57
         }
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 154
     },
     "@bitbaum/design-tokens": {
       "canary": "bitbaum/biaslens",
@@ -116,7 +121,8 @@
       "canaryChecks": [
         "ci.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 255
     },
     "@bitbaum/listkit": {
       "canary": "bitbaum/substrata",
@@ -129,7 +135,8 @@
       "canaryChecks": [
         "ci.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 254
     },
     "@bitbaum/mail-kit": {
       "canary": "bitbaum/kivvi",
@@ -147,7 +154,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 141
     },
     "@bitbaum/paykit": {
       "canary": "bitbaum/orangecat",
@@ -157,7 +165,8 @@
       "canaryChecks": [
         "ci.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 1430
     },
     "@bitbaum/searchkit": {
       "canary": "bitbaum/substrata",
@@ -170,7 +179,8 @@
       "canaryChecks": [
         "ci.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 255
     },
     "@bitbaum/sitekit": {
       "canary": "bitbaum/biaslens",
@@ -198,7 +208,8 @@
       "canaryChecks": [
         "ci.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 254
     },
     "ai-forms": {
       "canary": "bitbaum/kivvi",
@@ -219,7 +230,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 141
     },
     "bip-kit": {
       "canary": "bitbaum/kivvi",
@@ -237,7 +249,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 141
     },
     "limitkit": {
       "canary": "bitbaum/kivvi",
@@ -255,7 +268,8 @@
         "ci.yml",
         "browser-smoke.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 141
     },
     "threadkit": {
       "canary": "bitbaum/substrata",
@@ -268,7 +282,8 @@
       "canaryChecks": [
         "ci.yml"
       ],
-      "canaryAdmission": "verified-candidate"
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 254
     },
     "@bitbaum/speechkit": {
       "canary": "bitbaum/heidi",

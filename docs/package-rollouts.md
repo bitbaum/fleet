@@ -165,7 +165,9 @@ canary repository may enter after its exact configured checks. This applies to
 every release: a historical bootstrap PR number must not prevent the next
 automated update. Blocked artifacts and candidate checks still apply first.
 Legacy policies without this admission mode retain their exact `bootstrapPr`
-restriction. Every representative
+restriction. The optional `bootstrapPr` remains a binding-audit pointer while
+the initial integration PR is open; it is not a permanent release permission
+when verified-candidate admission is selected. Every representative
 must deploy the same artifact, pass its configured checks and complete the full
 observation period before an ordinary consumer can promote. Adding an embedded
 page representative therefore supplements, rather than replaces, a workspace
