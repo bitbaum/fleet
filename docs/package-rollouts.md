@@ -116,8 +116,16 @@ and unpublished repository versions never establish the current target.
 `scripts/ci/release-receipt.mjs` records the clean checked-out commit, the selected
 lockfile digest, and the canonical locked/installed first-party package versions.
 It refuses a dirty or untracked source tree, missing installed packages,
-mutable workspace/branch references, unsupported locks and mismatched npm
-versions. It uses the actual Git checkout rather than the workflow run's label.
+unverified workspace links, mutable branch references, unsupported locks and
+mismatched npm versions. It uses the actual Git checkout rather than the
+workflow run's label.
+
+A pnpm `workspace:` dependency locked to `link:` may be attested as the owning
+repository's immutable Git commit. The CLI checks that the installed package's
+real filesystem target is inside the clean checkout, its manifest is tracked,
+and its name/version and source path match the locked link. A version number
+alone cannot identify a local package. External links, wrong targets and dirty
+workspace source still fail; no raw local path is published.
 
 The deployment integration writes the result into the staged public directory
 as `/.well-known/fleet-release.json`. It contains no environment, user data,

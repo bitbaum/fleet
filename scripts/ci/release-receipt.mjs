@@ -1,5 +1,11 @@
-import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { resolve, relative, dirname } from "node:path";
+import {
+  readFileSync,
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  realpathSync,
+} from "node:fs";
+import { resolve, relative, dirname, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -33,7 +39,8 @@ const isProjectPath = (path) =>
   typeof path === "string" &&
   !path.startsWith("/") &&
   !/[\n\r\\]/.test(path) &&
-  (path === "." || path.split("/").every((part) => part && part !== "." && part !== ".."));
+  (path === "." ||
+    path.split("/").every((part) => part && part !== "." && part !== ".."));
 /** Only public first-party package metadata; no environment, paths, or product data. */
 export function createReleaseReceipt({
   repo,
@@ -46,6 +53,7 @@ export function createReleaseReceipt({
   manifests = {},
   lockImporters = {},
   installed = {},
+  workspacePackages = {},
   createdAt = new Date().toISOString(),
 }) {
   if (
@@ -61,15 +69,28 @@ export function createReleaseReceipt({
     importers.some((path) => !isProjectPath(path)) ||
     new Set(importers).size !== importers.length
   )
-    throw new Error("Receipt importers must be project paths inside the checkout");
-  const manifestsByPath = Object.fromEntries(importers.map((path) => [path, path === importer ? manifest : manifests[path]]));
+    throw new Error(
+      "Receipt importers must be project paths inside the checkout",
+    );
+  const manifestsByPath = Object.fromEntries(
+    importers.map((path) => [
+      path,
+      path === importer ? manifest : manifests[path],
+    ]),
+  );
   const wanted = [];
   for (let i = 0; i < importers.length; i++) {
     const path = importers[i];
     const current = manifestsByPath[path];
-    if (!current) throw new Error(`${path}: project manifest is required for release receipt`);
-    const importerDependencies = Object.entries(dependencies(current)).filter(([name, spec]) => isShared(dependencyIdentity(name, spec)));
-    for (const [depName, spec] of importerDependencies) wanted.push({ depName, spec, importer: path });
+    if (!current)
+      throw new Error(
+        `${path}: project manifest is required for release receipt`,
+      );
+    const importerDependencies = Object.entries(dependencies(current)).filter(
+      ([name, spec]) => isShared(dependencyIdentity(name, spec)),
+    );
+    for (const [depName, spec] of importerDependencies)
+      wanted.push({ depName, spec, importer: path });
   }
   if (wanted.length && !pnpmLock && !npmLock)
     throw new Error("Shared packages require a supported lockfile");
@@ -78,16 +99,47 @@ export function createReleaseReceipt({
   for (const { depName, spec, importer: currentImporter } of wanted) {
     const lockImporter = lockImporters[currentImporter] ?? currentImporter;
     if (!isProjectPath(lockImporter))
-      throw new Error(`${currentImporter}: project is outside the selected lock root`);
+      throw new Error(
+        `${currentImporter}: project is outside the selected lock root`,
+      );
     const name = dependencyIdentity(depName, spec),
       currentManifest = manifestsByPath[currentImporter],
       locked = pnpmLock
         ? lockedDependencies(currentManifest, pnpmLock, lockImporter)
         : npmLock
-          ? lockedNpmDependencies(currentManifest, JSON.parse(npmLock), lockImporter)
+          ? lockedNpmDependencies(
+              currentManifest,
+              JSON.parse(npmLock),
+              lockImporter,
+            )
           : {},
-      artifact = locked[name],
       actual = installed[depName];
+    let artifact = locked[name];
+    if (
+      typeof spec === "string" &&
+      spec.startsWith("workspace:") &&
+      artifact?.startsWith("link:")
+    ) {
+      const link = artifact.slice(5);
+      const path = posix.normalize(posix.join(currentImporter, link));
+      const local = workspacePackages[`${currentImporter}:${depName}`];
+      if (
+        link.startsWith("/") ||
+        /[\\\r\n]/.test(link) ||
+        !isProjectPath(path) ||
+        !local ||
+        local.path !== path ||
+        local.name !== name ||
+        local.version !== actual?.version
+      ) {
+        throw new Error(
+          `${name}: workspace package must resolve to its tracked in-repository source`,
+        );
+      }
+      // A local package is part of this exact clean repository commit. Its
+      // declared version alone would not distinguish later source changes.
+      artifact = `https://codeload.github.com/${repo}/tar.gz/${commit}`;
+    }
     if (!isImmutableArtifact(artifact ?? ""))
       throw new Error(`${name}: immutable locked artifact required`);
     if (!actual?.version || !isPackageVersion(actual.version))
@@ -95,7 +147,9 @@ export function createReleaseReceipt({
     if (/^\d/.test(artifact) && artifact !== actual.version)
       throw new Error(`${name}: installed package differs from the lockfile`);
     if (artifacts[name] && artifacts[name] !== artifact)
-      throw new Error(`${name}: workspace importers resolve different artifacts`);
+      throw new Error(
+        `${name}: workspace importers resolve different artifacts`,
+      );
     artifacts[name] = artifact;
     versions[name] = actual.version;
   }
@@ -167,24 +221,62 @@ function main() {
       : undefined;
   const lockRoot = dirname(pnpmLock ? pnpmPath : npmPath);
   const installed = {};
-  const projects = (option("--projects", importer)).split(",");
-  if (projects.some((project) => !isProjectPath(project)) || new Set(projects).size !== projects.length)
-    throw new Error("Receipt importers must be unique project paths inside the checkout");
+  const projects = option("--projects", importer).split(",");
+  if (
+    projects.some((project) => !isProjectPath(project)) ||
+    new Set(projects).size !== projects.length
+  )
+    throw new Error(
+      "Receipt importers must be unique project paths inside the checkout",
+    );
   const projectManifests = {};
+  const workspacePackages = {};
   for (const project of projects) {
-    projectManifests[project] = JSON.parse(readFileSync(resolve(root, project, "package.json"), "utf8"));
-    for (const [name, spec] of Object.entries(dependencies(projectManifests[project]))) {
+    projectManifests[project] = JSON.parse(
+      readFileSync(resolve(root, project, "package.json"), "utf8"),
+    );
+    for (const [name, spec] of Object.entries(
+      dependencies(projectManifests[project]),
+    )) {
       if (!isShared(dependencyIdentity(name, spec))) continue;
       let location = resolve(root, project);
       while (true) {
         const path = resolve(location, "node_modules", name, "package.json");
         if (existsSync(path)) {
           installed[name] = JSON.parse(readFileSync(path, "utf8"));
+          if (typeof spec === "string" && spec.startsWith("workspace:")) {
+            const sourcePath =
+              relative(
+                realpathSync(root),
+                dirname(realpathSync(path)),
+              ).replaceAll("\\", "/") || ".";
+            if (!isProjectPath(sourcePath))
+              throw new Error(
+                `${name}: workspace package is outside the checkout`,
+              );
+            execFileSync(
+              "git",
+              [
+                "-C",
+                root,
+                "ls-files",
+                "--error-unmatch",
+                "--",
+                `${sourcePath}/package.json`,
+              ],
+              { stdio: "pipe" },
+            );
+            workspacePackages[`${project}:${name}`] = {
+              ...installed[name],
+              path: sourcePath,
+            };
+          }
           break;
         }
         if (location === root) break;
         const parent = dirname(location);
-        if (parent === location || relative(root, parent).startsWith("..")) break;
+        if (parent === location || relative(root, parent).startsWith(".."))
+          break;
         location = parent;
       }
     }
@@ -197,11 +289,15 @@ function main() {
     npmLock,
     importer,
     importers: projects,
-    lockImporters: Object.fromEntries(projects.map(project => [
-      project, relative(lockRoot, resolve(root, project)).replaceAll("\\", "/") || ".",
-    ])),
+    lockImporters: Object.fromEntries(
+      projects.map((project) => [
+        project,
+        relative(lockRoot, resolve(root, project)).replaceAll("\\", "/") || ".",
+      ]),
+    ),
     manifests: projectManifests,
     installed,
+    workspacePackages,
   });
   mkdirSync(dirname(output), { recursive: true });
   writeFileSync(output, JSON.stringify(receipt, null, 2) + "\n");
