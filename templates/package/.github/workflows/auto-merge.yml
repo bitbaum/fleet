@@ -13,6 +13,7 @@
 # turns the weekly hygiene run red.
 #
 # To stop all of this: delete this file, or add a `hold` label to a PR.
+# prettier-ignore
 name: Auto-merge
 
 on:

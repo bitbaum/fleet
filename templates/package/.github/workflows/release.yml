@@ -30,6 +30,7 @@
 # If main is ever protected against direct pushes, FLEET_PAT's identity must be
 # allowed to bypass it, or this fails at the push — after verify, before any
 # tag exists, so nothing half-ships.
+# prettier-ignore
 name: Release
 run-name: Release ${{ inputs.version != '' && format('v{0}', inputs.version) || inputs.bump }}
 
