@@ -1,5 +1,6 @@
 # A release is useful only when the registry and consumers learn about it.
 # No checkout or execution of the completed workflow's code: metadata only.
+# prettier-ignore
 name: Notify Fleet of verified release
 
 on:

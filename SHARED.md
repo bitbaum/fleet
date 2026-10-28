@@ -59,10 +59,18 @@ refuses unless main's CI is green on the commit, raises the version, runs
 `FLEET_PAT` (so `publish.yml` fires on the tag) and writes a GitHub release.
 Dependabot then proposes the tag to every consumer.
 
-npm is a separate, later step and is **not** on the critical path: consumers
-install the tag (`github:bitbaum/<name>#vX.Y.Z`) and Dependabot bumps it. The
-first npm publish of each package needs the account's passkey, so those are
-batched rather than done one by one.
+Every kit is published to npm by its own `publish.yml`, through npm Trusted
+Publishing (GitHub Actions OIDC, signed provenance, no token anywhere). A
+package's first version needs the account once (`NPM_BOOTSTRAP_TOKEN`); linking
+the package to its workflow is one form on npmjs.com
+(`https://www.npmjs.com/package/<name>/access`, organization `bitbaum`,
+repository = the package repo, workflow `publish.yml`, environment blank). To
+check that link without publishing anything, run the package's **Publish**
+workflow with `diagnose_auth` ticked: HTTP 200 means linked, 404 means the form
+is still to be filled in. Consumers install the version npm serves
+(`pnpm add @bitbaum/<name>@^X.Y.Z`); `registers/packages.json` names the verified
+install command for each package. A Git tag is the source record, not the
+install route.
 
 ## The registry — what already exists
 

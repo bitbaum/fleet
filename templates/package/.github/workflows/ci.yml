@@ -1,6 +1,7 @@
 # CI for a bitbaum package repo — rendered from bitbaum/fleet templates/package
 # by scripts/packages/create-package-repos.mjs. Same floor as every repo:
 # install exactly the lockfile, run the package's own `verify`.
+# prettier-ignore
 name: CI
 
 on:
