@@ -331,6 +331,9 @@
     ],
     "bitbaum/fleet": [
       "ci.yml"
+    ],
+    "bitbaum/loki": [
+      "ci.yml#check"
     ]
   },
   "managedConsumerMirrors": {
