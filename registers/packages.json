@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T01:16:57.180Z",
+  "generatedAt": "2026-10-28T03:01:54.375Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -147,6 +147,40 @@
       }
     },
     {
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
+      "version": "0.9.1",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/accountkit#63573dc70b4a678dc53f806a996616b071c8802c"
+      },
+      "adopters": 15,
+      "adopterNames": [
+        "biaslens",
+        "botsmann",
+        "causius",
+        "datacat",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "kivvi",
+        "loki",
+        "petvity",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life"
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.9.1",
+        "commit": "63573dc70b4a678dc53f806a996616b071c8802c"
+      }
+    },
+    {
       "slug": "limitkit",
       "name": "limitkit",
       "repo": "https://github.com/bitbaum/limitkit",
@@ -177,37 +211,6 @@
       "release": {
         "source": "npm",
         "version": "0.2.0"
-      }
-    },
-    {
-      "slug": "accountkit",
-      "name": "@bitbaum/accountkit",
-      "repo": "https://github.com/bitbaum/accountkit",
-      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.9.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.9.0"
-      },
-      "adopters": 13,
-      "adopterNames": [
-        "biaslens",
-        "causius",
-        "datacat",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "loki",
-        "petvity",
-        "skif",
-        "solon",
-        "substrata",
-        "surf-your-life"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.9.0"
       }
     },
     {
@@ -423,8 +426,9 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/chartkit@^0.3.0"
       },
-      "adopters": 1,
+      "adopters": 2,
       "adopterNames": [
+        "kivvi",
         "substrata"
       ],
       "release": {
