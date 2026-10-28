@@ -138,7 +138,8 @@ else if(path==='repos/bitbaum/kivvi') result={default_branch:'main'};
 else if(path==='repos/bitbaum/kivvi/commits/main') result={sha:tip};
 else if(path.includes('repos/bitbaum/kivvi/actions/workflows/deploy.yml/runs?')) result={workflow_runs:[{conclusion:'success',head_sha:tip,updated_at:new Date().toISOString()}]};
 else if(path.includes('repos/bitbaum/kivvi/actions/runs?')) result={workflow_runs:['ci.yml','browser-smoke.yml'].map(p=>({path:'.github/workflows/'+p,event:'push',status:'completed',conclusion:'success',head_sha:new URL('https://api.github.com/'+path).searchParams.get('head_sha')}))};
-else if(path.includes('repos/bitbaum/loki/actions/runs?')) result={workflow_runs:[{path:'.github/workflows/ci.yml',event:'pull_request',status:'completed',conclusion:'success',head_sha:new URL('https://api.github.com/'+path).searchParams.get('head_sha')}]};
+else if(path.includes('repos/bitbaum/loki/actions/runs?')) result={workflow_runs:[{id:99,path:'.github/workflows/ci.yml',event:'pull_request',status:'completed',conclusion:'success',head_sha:new URL('https://api.github.com/'+path).searchParams.get('head_sha')}]};
+else if(path==='repos/bitbaum/loki/actions/runs/99/jobs?filter=latest&per_page=100') result={total_count:1,jobs:[{name:'check',status:'completed',conclusion:'success'}]};
 else if(path.includes('/contents/')) {
  const [repo,file,ref]=/^repos\\/([^/]+\\/[^/]+)\\/contents\\/(.+)\\?ref=(.+)$/.exec(path).slice(1);
  let value=null;
