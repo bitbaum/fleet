@@ -330,6 +330,14 @@ app. Products keep their own role and tenant policy, legacy identity mapping,
 provider configuration and domain-specific authorization; preserve those at
 the app adapter and prove parity before changing them.
 
+**One password rule, everywhere:** a password is any non-empty string up to 128
+characters (`MIN_PASSWORD_LENGTH`, `MAX_PASSWORD_LENGTH`, and `passwordProblem()`
+from `@bitbaum/accountkit/auth/password`, which is safe in browser and server
+code). Sign-up, reset, change and sign-in in every product use that and nothing
+else: no local minimum, no character classes, no strength meter, no hint text.
+A product that still has its own account code imports the rule from there; it
+never writes its own number. To change the rule, change accountkit and release.
+
 ## Repos you create
 
 The fleet creates repos automatically now — Loki provisions one per
