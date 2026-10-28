@@ -33,10 +33,13 @@ judged; a doc that has stopped being true and is worth keeping as history moves
 to an `archive/` directory. Forbidden claims are `forbiddenClaims` in
 `registers/org.json`: one list, read by every gate above.
 
-Each repo keeps a short `AGENTS.md`: the pointer in `templates/AGENTS.md`, then
-only facts that exist only in that repo (how to run it, where the tests are).
-`CLAUDE.md` and any other agent file point here. They do not get their own
-essay of the org.
+Each repo keeps a short `AGENTS.md`: the generated org-rules block
+(`templates/agent-rules.md`, copied between `fleet:rules` markers by
+`scripts/packages/sync-agent-rules.mjs`, a pull request per repo), then only
+facts that exist only in that repo (how to run it, where the tests are).
+`CLAUDE.md` is a pointer to `AGENTS.md`; no agent file gets its own essay of the
+org, and none imports a personal `~/.claude` file. `scripts/ci/agent-files-audit.mjs`
+fails on a repo that starts without the shape and lists the ones still to fold.
 
 ## Your context may be stale
 

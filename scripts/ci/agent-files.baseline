@@ -1,0 +1,86 @@
+# Agent-file findings that existed when scripts/ci/agent-files-audit.mjs was added (2026-10-28).
+#
+# Format: <repo>/<rule>. DEBT, not exemptions. A line may be deleted as soon as the
+# finding is gone; a line whose finding is gone does not fail the audit, and a
+# finding with no line here does. Add a line only in the PR that decides to.
+#
+#   no-agents-md / no-rules-block   sync-agent-rules.mjs opens the pull request
+#   claude-md-not-a-pointer         fold what is still true into AGENTS.md, leave the pointer
+#   home-claude-import-in-*         a rule that lives only on one person's machine is not the repo's
+accountkit/no-rules-block
+ai-forms/no-rules-block
+ai-kit/no-rules-block
+aoz-begleitung/claude-md-not-a-pointer
+aoz-begleitung/home-claude-import-in-claude
+aoz-begleitung/no-agents-md
+biaslens/claude-md-not-a-pointer
+biaslens/no-rules-block
+bip-kit/no-rules-block
+bitbaum/no-rules-block
+botsmann/no-rules-block
+camille-boulangerie/no-agents-md
+causius/no-rules-block
+chartkit/no-rules-block
+chatkit/no-rules-block
+datacat/home-claude-import-in-dot-claude
+datacat/no-rules-block
+design-tokens/no-rules-block
+diplodoctor/no-rules-block
+evig/claude-md-not-a-pointer
+evig/home-claude-import-in-claude
+evig/home-claude-import-in-dot-claude
+evig/no-rules-block
+geo-kit/no-rules-block
+heidi/no-rules-block
+hirnli/claude-md-not-a-pointer
+hirnli/home-claude-import-in-claude
+hirnli/home-claude-import-in-dot-claude
+hirnli/no-agents-md
+hochhinhouse-party/no-agents-md
+hochhinhouse/no-agents-md
+ivy-portal/claude-md-not-a-pointer
+ivy-portal/no-agents-md
+kivvi/claude-md-not-a-pointer
+kivvi/home-claude-import-in-claude
+kivvi/no-rules-block
+limitkit/no-rules-block
+listkit/no-rules-block
+loki/claude-md-not-a-pointer
+loki/home-claude-import-in-claude
+loki/no-rules-block
+mail-kit/no-rules-block
+orangecat/claude-md-not-a-pointer
+orangecat/home-claude-import-in-claude
+orangecat/home-claude-import-in-dot-claude
+orangecat/no-rules-block
+paykit/no-rules-block
+petvity/claude-md-not-a-pointer
+petvity/home-claude-import-in-claude
+petvity/no-rules-block
+printcraft/claude-md-not-a-pointer
+printcraft/home-claude-import-in-claude
+printcraft/no-rules-block
+reparaturbonus-zh/home-claude-import-in-dot-claude
+reparaturbonus-zh/no-rules-block
+s-ink/no-rules-block
+sbb-fundbuero/claude-md-not-a-pointer
+sbb-fundbuero/home-claude-import-in-agents
+sbb-fundbuero/home-claude-import-in-claude
+sbb-fundbuero/no-rules-block
+searchkit/no-rules-block
+sitekit/no-rules-block
+skif/no-rules-block
+solon/home-claude-import-in-dot-claude
+solon/no-rules-block
+speechkit/no-rules-block
+substrata/no-rules-block
+surf-your-life/claude-md-not-a-pointer
+surf-your-life/home-claude-import-in-claude
+surf-your-life/no-rules-block
+threadkit/no-rules-block
+truthseeker/no-rules-block
+vitareba/claude-md-not-a-pointer
+vitareba/home-claude-import-in-claude
+vitareba/no-rules-block
+whenkit/no-rules-block
+zeitkastli/no-agents-md

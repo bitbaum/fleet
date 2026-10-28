@@ -1,0 +1,78 @@
+# One org-rules block in every repo's AGENTS.md, generated from this repo.
+#
+# templates/agent-rules.md is the only place the rules are written. This opens
+# (or updates) one pull request per code repo that does not carry the current
+# block yet; the repo's own CI checks it and the auto-merge sweep merges it.
+# The audit then fails on a repo that has no block and no baseline line, so a
+# new repo cannot start without the shape. It is its own workflow, not a job
+# of ci.yml: a finding in another repo must never hold this repo's merges.
+name: Agent rules
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - templates/agent-rules.md
+      - scripts/ci/agent-rules.mjs
+      - scripts/ci/agent-files-audit.mjs
+      - scripts/ci/agent-files.baseline
+      - scripts/packages/sync-agent-rules.mjs
+  pull_request:
+    paths:
+      - templates/agent-rules.md
+      - templates/**/AGENTS.md
+      - templates/**/CLAUDE.md
+      - scripts/ci/agent-rules.mjs
+      - scripts/ci/agent-files-audit.mjs
+      - scripts/ci/agent-files.baseline
+      - scripts/packages/sync-agent-rules.mjs
+  schedule:
+    - cron: "41 5 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: agent-rules
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: The rules and their audit still behave
+        run: |
+          node scripts/ci/test-agent-rules.mjs
+          node scripts/ci/test-agent-files-audit.mjs
+          node scripts/packages/test-sync-agent-rules.mjs
+      - name: Does any repo's agent-file set drift from the one shape?
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT || secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/agent-files-audit.mjs --check
+
+  sync:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Offer every repo the current block
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_PAT }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::error::FLEET_PAT is not set; no pull request can be opened."
+            exit 1
+          fi
+          gh auth setup-git
+          node scripts/packages/sync-agent-rules.mjs
