@@ -334,6 +334,10 @@
     ],
     "bitbaum/loki": [
       "ci.yml#check"
+    ],
+    "bitbaum/aoz-begleitung": [
+      "ci.yml",
+      "ci.yml#E2E Tests"
     ]
   },
   "managedConsumerMirrors": {
