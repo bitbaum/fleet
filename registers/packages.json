@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T17:19:28.429Z",
+  "generatedAt": "2026-10-28T17:26:57.783Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -425,8 +425,8 @@
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
       "version": "0.6.0",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/chartkit#d9ab65cba39d3c798863cd97db145b99fa385d31"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.6.0"
       },
       "adopters": 2,
       "adopterNames": [
@@ -434,9 +434,8 @@
         "substrata"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.6.0",
-        "commit": "d9ab65cba39d3c798863cd97db145b99fa385d31"
+        "source": "npm",
+        "version": "0.6.0"
       }
     },
     {
