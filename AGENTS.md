@@ -1,5 +1,10 @@
 # For every agent
 
+For multi-repository work, follow [the repository completion procedure](docs/repository-completion.md):
+keep one application active, close its declared scope with deployment and journey
+evidence, and report the exact remaining work if execution stops. A completed PR
+does not establish that the application's wider audit is complete.
+
 Claude, Codex, Antigravity, Cursor, Grok, Loki, and anything else read
 this file. Do not keep a private copy of these facts. If a fact is not in a
 register, it is not true yet.
