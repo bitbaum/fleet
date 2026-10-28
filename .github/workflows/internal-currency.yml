@@ -45,13 +45,13 @@ on:
     # everything else in the org for the same scheduler slot. See
     # deploy-reconciler.yml for why nothing here may DEPEND on this firing;
     # workflow_dispatch is the reliable trigger and the box can tick it.
-    - cron: '41 */6 * * *'
+    - cron: "41 */6 * * *"
   repository_dispatch:
     types: [shared-package-release]
   workflow_dispatch:
     inputs:
       go:
-        description: 'Actually open the pull requests (false = print the plan only).'
+        description: "Actually open the pull requests (false = print the plan only)."
         type: boolean
         default: true
 
@@ -260,6 +260,19 @@ jobs:
             exit 0
           fi
 
+          # Capture the lease before inspecting commits: a repair arriving
+          # during inspection must cause the eventual push to fail safely.
+          remote_oid="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          open_pr="$(gh pr list --repo "bitbaum/$REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$open_pr" ]; then
+            gh api "repos/bitbaum/$REPO/pulls/$open_pr/commits" --paginate --slurp \
+              | jq 'add' > "$RUNNER_TEMP/currency-commits.json"
+            if ! node "$RUNNER_TEMP/fleet-currency-tooling/scripts/ci/currency-branch-policy.mjs" < "$RUNNER_TEMP/currency-commits.json"; then
+              echo "::warning::Preserving repairs on bitbaum/$REPO PR #$open_pr; refresh after this PR merges."
+              exit 0
+            fi
+          fi
+
           git config user.name  "fleet-reconciler"
           git config user.email "fleet@bitbaum.invalid"
 
@@ -298,7 +311,6 @@ jobs:
           # push HEAD to the explicit remote ref. A lease tied to the live
           # remote SHA protects concurrent writers without requiring a local
           # branch named fleet/internal-currency.
-          remote_oid="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
           # pnpm install above produced the package-manager lockfile. Skip
           # the workstation-only Husky pre-push preview here: target CI runs
           # the required checks on this PR, and Loki's mtime guard falsely
