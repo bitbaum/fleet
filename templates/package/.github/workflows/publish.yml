@@ -185,6 +185,44 @@ jobs:
           fi
           rm -f "$RUNNER_TEMP/.npmrc"
 
+      - name: Wait for published registry metadata
+        if: steps.check.outputs.publish == 'true'
+        env:
+          NAME: ${{ steps.check.outputs.name }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          # npm accepts a release before its public metadata is readable. Keep
+          # this serialized job open until read-back succeeds, so the tag/main
+          # duplicate cannot try publishing a version still being processed.
+          node --input-type=module <<'NODE'
+          const { NAME: name, VERSION: version } = process.env;
+          const url = `https://registry.npmjs.org/${encodeURIComponent(name)}`;
+          let ready = false;
+          for (let attempt = 0; attempt < 60; attempt++) {
+            try {
+              const response = await fetch(url, {
+                headers: { 'cache-control': 'no-cache' },
+                signal: AbortSignal.timeout(10000),
+              });
+              if (response.ok) {
+                const metadata = await response.json();
+                const record = metadata.versions?.[version];
+                ready = record?.name === name && record.version === version &&
+                  Boolean(record.dist?.integrity && record.dist?.tarball);
+                if (ready) break;
+              }
+            } catch {
+              // Network errors and temporarily incomplete metadata can settle.
+            }
+            if (attempt < 59) {
+              console.log(`Waiting for ${name}@${version} registry read-back (${attempt + 1}/60)`);
+              await new Promise(resolve => setTimeout(resolve, 10000));
+            }
+          }
+          if (!ready) throw new Error(`Publication accepted, but ${name}@${version} registry read-back did not become ready`);
+          console.log(`Verified registry metadata and artifact coordinates for ${name}@${version}`);
+          NODE
+
       # A release from main gets its tag here, so every published version is
       # still traceable to a commit by name.
       - name: Tag the released commit
