@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T06:46:34.910Z",
+  "generatedAt": "2026-10-28T06:54:43.908Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -277,10 +277,10 @@
       "name": "@bitbaum/listkit",
       "repo": "https://github.com/bitbaum/listkit",
       "description": "A list as a query: a closed set of facet kinds, a URL codec that copies rather than rebuilds, a comparator that puts missing values last, and page arithmetic that cannot produce a negative offset. No markup, no React, no HTTP client.",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/listkit@^0.2.1"
+        "command": "pnpm add @bitbaum/listkit@^0.2.2"
       },
       "adopters": 8,
       "adopterNames": [
@@ -295,7 +295,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.2.1"
+        "version": "0.2.2"
       }
     },
     {
@@ -303,10 +303,10 @@
       "name": "@bitbaum/searchkit",
       "repo": "https://github.com/bitbaum/searchkit",
       "description": "Search that finds what was meant: typo budgets by word length, prefix while typing, German spellings without umlauts, joined and split words, Algolia-order tie-break ranking, highlight ranges, query expansion for any database, and a generated typo regression suite. Zero dependencies; React optional.",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/searchkit@^0.2.2"
+        "command": "pnpm add @bitbaum/searchkit@^0.2.3"
       },
       "adopters": 8,
       "adopterNames": [
@@ -321,7 +321,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.2.2"
+        "version": "0.2.3"
       }
     },
     {
@@ -400,10 +400,10 @@
       "name": "@bitbaum/geo-kit",
       "repo": "https://github.com/bitbaum/geo-kit",
       "description": "Versioned, on-demand geography resources and sourced boundary assertions for web applications.",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/geo-kit@^0.1.1"
+        "command": "pnpm add @bitbaum/geo-kit@^0.1.2"
       },
       "adopters": 3,
       "adopterNames": [
@@ -413,7 +413,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.1.1"
+        "version": "0.1.2"
       }
     },
     {
@@ -441,10 +441,10 @@
       "name": "@bitbaum/speechkit",
       "repo": "https://github.com/bitbaum/speechkit",
       "description": "Measure how somebody spoke — pauses, rate, where they searched for a word, grammar a listener would notice — and say only what the evidence allows. Language-agnostic; no pronunciation score, on purpose.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/speechkit@^1.0.0"
+        "command": "pnpm add @bitbaum/speechkit@^1.0.1"
       },
       "adopters": 1,
       "adopterNames": [
@@ -452,7 +452,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "1.0.0"
+        "version": "1.0.1"
       }
     },
     {
