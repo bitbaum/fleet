@@ -42,7 +42,17 @@ export function withBlock(text, block = ruleBlock()) {
   if (!text || !text.trim()) return `# Agents\n\n${block}`;
   if (MARKED.test(text)) return text.replace(MARKED, () => block);
   const lines = text.split('\n');
-  const h1 = lines.findIndex(l => /^# /.test(l));
+  // A heading inside another tool's marked region (create-next-app writes
+  // `<!-- BEGIN:nextjs-agent-rules -->` … `<!-- END:… -->`, which it rewrites)
+  // is not this file's title: the block never goes inside such a region.
+  let region = null;
+  const h1 = lines.findIndex(l => {
+    const open = l.match(/^<!-- BEGIN:([\w-]+) -->/);
+    if (open) region = open[1];
+    const hit = region === null && /^# /.test(l);
+    if (region !== null && l.startsWith(`<!-- END:${region} -->`)) region = null;
+    return hit;
+  });
   if (h1 === -1) return `${block}\n${text}`;
   const head = lines.slice(0, h1 + 1).join('\n');
   const rest = lines.slice(h1 + 1).join('\n').replace(/^\n+/, '');
