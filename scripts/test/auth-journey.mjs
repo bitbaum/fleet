@@ -228,15 +228,14 @@ try {
     await page.goto(redirect.href);
     const inputs = page.locator('input[type="password"]');
     // SSR initially draws the ordinary sign-in form; hydration reads and clears
-    // the reset token before rendering the two password fields.
-    await inputs.nth(1).waitFor();
+    // the reset token before rendering AccountKit's single new-password field.
+    await inputs.nth(0).waitFor();
     assert.equal(
       await inputs.count(),
-      2,
+      1,
       "real app renders the shared reset form",
     );
     await inputs.nth(0).fill("a replacement isolated test passphrase");
-    await inputs.nth(1).fill("a replacement isolated test passphrase");
     assert.ok(
       !new URL(page.url()).searchParams.has("token"),
       "token removed from address bar",
