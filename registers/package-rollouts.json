@@ -328,6 +328,9 @@
     ],
     "bitbaum/petvity": [
       "ci.yml"
+    ],
+    "bitbaum/fleet": [
+      "ci.yml"
     ]
   },
   "managedConsumerMirrors": {
