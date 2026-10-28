@@ -9,23 +9,44 @@ remain derived from Fleet's package and rollout registers.
 
 ## Current execution
 
-- [ ] **Shared-package consumer rollout.** Merge the current green Fleet #320
-  after its current-head checks, then resolve every still-open generated
-  `raise shared package floors` PR from the currency run. Open PRs currently
-  include Truthseeker #68, BiasLens #110, Botsmann #245, Loki #1436,
-  Diplodoctor #41, OrangeCat #1462, Solon #319, Evig #614, S-ink #50, Skif #69,
-  Causius #75, DataCat #315, Vitareba #126, Petvity #125, AOZ #317,
-  Surf Your Life #101, and Hirnli #123. Refresh stale candidates instead of
-  forcing them. Verify deployment receipts for apps that deploy; no receipt
-  substitutes for the app's required journey.
-- [ ] **AccountKit 0.9.1 app upgrades.** Refresh/merge Causius #76,
-  Diplodoctor #42, Heidi #237, BiasLens #111, Petvity #129, DataCat #314,
-  and Loki #1456. Rebuild Substrata #184 against current main and AccountKit;
+- [x] **Package floor baseline and first consumer wave.** The generated floor
+  PRs in the historical status report were processed; many merged, including
+  Fleet #320 and the Causius, Diplodoctor, Solon, BiasLens, Botsmann, Heidi,
+  Skif, Kivvi, Petvity, AOZ, OrangeCat, Truthseeker, S-ink, Evig, DataCat,
+  Vitareba, Surf Your Life, and Hirnli package-floor waves. This does not close
+  the continuing-currency task below. Evidence: current registry and PR queries
+  on 2026-10-28.
+- [ ] **Current package floor reconciliation.** Close only after regenerating
+  the live app/package matrix from the current registry and every active repo's
+  lockfile. This is not complete: a read-only scan of the cached app/package
+  checkouts found older declared floors in AOZ, BiasLens, Bitbaum, Botsmann,
+  Causius, DataCat, Diplodoctor, Evig, Fleet's template, Heidi, Hirnli, Kivvi,
+  Loki and its site template, OrangeCat, Petvity, S-ink, SBB Fundbüro, Skif,
+  Solon, Substrata, Surf Your Life, Truthseeker and Vitareba. The cached checkout
+  refs are not proof of current GitHub main, so regenerate from live refs before
+  creating/updating PRs. Latest directly queried open candidates at this
+  checkpoint: Loki #1436
+  (ChatKit 0.21.2 plus current shared floors; hosted check running and rollout
+  gate blocked pending its check), Bitbaum #177 (preview check fails because
+  checked-in generated site output embeds old ChatKit), and Evig #615 (CI still
+  running). Causius #78 and AOZ #327 were green; Substrata #285 was merged.
+  These statuses are live and may change. GitHub and npm returned repeated
+  upstream HTTP 503s during this execution, preventing fresh remote inventory,
+  pushes and merge-sweep triggers.
+- [ ] **AccountKit 0.9.1 app upgrades.** Re-query the legacy PRs before
+  touching them: some named upgrades merged (including Loki #1456), while
+  DataCat #314, Surf Your Life #107, Vitareba #129, Hirnli #148, AOZ #320,
+  and Substrata #184 were still stale or dirty at the last source inspection.
+  A clean Surf Your Life refresh exists locally at `/tmp/surf-auth-current`,
+  commit `31e5902`; formatting, lint, typecheck, all 894 tests, and the focused
+  19-test auth suite passed. It is not pushed because GitHub returned repeated
+  503 errors. Rebase/refresh each remaining app individually; do not force-merge
+  stale checks. Rebuild Substrata #184 against current main and AccountKit;
   preserve stable identities, roles, saved data, and its additive schema. Run
   the database/browser journeys before merge and verify deployed account flows.
-- [ ] **ChartKit adoption.** Rebase Kivvi #169 to ChartKit 0.5.0; check localized
-  chart labels and dates against real German tenant data, then verify light/dark
-  and phone/desktop after deployment. Review the bespoke chart usage in
+- [ ] **ChartKit adoption.** Kivvi #169 merged and the consumer floor was raised;
+  verify localized labels and dates against real German tenant data, then verify
+  light/dark and phone/desktop after deployment. Review bespoke chart usage in
   Petvity, Vitareba, Hirnli, and Evig against ChartKit's released capabilities;
   migrate eligible uses, keep only evidenced feature gaps as exceptions.
 - [ ] **Authentication parity.** Build the current app/provider matrix from
@@ -46,8 +67,9 @@ remain derived from Fleet's package and rollout registers.
   rules, reduce each `CLAUDE.md` to a pointer, remove Evig's personal-home import,
   then delete only findings proven gone from the baseline. Extend coverage to
   private repositories and editor-specific instruction files.
-- [ ] **Stale draft PRs.** Reconcile and refresh Hirnli #130, Petvity #106, and
-  Surf Your Life #87 against current code and mark ready only when accurate.
+- [ ] **Stale draft PRs.** Re-query the PRs and branches before taking action.
+  Reconcile Hirnli #130, Petvity #106, and Surf Your Life #87 against current
+  code and mark ready only when accurate.
   AOZ #255 is already closed. Kivvi #125 is encrypted company-AI-key handling,
   not a copy-drift PR; review it separately for current security behavior.
   Reconcile Bitbaum #119, #123, and #103 against current registers and site.
@@ -78,7 +100,10 @@ remain derived from Fleet's package and rollout registers.
 - ChartKit 0.5.0 includes locale-aware rendering, reference bands, stacked
   columns, doughnuts, and verified React 18 compatibility.
 - PayKit 0.1.1 is published with provenance.
-- AccountKit 0.9.1 and ChatKit 0.21.1 are published.
+- AccountKit 0.9.1 and ChatKit 0.21.2 are published. ChatKit's 0.21.2 release
+  includes provenance and a compact stylesheet for embedded clients; Loki's
+  migration to that entry point remains in PR #1436 pending CI and the rollout
+  gate.
 - Fleet package publishing workflow/template and source-history work are
   merged; they do not establish full app adoption or deployed user journeys.
 - Fleet's agent-file audit is installed. The ten findings above are debt already
