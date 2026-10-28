@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T03:01:54.375Z",
+  "generatedAt": "2026-10-28T03:09:48.818Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -153,10 +153,10 @@
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
       "version": "0.9.1",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#63573dc70b4a678dc53f806a996616b071c8802c"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.9.1"
       },
-      "adopters": 15,
+      "adopters": 16,
       "adopterNames": [
         "biaslens",
         "botsmann",
@@ -168,6 +168,7 @@
         "heidi",
         "kivvi",
         "loki",
+        "orangecat",
         "petvity",
         "skif",
         "solon",
@@ -175,9 +176,8 @@
         "surf-your-life"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.9.1",
-        "commit": "63573dc70b4a678dc53f806a996616b071c8802c"
+        "source": "npm",
+        "version": "0.9.1"
       }
     },
     {
