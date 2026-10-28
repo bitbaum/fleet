@@ -506,10 +506,13 @@ if [ ${#new_hits[@]} -gt 0 ]; then
 fi
 
 if [ ${#stale[@]} -gt 0 ]; then
-  echo "✓ baseline entries with no matching violation — the ratchet fell:" >&2
+  # Not a failure. Whoever fixes a baselined file in ANOTHER repo cannot know
+  # this file exists, and the audit turned fleet main red twice on 2026-10-26
+  # (fleet #221-#224) because the fall-only version failed on exactly that.
+  # The finding is reported; the line is deleted in the next PR that touches
+  # the baseline. A NEW violation above still fails.
+  echo "✓ baseline entries with no matching violation — the ratchet fell (delete these lines from $(basename "$BASELINE"); not a failure):" >&2
   printf '  %s\n' "${stale[@]}" >&2
-  echo "  Delete these lines from $(basename "$BASELINE")." >&2
-  exit 1
 fi
 
 echo "✓ ${#scanned_repos[@]} repos swept, ${#seen_keys[@]} known violation(s), no new contradictions"
