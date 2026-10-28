@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-10-28T17:26:57.783Z",
+  "generatedAt": "2026-10-28T23:46:56.753Z",
   "packages": [
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.21.4",
+      "version": "1.21.5",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/ai-kit@^1.21.4"
+        "command": "pnpm add @bitbaum/ai-kit@^1.21.5"
       },
       "adopters": 20,
       "adopterNames": [
@@ -36,7 +36,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "1.21.4"
+        "version": "1.21.5"
       }
     },
     {
@@ -398,6 +398,27 @@
       }
     },
     {
+      "slug": "chartkit",
+      "name": "@bitbaum/chartkit",
+      "repo": "https://github.com/bitbaum/chartkit",
+      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
+      "version": "0.6.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.6.0"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "aoz-begleitung",
+        "kivvi",
+        "substrata"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.6.0"
+      }
+    },
+    {
       "slug": "geo-kit",
       "name": "@bitbaum/geo-kit",
       "repo": "https://github.com/bitbaum/geo-kit",
@@ -416,26 +437,6 @@
       "release": {
         "source": "npm",
         "version": "0.1.2"
-      }
-    },
-    {
-      "slug": "chartkit",
-      "name": "@bitbaum/chartkit",
-      "repo": "https://github.com/bitbaum/chartkit",
-      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.6.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.6.0"
-      },
-      "adopters": 2,
-      "adopterNames": [
-        "kivvi",
-        "substrata"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.6.0"
       }
     },
     {
