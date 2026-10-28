@@ -37,7 +37,7 @@
     "react-dom": "19.3.0",
     "zod": "^4.6.6",
     "@bitbaum/sitekit": "^0.4.2",
-    "@bitbaum/accountkit": "github:bitbaum/accountkit#4c2a680d7c2e5709c7b71224fee314752309a454",
+    "@bitbaum/accountkit": "github:bitbaum/accountkit#1f41009539adf4804895f817cd5ae4b1f35ebdeb",
     "@bitbaum/chatkit": "^0.21.1"
   },
   "devDependencies": {
