@@ -38,7 +38,7 @@
     "zod": "^4.6.6",
     "@bitbaum/sitekit": "^0.4.2",
     "@bitbaum/accountkit": "^0.9.1",
-    "@bitbaum/chatkit": "^0.21.1"
+    "@bitbaum/chatkit": "github:bitbaum/chatkit#378430bdaa52f11d56bf91880977980c707b86f0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
