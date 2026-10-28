@@ -349,3 +349,61 @@ provider parity, specialized auth migrations, remaining current-artifact user
 journeys, broader security work, authored histories, semantic claim dependencies
 and the final unattended-cycle reconciliation remain open. Package installation,
 a green package page, or receipt availability is not a substitute for them.
+
+## 2026-10-28 reconciliation with parallel package work
+
+- PayKit publication is no longer blocked. The publisher diagnostic
+  `40643858407` succeeded after the owner renewed the npm connection.
+  Tokenless publication `40643912530` shipped the existing verified `v0.1.1`
+  tag; the registry now serves `@bitbaum/paykit@0.1.1` with a SLSA provenance
+  attestation. No tag was moved and no credential was shared.
+- Evig #588 merged on 2026-10-28 after the real staged rollout checks.
+  Fleet #308 now verifies the exact successful `Local E2E Journeys` job in
+  Evig's combined CI, in addition to the workflow result; skipped or missing
+  jobs do not count. A merged dependency update alone is not deployment proof.
+- Verified source-history baselines merged in AI Kit #97, Mail Kit #18,
+  LimitKit #32, Design Tokens #40, WhenKit #15, ListKit #11, SearchKit #8,
+  AI Forms #54, SiteKit #34, ThreadKit #43, SpeechKit #8 and PayKit #9.
+  Existing authored release notes were retained where available. Retrospective
+  tag evidence is labelled and does not pretend to be complete authored
+  feature history, npm publication or consumer deployment evidence.
+- AccountKit has advanced to 0.9.1 through parallel work. Its narrow recovery
+  client port already merged in #32, so the earlier local implementation must
+  not be republished as a competing 0.8.1. Password-policy and single-field
+  reset changes are owned by the subsequent shared releases. Consumer
+  authentication migrations and actual provider callbacks remain separate
+  acceptance work.
+- ChartKit #14 merged locale-aware line/column/timeline formatting, translated
+  accessible headings and preliminary labels. Full verification passed with
+  28 core/server tests and browser checks at 320, 390, 1280 and 1440px, in
+  default English and German, light and dark. Release and Kivvi adoption still
+  follow; the merge is not a claim that deployed German charts are repaired.
+  Normal-range bands, stacked columns and doughnuts are still capability
+  gaps to resolve centrally before replacing stronger app chart features.
+- Bitbaum #169's dependency PR correctly failed its committed-bundle check:
+  the new lock installed ChatKit 0.21.1 while the committed bundle named
+  0.21.0. Commit `62718b8` rebuilds the bundle on that existing PR branch.
+  Bundle equality, 30 tests and the documentation audit pass locally; exact
+  PR CI, checked merge, deployment and served-page checks remain required.
+- Fleet's generated rules and agent-file audit are installed. A fresh audit
+  inspected 46 public code repositories and observed 10 findings, all existing
+  debt; no new finding. This does not cover private repositories, forks or
+  every editor-specific file. The baseline is reduced from 77 to these 10
+  observed findings so previously repaired drift cannot silently return.
+
+The owner's current direction is to improve shared capabilities and propagate
+verified releases, preserving stronger product behavior during migration. Keep
+RevampIT and owner-controlled Evig as product contexts; do not infer paid-client
+relationships, endorsement or permission to expose real tenant bookkeeping data.
+Do not reorder Loki's host list without a routing reason. Routine draft cleanup
+and checked releases need no additional owner review. Keep third-party
+supply-chain protections and financial/identity invariants intact.
+
+The plan remains open. Outstanding areas include the remaining ten instruction
+findings, refreshing or retiring stale draft PRs against current code, shared
+chart capability/adoption gaps, remaining auth adapters and actual configured
+social-provider journeys, mail adapter parity, package applicability across all
+repositories, broader security review, semantic claim dependencies, and final
+release-to-consumer-to-deployed-journey reconciliation. Release workflows that
+push version bumps directly to main must use checked release PRs before stronger
+package branch protection; do not solve that conflict with a broad bot bypass.
