@@ -30,6 +30,9 @@ remain derived from Fleet's package and rollout registers.
   gate blocked pending its check), Bitbaum #177 (preview check fails because
   checked-in generated site output embeds old ChatKit), and Evig #615 (CI still
   running). Causius #78 and AOZ #327 were green; Substrata #285 was merged.
+  Fleet #336's gate-policy test fix passed its checks, but its branch was behind
+  main on the last query; it still needs the Fleet auto-merge sweep after a
+  fresh rebase/check.
   These statuses are live and may change. GitHub and npm returned repeated
   upstream HTTP 503s during this execution, preventing fresh remote inventory,
   pushes and merge-sweep triggers.
