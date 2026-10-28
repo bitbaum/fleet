@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T03:09:48.818Z",
+  "generatedAt": "2026-10-28T06:38:55.272Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -421,10 +421,10 @@
       "name": "@bitbaum/chartkit",
       "repo": "https://github.com/bitbaum/chartkit",
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.3.0"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chartkit#efff2aac954396fb16f2c8f869210bf1fc534ac9"
       },
       "adopters": 2,
       "adopterNames": [
@@ -432,8 +432,9 @@
         "substrata"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.3.0"
+        "source": "git",
+        "tag": "v0.4.0",
+        "commit": "efff2aac954396fb16f2c8f869210bf1fc534ac9"
       }
     },
     {
@@ -462,15 +463,14 @@
       "description": "Let a website get paid without holding the money. Classify a pasted Bitcoin receive string, and record a shown code (Twint, another currency) the visitor pays in their own app.",
       "version": "0.1.1",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/paykit#d3038e303e6fe9e97a171131c7001637d104fd77"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/paykit@^0.1.1"
       },
       "adopters": 0,
       "adopterNames": [],
       "release": {
-        "source": "git",
-        "tag": "v0.1.1",
-        "commit": "d3038e303e6fe9e97a171131c7001637d104fd77"
+        "source": "npm",
+        "version": "0.1.1"
       }
     }
   ],
