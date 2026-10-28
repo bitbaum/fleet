@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T10:21:42.828Z",
+  "generatedAt": "2026-10-28T17:19:28.429Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -77,6 +77,41 @@
       }
     },
     {
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
+      "version": "0.9.1",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.9.1"
+      },
+      "adopters": 17,
+      "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "botsmann",
+        "causius",
+        "datacat",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "kivvi",
+        "loki",
+        "orangecat",
+        "petvity",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.9.1"
+      }
+    },
+    {
       "slug": "bip-kit",
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
@@ -147,40 +182,6 @@
       }
     },
     {
-      "slug": "accountkit",
-      "name": "@bitbaum/accountkit",
-      "repo": "https://github.com/bitbaum/accountkit",
-      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.9.1",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.9.1"
-      },
-      "adopters": 16,
-      "adopterNames": [
-        "biaslens",
-        "botsmann",
-        "causius",
-        "datacat",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "kivvi",
-        "loki",
-        "orangecat",
-        "petvity",
-        "skif",
-        "solon",
-        "substrata",
-        "surf-your-life"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.9.1"
-      }
-    },
-    {
       "slug": "limitkit",
       "name": "limitkit",
       "repo": "https://github.com/bitbaum/limitkit",
@@ -190,9 +191,10 @@
         "source": "npm",
         "command": "pnpm add limitkit@^0.2.1"
       },
-      "adopters": 15,
+      "adopters": 16,
       "adopterNames": [
         "accountkit",
+        "aoz-begleitung",
         "biaslens",
         "botsmann",
         "causius",
@@ -421,10 +423,10 @@
       "name": "@bitbaum/chartkit",
       "repo": "https://github.com/bitbaum/chartkit",
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.5.0"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/chartkit#d9ab65cba39d3c798863cd97db145b99fa385d31"
       },
       "adopters": 2,
       "adopterNames": [
@@ -432,8 +434,9 @@
         "substrata"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.5.0"
+        "source": "git",
+        "tag": "v0.6.0",
+        "commit": "d9ab65cba39d3c798863cd97db145b99fa385d31"
       }
     },
     {
