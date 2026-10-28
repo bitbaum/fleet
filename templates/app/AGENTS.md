@@ -1,6 +1,7 @@
 # Agents
 
 <!-- fleet:rules:begin — generated from bitbaum/fleet templates/agent-rules.md; edit it there, not here -->
+
 ## Org rules
 
 Read `bitbaum/fleet` `AGENTS.md`, `SHARED.md` and the registers it names before
@@ -25,6 +26,7 @@ into this file.
 - **No model identifier** in anything pushed to a repository.
 - Before you finish, run `node <fleet>/scripts/ci/docs-truth-audit.mjs --dir .`:
   the same check the sweep runs on every pull request.
+
 <!-- fleet:rules:end -->
 
 Repo-only notes live below this line.

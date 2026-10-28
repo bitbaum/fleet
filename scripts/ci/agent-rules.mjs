@@ -23,7 +23,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** The block, markers included, ending in a newline. */
 export function ruleBlock(body = readFileSync(join(ROOT, 'templates', 'agent-rules.md'), 'utf8')) {
-  return `${BEGIN}\n${body.trim()}\n${END}\n`;
+  return `${BEGIN}\n\n${body.trim()}\n\n${END}\n`;
 }
 
 const MARKED = /<!-- fleet:rules:begin[^>]*-->[\s\S]*?<!-- fleet:rules:end -->\n?/;
