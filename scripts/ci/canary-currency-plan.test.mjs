@@ -30,5 +30,16 @@ test("additional representatives, aliases and nested importer leases are preserv
 test("ordinary consumers and unchanged batches retain all updates", () => {
   const ordinary = { repo: "ordinary-app", bumps: [bump("design"), bump("search")] };
   const onlyOwned = { repo: "search-app", bumps: [bump("search")] };
-  assert.deepEqual(canaryFirst([ordinary, onlyOwned], policy), [ordinary, onlyOwned]);
+  assert.deepEqual(canaryFirst([ordinary, onlyOwned], policy), [onlyOwned, ordinary]);
+});
+
+
+test("representative updates precede ordinary apps without reordering either group", () => {
+  const ordinaryA = { repo: "a-app", bumps: [bump("search")] };
+  const representativeB = { repo: "bitbaum/case-app", bumps: [bump("chat")] };
+  const ordinaryB = { repo: "b-app", bumps: [bump("chat")] };
+  const representativeA = { repo: "search-app", bumps: [bump("search")] };
+  const input = [ordinaryA, representativeB, ordinaryB, representativeA];
+  assert.deepEqual(canaryFirst(input, policy), [representativeB, representativeA, ordinaryA, ordinaryB]);
+  assert.deepEqual(input, [ordinaryA, representativeB, ordinaryB, representativeA]);
 });
