@@ -1,5 +1,7 @@
 # Remediation checkpoint — 2026-10-29
 
+Continuation evidence: [AOZ migration staging](#accountkit-staging-continuation).
+
 The full plan remains open. Continue with AOZ as the active application under
 [the completion procedure](repository-completion.md). The acceptance queue is
 [the remediation checklist](package-remediation-checklist-2026-10-28.md); a
@@ -134,3 +136,53 @@ cutover was published. Restore reliable package/GitHub retrieval, reconcile the
 current default branch and currency PRs, then implement and rehearse the full
 identity-preserving migration before release. The fresh auth worktree is a
 starting point, not completed implementation.
+
+## AccountKit staging continuation
+
+Git clone/fetch/push and npm access recovered in the following execution. The
+fresh workspace contained no prior worktree or running install. AOZ was cloned
+at current master `2d9b0d3539d7ba0f43e91431d4329e431bf6a13e`, which already
+contains the AccountKit 0.10.0 floor, and a frozen dependency install completed.
+
+AOZ [#340](https://github.com/bitbaum/aoz-begleitung/pull/340), head
+`7299d3a083ba8842dbe8e6dc6f76824ec6982079`, stages the published shared tables,
+an explicit shared-user to staff/resident mapping, and a rollback-only importer.
+It preserves Account ids, both actor ids and bcrypt hashes, retains unclaimed
+invited accounts, creates namespaced identities for code-only actors, refuses
+conflicting ownership and changed shared credentials, and never mutates the
+legacy records. Deployment of this change would create empty tables only; the
+data importer is outside automatic migrations and its CLI has no apply mode.
+
+Full local verify passed 288 files / 4,590 tests, with ten existing lint warnings
+and no errors. Production build passed using the repository's dummy CI build
+configuration; Drizzle consistency and documentation truth audits passed. Seven
+database tests apply the entire committed schema chain in PostgreSQL/PGlite,
+exercise both hash formats through the actual AccountKit runtime, and prove
+transaction rollback, conflict rejection, reset/session revocation and one-time
+reset tokens. The dependency audit still reports zero high/critical advisories
+and the existing moderate development esbuild advisory. Hosted CI, sweep merge
+and deployment are not certified by these local results.
+
+The tests exposed a specific compatibility condition: with mail configured,
+AccountKit requires email verification for an imported unverified account;
+AOZ's old password login does not. The importer preserves the verification
+flag. Prove a usable verification/recovery journey before cutover rather than
+marking the account verified without proof. Shared first-password provisioning
+for invited/code-only accounts, second-identity linking with existing-account
+proof, runtime session/authorization and impersonation adapters, account screens,
+configured-provider journeys and deployed proof all remain open. The approved
+AOZ production test identity and authenticated database/runtime access remain
+unavailable in this execution. No production credentials were imported and the
+served auth lifecycle was not switched.
+
+AOZ #338 was refreshed by merging current master into its branch, without
+rewriting history, at `2f4cbf3589981104478b890fe4572f438a1ec2d9`. Its frozen
+install and three focused search/selection tests passed. The earlier sweep run
+`40826317733` held its old head because the old AccountKit 0.9.1 artifact lacked
+canary rollout evidence. Hosted checks are rerunning against the refreshed
+0.10.0 lockfile. Do not treat the old green checks or this branch refresh as
+merge, deployment or complete search/list adoption evidence.
+
+Resume at AOZ #340's hosted checks and the runtime prerequisites in its migration
+guide, and #338's refreshed checks/sweep outcome. The rest of this checkpoint's
+application and fleet acceptance queue remains open.
