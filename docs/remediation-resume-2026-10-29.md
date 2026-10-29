@@ -245,3 +245,57 @@ blocker is gone. #184 is being rebuilt on current main as a new PR.
 
 Resume at: AccountKit 0.14.0, then Hirnli #151 ready, then Substrata's new
 PR, then the remaining apps in checklist order.
+
+## Auth migrations shipped; agent-file findings closed (2026-10-29, afternoon)
+
+AccountKit released 0.14.0 with `plugins` (#45) and `site.trustedOrigins`
+(#46). `site.trustedOrigins` accepts a list, or a lookup for hosts kept as
+data.
+
+- **Hirnli** ([#151](https://github.com/bitbaum/hirnli/pull/151)) is on
+  AccountKit, with `organization()` mounted. Tenant origins come from
+  `org_domains`. Checks against the live site: a tenant-host sign-in passes the
+  origin check (401 on bad credentials, 403 before the deploy), and a foreign
+  origin is still 403. #148 was closed as superseded.
+- **Substrata** ([#294](https://github.com/bitbaum/substrata/pull/294)) is on
+  AccountKit, keeping OrangeCat actor ids through `legacyIdentityProvider`, and
+  `017-accounts.sql` is applied by the deploy. `/sign-in`, `/sign-up` and
+  `/account` are live. OrangeCat accepts the authorize request, which still
+  returns to the original `/api/auth/callback/orangecat`. The extra URI from
+  orangecat #1471 is unused but harmless.
+- **Vitareba** (#134, #129): both merged on `^0.14.0`. The AccountKit runtime
+  is staged with the switch off, and NextAuth still answers. Health and the
+  auth pages are fine on the live site.
+
+The rollout gate needs `browser-smoke.yml` on each consumer.
+`shared-auth-journey.yml` does not fit an app that has mail off, has
+organisations, or is still on NextAuth, so each of these apps now has its own
+journey: Hirnli `account`, Vitareba `patient-journey`. A consumer pinned to an
+AccountKit version that the canary never deployed waits forever. Move it to
+the canary's version.
+
+Agent files: every finding in `scripts/ci/agent-files.baseline` is fixed on
+main, so the baseline is empty:
+- biaslens #124;
+- evig #625;
+- kivvi #183;
+- loki #1465;
+- orangecat #1472;
+- petvity #138;
+- surf-your-life #118;
+- vitareba #135;
+- substrata #283.
+
+Docs-only PRs whose branch predated a dependency-floor merge were held by the
+rollout gate until main was merged in.
+
+Follow-ups:
+- Loki's profile enrichment still reads `CLAUDE.md`, which is now a pointer
+  everywhere. It should read `AGENTS.md`.
+- Hirnli has no sign-out button.
+- Vitareba: the switch (an approved test identity), and Google-only patients.
+- AOZ: the switch, deferred by the owner.
+
+Resume at: the remaining checklist items in order. These are authentication
+parity, AI Kit/ChatKit, stale draft PRs, truth dependencies, the security
+review, the unattended release proof and the final census.
