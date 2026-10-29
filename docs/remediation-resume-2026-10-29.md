@@ -1,6 +1,7 @@
 # Remediation checkpoint — 2026-10-29
 
-Continuation evidence: [AOZ migration staging](#accountkit-staging-continuation).
+Continuation evidence: [AOZ migration staging](#accountkit-staging-continuation),
+[AOZ shared runtime](#aoz-shared-runtime-continuation).
 
 The full plan remains open. Continue with AOZ as the active application under
 [the completion procedure](repository-completion.md). The acceptance queue is
@@ -186,3 +187,28 @@ merge, deployment or complete search/list adoption evidence.
 Resume at AOZ #340's hosted checks and the runtime prerequisites in its migration
 guide, and #338's refreshed checks/sweep outcome. The rest of this checkpoint's
 application and fleet acceptance queue remains open.
+
+## AOZ shared runtime continuation
+
+AOZ #340 and #338 merged and deployed. AccountKit released two prerequisites,
+each published with provenance: 0.11.0 (#42) adds the shared first-password
+claim with proof-gated linking, and makes a used reset link verify its address.
+0.12.0 (#43) adds a per-person session idle limit.
+
+AOZ [#342](https://github.com/bitbaum/aoz-begleitung/pull/342) merged the
+shared runtime behind `AUTH_RUNTIME=accountkit`, which no deployment sets. It
+covers code login scoped to its side, row-reloaded authorization, claims and
+linking, read-only borrowed views and the existing screens served through a
+bridge. AOZ [#344](https://github.com/bitbaum/aoz-begleitung/pull/344) keeps
+staff sessions at 8 hours, as the owner decided on 2026-10-29. Database tests
+run on the migration chain plus the real import SQL. No deployed or browser
+evidence exists for the runtime, and no account data was imported.
+
+The owner deferred the switch. The open AOZ auth item is the locked import plus
+switching both settings together, which needs an approved test identity. AOZ's
+other open blocks remain: staff SQL searches (SearchKit), URL/filter codecs
+(ListKit), and a review of its local layout primitives.
+
+Resume at AOZ search/lists, then the Vitareba, Hirnli and Substrata auth
+migrations, reusing AccountKit's provisioning and `sessionLifetime`. The
+remaining checklist items are unchanged.
