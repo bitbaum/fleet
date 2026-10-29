@@ -1,0 +1,58 @@
+{
+  "observedAt": "2026-10-29T05:07:42.671870+00:00",
+  "repo": "bitbaum/aoz-begleitung",
+  "commit": "8ab6b9192ff83688fb3fdca25a7a73d114f47c91",
+  "pullRequest": "https://github.com/bitbaum/aoz-begleitung/pull/335",
+  "ciRun": "https://github.com/bitbaum/aoz-begleitung/actions/runs/40820545308",
+  "deploymentRun": "https://github.com/bitbaum/aoz-begleitung/actions/runs/40820630570",
+  "receiptUrl": "https://aoz.orangecat.ch/.well-known/fleet-release.json",
+  "checks": [
+    {
+      "width": 390,
+      "colorScheme": "light",
+      "scroll": 390,
+      "bg": "rgb(255, 255, 255)",
+      "errors": []
+    },
+    {
+      "width": 390,
+      "colorScheme": "dark",
+      "scroll": 390,
+      "bg": "rgb(0, 0, 0)",
+      "errors": []
+    },
+    {
+      "width": 834,
+      "colorScheme": "light",
+      "scroll": 834,
+      "bg": "rgb(255, 255, 255)",
+      "errors": []
+    },
+    {
+      "width": 834,
+      "colorScheme": "dark",
+      "scroll": 834,
+      "bg": "rgb(0, 0, 0)",
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "colorScheme": "light",
+      "scroll": 1440,
+      "bg": "rgb(255, 255, 255)",
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "colorScheme": "dark",
+      "scroll": 1440,
+      "bg": "rgb(0, 0, 0)",
+      "errors": []
+    },
+    {
+      "javascript": false,
+      "navigation": "passed"
+    }
+  ],
+  "scope": "Anonymous public-shell navigation only. No authenticated production date, account or tenant journey is certified."
+}
