@@ -115,8 +115,9 @@ Subsequent Git/CLI requests consistently failed with HTTP 503 and an upstream
 not recover the path. Environment status still reported enforced unrestricted
 HTTP policy and no retained diagnostic captures; that is not proof of network
 health. Connected GitHub tools remained usable and were used to read PR status
-and preserve this checkpoint. Further dependency retrieval, new source capture
-and deployed browser/database journeys require restored execution networking.
+and preserve this checkpoint. Git clone/fetch/push and CLI orchestration remain blocked. Independent read-only
+probes still returned HTTP 200 for npm and AOZ; do not describe all egress or
+public-app access as unavailable. Connected tools and local checks remain usable.
 
 Revamp-It and Evig are the approved tenant contexts named by the user. An
 approved AOZ production test identity and an authenticated runtime/database
