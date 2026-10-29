@@ -1,30 +1,30 @@
 {
-  "generatedAt": "2026-10-28T10:47:05.738Z",
+  "generatedAt": "2026-10-29T11:03:30.407Z",
   "org": "bitbaum",
   "current": {
-    "date": "2026-10-28",
+    "date": "2026-10-29",
     "stars": 3,
     "forks": 1,
     "downloads": {
-      "lastMonth": 22818,
+      "lastMonth": 35122,
       "byPackage": {
-        "@bitbaum/ai-kit": 4567,
-        "@bitbaum/mail-kit": 2631,
-        "bip-kit": 3659,
-        "@bitbaum/chatkit": 3365,
-        "@bitbaum/accountkit": 168,
-        "limitkit": 1712,
-        "@bitbaum/design-tokens": 726,
-        "@bitbaum/whenkit": 154,
-        "@bitbaum/listkit": 159,
-        "@bitbaum/searchkit": 177,
-        "ai-forms": 2896,
-        "@bitbaum/sitekit": 1191,
-        "threadkit": 828,
-        "@bitbaum/geo-kit": 169,
-        "@bitbaum/chartkit": 166,
-        "@bitbaum/speechkit": 220,
-        "@bitbaum/paykit": 30
+        "@bitbaum/ai-kit": 5729,
+        "@bitbaum/mail-kit": 3779,
+        "@bitbaum/accountkit": 1062,
+        "bip-kit": 4819,
+        "@bitbaum/chatkit": 5723,
+        "limitkit": 2832,
+        "@bitbaum/design-tokens": 1354,
+        "@bitbaum/whenkit": 673,
+        "@bitbaum/listkit": 537,
+        "@bitbaum/searchkit": 658,
+        "ai-forms": 4060,
+        "@bitbaum/sitekit": 1574,
+        "threadkit": 1085,
+        "@bitbaum/chartkit": 582,
+        "@bitbaum/geo-kit": 355,
+        "@bitbaum/speechkit": 273,
+        "@bitbaum/paykit": 27
       }
     },
     "clients": {
@@ -291,6 +291,15 @@
       "stars": 3,
       "forks": 1,
       "downloads": 22818,
+      "payingClients": 0,
+      "mrrChf": 0,
+      "originatorSharePaid": 0
+    },
+    {
+      "date": "2026-10-29",
+      "stars": 3,
+      "forks": 1,
+      "downloads": 35122,
       "payingClients": 0,
       "mrrChf": 0,
       "originatorSharePaid": 0
