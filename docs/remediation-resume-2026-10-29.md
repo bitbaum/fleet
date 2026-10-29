@@ -36,24 +36,29 @@ package being installed or a PR being merged does not close the application.
   credentials while writing native scrypt on registration/reset. Full verify
   passed 115 tests and the browser suite; database tests prove stable user ids,
   old/new passwords, long suffixes, token reuse rejection and session revocation.
-  AOZ has not yet adopted this release or completed its data migration.
+  AOZ #336 subsequently merged a dependency-floor update at `80db2f7bdbf71adef237683679dfef4b4470d85b`.
+  That dependency update does not complete the shared-runtime data migration.
 
 ## Active prerequisite and remaining AOZ acceptance
 
 AccountKit #41 merged at `4d62ab8ebed295a9b0af8bda0838fb01bd336418`.
-Its 0.10.0 publication is pending at this checkpoint. Full local verification
+Version 0.10.0 is published: npm identifies this exact source commit and supplies
+SLSA provenance; publish run `40822181927` passed. Full local verification
 passed 116 tests and browser checks; hosted CI passed. The opt-in domain proof
 adapter issues shared revocable sessions, binds product restrictions before
 cookies are exposed, and denies code-only account-security changes and MFA
 bypass. Domain sessions have fixed expiry so their restrictions cannot expire
 before a sliding session does. The runtime can map an existing deployment's
-secret names without changing process.env. Consume only after verified release.
+secret names without changing process.env. Consumer rollout gates still apply.
 
-AOZ's `fix/search-list-bindings` branch is local and still being verified. It
-uses SearchKit for survey-recipient names and ListKit for selection toggles and
-SQL wildcard escaping. Generated typo and component selection tests passed;
-full checks and isolated-database browser journeys are in progress. This is
-partial adoption, not closure of the remaining SQL searches or filter codecs.
+AOZ #338 is open at `ac4e5f57d06adef6236332540396cb6990d2e03a`.
+It uses SearchKit for survey-recipient names and ListKit for selection toggles
+and SQL wildcard escaping. Full local verification passed 289 files / 4,585
+tests and the production build. Four isolated-database browser journeys passed
+at 390/1280px in light/dark, preserving selected recipients while a typo search
+hides them. Exact-head hosted CI and composition checks passed. Merge and
+deployment remain unverified; do not bypass the Fleet sweep. This is partial
+adoption, not closure of remaining SQL searches or filter codecs.
 
 The next auth design must also preserve unclaimed/invited accounts when they
 receive their first email/password, and link a second domain identity only
@@ -89,3 +94,43 @@ AccountKit PR replacements, wider Loki/OrangeCat/DataCat account journeys,
 Bitbaum #119/#123/#103, all remaining apps and package producers, ten current
 instruction findings, full security census and unattended release/recovery
 proof. None was closed by the two changes above.
+
+## Execution access interruption and audit coverage
+
+The source census enumerated 61 active original repositories and captured
+immutable source for 42. Nineteen remained unavailable after a bounded retry;
+they must not count as audited. The local capture is evidence of manifests,
+locks and candidate imports only, not applicability or working integration.
+The active OpenClaw fork is separate from this original-repository census and
+is not cleared by its exclusion. Private source snapshots remain in the execution
+workspace and are not published with this checkpoint.
+
+A fresh instruction-file scan completed after one GitHub 503 retry: 46 public
+code repositories, the same ten findings, no new finding. Every recorded
+baseline line remains. Private repositories and additional editor files still
+need coverage.
+
+Subsequent Git/CLI requests consistently failed with HTTP 503 and an upstream
+`envoy://cloudflare_https_tunnel/` connection failure. Fetch/clone retries did
+not recover the path. Environment status still reported enforced unrestricted
+HTTP policy and no retained diagnostic captures; that is not proof of network
+health. Connected GitHub tools remained usable and were used to read PR status
+and preserve this checkpoint. Git clone/fetch/push and CLI orchestration remain blocked. Independent read-only
+probes still returned HTTP 200 for npm and AOZ; do not describe all egress or
+public-app access as unavailable. Connected tools and local checks remain usable.
+
+Revamp-It and Evig are the approved tenant contexts named by the user. An
+approved AOZ production test identity and an authenticated runtime/database
+connection have been requested; neither is available in this execution context.
+Do not infer working providers or send account mail to guessed identities.
+
+The next AOZ cutover was prepared in a separate local worktree
+(`/workspace/aoz-auth`, branch `fix/accountkit-runtime`, starting at
+`80db2f7bdbf71adef237683679dfef4b4470d85b`). Installing AccountKit 0.10.0
+and its Better Auth/passkey peers then received repeated HTTP 503 responses for
+package metadata and tarballs. The retry loop was stopped; the worktree's
+manifest and lockfile remained unchanged. No auth schema/data migration or
+cutover was published. Restore reliable package/GitHub retrieval, reconcile the
+current default branch and currency PRs, then implement and rehearse the full
+identity-preserving migration before release. The fresh auth worktree is a
+starting point, not completed implementation.
