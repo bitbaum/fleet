@@ -212,3 +212,36 @@ other open blocks remain: staff SQL searches (SearchKit), URL/filter codecs
 Resume at AOZ search/lists, then the Vitareba, Hirnli and Substrata auth
 migrations, reusing AccountKit's provisioning and `sessionLifetime`. The
 remaining checklist items are unchanged.
+
+## Auth migrations across the queue (2026-10-29, later)
+
+AOZ: [#346](https://github.com/bitbaum/aoz-begleitung/pull/346) merged the
+staff searches onto SearchKit (`searchText`, which only narrows rows already
+authorised). ListKit stays a recorded exception in `package-plan.json`: it has
+no viewer-relative defaults or neutral overrides. Only the switch remains
+open, still deferred by the owner.
+
+AccountKit released 0.13.0, which adds `createAuthTables(prefix)` for products
+whose own tables already use the standard names. #45 merged `plugins`, for a
+product's own better-auth plugins such as `organization`.
+[#46](https://github.com/bitbaum/accountkit/pull/46) adds
+`site.trustedOrigins`, as a list or as a lookup for hosts kept as data. 0.14.0
+follows once it merges.
+
+Vitareba: [#134](https://github.com/bitbaum/vitareba/pull/134) stages the
+`auth_*` tables beside NextAuth and adds a rollback-only import rehearsal. It
+also wires the runtime behind `AUTH_RUNTIME=accountkit` (off), with
+`next-auth/react` answered by AccountKit. It is green and waits for the sweep.
+Known gap: Google-only patients (AccountKit has no Google provider).
+
+Hirnli: [#151](https://github.com/bitbaum/hirnli/pull/151) (draft until
+0.14.0) moves sign-in onto AccountKit's runtime with `organization()` mounted.
+Tenant hosts come from `org_domains`. Hashes and session cookies stay valid,
+and additive migration 0018 is part of it. Account mail stays off, because
+every existing account is unverified. It supersedes #148's password rule.
+
+Substrata: Substrata's deploy now applies `scripts/db/*.sql` itself, so #184's
+blocker is gone. #184 is being rebuilt on current main as a new PR.
+
+Resume at: AccountKit 0.14.0, then Hirnli #151 ready, then Substrata's new
+PR, then the remaining apps in checklist order.
