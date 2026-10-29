@@ -7,13 +7,9 @@
 #   no-agents-md / no-rules-block   sync-agent-rules.mjs opens the pull request
 #   claude-md-not-a-pointer         fold what is still true into AGENTS.md, leave the pointer
 #   home-claude-import-in-*         a rule that lives only on one person's machine is not the repo's
-biaslens/claude-md-not-a-pointer
 evig/claude-md-not-a-pointer
 evig/home-claude-import-in-dot-claude
 kivvi/claude-md-not-a-pointer
-loki/claude-md-not-a-pointer
-orangecat/claude-md-not-a-pointer
 petvity/claude-md-not-a-pointer
 substrata/no-rules-block
 surf-your-life/claude-md-not-a-pointer
-vitareba/claude-md-not-a-pointer
