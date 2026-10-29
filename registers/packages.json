@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T05:18:42.851Z",
+  "generatedAt": "2026-10-29T07:21:18.854Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -81,10 +81,10 @@
       "name": "@bitbaum/accountkit",
       "repo": "https://github.com/bitbaum/accountkit",
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.10.0"
+        "command": "pnpm add @bitbaum/accountkit@^0.11.0"
       },
       "adopters": 17,
       "adopterNames": [
@@ -108,7 +108,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.10.0"
+        "version": "0.11.0"
       }
     },
     {
@@ -286,8 +286,9 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/listkit@^0.2.2"
       },
-      "adopters": 8,
+      "adopters": 9,
       "adopterNames": [
+        "aoz-begleitung",
         "bitbaum",
         "causius",
         "diplodoctor",
@@ -312,8 +313,9 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/searchkit@^0.2.3"
       },
-      "adopters": 8,
+      "adopters": 9,
       "adopterNames": [
+        "aoz-begleitung",
         "causius",
         "diplodoctor",
         "evig",
