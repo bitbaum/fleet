@@ -205,6 +205,9 @@ jobs:
       - name: The package template is complete, and the sync only adds what is missing
         run: node scripts/packages/test-sync-package-template.mjs
 
+      - name: Package release staging contract
+        run: node --test scripts/packages/release-staging.test.mjs
+
       # The wake script holds a dispatch button for every repo in the org; its one
       # decision is pure and pinned both ways, with a cap.
       - name: The sweep wake wakes what has work and leaves the rest
