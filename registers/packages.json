@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T09:23:28.161Z",
+  "generatedAt": "2026-10-29T18:38:30.273Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -40,6 +40,43 @@
       }
     },
     {
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
+      "version": "0.14.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.14.0"
+      },
+      "adopters": 19,
+      "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "botsmann",
+        "causius",
+        "datacat",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "hirnli",
+        "kivvi",
+        "loki",
+        "orangecat",
+        "petvity",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.14.0"
+      }
+    },
+    {
       "slug": "mail-kit",
       "name": "@bitbaum/mail-kit",
       "repo": "https://github.com/bitbaum/mail-kit",
@@ -74,41 +111,6 @@
       "release": {
         "source": "npm",
         "version": "0.2.0"
-      }
-    },
-    {
-      "slug": "accountkit",
-      "name": "@bitbaum/accountkit",
-      "repo": "https://github.com/bitbaum/accountkit",
-      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.14.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.14.0"
-      },
-      "adopters": 17,
-      "adopterNames": [
-        "aoz-begleitung",
-        "biaslens",
-        "botsmann",
-        "causius",
-        "datacat",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "kivvi",
-        "loki",
-        "orangecat",
-        "petvity",
-        "skif",
-        "solon",
-        "substrata",
-        "surf-your-life"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.14.0"
       }
     },
     {
@@ -365,18 +367,43 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/sitekit@^0.4.2"
       },
-      "adopters": 6,
+      "adopters": 7,
       "adopterNames": [
         "aoz-begleitung",
         "biaslens",
         "camille-boulangerie",
         "fleet",
+        "loki",
         "skif",
         "substrata"
       ],
       "release": {
         "source": "npm",
         "version": "0.4.2"
+      }
+    },
+    {
+      "slug": "chartkit",
+      "name": "@bitbaum/chartkit",
+      "repo": "https://github.com/bitbaum/chartkit",
+      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
+      "version": "0.7.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
+      },
+      "adopters": 6,
+      "adopterNames": [
+        "aoz-begleitung",
+        "evig",
+        "hirnli",
+        "kivvi",
+        "substrata",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.7.0"
       }
     },
     {
@@ -401,27 +428,6 @@
       "release": {
         "source": "npm",
         "version": "0.1.1"
-      }
-    },
-    {
-      "slug": "chartkit",
-      "name": "@bitbaum/chartkit",
-      "repo": "https://github.com/bitbaum/chartkit",
-      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.6.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.6.0"
-      },
-      "adopters": 3,
-      "adopterNames": [
-        "aoz-begleitung",
-        "kivvi",
-        "substrata"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.6.0"
       }
     },
     {
