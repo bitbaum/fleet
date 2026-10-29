@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T23:46:56.753Z",
+  "generatedAt": "2026-10-29T05:01:45.895Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -81,10 +81,10 @@
       "name": "@bitbaum/accountkit",
       "repo": "https://github.com/bitbaum/accountkit",
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.9.1",
+      "version": "0.9.2",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.9.1"
+        "command": "pnpm add @bitbaum/accountkit@^0.9.2"
       },
       "adopters": 17,
       "adopterNames": [
@@ -108,7 +108,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.9.1"
+        "version": "0.9.2"
       }
     },
     {
@@ -225,9 +225,10 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/design-tokens@^1.2.0"
       },
-      "adopters": 13,
+      "adopters": 14,
       "adopterNames": [
         "accountkit",
+        "aoz-begleitung",
         "biaslens",
         "bitbaum",
         "causius",
@@ -256,8 +257,9 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/whenkit@^0.3.3"
       },
-      "adopters": 10,
+      "adopters": 11,
       "adopterNames": [
+        "aoz-begleitung",
         "datacat",
         "diplodoctor",
         "evig",
@@ -361,8 +363,9 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/sitekit@^0.4.2"
       },
-      "adopters": 5,
+      "adopters": 6,
       "adopterNames": [
+        "aoz-begleitung",
         "biaslens",
         "camille-boulangerie",
         "fleet",
@@ -384,8 +387,9 @@
         "source": "npm",
         "command": "pnpm add threadkit@^0.1.1"
       },
-      "adopters": 5,
+      "adopters": 6,
       "adopterNames": [
+        "aoz-begleitung",
         "heidi",
         "orangecat",
         "skif",
