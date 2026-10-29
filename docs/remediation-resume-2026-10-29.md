@@ -40,14 +40,25 @@ package being installed or a PR being merged does not close the application.
 
 ## Active prerequisite and remaining AOZ acceptance
 
-AccountKit's local `fix/domain-credential-runtime` branch is under development.
-It is not published and must not be counted as adoption. It adapts product-owned
-code proof to shared revocable sessions, binds product identity restrictions
-before exposing a session, and refuses code-only account-security changes and
-MFA bypass. Finish its database regressions, full verification and checked
-release before consuming it. Preserve the narrower identity of a code login:
-a staff code must not silently become access to a linked resident identity,
-nor may it enroll credentials for the whole account.
+AccountKit #41 merged at `4d62ab8ebed295a9b0af8bda0838fb01bd336418`.
+Its 0.10.0 publication is pending at this checkpoint. Full local verification
+passed 116 tests and browser checks; hosted CI passed. The opt-in domain proof
+adapter issues shared revocable sessions, binds product restrictions before
+cookies are exposed, and denies code-only account-security changes and MFA
+bypass. Domain sessions have fixed expiry so their restrictions cannot expire
+before a sliding session does. The runtime can map an existing deployment's
+secret names without changing process.env. Consume only after verified release.
+
+AOZ's `fix/search-list-bindings` branch is local and still being verified. It
+uses SearchKit for survey-recipient names and ListKit for selection toggles and
+SQL wildcard escaping. Generated typo and component selection tests passed;
+full checks and isolated-database browser journeys are in progress. This is
+partial adoption, not closure of the remaining SQL searches or filter codecs.
+
+The next auth design must also preserve unclaimed/invited accounts when they
+receive their first email/password, and link a second domain identity only
+after proof of the existing account. Do not introduce an app-owned credential
+lifecycle merely to bridge a missing shared provisioning operation.
 
 AOZ still needs the full AccountKit migration: additive schema and identity
 mapping; preserved bcrypt hashes and dual identities; registration and
