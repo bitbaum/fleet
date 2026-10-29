@@ -123,3 +123,14 @@ Revamp-It and Evig are the approved tenant contexts named by the user. An
 approved AOZ production test identity and an authenticated runtime/database
 connection have been requested; neither is available in this execution context.
 Do not infer working providers or send account mail to guessed identities.
+
+The next AOZ cutover was prepared in a separate local worktree
+(`/workspace/aoz-auth`, branch `fix/accountkit-runtime`, starting at
+`80db2f7bdbf71adef237683679dfef4b4470d85b`). Installing AccountKit 0.10.0
+and its Better Auth/passkey peers then received repeated HTTP 503 responses for
+package metadata and tarballs. The retry loop was stopped; the worktree's
+manifest and lockfile remained unchanged. No auth schema/data migration or
+cutover was published. Restore reliable package/GitHub retrieval, reconcile the
+current default branch and currency PRs, then implement and rehearse the full
+identity-preserving migration before release. The fresh auth worktree is a
+starting point, not completed implementation.
