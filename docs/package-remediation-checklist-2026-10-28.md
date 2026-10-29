@@ -7,6 +7,10 @@ older open/closed summaries must not be read as the current state. A task closes
 only with the evidence stated here. Package versions and consumer membership
 remain derived from Fleet's package and rollout registers.
 
+Latest evidence: [29 October checkpoint](remediation-resume-2026-10-29.md).
+It supersedes older pending/local status for the specific work it records;
+all wider acceptance criteria below remain open until separately evidenced.
+
 ## Completion contract and execution order
 
 The destination is maintained shared capabilities, not a dependency count.
