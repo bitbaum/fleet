@@ -1,6 +1,44 @@
 {
-  "generatedAt": "2026-10-30T22:30:21.969Z",
+  "generatedAt": "2026-10-30T22:35:56.998Z",
   "packages": [
+    {
+      "slug": "accountkit",
+      "name": "@bitbaum/accountkit",
+      "repo": "https://github.com/bitbaum/accountkit",
+      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
+      "version": "0.14.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.14.0"
+      },
+      "adopters": 20,
+      "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "botsmann",
+        "causius",
+        "datacat",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "hirnli",
+        "kivvi",
+        "loki",
+        "orangecat",
+        "petvity",
+        "signin",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.14.0"
+      }
+    },
     {
       "slug": "ai-kit",
       "name": "@bitbaum/ai-kit",
@@ -37,43 +75,6 @@
       "release": {
         "source": "npm",
         "version": "1.21.5"
-      }
-    },
-    {
-      "slug": "accountkit",
-      "name": "@bitbaum/accountkit",
-      "repo": "https://github.com/bitbaum/accountkit",
-      "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.14.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.14.0"
-      },
-      "adopters": 19,
-      "adopterNames": [
-        "aoz-begleitung",
-        "biaslens",
-        "botsmann",
-        "causius",
-        "datacat",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "hirnli",
-        "kivvi",
-        "loki",
-        "orangecat",
-        "petvity",
-        "skif",
-        "solon",
-        "substrata",
-        "surf-your-life",
-        "vitareba"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.14.0"
       }
     },
     {
@@ -193,7 +194,7 @@
         "source": "npm",
         "command": "pnpm add limitkit@^0.2.1"
       },
-      "adopters": 16,
+      "adopters": 17,
       "adopterNames": [
         "accountkit",
         "aoz-begleitung",
@@ -208,6 +209,7 @@
         "loki",
         "orangecat",
         "petvity",
+        "signin",
         "skif",
         "surf-your-life",
         "truthseeker"
@@ -227,7 +229,7 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/design-tokens@^1.2.0"
       },
-      "adopters": 14,
+      "adopters": 15,
       "adopterNames": [
         "accountkit",
         "aoz-begleitung",
@@ -239,6 +241,7 @@
         "diplodoctor",
         "fleet",
         "loki",
+        "signin",
         "skif",
         "solon",
         "substrata",
