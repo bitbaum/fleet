@@ -9,14 +9,17 @@
  * FLEET_PAT, the same token package-repos.yml already uses, so declaring a
  * repo IS creating it.
  *
- * A repo is created empty: no README and no commit, so the project's first
- * push is its whole history. It never touches a repo that exists. Usage:
+ * A repo is created with one commit on main: the files in templates/app-repo,
+ * which is the fleet auto-merge caller. The sweep runs from the default
+ * branch, so a repo without it never merges a PR (bitbaum/signin #1 sat green
+ * for 50 minutes, 2026-10-30). Everything else arrives by pull request; the
+ * first one adds ci.yml. It never touches a repo that exists. Usage:
  *   node scripts/repos/create-app-repos.mjs [--dry-run]
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { repoExists, toCreate } from '../packages/create-package-repos.mjs';
@@ -24,6 +27,7 @@ import { repoExists, toCreate } from '../packages/create-package-repos.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ORG = 'bitbaum';
 const VISIBILITIES = ['public', 'private'];
+const SEED = join(ROOT, 'templates', 'app-repo');
 
 /** Declarations, validated: a typo must fail here, not half-create a repo. */
 export function parseDeclarations(text, packageNames = []) {
@@ -46,9 +50,26 @@ export function parseDeclarations(text, packageNames = []) {
   return repos;
 }
 
-/** The `gh repo create` arguments for one declaration: empty, nothing seeded. */
+/** The `gh repo create` arguments for one declaration. The seed is a separate step. */
 export function createArgs(decl) {
   return ['repo', 'create', `${ORG}/${decl.name}`, `--${decl.visibility}`, '--description', decl.description];
+}
+
+/** Every file under the seed folder, as repo-relative paths. */
+export function seedFiles(dir = SEED) {
+  return readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter(e => e.isFile())
+    .map(e => relative(dir, join(e.parentPath ?? e.path, e.name)))
+    .sort();
+}
+
+/** The contents-API call that commits one seed file to the new repo's main. */
+export function seedArgs(name, path, content) {
+  return [
+    'api', '--method', 'PUT', `repos/${ORG}/${name}/contents/${path}`,
+    '-f', `message=Seed ${path} from bitbaum/fleet templates/app-repo`,
+    '-f', `content=${Buffer.from(content).toString('base64')}`,
+  ];
 }
 
 const run = (cmd, args, opts = {}) =>
@@ -56,6 +77,9 @@ const run = (cmd, args, opts = {}) =>
 
 function create(decl) {
   run('gh', createArgs(decl), { stdio: 'inherit' });
+  for (const path of seedFiles()) {
+    run('gh', seedArgs(decl.name, path, readFileSync(join(SEED, path), 'utf8')), { stdio: ['ignore', 'ignore', 'inherit'] });
+  }
   // Merge settings the auto-merge sweep relies on. Best effort: a token that
   // may create a repo but not edit its settings must not undo the creation.
   try {
@@ -75,7 +99,7 @@ function main() {
     return;
   }
   for (const decl of missing) {
-    console.log(`→ ${ORG}/${decl.name} (${decl.visibility}, empty)`);
+    console.log(`→ ${ORG}/${decl.name} (${decl.visibility}, seeded with ${seedFiles().join(', ')})`);
     if (dryRun) {
       console.log('  dry run: not created.');
       continue;
