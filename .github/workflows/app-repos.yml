@@ -2,7 +2,8 @@
 #
 # registers/app-repos.json lists the app and service repos that must exist.
 # On a change to it (or to the script), and daily as a retry, this creates
-# every declared repo that is missing, EMPTY, with the declared visibility.
+# every declared repo that is missing, with the declared visibility, its main
+# seeded with templates/app-repo (the auto-merge caller).
 # Existing repos are never written to.
 #
 # Why CI and not an agent: an agent session's GitHub integration may not
@@ -17,6 +18,7 @@ on:
     paths:
       - registers/app-repos.json
       - scripts/repos/**
+      - templates/app-repo/**
       # imported by scripts/repos/create-app-repos.mjs (repoExists, toCreate)
       - scripts/packages/create-package-repos.mjs
   schedule:
