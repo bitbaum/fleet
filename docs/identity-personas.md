@@ -29,7 +29,8 @@ service's `lib/subject.ts` (not yet published; the `bitbaum/signin`
 repository is pending):
 
 - root: HMAC-SHA256(secret, `<sector>.<userId>`), where `sector` is the host
-  of the app's redirect URI. This is the value issued today and a test pins it.
+  of the app's first redirect URI. This is the value the plugin issues today,
+  and a test pins it.
 - a life: HMAC-SHA256(secret, `<sector>.<userId>|persona|<lifeId>`).
 - "root" means no persona, or a persona equal to `userId`. A life id is
   `life_<uuid>` from a lives table; any other non-root persona is refused, so
