@@ -1,0 +1,10 @@
+{
+  "$comment": "App and service repos that must exist. Declaring one here IS creating it: on merge, .github/workflows/app-repos.yml runs scripts/repos/create-app-repos.mjs, which creates every missing bitbaum/<name> EMPTY (no README, no commit) with the given visibility and description, then enables squash merge, auto-merge and head-branch cleanup. The project's own code arrives by its first push. Existing repos are never touched. Package repos are declared in package-repos.json instead.",
+  "repos": [
+    {
+      "name": "signin",
+      "visibility": "public",
+      "description": "The shared bitbaum sign-in: one OIDC service for Google, GitHub, X, Meta and Apple, issuing a per-app subject"
+    }
+  ]
+}

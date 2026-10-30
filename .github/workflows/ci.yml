@@ -191,6 +191,11 @@ jobs:
       - name: Declared package repos are created safely, or not at all
         run: node scripts/packages/test-create-package-repos.mjs
 
+      # The same for app and service repos: created empty, with exactly the
+      # visibility the declaration states, or not at all.
+      - name: Declared app repos are created safely, or not at all
+        run: node scripts/repos/test-create-app-repos.mjs
+
       - name: Package repository settings stay enabled and fail closed
         run: node scripts/packages/test-reconcile-package-repo-settings.mjs
 
