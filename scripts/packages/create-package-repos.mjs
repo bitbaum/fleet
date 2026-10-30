@@ -91,7 +91,10 @@ const run = (cmd, args, opts = {}) =>
 
 export function repoExists(name, execute = run) {
   try {
-    execute('gh', ['api', `repos/${ORG}/${name}`, '--silent']);
+    // stderr is captured, not inherited: the 404 that means "missing" is only
+    // on stderr, and an inherited stream leaves error.stderr empty, so every
+    // missing repo read as "could not determine" (bitbaum/signin, 2026-10-30).
+    execute('gh', ['api', `repos/${ORG}/${name}`, '--silent'], { stdio: ['ignore', 'pipe', 'pipe'] });
     return true;
   } catch (error) {
     const detail = `${error.stderr ?? ''}\n${error.message ?? ''}`;
