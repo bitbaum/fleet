@@ -5,8 +5,10 @@
 #
 # Seeded on main when fleet registers/app-repos.json created this repo: the
 # sweep runs from the default branch, so without it here no PR ever merges.
-# The repo's first PR adds ci.yml (workflow `name: CI`); add the deploy
-# settings from templates/ci/auto-merge.yml once the repo deploys.
+# The repo's first PR adds ci.yml (workflow `name: CI`), and browser-smoke.yml
+# too if it depends on a shared package: the rollout gate holds such PRs until
+# both pass (fleet docs/package-rollouts.md). Add the deploy settings from
+# templates/ci/auto-merge.yml once the repo deploys.
 name: Auto-merge
 
 on:
