@@ -38,6 +38,9 @@ console.log('repository existence checks');
 eq(repoExists('searchkit', () => ''), true, 'a successful GitHub read means the repo exists');
 eq(repoExists('searchkit', () => { throw Object.assign(new Error('gh: Not Found (HTTP 404)'), { stderr: 'gh: Not Found (HTTP 404)' }); }), false, 'an explicit 404 means the repo is missing');
 throws(() => repoExists('searchkit', () => { throw Object.assign(new Error('API rate limit exceeded (HTTP 403)'), { stderr: 'API rate limit exceeded (HTTP 403)' }); }), /could not determine whether bitbaum\/searchkit exists/, 'a rate limit fails closed instead of treating the repo as missing');
+let probeStdio;
+repoExists('searchkit', (_cmd, _args, opts) => { probeStdio = opts?.stdio; return ''; });
+eq(probeStdio?.[2], 'pipe', 'the existence probe captures stderr, where gh prints the 404');
 
 console.log('standalone package.json');
 const source = {
