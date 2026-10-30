@@ -48,8 +48,10 @@ users table"), reversed by the owner on 2026-10-11.
     `SIGNIN_CLIENT_SECRET`): one service that holds the Google, GitHub, X,
     Meta and Apple credentials ONCE and speaks OIDC to every app, issuing a
     per-app (pairwise) subject and creating no OrangeCat account. Social
-    providers are never configured per app. The service is its own project;
-    until it runs, the button is simply absent.
+    providers are never configured per app. The service is its own repo,
+    `bitbaum/signin` (declared in `registers/app-repos.json`); its code is in
+    an open pull request (bitbaum/signin#1) and it is not deployed yet, so the
+    button is absent everywhere. Its planned host is `signin.orangecat.ch`.
   - **OrangeCat** (`ORANGECAT_OAUTH_CLIENT_ID`, `_SECRET`, optional
     `_ISSUER`): one click for people who already have OrangeCat — one option
     among them, never a requirement.
