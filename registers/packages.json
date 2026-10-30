@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T21:08:25.822Z",
+  "generatedAt": "2026-10-30T22:30:21.969Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -436,10 +436,10 @@
       "name": "@bitbaum/geo-kit",
       "repo": "https://github.com/bitbaum/geo-kit",
       "description": "Versioned, on-demand geography resources and sourced boundary assertions for web applications, and a Canvas 2D renderer for them (globe or map).",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/geo-kit@^0.2.0"
+        "command": "pnpm add @bitbaum/geo-kit@^0.3.0"
       },
       "adopters": 3,
       "adopterNames": [
@@ -449,7 +449,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.2.0"
+        "version": "0.3.0"
       }
     },
     {
