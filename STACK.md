@@ -67,6 +67,9 @@ users table"), reversed by the owner on 2026-10-11.
   client by adding a spec to orangecat's `scripts/oauth/register-client.ts`,
   identity scopes only, then run it on the box.
 
+Personas (Morulia) are a layer on the shared sign-in, not a further login
+provider: see `docs/identity-personas.md`.
+
 Causius runs on the package (2026-10-15). Loki, Solon, Heidi, Substrata and
 evig still federate to OrangeCat through next-auth; each moves onto
 `@bitbaum/accountkit/auth` deliberately, one at a time.
