@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T18:38:30.273Z",
+  "generatedAt": "2026-10-30T10:32:21.618Z",
   "packages": [
     {
       "slug": "ai-kit",
@@ -153,10 +153,10 @@
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
       "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.21.2",
+      "version": "0.21.3",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.21.2"
+        "command": "pnpm add @bitbaum/chatkit@^0.21.3"
       },
       "adopters": 17,
       "adopterNames": [
@@ -180,7 +180,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.21.2"
+        "version": "0.21.3"
       }
     },
     {
@@ -358,6 +358,31 @@
       }
     },
     {
+      "slug": "chartkit",
+      "name": "@bitbaum/chartkit",
+      "repo": "https://github.com/bitbaum/chartkit",
+      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
+      "version": "0.7.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
+      },
+      "adopters": 7,
+      "adopterNames": [
+        "aoz-begleitung",
+        "evig",
+        "hirnli",
+        "kivvi",
+        "petvity",
+        "substrata",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.7.0"
+      }
+    },
+    {
       "slug": "sitekit",
       "name": "@bitbaum/sitekit",
       "repo": "https://github.com/bitbaum/sitekit",
@@ -380,30 +405,6 @@
       "release": {
         "source": "npm",
         "version": "0.4.2"
-      }
-    },
-    {
-      "slug": "chartkit",
-      "name": "@bitbaum/chartkit",
-      "repo": "https://github.com/bitbaum/chartkit",
-      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.7.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
-      },
-      "adopters": 6,
-      "adopterNames": [
-        "aoz-begleitung",
-        "evig",
-        "hirnli",
-        "kivvi",
-        "substrata",
-        "vitareba"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.7.0"
       }
     },
     {
