@@ -5,11 +5,12 @@
  * The script creates repositories without a human looking, so the assertions
  * are about refusing: a malformed name, an unstated visibility, a missing
  * description, a name that is already a package repo. And a repo is created
- * empty, with exactly the visibility it declares.
+ * with exactly the visibility it declares, seeded with the auto-merge caller
+ * the sweep needs on main.
  */
 
 import { readFileSync } from 'node:fs';
-import { createArgs, parseDeclarations } from './create-app-repos.mjs';
+import { createArgs, parseDeclarations, seedArgs, seedFiles } from './create-app-repos.mjs';
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log(`  ✓ ${m}`); pass++; };
@@ -34,8 +35,17 @@ const registered = parseDeclarations(readFileSync(new URL('../../registers/app-r
 ok(`the real register parses (${registered.length} repo(s))`);
 
 console.log('creation');
-eq(createArgs(decl), ['repo', 'create', 'bitbaum/signin', '--public', '--description', 'd'], 'a public repo is created empty: no --source, no --add-readme');
+eq(createArgs(decl), ['repo', 'create', 'bitbaum/signin', '--public', '--description', 'd'], 'a public repo is created with no --source and no --add-readme');
 eq(createArgs({ ...decl, visibility: 'private' })[3], '--private', 'a private declaration creates a private repo');
+
+console.log('seed');
+eq(seedFiles(), ['.github/workflows/auto-merge.yml'], 'main is seeded with the auto-merge caller, and only that');
+const caller = readFileSync(new URL('../../templates/app-repo/.github/workflows/auto-merge.yml', import.meta.url), 'utf8');
+/uses: bitbaum\/fleet\/\.github\/workflows\/auto-merge-sweep\.yml@main/.test(caller) ? ok('the seeded caller calls the fleet sweep') : no('the seeded caller calls the fleet sweep');
+!/deploy_workflow/.test(caller) ? ok('the seed names no deploy workflow a new repo does not have') : no('the seed names no deploy workflow a new repo does not have');
+const put = seedArgs('signin', '.github/workflows/auto-merge.yml', 'x');
+eq(put.slice(0, 4), ['api', '--method', 'PUT', 'repos/bitbaum/signin/contents/.github/workflows/auto-merge.yml'], 'a seed file is committed through the contents API');
+eq(put.at(-1), 'content=' + Buffer.from('x').toString('base64'), 'its content is sent base64-encoded');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
