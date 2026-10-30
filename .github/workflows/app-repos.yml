@@ -17,6 +17,8 @@ on:
     paths:
       - registers/app-repos.json
       - scripts/repos/**
+      # imported by scripts/repos/create-app-repos.mjs (repoExists, toCreate)
+      - scripts/packages/create-package-repos.mjs
   schedule:
     - cron: "29 5 * * *"
   workflow_dispatch: {}
