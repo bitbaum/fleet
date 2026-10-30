@@ -309,6 +309,25 @@ signed-in user, a model, or a public changelog.
 
 A page that types the portfolio is a copy. Generate it, or do not ship it.
 
+**Extract before the second copy.** When a second product needs what another
+product built in-house (Solon's map of places and Substrata's globe are the
+case that set this rule, on 2026-10-30: two renderers of one geography), the
+work is to make it a package, or to extend the package closest to it, and
+adopt it in both. Building the second copy and extracting "later" is how the
+fleet got thirteen chats.
+
+## A gap is a task, not an answer
+
+The owner should never have to read "not supported", "not available" or
+"missing" as the end of a piece of work. Each one is a task with a way
+through: another format or publisher, an official tool whose answers can be
+measured (the federal tax calculator taught Solon rounding no export states),
+a model extended to a case it could not express, a package extended. Do it in
+the same piece of work where it fits, and otherwise record the plan where the
+product's roadmap lives and say which step comes next. This does not lift
+"Nothing made up": a gap is closed with sourced data or left visibly open,
+never filled with a guess.
+
 ## Search
 
 A search box uses `@bitbaum/searchkit` (SHARED.md) by default, per the rule
