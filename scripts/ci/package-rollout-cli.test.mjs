@@ -35,6 +35,7 @@ const manifest = v => JSON.stringify({name:'fixture-app',dependencies:{'@bitbaum
 let result;
 if (verb !== 'api') throw Error('unexpected CLI invocation');
 if (path === 'repos/bitbaum/example/pulls/1') result={base:{sha:'a'.repeat(40)},head:{sha:'b'.repeat(40)}};
+else if (path.startsWith('repos/bitbaum/example/compare/'+'a'.repeat(40)+'...'+'b'.repeat(40))) result={merge_base_commit:{sha:'a'.repeat(40)}};
 else if (path.includes('/pulls/1/files?')) result=[{filename:(project==='.'?'':project+'/')+'package.json'},{filename:(project==='.'?'':project+'/')+'pnpm-lock.yaml'}];
 else if (path === 'repos/bitbaum/biaslens') result={default_branch:'main'};
 else if (path === 'repos/bitbaum/biaslens/commits/main') result={sha:tip};
@@ -133,6 +134,7 @@ const encode = value => ({content:Buffer.from(value).toString('base64')});
 let result;
 if(verb!=='api') throw Error('unexpected CLI invocation');
 if(path==='repos/bitbaum/loki/pulls/1') result={base:{sha:base},head:{sha:head}};
+else if(path.startsWith('repos/bitbaum/loki/compare/'+base+'...'+head)) result={merge_base_commit:{sha:base}};
 else if(path.includes('/pulls/1/files?')) result=[{filename:'scripts/site-template/package.json'},{filename:'scripts/site-template/pnpm-lock.yaml'}];
 else if(path==='repos/bitbaum/kivvi') result={default_branch:'main'};
 else if(path==='repos/bitbaum/kivvi/commits/main') result={sha:tip};
@@ -178,6 +180,50 @@ console.log(JSON.stringify(result));
     assert.equal(run.status, 1, run.stdout + run.stderr);
     assert.match(run.stdout, /@bitbaum\/ai-kit@1\.21\.4: wait for bitbaum\/kivvi/);
     assert.doesNotMatch(run.stdout + run.stderr, /no importer-specific lock evidence/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// bitbaum/diplodoctor#59 (2026-10-31): a branch forked before the base moved
+// @bitbaum/chatkit 0.21.2 -> 0.21.3 never touched a manifest, yet measuring it
+// from `pr.base.sha` read as a downgrade to 0.21.2, which no canary would ever
+// run again. The sweep holds before it refreshes a behind branch, so the PR
+// could never clear. The PR's change is measured from its merge base.
+test("a stale branch that does not touch the lockfile is not read as a downgrade", () => {
+  const dir = mkdtempSync(join(tmpdir(), "rollout-stale-cli-"));
+  const fork = "e".repeat(40);
+  try {
+    writeFileSync(
+      join(dir, "gh"),
+      `#!${process.execPath}
+const [verb, path] = process.argv.slice(2);
+const base='a'.repeat(40), head='b'.repeat(40), fork=${JSON.stringify(fork)};
+const lock = v => "lockfileVersion: '9.0'\\nimporters:\\n  .:\\n    dependencies:\\n      '@bitbaum/chatkit':\\n        specifier: ^"+v+"\\n        version: "+v+"\\n";
+const manifest = v => JSON.stringify({name:'fixture-app',dependencies:{'@bitbaum/chatkit':'^'+v}});
+let result;
+if (verb !== 'api') throw Error('unexpected CLI invocation');
+if (path === 'repos/bitbaum/example/pulls/1') result={base:{sha:base},head:{sha:head}};
+else if (path.startsWith('repos/bitbaum/example/compare/'+base+'...'+head)) result={merge_base_commit:{sha:fork}};
+else if (path.includes('/pulls/1/files?')) result=[{filename:'lib/auth/recovery.test.ts'}];
+else if (path.includes('/contents/')) {
+ const [file,ref]=/^repos\\/bitbaum\\/example\\/contents\\/(.+)\\?ref=(.+)$/.exec(path).slice(1);
+ const v = ref===base ? '0.21.3' : '0.21.2';
+ const content = file==='package.json'?manifest(v):file==='pnpm-lock.yaml'?lock(v):null;
+ if (content!==null) result={content:Buffer.from(content).toString('base64')};
+}
+if(result===undefined){console.error('404');process.exit(1)}
+console.log(JSON.stringify(result));
+`,
+      { mode: 0o755 },
+    );
+    const run = spawnSync(
+      process.execPath,
+      [new URL("./package-rollout-gate.mjs", import.meta.url).pathname, "bitbaum/example", "1"],
+      { encoding: "utf8", env: { ...process.env, PATH: dir + ":" + process.env.PATH } },
+    );
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.doesNotMatch(run.stdout, /chatkit@0\.21\.2/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
