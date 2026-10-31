@@ -322,21 +322,23 @@ review, the unattended release proof and the final census.
   appears once `RESEND_API_KEY` reaches each app on the box (owner step 2).
 - **Security review.** The census, the PRs that landed, and what is still open
   or excepted are recorded under the checklist item (fleet #390). OrangeCat
-  #1491 has since merged. Still open there: orangecat-2 #5 and the
-  derhochhinhouse refresh #3 (owner decision), and the Loki AppImage
+  #1491 has since merged. Still open there: the derhochhinhouse refresh #3
+  (waits on #5, its CI, which needs the owner's first merge), and the Loki AppImage
   `--no-sandbox` flag (a follow-up, tested on a packaged build).
 - **Owner checklist.** All owner-only steps (links, commands and checks) are on
   the private page https://claude.ai/artifact/LxATXnTgyCwRGxp4nf4oyX:
   1. sign-in go-live;
   2. recovery mail;
-  3. orangecat-2;
-  4. the refresh repo;
-  5. the Kivvi key seal;
-  6. the Surf `session_preps` grant (`pnpm db:migrate` already ran on deploy);
-  7. the Kivvi terms sentence;
-  8. Loki's Google and X consoles;
-  9. the Substrata outage logs;
-  10. the Morulia questions.
+  3. the refresh repo;
+  4. the Kivvi key seal;
+  5. the Surf `session_preps` grant (`pnpm db:migrate` already ran on deploy);
+  6. the Kivvi terms sentence;
+  7. Loki's Google and X consoles;
+  8. the Substrata outage logs;
+  9. the Morulia questions.
+- **orangecat-2 is out of scope** at the owner's instruction. It is a Loki
+  starter, not OrangeCat; the security PR there (#5) was closed unmerged. Do not
+  open work in it.
 - **Assistant follow-ups waiting on the owner:**
   - the apps.conf `prospect` → `live` PR for `signin`, after go-live steps 1–5;
   - unpausing Loki's Google and X once the consoles are fixed;
@@ -351,3 +353,50 @@ Resume at, in checklist order:
 3. truth dependencies and package pages;
 4. the unattended release proof;
 5. the final census.
+
+## Owner steps done by the assistant (2026-10-31, evening)
+
+The owner asked that every step not needing their own accounts be done
+without them.
+
+- **Sign-in service is live** at https://signin.orangecat.ch (port 4040, row
+  `live`). Health reports db up and 7 registered clients, and discovery names
+  the issuer. No providers are configured yet, and no consuming app has
+  `SIGNIN_ISSUER` / `SIGNIN_CLIENT_ID`; both wait on the owner's provider
+  credentials. Loki PRs:
+  - #1487: `provision-db.yml`, an app's database without a laptop;
+  - #1489: a failing wake socket says why;
+  - #1490: the live row;
+  - #1491: stop a leftover wake proxy before a site's first switch to sleeping;
+  - #1492: BiasLens 4038 and keller 4039 entered from the box, signin moved to
+    4040.
+
+  #1493 adds a daily register-drift check. Main had not known BiasLens's port,
+  because #1404 never merged, so signin was first given 4038 and its address
+  served BiasLens.
+- **Recovery mail is on** for Diplodoctor, Solon and Heidi. Loki #1488: an
+  empty line in an app's `.env` no longer erases a fleet key, and
+  `FLEET_KEYS_OFF` turns one off on purpose. Solon and Heidi needed a redeploy,
+  because a sync does not restart always-on apps. No real reset has been sent
+  yet.
+- **Kivvi:**
+  - #199 removes the dead Terms sentence;
+  - #200 seals plaintext company AI keys at server start;
+  - #201 fixes a real sign-out race: a prefetch re-issued the session cookie
+    after sign-out.
+
+  The box's seal counts are only in `journalctl -u kivvi-app`.
+- **Surf Your Life #132:** the `session_preps` grant is applied through a
+  migration, and the deploy log confirms that the role reads every table.
+- **Refresh repo:** #5 adds CI. Its first merge needs the owner, because the
+  sweep runs from `auto-merge.yml` on main. Security PR #3 then merges itself.
+- **Morulia Q1** was decided in fleet #398: a sibling life's review is always
+  marked "same person".
+
+Still the owner's:
+- provider credentials for signin, then the two env lines per consuming app;
+- Loki's Google and X consoles;
+- the first merge of the refresh repo's #5;
+- the Substrata outage logs;
+- Morulia Q2 and Q3;
+- one real password reset on each of the three apps.
