@@ -150,6 +150,57 @@ checkpoint and explicit remaining criteria, never a vague completion claim.
   projects, and production/development dependencies. Triage advisories; land
   compatible patches and isolate major upgrades. Recheck known Loki desktop and
   development findings.
+  - **Census, 2026-10-30.** 63 non-archived repos (53 public, 10 private), 68
+    lock roots: pnpm, npm, Cargo, Go and Gemfile, plus two lockless Python
+    projects resolved and run through pip-audit. Each was audited with
+    `pnpm`/`npm audit` and with osv-scanner as a second source, for production
+    and development separately. Bitbaum-original repos had 17 critical and
+    53 high production findings, and 3 critical and 97 high development
+    findings.
+  - **Landed** (all non-draft PRs, merged by the sweep):
+    - Next 16.4.1: hochhinhouse #3, hochhinhouse-party #3, Skif #86, Zurich
+      Sublet #7.
+    - Loki #1479: Electron 43.8.4 with a sandboxed, context-isolated main
+      window. The desktop audit went from 5 high to 0.
+    - Vitareba #141: the Sentry critical.
+    - Evig #633.
+    - body-parser/qs: OrangeCat #1487, DataCat #328, Ivy Portal #52.
+    - Development-tool updates in 27 repos, each moving to 0 critical and
+      0 high except where noted below: ai-forms #59, ai-kit #104,
+      botsmann #263, camille-boulangerie #48, causius #97, design-tokens #46,
+      diplodoctor #61, farmhouse #6, heidi #253, hirnli #158, kivvi #193,
+      limitkit #39, listkit #18, mail-kit #24, petvity #148, printcraft #88,
+      reparaturbonus-zh #205, s-ink #53, sbb-fundbuero #113, sitekit #39,
+      solon #343, substrata #304, surf-your-life #127, threadkit #48,
+      truthseeker #71, Xhiva #22, zeitkastli #44.
+    - Majors, each in its own PR:
+      - Kivvi #195 (nodemailer).
+      - Kivvi #196 (zod 4). Partial updates no longer reset defaults, and
+        the tool parameter schemas are regenerated.
+      - Farmacia del Parco #11 (vitest 4; clears the tinypool criticals).
+      - Fleet #389 (`templates/app` vitest).
+      - DataCat #329 (puppeteer 25; backend production highs 4 to 0).
+  - **Still open, and what closes each:**
+    - OrangeCat #1491: the six MCP servers that could not start, converted to
+      ESM; includes a CodeQL race fix. Closes when it merges.
+    - orangecat-2 #5 (Next): every workflow in that repo was disabled on
+      2026-10-17. Closes when the owner re-enables them or archives the repo.
+    - derhochhinhousepartyrenner refresh #3 (Next): the repo has no CI, so the
+      sweep cannot merge it. Closes when the owner chooses CI or archival.
+    - Loki desktop on Linux: the AppImage still launches with `--no-sandbox`,
+      flagged in #1479. Closes with a follow-up that drops the flag and is
+      tested on a packaged build.
+  - **Exceptions** (no compatible fix exists):
+    - Hirnli `xlsx` 0.18.5, 2 high. npm has nothing newer; fixed builds exist
+      only on the SheetJS CDN. Only an offline import script uses it. Review
+      when that script is next run, or move the dependency to the CDN build.
+    - Printcraft `zod` 3.25.76, 1 high, pulled in by `shadcn`. There is no
+      fixed 3.x release. Review when `shadcn` moves to zod 4.
+    - Causius, Heidi, Hirnli and Solon: `esbuild` 0.18.20, a moderate
+      development finding pulled in by `drizzle-kit`. Review on the next
+      `drizzle-kit` release.
+    - The OpenClaw fork: findings are tracked upstream and not patched in the
+      fork.
 - [ ] **Release-to-user unattended proof.** Demonstrate one package release
   flowing through trusted publication/provenance, notification, exact locked
   consumer update, required CI, auto-merge, deployment, current-artifact user
