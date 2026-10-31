@@ -57,14 +57,16 @@ our own extension point.
   The place accepts or declines the person through its own Solon constitution.
   The product says once that a pledge does not replace taxes owed. Pledges are
   non-custodial, like every payment in the fleet.
+- A review, endorsement or backing that one life gives to a sibling life's
+  project is always marked "same person", even when links are switched off.
+  The mark names no other life. EU and Swiss consumer law forbid undisclosed
+  self-reviews, so the person's links switch cannot turn the mark off.
+  Decided 2026-10-31.
 
 ## Open
 
-1. Whether a review, endorsement or backing given by one life to a sibling
-   life's project is always marked "same person", even with links switched
-   off (EU and Swiss consumer law forbid undisclosed self-reviews).
-2. The default persona settings a new Solon organization starts with.
-3. Whether "Continue with Morulia" replaces or sits beside the OrangeCat button
+1. The default persona settings a new Solon organization starts with.
+2. Whether "Continue with Morulia" replaces or sits beside the OrangeCat button
    on outside sites.
 
 ## Build order
