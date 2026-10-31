@@ -592,3 +592,19 @@ test("multiple named jobs reuse the exact run and reject a missing guard", () =>
     [],
   );
 });
+
+test("the pull request baseline is its merge base, and an unreadable one holds", async () => {
+  const { pullRequestBaseline } = await import("./package-rollout-gate.mjs");
+  const pr = { base: { sha: "a".repeat(40) }, head: { sha: "b".repeat(40) } };
+  const seen = [];
+  assert.equal(
+    pullRequestBaseline(pr, (base, head) => {
+      seen.push([base, head]);
+      return { merge_base_commit: { sha: "e".repeat(40) } };
+    }),
+    "e".repeat(40),
+  );
+  assert.deepEqual(seen, [["a".repeat(40), "b".repeat(40)]]);
+  for (const reply of [undefined, {}, { merge_base_commit: { sha: "main" } }])
+    assert.throws(() => pullRequestBaseline(pr, () => reply), /merge base/);
+});

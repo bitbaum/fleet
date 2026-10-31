@@ -523,9 +523,33 @@ export async function canaryDeploymentEvidence({
   };
 }
 
+/**
+ * The commit the pull request's own change is measured from. `pr.base.sha` is
+ * the base branch as GitHub last recorded it, not where the branch forked: a
+ * branch that predates a dependency bump on the base would read as reverting
+ * it, and the gate would hold a PR that never touches a manifest. The merge
+ * base is the parent of exactly the diff a squash merge lands.
+ */
+export function pullRequestBaseline(pr, readCompare) {
+  const compare = readCompare(pr.base.sha, pr.head.sha);
+  const sha = compare?.merge_base_commit?.sha;
+  if (!/^[0-9a-f]{40}$/.test(sha ?? ""))
+    throw new Error("merge base of the pull request is unavailable");
+  return sha;
+}
+
 async function main() {
   const [repo, number] = process.argv.slice(2);
-  const pr = api(`repos/${repo}/pulls/${number}`);
+  const pullRequest = api(`repos/${repo}/pulls/${number}`);
+  const pr = {
+    ...pullRequest,
+    base: {
+      ...pullRequest.base,
+      sha: pullRequestBaseline(pullRequest, (base, head) =>
+        api(`repos/${repo}/compare/${base}...${head}?per_page=1`),
+      ),
+    },
+  };
   // Avoid requiring a Node lockfile from repositories with no root Node manifest.
   const manifest = content(repo, "package.json", pr.head.sha);
   // Package repositories publish artifacts; their downstream application consumers
