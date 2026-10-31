@@ -322,21 +322,23 @@ review, the unattended release proof and the final census.
   appears once `RESEND_API_KEY` reaches each app on the box (owner step 2).
 - **Security review.** The census, the PRs that landed, and what is still open
   or excepted are recorded under the checklist item (fleet #390). OrangeCat
-  #1491 has since merged. Still open there: orangecat-2 #5 and the
-  derhochhinhouse refresh #3 (owner decision), and the Loki AppImage
+  #1491 has since merged. Still open there: the derhochhinhouse refresh #3
+  (waits on #5, its CI, which needs the owner's first merge), and the Loki AppImage
   `--no-sandbox` flag (a follow-up, tested on a packaged build).
 - **Owner checklist.** All owner-only steps (links, commands and checks) are on
   the private page https://claude.ai/artifact/LxATXnTgyCwRGxp4nf4oyX:
   1. sign-in go-live;
   2. recovery mail;
-  3. orangecat-2;
-  4. the refresh repo;
-  5. the Kivvi key seal;
-  6. the Surf `session_preps` grant (`pnpm db:migrate` already ran on deploy);
-  7. the Kivvi terms sentence;
-  8. Loki's Google and X consoles;
-  9. the Substrata outage logs;
-  10. the Morulia questions.
+  3. the refresh repo;
+  4. the Kivvi key seal;
+  5. the Surf `session_preps` grant (`pnpm db:migrate` already ran on deploy);
+  6. the Kivvi terms sentence;
+  7. Loki's Google and X consoles;
+  8. the Substrata outage logs;
+  9. the Morulia questions.
+- **orangecat-2 is out of scope** at the owner's instruction. It is a Loki
+  starter, not OrangeCat; the security PR there (#5) was closed unmerged. Do not
+  open work in it.
 - **Assistant follow-ups waiting on the owner:**
   - the apps.conf `prospect` → `live` PR for `signin`, after go-live steps 1–5;
   - unpausing Loki's Google and X once the consoles are fixed;
