@@ -165,6 +165,8 @@ checkpoint and explicit remaining criteria, never a vague completion claim.
     - Vitareba #141: the Sentry critical.
     - Evig #633.
     - body-parser/qs: OrangeCat #1487, DataCat #328, Ivy Portal #52.
+    - OrangeCat #1491: the six MCP servers that could not start, converted to
+      ESM; includes a CodeQL race fix.
     - Development-tool updates in 27 repos, each moving to 0 critical and
       0 high except where noted below: ai-forms #59, ai-kit #104,
       botsmann #263, camille-boulangerie #48, causius #97, design-tokens #46,
@@ -181,12 +183,8 @@ checkpoint and explicit remaining criteria, never a vague completion claim.
       - Fleet #389 (`templates/app` vitest).
       - DataCat #329 (puppeteer 25; backend production highs 4 to 0).
   - **Still open, and what closes each:**
-    - OrangeCat #1491: the six MCP servers that could not start, converted to
-      ESM; includes a CodeQL race fix. Closes when it merges.
-    - orangecat-2 #5 (Next): every workflow in that repo was disabled on
-      2026-10-17. Closes when the owner re-enables them or archives the repo.
-    - derhochhinhousepartyrenner refresh #3 (Next): the repo has no CI, so the
-      sweep cannot merge it. Closes when the owner chooses CI or archival.
+    - derhochhinhousepartyrenner refresh #3 (Next): the repo had no CI; #5 adds
+      it and needs the owner's one first merge, then the sweep merges #3.
     - Loki desktop on Linux: the AppImage still launches with `--no-sandbox`,
       flagged in #1479. Closes with a follow-up that drops the flag and is
       tested on a packaged build.
@@ -201,6 +199,8 @@ checkpoint and explicit remaining criteria, never a vague completion claim.
       `drizzle-kit` release.
     - The OpenClaw fork: findings are tracked upstream and not patched in the
       fork.
+    - orangecat-2 is out of scope at the owner's instruction: it is a Loki
+      starter, not OrangeCat. Its security PR #5 was closed unmerged.
 - [ ] **Release-to-user unattended proof.** Demonstrate one package release
   flowing through trusted publication/provenance, notification, exact locked
   consumer update, required CI, auto-merge, deployment, current-artifact user
