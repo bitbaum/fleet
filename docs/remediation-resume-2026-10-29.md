@@ -299,3 +299,55 @@ Follow-ups:
 Resume at: the remaining checklist items in order. These are authentication
 parity, AI Kit/ChatKit, stale draft PRs, truth dependencies, the security
 review, the unattended release proof and the final census.
+
+## Sign-in service, recovery and security review (2026-10-30/31)
+
+- **Shared sign-in service.** [bitbaum/signin#1](https://github.com/bitbaum/signin/pull/1)
+  merged: an OIDC provider on AccountKit's runtime with pairwise subjects. It
+  ships CI and a browser smoke test on the production build. Loki
+  [#1481](https://github.com/bitbaum/loki/pull/1481) registers it (port 4038,
+  its own `signin` database, status `prospect`), and `app-secrets.sh` can now
+  write one generated value into two apps (`pair:`). Fleet #383 adds the
+  STACK.md entry.
+  - **Not live.** The owner steps are on the owner checklist page (below); the
+    box has no database or env for `signin` yet, so every deploy fails until
+    they are done.
+  - **New-repo traps found:** fleet #384 (seed `auto-merge.yml` on `main`) and
+    #386 (a shared-package consumer also needs `browser-smoke.yml`).
+- **Rollout gate.** Fleet [#391](https://github.com/bitbaum/fleet/pull/391)
+  fixes a deadlock: the gate measured a PR from GitHub's recorded base rather
+  than its merge base, so a stale branch read as a package downgrade and was
+  held for a version no canary would ever run again.
+- **Recovery mail.** Diplodoctor #59, Solon #337 and Heidi #252 merged. Recovery
+  appears once `RESEND_API_KEY` reaches each app on the box (owner step 2).
+- **Security review.** The census, the PRs that landed, and what is still open
+  or excepted are recorded under the checklist item (fleet #390). OrangeCat
+  #1491 has since merged. Still open there: orangecat-2 #5 and the
+  derhochhinhouse refresh #3 (owner decision), and the Loki AppImage
+  `--no-sandbox` flag (a follow-up, tested on a packaged build).
+- **Owner checklist.** All owner-only steps (links, commands and checks) are on
+  the private page https://claude.ai/artifact/LxATXnTgyCwRGxp4nf4oyX:
+  1. sign-in go-live;
+  2. recovery mail;
+  3. orangecat-2;
+  4. the refresh repo;
+  5. the Kivvi key seal;
+  6. the Surf `session_preps` grant (`pnpm db:migrate` already ran on deploy);
+  7. the Kivvi terms sentence;
+  8. Loki's Google and X consoles;
+  9. the Substrata outage logs;
+  10. the Morulia questions.
+- **Assistant follow-ups waiting on the owner:**
+  - the apps.conf `prospect` → `live` PR for `signin`, after go-live steps 1–5;
+  - unpausing Loki's Google and X once the consoles are fixed;
+  - Kivvi terms option 1 or 2;
+  - CI for the refresh repo, if kept;
+  - a `trustedOrigins` entry for Apple if Apple sign-in fails.
+
+Resume at, in checklist order:
+1. NextAuth → AccountKit for evig, kivvi, loki, petvity and surf-your-life, one
+   app at a time;
+2. AI Kit / ChatKit;
+3. truth dependencies and package pages;
+4. the unattended release proof;
+5. the final census.
