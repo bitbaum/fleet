@@ -1,0 +1,39 @@
+# Auto-merge — nobody is in the merge loop. The policy lives ONCE, in
+# bitbaum/fleet scripts/ci/auto-merge-sweep.sh; this file only says "run it,
+# with these settings" (fleet templates/ci/auto-merge.yml). Never copy the
+# script. To stop it: delete this file, or add a `hold` label to a PR.
+#
+# Seeded on main when fleet registers/app-repos.json created this repo: the
+# sweep runs from the default branch, so without it here no PR ever merges.
+# The repo's first PR adds ci.yml (workflow `name: CI`), and browser-smoke.yml
+# too if it depends on a shared package: the rollout gate holds such PRs until
+# both pass (fleet docs/package-rollouts.md). Add the deploy settings from
+# templates/ci/auto-merge.yml once the repo deploys.
+name: Auto-merge
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+# Declared on the caller too: a called workflow's token is capped by what the
+# caller grants, and a read-only token merges nothing while exiting 0.
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  checks: read
+  statuses: read
+
+jobs:
+  sweep:
+    uses: bitbaum/fleet/.github/workflows/auto-merge-sweep.yml@main
+    with:
+      base_branch: main
+      ci_workflow: ci.yml
+      rearm_workflows: "ci.yml"
+    secrets:
+      token: ${{ secrets.FLEET_PAT }}

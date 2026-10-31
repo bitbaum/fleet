@@ -25,8 +25,8 @@ linked.
 ## Subjects
 
 The service derives a pairwise subject per app. As implemented in the
-service's `lib/subject.ts` (not yet published; the `bitbaum/signin`
-repository is pending):
+service's `lib/subject.ts` (in `bitbaum/signin`, open pull request #1, not
+deployed yet):
 
 - root: HMAC-SHA256(secret, `<sector>.<userId>`), where `sector` is the host
   of the app's first redirect URI. This is the value the plugin issues today,

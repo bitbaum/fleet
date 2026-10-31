@@ -31,7 +31,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Package manager | pnpm 11 (fleet-wide since 2026-09-04; `packageManager` pinned per repo, corepack) | openclaw follows upstream; kivvi (already-pnpm before the sweep) still pins `pnpm@9` — bump pending |
 | Runtime | Node LTS (currently 24), nodesource on the box | openclaw gateway: its own nvm-pinned Node |
 | Deploy | push → PR → CI → auto-merge sweep → CD → box (systemd + Caddy) | — |
-| Maps & globes | **`d3-geo` + `topojson-client`, drawn on Canvas 2D** (an orthographic globe, or any flat projection); country outlines from Natural Earth via `world-atlas`, built into the repo. Why: substrata already shipped its map on d3-geo, and a globe is one projection away — no second map stack. Canvas 2D rather than WebGL (three.js/globe.gl ~600 KB, MapLibre ~800 KB, cobe draws dots, not countries): 240 filled countries per frame fit a phone's frame budget, and it runs wherever the page runs, so there is no flat fallback to maintain. Tiles/street maps would be MapLibre — no repo needs them yet. | — |
+| Maps & globes | **`@bitbaum/geo-kit/map`: `d3-geo` + `topojson-client`, drawn on Canvas 2D** (an orthographic globe that, zoomed in, is a flat map of a country or a commune); data through `@bitbaum/geo-kit`'s manifests. Why: substrata already shipped its globe on d3-geo, and a map of communes is the same globe zoomed in — no second map stack. Extracted into geo-kit 0.2.0 (2026-10-30) when Solon's commune map, then on MapLibre, needed the same. Canvas 2D rather than WebGL (three.js/globe.gl ~600 KB, MapLibre ~800 KB, cobe draws dots, not countries): 240 filled countries per frame fit a phone's frame budget, and it runs wherever the page runs, so there is no flat fallback to maintain. Tiles/street maps would be MapLibre — no repo needs them (Solon's commune map left it for geo-kit/map). | — |
 
 ## Identity (2026-10-11)
 
@@ -48,8 +48,10 @@ users table"), reversed by the owner on 2026-10-11.
     `SIGNIN_CLIENT_SECRET`): one service that holds the Google, GitHub, X,
     Meta and Apple credentials ONCE and speaks OIDC to every app, issuing a
     per-app (pairwise) subject and creating no OrangeCat account. Social
-    providers are never configured per app. The service is its own project;
-    until it runs, the button is simply absent.
+    providers are never configured per app. The service is its own repo,
+    `bitbaum/signin` (declared in `registers/app-repos.json`); its code is in
+    an open pull request (bitbaum/signin#1) and it is not deployed yet, so the
+    button is absent everywhere. Its planned host is `signin.orangecat.ch`.
   - **OrangeCat** (`ORANGECAT_OAUTH_CLIENT_ID`, `_SECRET`, optional
     `_ISSUER`): one click for people who already have OrangeCat — one option
     among them, never a requirement.
