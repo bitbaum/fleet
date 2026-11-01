@@ -1,0 +1,25 @@
+{
+  "_doc": "Apps auth-parity.mjs probes every day: each app with a sign-in page, its live origin and the paths of its sign-in, sign-up and recovery pages. `runtime` says which server probes apply: accountkit (better-auth endpoints answer), compat (AccountKit behind its Auth.js bridge; Auth.js-shaped endpoints answer), authjs (Auth.js), gotrue (Supabase GoTrue), legacy (the product's own). The inventory behind this list is docs/auth-parity-2026-11-01.md. Adding an app with a sign-in page is one row here. `providerButtons: \"OC\"` marks an app whose Google/GitHub buttons are OrangeCat with a provider hint (Skif), so they count as OC, not as Morulia.",
+  "apps": [
+    { "name": "biaslens", "origin": "https://biaslens.orangecat.ch", "runtime": "accountkit", "signIn": "/sign-in", "signUp": "/sign-up" },
+    { "name": "causius", "origin": "https://causius.orangecat.ch", "runtime": "accountkit", "signIn": "/de/sign-in", "signUp": "/de/sign-up" },
+    { "name": "diplodoctor", "origin": "https://diplodoctor.orangecat.ch", "runtime": "accountkit", "signIn": "/de/sign-in", "signUp": "/de/sign-up" },
+    { "name": "heidi", "origin": "https://heidi.orangecat.ch", "runtime": "accountkit", "signIn": "/de/sign-in", "signUp": "/de/sign-up" },
+    { "name": "hirnli", "origin": "https://hirnli.orangecat.ch", "runtime": "accountkit", "signIn": "/anmelden", "signUp": "/registrieren" },
+    { "name": "solon", "origin": "https://solon.orangecat.ch", "runtime": "accountkit", "signIn": "/de/sign-in", "signUp": "/de/sign-up" },
+    { "name": "substrata", "origin": "https://substrata.orangecat.ch", "runtime": "accountkit", "signIn": "/sign-in", "signUp": "/sign-up" },
+    { "name": "loki", "origin": "https://loki.orangecat.ch", "runtime": "compat", "signIn": "/sign-in", "signUp": "/sign-up" },
+    { "name": "evig", "origin": "https://evig.orangecat.ch", "runtime": "compat", "signIn": "/auth/login", "signUp": "/auth/register" },
+    { "name": "kivvi", "origin": "https://kivvi.orangecat.ch", "runtime": "compat", "signIn": "/login", "signUp": "/register" },
+    { "name": "petvity", "origin": "https://petvity.orangecat.ch", "runtime": "compat", "signIn": "/login", "signUp": "/register" },
+    { "name": "surf-your-life", "origin": "https://surf-your-life.orangecat.ch", "runtime": "compat", "signIn": "/de/login", "signUp": "/de/register" },
+    { "name": "vitareba", "origin": "https://vita.orangecat.ch", "runtime": "authjs", "signIn": "/de/login", "signUp": "/de/register" },
+    { "name": "datacat", "origin": "https://datacat.orangecat.ch", "runtime": "authjs", "signIn": "/login", "signUp": "/register" },
+    { "name": "skif", "origin": "https://skif.orangecat.ch", "runtime": "authjs", "signIn": "/de/signin", "signUp": "/de/signin?mode=create", "providerButtons": "OC" },
+    { "name": "reparaturbonus-zh", "origin": "https://reparaturbonus.orangecat.ch", "runtime": "authjs", "signIn": "/auth/signin", "signUp": "/auth/signup" },
+    { "name": "aoz-begleitung", "origin": "https://aoz.orangecat.ch", "runtime": "legacy", "signIn": "/login", "signUp": "/register" },
+    { "name": "botsmann", "origin": "https://botsmann.orangecat.ch", "runtime": "gotrue", "signIn": "/auth/signin", "signUp": "/auth/signup" },
+    { "name": "printcraft", "origin": "https://printcraft.orangecat.ch", "runtime": "gotrue", "signIn": "/login", "signUp": "/register" },
+    { "name": "orangecat", "origin": "https://orangecat.ch", "runtime": "gotrue", "signIn": "/auth", "isOrangeCat": true }
+  ]
+}

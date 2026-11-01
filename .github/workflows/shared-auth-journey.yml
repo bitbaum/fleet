@@ -71,7 +71,7 @@ jobs:
           set -euo pipefail
           # Fresh server process per scenario preserves production rate limits;
           # the application build and isolated database are reused.
-          for scenario in recovery passkeys two-factor two-factor-disable magic-link two-factor-magic-link two-factor-passkeys; do
+          for scenario in recovery passkeys two-factor two-factor-disable magic-link two-factor-magic-link two-factor-passkeys oidc; do
             AUTH_TEST_SCENARIO="$scenario" node .fleet-auth-tests/scripts/test/auth-journey.mjs
           done
       - uses: actions/upload-artifact@v4
