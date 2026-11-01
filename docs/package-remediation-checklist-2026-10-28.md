@@ -167,6 +167,13 @@ checkpoint and explicit remaining criteria, never a vague completion claim.
     - body-parser/qs: OrangeCat #1487, DataCat #328, Ivy Portal #52.
     - OrangeCat #1491: the six MCP servers that could not start, converted to
       ESM; includes a CodeQL race fix.
+    - Loki #1521: the Linux AppImage runs with the Chromium sandbox wherever
+      user namespaces allow it, and says why when it cannot. A packaged-build
+      check runs on PRs and before each release (first: Fleet Runner 0.8.62).
+    - Hirnli #171: `xlsx` from SheetJS's own 0.20.3 build (high 2 → 0); the
+      offline import produced the same 5392 records.
+    - Printcraft #89 (root verify passes and runs in CI) and OrangeCat #1517
+      (the MCP server smoke test runs in CI, 7/7).
     - Development-tool updates in 27 repos, each moving to 0 critical and
       0 high except where noted below: ai-forms #59, ai-kit #104,
       botsmann #263, camille-boulangerie #48, causius #97, design-tokens #46,
@@ -185,13 +192,7 @@ checkpoint and explicit remaining criteria, never a vague completion claim.
   - **Still open, and what closes each:**
     - derhochhinhousepartyrenner refresh #3 (Next): the repo had no CI; #5 adds
       it and needs the owner's one first merge, then the sweep merges #3.
-    - Loki desktop on Linux: the AppImage still launches with `--no-sandbox`,
-      flagged in #1479. Closes with a follow-up that drops the flag and is
-      tested on a packaged build.
   - **Exceptions** (no compatible fix exists):
-    - Hirnli `xlsx` 0.18.5, 2 high. npm has nothing newer; fixed builds exist
-      only on the SheetJS CDN. Only an offline import script uses it. Review
-      when that script is next run, or move the dependency to the CDN build.
     - Printcraft `zod` 3.25.76, 1 high, pulled in by `shadcn`. There is no
       fixed 3.x release. Review when `shadcn` moves to zod 4.
     - Causius, Heidi, Hirnli and Solon: `esbuild` 0.18.20, a moderate
