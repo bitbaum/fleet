@@ -49,9 +49,11 @@ users table"), reversed by the owner on 2026-10-11.
     Meta and Apple credentials ONCE and speaks OIDC to every app, issuing a
     per-app (pairwise) subject and creating no OrangeCat account. Social
     providers are never configured per app. The service is its own repo,
-    `bitbaum/signin` (declared in `registers/app-repos.json`); its code is in
-    an open pull request (bitbaum/signin#1) and it is not deployed yet, so the
-    button is absent everywhere. Its planned host is `signin.orangecat.ch`.
+    `bitbaum/signin` (declared in `registers/app-repos.json`), live at
+    `signin.orangecat.ch` since 2026-10-31 (`/api/health`,
+    `/.well-known/openid-configuration`). No upstream provider is configured
+    on it yet and no app has `SIGNIN_ISSUER`/`SIGNIN_CLIENT_ID`, so the button
+    is still absent everywhere until both are set.
   - **OrangeCat** (`ORANGECAT_OAUTH_CLIENT_ID`, `_SECRET`, optional
     `_ISSUER`): one click for people who already have OrangeCat — one option
     among them, never a requirement.
