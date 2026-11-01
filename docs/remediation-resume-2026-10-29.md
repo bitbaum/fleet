@@ -521,9 +521,28 @@ Loki also needs two more things before its switch:
   credentials), or the people who sign in only that way set a password first;
 - a separate "Connect GitHub" step for the `repo`/`workflow` token.
 
-Follow-up: the `next-auth/react` bridge now exists in five apps (evig, kivvi,
-petvity, surf, loki). The fleet rule says it belongs in AccountKit as one
-module, to be extracted before any further app copies it.
+The bridge is no longer copied. AccountKit 0.18.0
+([#52](https://github.com/bitbaum/accountkit/pull/52),
+[#53](https://github.com/bitbaum/accountkit/pull/53),
+[#54](https://github.com/bitbaum/accountkit/pull/54)) ships it once. That one
+release covers:
+
+- `auth/nextauth-compat` (`createNextAuthCompat`);
+- `auth/switch` (`sharedRuntimeEnabled`);
+- the `accountkit-rehearse-import` command;
+- `auth/compat-testing` for the journeys.
+
+Each of the five apps keeps only a `compat.ts` holding what is its own: the
+session shape, its password forms, its login codes and its hooks. These PRs
+deleted the copies:
+
+- evig [#646](https://github.com/bitbaum/evig/pull/646);
+- kivvi [#212](https://github.com/bitbaum/kivvi/pull/212);
+- petvity [#160](https://github.com/bitbaum/petvity/pull/160);
+- surf-your-life [#141](https://github.com/bitbaum/surf-your-life/pull/141);
+- loki [#1508](https://github.com/bitbaum/loki/pull/1508).
+
+The next product to stage AccountKit uses the package and copies nothing.
 
 Resume at: the switches, as the owner approves test identities (evig first).
 Then AI Kit / ChatKit, truth dependencies and package pages, the unattended
