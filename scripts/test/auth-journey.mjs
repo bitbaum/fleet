@@ -41,7 +41,10 @@ const messages = [];
 // The "oidc" scenario's two issuers ("Continue with OrangeCat" and the shared
 // sign-in) are served here too: discovery and an authorize endpoint that only
 // records that the browser arrived. No token is ever issued.
-const issuers = { orangecat: "/issuer/orangecat", "bitbaum-signin": "/issuer/signin" };
+const issuers = {
+  orangecat: "/issuer/orangecat",
+  "bitbaum-signin": "/issuer/signin",
+};
 const authorized = [];
 const outbox = createServer(async (request, response) => {
   const issuer = Object.values(issuers).find((prefix) =>
@@ -198,18 +201,31 @@ try {
   const labels = authLabelsFor(signIn.split("/").filter(Boolean)[0]);
   if (scenario === "recovery" && process.env.AUTH_TEST_INTEGRATION_CHECK) {
     browser = await authChromium(consumerRequire).launch({
-      ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}),
+      ...(process.env.BROWSER_EXECUTABLE
+        ? { executablePath: process.env.BROWSER_EXECUTABLE }
+        : {}),
       args: ["--no-sandbox"],
     });
     try {
       const context = await browser.newContext();
-      const login = await context.request.post(base + "/api/auth/sign-in/email", {
-        headers: { origin: base },
-        data: { email, password },
-      });
-      assert.equal(login.status(), 200, "product integration browser signs in normally");
+      const login = await context.request.post(
+        base + "/api/auth/sign-in/email",
+        {
+          headers: { origin: base },
+          data: { email, password },
+        },
+      );
+      assert.equal(
+        login.status(),
+        200,
+        "product integration browser signs in normally",
+      );
       const page = await context.newPage();
-      await checkAuthIntegration(process.env.AUTH_TEST_INTEGRATION_CHECK, { page, base, userId: signedIn.user.id });
+      await checkAuthIntegration(process.env.AUTH_TEST_INTEGRATION_CHECK, {
+        page,
+        base,
+        userId: signedIn.user.id,
+      });
     } finally {
       await browser.close();
       browser = null;
@@ -223,7 +239,9 @@ try {
         : {}),
       args: ["--no-sandbox"],
     });
-    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    const page = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+    });
     const signUp = signIn.replace(/sign-in$/, "sign-up");
     const buttons = [
       ["orangecat", labels.withOrangecat, "journey-orangecat"],
@@ -244,13 +262,24 @@ try {
         timeout: 20_000,
       });
       const request = authorized.at(-1);
-      assert.ok(request && authorized.length > before, `${id}: the browser reached its issuer`);
+      assert.ok(
+        request && authorized.length > before,
+        `${id}: the browser reached its issuer`,
+      );
       assert.ok(
         request.pathname.startsWith(issuers[id] + "/"),
         `${id}: the button goes to its own issuer`,
       );
-      assert.equal(request.searchParams.get("client_id"), clientId, `${id}: client id`);
-      assert.equal(request.searchParams.get("response_type"), "code", `${id}: code flow`);
+      assert.equal(
+        request.searchParams.get("client_id"),
+        clientId,
+        `${id}: client id`,
+      );
+      assert.equal(
+        request.searchParams.get("response_type"),
+        "code",
+        `${id}: code flow`,
+      );
       assert.equal(
         request.searchParams.get("code_challenge_method"),
         "S256",
