@@ -429,10 +429,32 @@ Step 1 of the plan (NextAuth → AccountKit), first app: evig.
   URI.
 
 Open before evig's switch:
-- **Owner decision.** AccountKit refuses unverified password sign-in when mail
-  is on; evig allows it and gates only staff powers. The rehearsal prints how
-  many accounts this touches.
 - The import under locks, then deployed proof with an approved test identity.
 
 Resume at: evig #637 and orangecat #1501 through the sweep, then kivvi,
 then loki, petvity and surf-your-life, one at a time, with the same pattern.
+
+## Confirming an email never blocks sign-in (2026-11-01, owner decision)
+
+The owner decided that every product lets people in at once, with as little
+friction as possible, and that AccountKit keeps the rule uniform while letting
+a product choose otherwise.
+
+- **AccountKit 0.16.0** ([#50](https://github.com/bitbaum/accountkit/pull/50)):
+  - by default a sign-up is signed in at once and mailed a confirmation link;
+  - an unconfirmed account signs in;
+  - a first-password claim signs the person in.
+
+  Following the link still sets `emailVerified`. A product that needs the
+  wall passes `emailConfirmation: "before-sign-in"`. Every consumer gets the
+  new default when it upgrades; none sets the option.
+- **evig [#639](https://github.com/bitbaum/evig/pull/639)** moves to 0.16.0
+  and drops its open decision. A journey with mail on proves an unconfirmed
+  account signs in; the same test fails on 0.15.0. Confirming still unlocks
+  evig's staff powers.
+
+Products that keep their own account code (Loki, Surf Your Life, Petvity and
+others still on NextAuth) follow the same rule as each moves to AccountKit.
+
+Resume at: evig's switch (the import, then deployed proof), then kivvi, loki,
+petvity and surf-your-life, one at a time.
