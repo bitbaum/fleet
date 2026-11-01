@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-01T07:51:48.199Z",
+  "generatedAt": "2026-11-01T10:08:21.986Z",
   "packages": [
     {
       "slug": "accountkit",
       "name": "@bitbaum/accountkit",
       "repo": "https://github.com/bitbaum/accountkit",
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.17.0",
+      "version": "0.18.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.17.0"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/accountkit#2a587c873ea379bb564ab7d53203fb44f44eb9a4"
       },
       "adopters": 20,
       "adopterNames": [
@@ -25,9 +25,9 @@
         "hirnli",
         "kivvi",
         "loki",
+        "morulia",
         "orangecat",
         "petvity",
-        "signin",
         "skif",
         "solon",
         "substrata",
@@ -35,8 +35,9 @@
         "vitareba"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.17.0"
+        "source": "git",
+        "tag": "v0.18.0",
+        "commit": "2a587c873ea379bb564ab7d53203fb44f44eb9a4"
       }
     },
     {
@@ -207,9 +208,9 @@
         "heidi",
         "kivvi",
         "loki",
+        "morulia",
         "orangecat",
         "petvity",
-        "signin",
         "skif",
         "surf-your-life",
         "truthseeker"
@@ -241,7 +242,7 @@
         "diplodoctor",
         "fleet",
         "loki",
-        "signin",
+        "morulia",
         "skif",
         "solon",
         "substrata",
