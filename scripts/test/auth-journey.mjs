@@ -26,6 +26,7 @@ assert.ok(
     "two-factor-magic-link",
     "two-factor-passkeys",
     "magic-link",
+    "oidc",
   ].includes(scenario),
   "Unknown account test scenario",
 );
@@ -37,7 +38,48 @@ const out = resolve(
 );
 mkdirSync(out, { recursive: true });
 const messages = [];
+// The "oidc" scenario's two issuers ("Continue with OrangeCat" and the shared
+// sign-in) are served here too: discovery and an authorize endpoint that only
+// records that the browser arrived. No token is ever issued.
+const issuers = {
+  orangecat: "/issuer/orangecat",
+  "bitbaum-signin": "/issuer/signin",
+};
+const authorized = [];
 const outbox = createServer(async (request, response) => {
+  const issuer = Object.values(issuers).find((prefix) =>
+    request.url?.startsWith(prefix + "/"),
+  );
+  if (request.method === "GET" && issuer) {
+    const origin = `http://127.0.0.1:${outbox.address().port}`;
+    const path = request.url.slice(issuer.length);
+    if (path === "/.well-known/openid-configuration") {
+      response.writeHead(200, { "content-type": "application/json" }).end(
+        JSON.stringify({
+          issuer: origin + issuer,
+          authorization_endpoint: `${origin}${issuer}/authorize`,
+          token_endpoint: `${origin}${issuer}/token`,
+          jwks_uri: `${origin}${issuer}/jwks`,
+          userinfo_endpoint: `${origin}${issuer}/userinfo`,
+          response_types_supported: ["code"],
+          subject_types_supported: ["pairwise"],
+          id_token_signing_alg_values_supported: ["RS256"],
+          code_challenge_methods_supported: ["S256"],
+          token_endpoint_auth_methods_supported: ["client_secret_post"],
+        }),
+      );
+      return;
+    }
+    if (path.startsWith("/authorize?")) {
+      authorized.push(new URL(origin + request.url));
+      response
+        .writeHead(200, { "content-type": "text/html" })
+        .end("<!doctype html><title>test issuer</title>");
+      return;
+    }
+    response.writeHead(404).end();
+    return;
+  }
   if (request.method !== "POST" || request.url !== "/messages") {
     response.writeHead(404).end();
     return;
@@ -63,6 +105,16 @@ const child = spawn(
       BETTER_AUTH_SECRET: randomBytes(48).toString("base64"),
       RESEND_API_KEY: "re_fleet_test_" + randomBytes(24).toString("hex"),
       FLEET_AUTH_TEST_MAIL_PORT: String(outbox.address().port),
+      ...(scenario === "oidc"
+        ? {
+            ORANGECAT_OAUTH_ISSUER: `http://127.0.0.1:${outbox.address().port}${issuers.orangecat}`,
+            ORANGECAT_OAUTH_CLIENT_ID: "journey-orangecat",
+            ORANGECAT_OAUTH_CLIENT_SECRET: randomBytes(24).toString("hex"),
+            SIGNIN_ISSUER: `http://127.0.0.1:${outbox.address().port}${issuers["bitbaum-signin"]}`,
+            SIGNIN_CLIENT_ID: "journey-signin",
+            SIGNIN_CLIENT_SECRET: randomBytes(24).toString("hex"),
+          }
+        : {}),
       NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --import ${fileURLToPath(new URL("./capture-auth-mail.mjs", import.meta.url))}`,
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -149,25 +201,100 @@ try {
   const labels = authLabelsFor(signIn.split("/").filter(Boolean)[0]);
   if (scenario === "recovery" && process.env.AUTH_TEST_INTEGRATION_CHECK) {
     browser = await authChromium(consumerRequire).launch({
-      ...(process.env.BROWSER_EXECUTABLE ? { executablePath: process.env.BROWSER_EXECUTABLE } : {}),
+      ...(process.env.BROWSER_EXECUTABLE
+        ? { executablePath: process.env.BROWSER_EXECUTABLE }
+        : {}),
       args: ["--no-sandbox"],
     });
     try {
       const context = await browser.newContext();
-      const login = await context.request.post(base + "/api/auth/sign-in/email", {
-        headers: { origin: base },
-        data: { email, password },
-      });
-      assert.equal(login.status(), 200, "product integration browser signs in normally");
+      const login = await context.request.post(
+        base + "/api/auth/sign-in/email",
+        {
+          headers: { origin: base },
+          data: { email, password },
+        },
+      );
+      assert.equal(
+        login.status(),
+        200,
+        "product integration browser signs in normally",
+      );
       const page = await context.newPage();
-      await checkAuthIntegration(process.env.AUTH_TEST_INTEGRATION_CHECK, { page, base, userId: signedIn.user.id });
+      await checkAuthIntegration(process.env.AUTH_TEST_INTEGRATION_CHECK, {
+        page,
+        base,
+        userId: signedIn.user.id,
+      });
     } finally {
       await browser.close();
       browser = null;
     }
   }
 
-  if (scenario !== "recovery") {
+  if (scenario === "oidc") {
+    browser = await authChromium(consumerRequire).launch({
+      ...(process.env.BROWSER_EXECUTABLE
+        ? { executablePath: process.env.BROWSER_EXECUTABLE }
+        : {}),
+      args: ["--no-sandbox"],
+    });
+    const page = await browser.newPage({
+      viewport: { width: 390, height: 844 },
+    });
+    const signUp = signIn.replace(/sign-in$/, "sign-up");
+    const buttons = [
+      ["orangecat", labels.withOrangecat, "journey-orangecat"],
+      ["bitbaum-signin", labels.withSignin, "journey-signin"],
+    ];
+    for (const path of [signIn, signUp]) {
+      await page.goto(base + path);
+      for (const [, label] of buttons)
+        await page
+          .getByRole("button", { name: label, exact: true })
+          .waitFor({ state: "visible", timeout: 20_000 });
+    }
+    for (const [id, label, clientId] of buttons) {
+      await page.goto(base + signIn + "?next=" + encodeURIComponent(account));
+      const before = authorized.length;
+      await page.getByRole("button", { name: label, exact: true }).click();
+      await page.waitForURL((url) => url.pathname.endsWith("/authorize"), {
+        timeout: 20_000,
+      });
+      const request = authorized.at(-1);
+      assert.ok(
+        request && authorized.length > before,
+        `${id}: the browser reached its issuer`,
+      );
+      assert.ok(
+        request.pathname.startsWith(issuers[id] + "/"),
+        `${id}: the button goes to its own issuer`,
+      );
+      assert.equal(
+        request.searchParams.get("client_id"),
+        clientId,
+        `${id}: client id`,
+      );
+      assert.equal(
+        request.searchParams.get("response_type"),
+        "code",
+        `${id}: code flow`,
+      );
+      assert.equal(
+        request.searchParams.get("code_challenge_method"),
+        "S256",
+        `${id}: PKCE`,
+      );
+      assert.equal(
+        new URL(request.searchParams.get("redirect_uri")).origin,
+        base,
+        `${id}: the callback is this app`,
+      );
+    }
+    console.log(
+      "PASS real app shows Continue with OrangeCat and the shared sign-in on sign-in and sign-up, and each starts a PKCE code flow at its own issuer",
+    );
+  } else if (scenario !== "recovery") {
     const chromium = authChromium(consumerRequire);
     browser = await chromium.launch({
       ...(process.env.BROWSER_EXECUTABLE
