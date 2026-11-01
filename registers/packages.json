@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-01T16:42:39.593Z",
+  "generatedAt": "2026-11-01T16:49:36.063Z",
   "packages": [
     {
       "slug": "accountkit",
@@ -8,8 +8,8 @@
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
       "version": "0.18.1",
       "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/accountkit#4e6451e690b20b17bfa1ec32acc74b152b19780a"
+        "source": "npm",
+        "command": "pnpm add @bitbaum/accountkit@^0.18.1"
       },
       "adopters": 20,
       "adopterNames": [
@@ -35,9 +35,8 @@
         "vitareba"
       ],
       "release": {
-        "source": "git",
-        "tag": "v0.18.1",
-        "commit": "4e6451e690b20b17bfa1ec32acc74b152b19780a"
+        "source": "npm",
+        "version": "0.18.1"
       }
     },
     {
