@@ -597,10 +597,35 @@ for a rollback.
   - Result: on each of the four, the OrangeCat button reaches OrangeCat's
     authorize page.
 
-Still open, and needing the owner's approved test identity on each app:
-recovery, revocation, an OrangeCat sign-in through to its callback, and each
-app's own check (kivvi's company switch, a role change or staff demotion, and
-Loki's invite and publish).
+The owner asked that the proofs be done without them. Loki's
+`accountkit-switch.yml` gained a `prove` action, and it passed live on all
+five apps, using throwaway accounts that it deleted again. It covers:
+
+- two sessions at once;
+- a change to the person's row read on the next request (the path a role,
+  staff or company change takes);
+- a password write (what a reset and a change do) ending both sessions, with
+  the old password refused and the new one accepted;
+- sign-out, and deletion;
+- on the four apps that offer OrangeCat, a real browser sign-in with a
+  throwaway OrangeCat account, through OrangeCat's sign-in and consent and
+  back in.
+
+The OrangeCat proof found two defects, both fixed:
+
+- **A first OrangeCat sign-in failed with `unable_to_create_user`.** The
+  product's mirror recorded the link just before better-auth stored its own.
+  Fix: AccountKit 0.19.0
+  ([#56](https://github.com/bitbaum/accountkit/pull/56)), rolled out to all
+  five.
+- **OrangeCat's tokens never reached Loki's `accounts`, where publish reads
+  them.** Fix: Loki
+  [#1528](https://github.com/bitbaum/loki/pull/1528).
+
+Not proven by a machine:
+
+- a reset mail arriving in a real inbox;
+- a Loki publish with a token that a real sign-in stored.
 
 Resume at: step 2, AI Kit / ChatKit. Then truth dependencies and package pages,
 the unattended release proof, and the final census.
