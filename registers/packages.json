@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-01T04:55:49.826Z",
+  "generatedAt": "2026-11-01T05:45:32.700Z",
   "packages": [
     {
       "slug": "accountkit",
@@ -44,10 +44,10 @@
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.21.5",
+      "version": "1.22.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/ai-kit@^1.21.5"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/ai-kit#80da12607bcfe18891dd6bff442b4fc6b0e341ea"
       },
       "adopters": 20,
       "adopterNames": [
@@ -73,8 +73,9 @@
         "vitareba"
       ],
       "release": {
-        "source": "npm",
-        "version": "1.21.5"
+        "source": "git",
+        "tag": "v1.22.0",
+        "commit": "80da12607bcfe18891dd6bff442b4fc6b0e341ea"
       }
     },
     {
