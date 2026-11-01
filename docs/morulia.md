@@ -35,13 +35,14 @@ that follows anyone around.
 ## Where it lives: one service
 
 - **Engine:** the shared bitbaum sign-in (`STACK.md`, "Identity"), repo
-  `bitbaum/signin`, live at `signin.orangecat.ch`. Identities hang off the
+  `bitbaum/morulia` (renamed from `bitbaum/signin`, whose address GitHub
+  redirects), live at `signin.orangecat.ch`. Identities hang off the
   root account that service already holds. There is no second account store,
   because that would give every person two roots: two recoveries and two sets
   of passkeys.
-- **Planned:** rename `bitbaum/signin` to `bitbaum/morulia` while nothing
-  depends on the name yet. One repo holds the engine, the management screens
-  and the database, because both halves read and write the same records.
+- One repo holds the engine, the management screens and the database,
+  because both halves read and write the same records. Its host moves to
+  `morulia.orangecat.ch` while no app points at the old one yet.
 - Apps keep owning their accounts, as `STACK.md` requires. Morulia adds no
   further login provider.
 
@@ -68,7 +69,7 @@ everywhere, shared by every system. Morulia never creates one.
 ## Subjects
 
 The service derives a pairwise subject per app. As implemented in the
-service's `lib/subject.ts` (`bitbaum/signin`, live at `signin.orangecat.ch`):
+service's `lib/subject.ts` (`bitbaum/morulia`):
 
 - root: HMAC-SHA256(secret, `<sector>.<userId>`), where `sector` is the host
   of the app's first redirect URI. This is the value the plugin issues today,
