@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-01T18:55:33.151Z",
+  "generatedAt": "2026-11-01T20:13:48.037Z",
   "packages": [
     {
       "slug": "accountkit",
@@ -154,10 +154,10 @@
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
       "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.22.0",
+      "version": "0.22.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.22.0"
+        "command": "pnpm add @bitbaum/chatkit@^0.22.1"
       },
       "adopters": 17,
       "adopterNames": [
@@ -181,7 +181,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.22.0"
+        "version": "0.22.1"
       }
     },
     {
