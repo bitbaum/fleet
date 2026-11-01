@@ -1,5 +1,9 @@
 # Authentication parity: app × provider matrix (2026-10-30)
 
+> Superseded for current state by [auth-parity-2026-11-01.md](auth-parity-2026-11-01.md),
+> which covers every app with a sign-in page and is re-checked daily by
+> `.github/workflows/auth-parity.yml`. This file stays as the 10-30 record.
+
 This is the inventory for the "Authentication parity" item in
 `docs/package-remediation-checklist-2026-10-28.md` (status row D2 in
 `docs/package-remediation-status.md`). It reports what was checked. It changes
