@@ -400,3 +400,39 @@ Still the owner's:
 - the Substrata outage logs;
 - Morulia Q2 and Q3;
 - one real password reset on each of the three apps.
+
+## evig on AccountKit, staged (2026-11-01)
+
+Step 1 of the plan (NextAuth → AccountKit), first app: evig.
+
+- **AccountKit 0.15.0** ([#49](https://github.com/bitbaum/accountkit/pull/49),
+  published by `release.yml`) adds `ids: "uuid"`. evig's tables key people
+  on a `uuid`, and better-auth's own string ids could never become an evig
+  row for a person AccountKit creates itself.
+- **evig [#637](https://github.com/bitbaum/evig/pull/637)** stages the shared
+  runtime behind `AUTH_RUNTIME=accountkit` (off). It follows Vitareba #134,
+  plus these:
+  - the import attaches mirror triggers, so all of evig's direct `users`
+    writers keep `auth_users` in step;
+  - `src/lib/auth/claims.ts` holds the staff/verification rule once, for both
+    runtimes;
+  - the bridge also answers `signin/orangecat` and "Connect OrangeCat".
+
+  Proof:
+  - journeys on real Postgres + the full migration chain, 10/10, run in CI's
+    drift job;
+  - a local browser run of the built app with the switch on.
+
+  It is not deployed evidence.
+- **OrangeCat [#1501](https://github.com/bitbaum/orangecat/pull/1501)** adds
+  `/api/auth/oauth2/callback/orangecat` to client `evig`, beside the Auth.js
+  URI.
+
+Open before evig's switch:
+- **Owner decision.** AccountKit refuses unverified password sign-in when mail
+  is on; evig allows it and gates only staff powers. The rehearsal prints how
+  many accounts this touches.
+- The import under locks, then deployed proof with an approved test identity.
+
+Resume at: evig #637 and orangecat #1501 through the sweep, then kivvi,
+then loki, petvity and surf-your-life, one at a time, with the same pattern.
