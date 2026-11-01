@@ -347,8 +347,8 @@ review, the unattended release proof and the final census.
   - a `trustedOrigins` entry for Apple if Apple sign-in fails.
 
 Resume at, in checklist order:
-1. NextAuth → AccountKit for evig, kivvi, loki, petvity and surf-your-life, one
-   app at a time;
+1. ~~NextAuth → AccountKit for evig, kivvi, loki, petvity and surf-your-life, one
+   app at a time~~ (done 2026-11-01, see the last section);
 2. AI Kit / ChatKit;
 3. truth dependencies and package pages;
 4. the unattended release proof;
@@ -547,3 +547,60 @@ The next product to stage AccountKit uses the package and copies nothing.
 Resume at: the switches, as the owner approves test identities (evig first).
 Then AI Kit / ChatKit, truth dependencies and package pages, the unattended
 release proof, and the final census.
+
+## All five switched to AccountKit (2026-11-01, evening)
+
+Step 1 of the plan is done. The owner asked for it to be made to work and
+switched on. kivvi, petvity, surf-your-life, evig and loki answer sign-in from
+AccountKit (`AUTH_RUNTIME=accountkit` on the box). Auth.js stays in each tree
+for a rollback.
+
+- **The switch** is Loki's `accountkit-switch.yml`
+  ([loki#1510](https://github.com/bitbaum/loki/pull/1510)). It takes an app and
+  an action (`survey`, `switch` or `rollback`), runs over the deploy's SSH and
+  prints counts only.
+  - `switch` refuses while anyone would be locked out. It then:
+    - imports under locks and attaches the mirrors;
+    - sets the runtime and restarts;
+    - proves sign-in on the public site with a throwaway account it deletes
+      again;
+    - rolls back on any failure.
+- **The surveys** counted no one who would be locked out:
+
+  | App            | Accounts |
+  | -------------- | -------- |
+  | kivvi          | 4        |
+  | petvity        | 10       |
+  | surf-your-life | 2        |
+  | evig           | 21       |
+  | loki           | 15       |
+
+  Loki's GitHub-only case was empty, and Google and X were already paused
+  there. So neither Loki precondition (the bitbaum sign-in carrying GitHub, or
+  "Connect GitHub") blocked its switch. Both remain for new GitHub connections.
+- **Every switch's live proof passed.** A fresh account signed in through the
+  product's own sign-in route, read its session back and signed out.
+- **One defect surfaced, and it is fixed.** OrangeCat sign-in answered
+  `unavailable` on the four apps that offer it.
+  - Cause: AccountKit 0.18.0's compat layer called `/sign-in/oauth2`, which
+    better-auth 1.7 removed.
+  - Containment: loki and petvity, which have OrangeCat-linked people, were
+    rolled back within the hour.
+  - Fix: AccountKit 0.18.1
+    ([#55](https://github.com/bitbaum/accountkit/pull/55)) starts the sign-in
+    through `/sign-in/social`, with the redirect `/api/auth/callback/orangecat`,
+    which every client already accepted. A new journey test runs the whole
+    OIDC round-trip and fails on 0.18.0.
+  - Rollout: 0.18.1 is live in all five (loki #1511, petvity #161, surf #142,
+    and the fleet's floor raise for evig and kivvi). Loki and petvity were
+    switched again.
+  - Result: on each of the four, the OrangeCat button reaches OrangeCat's
+    authorize page.
+
+Still open, and needing the owner's approved test identity on each app:
+recovery, revocation, an OrangeCat sign-in through to its callback, and each
+app's own check (kivvi's company switch, a role change or staff demotion, and
+Loki's invite and publish).
+
+Resume at: step 2, AI Kit / ChatKit. Then truth dependencies and package pages,
+the unattended release proof, and the final census.
