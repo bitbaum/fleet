@@ -35,13 +35,14 @@ that follows anyone around.
 ## Where it lives: one service
 
 - **Engine:** the shared bitbaum sign-in (`STACK.md`, "Identity"), repo
-  `bitbaum/signin`, live at `signin.orangecat.ch`. Identities hang off the
+  `bitbaum/morulia` (renamed from `bitbaum/signin`, whose address GitHub
+  redirects), live at `signin.orangecat.ch`. Identities hang off the
   root account that service already holds. There is no second account store,
   because that would give every person two roots: two recoveries and two sets
   of passkeys.
-- **Planned:** rename `bitbaum/signin` to `bitbaum/morulia` while nothing
-  depends on the name yet. One repo holds the engine, the management screens
-  and the database, because both halves read and write the same records.
+- One repo holds the engine, the management screens and the database,
+  because both halves read and write the same records. Its host moves to
+  `morulia.orangecat.ch` while no app points at the old one yet.
 - Apps keep owning their accounts, as `STACK.md` requires. Morulia adds no
   further login provider.
 
@@ -68,7 +69,7 @@ everywhere, shared by every system. Morulia never creates one.
 ## Subjects
 
 The service derives a pairwise subject per app. As implemented in the
-service's `lib/subject.ts` (`bitbaum/signin`, live at `signin.orangecat.ch`):
+service's `lib/subject.ts` (`bitbaum/morulia`):
 
 - root: HMAC-SHA256(secret, `<sector>.<userId>`), where `sector` is the host
   of the app's first redirect URI. This is the value the plugin issues today,
@@ -88,12 +89,20 @@ upstream hook or our own extension point.
 |---|---|---|
 | The keeper | Identities are shown as linked | On; can be switched off per identity |
 | The keeper | Each identity's name, kind, place, languages | Free choice |
-| The organisation (its Solon constitution) | Whether identities may join and vote; one vote per identity or per keeper; which kinds it accepts; whether disclosed links are required | The organisation's choice |
+| The organisation (its Solon constitution) | Whether identities may join and vote; one vote per identity or per keeper; which kinds it accepts, and for which decisions; whether disclosed links or a state-verified identity are required | The organisation's choice |
 
 - Identities are legitimate by default, from any country or from places that
   are not nation states (a municipality, an area, a network state, a DAO).
-- Solon's humans-only decisions (`AID_DISBURSEMENT`, `MEMBERSHIP`, `SAFETY`,
-  `GOVERNANCE_RULES`) need an identity that declares a human keeper.
+- **Which kinds may vote, and on what, is each organisation's own rule**, set
+  in its Solon constitution. Solon sets no platform-wide rule: one
+  organisation may let agents and robots vote on everything, another may keep
+  some decisions to identities with a human keeper. Decided 2026-11-01.
+- **A state-verified identity is an option, never a requirement.** A keeper may
+  attach a check against a passport or a state number to one identity, if
+  they choose. Organisations that only want to deal with such identities may
+  require it; others will not. The check is a proof attached to that one
+  identity (rule 3), so it does not link the keeper's other identities.
+  Decided 2026-11-01.
 - An identity never makes claims with legal consequences (tax residency, KYC,
   contracts, payment rails). Those come from the keeper's legal identity,
   which stays private unless the keeper shares it.

@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { createArgs, parseDeclarations, seedArgs, seedFiles } from './create-app-repos.mjs';
+import { createArgs, parseDeclarations, planAction, renameArgs, seedArgs, seedFiles } from './create-app-repos.mjs';
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log(`  ✓ ${m}`); pass++; };
@@ -33,6 +33,18 @@ throws(() => parseDeclarations(doc([decl]), ['signin']), /package-repos/, 'a nam
 const real = JSON.parse(readFileSync(new URL('../../registers/package-repos.json', import.meta.url), 'utf8')).repos.map(d => d.name);
 const registered = parseDeclarations(readFileSync(new URL('../../registers/app-repos.json', import.meta.url), 'utf8'), real);
 ok(`the real register parses (${registered.length} repo(s))`);
+
+throws(() => parseDeclarations(doc([{ ...decl, renamedFrom: 'signin' }])), /renamedFrom/, 'a rename to the same name is refused');
+throws(() => parseDeclarations(doc([{ ...decl, name: 'morulia', renamedFrom: 'Sign In' }])), /renamedFrom/, 'a renamedFrom that is not a repo slug is refused');
+
+console.log('rename');
+const moved = { name: 'morulia', visibility: 'public', description: 'd', renamedFrom: 'signin' };
+eq(planAction(moved, n => n === 'signin'), 'rename', 'only the old name exists: rename it');
+eq(planAction(moved, () => true), 'none', 'the new name exists (the old one redirects): nothing to do');
+eq(planAction(moved, () => false), 'create', 'neither exists: create under the new name');
+eq(planAction(decl, () => false), 'create', 'a plain declaration that is missing is created');
+eq(planAction(decl, () => true), 'none', 'a plain declaration that exists is left alone');
+eq(renameArgs(moved), ['api', '--method', 'PATCH', 'repos/bitbaum/signin', '-f', 'name=morulia', '--silent'], 'the rename is one PATCH on the old name');
 
 console.log('creation');
 eq(createArgs(decl), ['repo', 'create', 'bitbaum/signin', '--public', '--description', 'd'], 'a public repo is created with no --source and no --add-readme');

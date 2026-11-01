@@ -13,7 +13,11 @@
  * which is the fleet auto-merge caller. The sweep runs from the default
  * branch, so a repo without it never merges a PR (bitbaum/signin #1 sat green
  * for 50 minutes, 2026-10-30). Everything else arrives by pull request; the
- * first one adds ci.yml. It never touches a repo that exists. Usage:
+ * first one adds ci.yml. It never touches a repo that exists, except one:
+ * a declaration with `renamedFrom` renames that repo to its new name when the
+ * new name does not exist yet (bitbaum/signin → bitbaum/morulia, 2026-11-01;
+ * an agent session may not write repo settings). GitHub redirects the old
+ * name. Usage:
  *   node scripts/repos/create-app-repos.mjs [--dry-run]
  */
 
@@ -22,7 +26,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { repoExists, toCreate } from '../packages/create-package-repos.mjs';
+import { repoExists } from '../packages/create-package-repos.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ORG = 'bitbaum';
@@ -46,8 +50,30 @@ export function parseDeclarations(text, packageNames = []) {
       throw new Error(`${d.name}: visibility must be one of ${VISIBILITIES.join(', ')} (stated, never defaulted)`);
     }
     if (!d.description) throw new Error(`${d.name}: description is required (it is the repo's description)`);
+    if (d.renamedFrom !== undefined) {
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(d.renamedFrom) || d.renamedFrom === d.name) {
+        throw new Error(`${d.name}: renamedFrom must be another repo name: ${JSON.stringify(d.renamedFrom)}`);
+      }
+    }
   }
   return repos;
+}
+
+/**
+ * What to do for one declaration: nothing when the repo exists under its name,
+ * rename when only its old name exists, otherwise create. The new name is
+ * asked first: after a rename GitHub redirects the old one, so it also reads
+ * as existing.
+ */
+export function planAction(decl, exists) {
+  if (exists(decl.name)) return 'none';
+  if (decl.renamedFrom && exists(decl.renamedFrom)) return 'rename';
+  return 'create';
+}
+
+/** The API call that renames `renamedFrom` to the declared name. */
+export function renameArgs(decl) {
+  return ['api', '--method', 'PATCH', `repos/${ORG}/${decl.renamedFrom}`, '-f', `name=${decl.name}`, '--silent'];
 }
 
 /** The `gh repo create` arguments for one declaration. The seed is a separate step. */
@@ -93,12 +119,22 @@ function main() {
   const dryRun = process.argv.includes('--dry-run');
   const packageNames = (JSON.parse(readFileSync(join(ROOT, 'registers', 'package-repos.json'), 'utf8')).repos ?? []).map(d => d.name);
   const declarations = parseDeclarations(readFileSync(join(ROOT, 'registers', 'app-repos.json'), 'utf8'), packageNames);
-  const missing = toCreate(declarations, declarations.filter(d => repoExists(d.name)).map(d => d.name));
-  if (missing.length === 0) {
+  const plans = declarations.map(d => ({ decl: d, action: planAction(d, repoExists) })).filter(p => p.action !== 'none');
+  if (plans.length === 0) {
     console.log(`All ${declarations.length} declared app repo(s) exist. Nothing to create.`);
     return;
   }
-  for (const decl of missing) {
+  for (const { decl, action } of plans) {
+    if (action === 'rename') {
+      console.log(`→ ${ORG}/${decl.renamedFrom} renamed to ${ORG}/${decl.name}`);
+      if (dryRun) {
+        console.log('  dry run: not renamed.');
+        continue;
+      }
+      run('gh', renameArgs(decl), { stdio: ['ignore', 'ignore', 'pipe'] });
+      console.log(`  ✓ renamed ${ORG}/${decl.renamedFrom} to ${ORG}/${decl.name}`);
+      continue;
+    }
     console.log(`→ ${ORG}/${decl.name} (${decl.visibility}, seeded with ${seedFiles().join(', ')})`);
     if (dryRun) {
       console.log('  dry run: not created.');
