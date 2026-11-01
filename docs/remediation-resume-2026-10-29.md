@@ -458,3 +458,73 @@ others still on NextAuth) follow the same rule as each moves to AccountKit.
 
 Resume at: evig's switch (the import, then deployed proof), then kivvi, loki,
 petvity and surf-your-life, one at a time.
+
+## kivvi, petvity, surf-your-life and loki on AccountKit, staged (2026-11-01, later)
+
+Step 1 of the plan, the four remaining apps, each with evig #637's pattern.
+The pattern: AccountKit's tables under `auth_`, a rollback-only import that
+attaches `users` ↔ `auth_users` mirror triggers, a `next-auth/react` bridge,
+and `AUTH_RUNTIME=accountkit`, off.
+
+- **kivvi [#209](https://github.com/bitbaum/kivvi/pull/209)**, merged.
+  Credentials only. Company, membership and role claims are re-read on every
+  request (`lib/session-claims.ts`, one rule for both runtimes). The
+  middleware now runs on Node. A fix rode along: `tailwind.config.ts` loads
+  `tailwindcss-animate` by import, because under Node 24 `next dev` exited on
+  `require`.
+- **petvity [#156](https://github.com/bitbaum/petvity/pull/156)**, merged.
+  Credentials and OrangeCat; `orangecat_sub` is imported as the OIDC pair.
+- **surf-your-life [#138](https://github.com/bitbaum/surf-your-life/pull/138)**,
+  merged. The same shape as petvity. It also fixes a live bug: with `ADMIN_EMAILS`
+  set, every password sign-in demoted a practitioner to client.
+  `ADMIN_EMAILS` now only promotes.
+- **AccountKit 0.17.0** ([#51](https://github.com/bitbaum/accountkit/pull/51))
+  adds `legacyPassword: { matches, verify }`, for a product's own hash format.
+  Loki's scrypt `hex.salt` needed it.
+- **loki [#1503](https://github.com/bitbaum/loki/pull/1503)**. It covers:
+  - the three credentials flows (email, invite, owner key against the stored
+    hash);
+  - OrangeCat sign-in, or linking when signed in. The studio's server
+    `signIn` reaches it by redirect;
+  - a third trigger that copies AccountKit's OrangeCat token set into Loki's
+    `accounts`, where publish, promote and wallet read it;
+  - a placeholder address for people with none (X).
+
+  GitHub, Google and X are hidden on this runtime.
+- **OrangeCat [#1508](https://github.com/bitbaum/orangecat/pull/1508)** adds
+  `/api/auth/oauth2/callback/orangecat` for clients `petvity`,
+  `surf-your-life` and `loki`.
+
+Shared rules in all four:
+- the session is re-read from the product's row on every request;
+- AccountKit's own credential endpoints answer 404, so the product's writers
+  stay the only ones and every hash stays readable by Auth.js for rollback;
+- changing your own password keeps that session (`<app>.keep_session`) and
+  ends the others.
+
+Proof, for each app:
+- real-Postgres journeys through the bridge on the migration chain and the
+  import: kivvi 11, petvity 16, surf 16, loki 16;
+- the existing browser account journey, passed locally on both runtimes;
+- CI: kivvi, petvity and surf run that journey as a matrix (`authjs`,
+  `accountkit`), and loki runs its journeys in `test:db`.
+
+None of this is deployed evidence, and no import has run.
+
+Open before each switch:
+- the OrangeCat callback live (petvity, surf, loki);
+- the import under locks;
+- deployed proof with an approved test identity.
+
+Loki also needs two more things before its switch:
+- GitHub and Google through the bitbaum sign-in (the owner's provider
+  credentials), or the people who sign in only that way set a password first;
+- a separate "Connect GitHub" step for the `repo`/`workflow` token.
+
+Follow-up: the `next-auth/react` bridge now exists in five apps (evig, kivvi,
+petvity, surf, loki). The fleet rule says it belongs in AccountKit as one
+module, to be extracted before any further app copies it.
+
+Resume at: the switches, as the owner approves test identities (evig first).
+Then AI Kit / ChatKit, truth dependencies and package pages, the unattended
+release proof, and the final census.
