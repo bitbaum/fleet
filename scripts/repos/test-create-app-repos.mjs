@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { createArgs, parseDeclarations, planAction, renameArgs, seedArgs, seedFiles } from './create-app-repos.mjs';
+import { createArgs, metadataArgs, parseDeclarations, planAction, renameArgs, seedArgs, seedFiles } from './create-app-repos.mjs';
 
 let pass = 0, fail = 0;
 const ok = (m) => { console.log(`  ✓ ${m}`); pass++; };
@@ -36,6 +36,13 @@ ok(`the real register parses (${registered.length} repo(s))`);
 
 throws(() => parseDeclarations(doc([{ ...decl, renamedFrom: 'signin' }])), /renamedFrom/, 'a rename to the same name is refused');
 throws(() => parseDeclarations(doc([{ ...decl, name: 'morulia', renamedFrom: 'Sign In' }])), /renamedFrom/, 'a renamedFrom that is not a repo slug is refused');
+
+throws(() => parseDeclarations(doc([{ ...decl, homepage: 'http://signin.orangecat.ch' }])), /https/, 'a homepage that is not https is refused');
+eq(parseDeclarations(doc([{ ...decl, homepage: 'https://morulia.orangecat.ch' }]))[0].homepage, 'https://morulia.orangecat.ch', 'an https homepage parses');
+
+console.log('metadata');
+eq(metadataArgs(decl), ['repo', 'edit', 'bitbaum/signin', '--description', 'd'], 'without a homepage only the description is set');
+eq(metadataArgs({ ...decl, homepage: 'https://x.orangecat.ch' }).slice(-2), ['--homepage', 'https://x.orangecat.ch'], 'a declared homepage is set too');
 
 console.log('rename');
 const moved = { name: 'morulia', visibility: 'public', description: 'd', renamedFrom: 'signin' };

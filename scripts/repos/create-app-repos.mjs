@@ -17,7 +17,10 @@
  * a declaration with `renamedFrom` renames that repo to its new name when the
  * new name does not exist yet (bitbaum/signin → bitbaum/morulia, 2026-11-01;
  * an agent session may not write repo settings). GitHub redirects the old
- * name. Usage:
+ * name. For every declared repo it also keeps the description and homepage
+ * equal to the declaration: only those two fields, best effort (a rename does
+ * not carry a new description, and bitbaum/morulia kept signin's homepage).
+ * Usage:
  *   node scripts/repos/create-app-repos.mjs [--dry-run]
  */
 
@@ -50,6 +53,9 @@ export function parseDeclarations(text, packageNames = []) {
       throw new Error(`${d.name}: visibility must be one of ${VISIBILITIES.join(', ')} (stated, never defaulted)`);
     }
     if (!d.description) throw new Error(`${d.name}: description is required (it is the repo's description)`);
+    if (d.homepage !== undefined && !/^https:\/\/[^\s/]+(\/\S*)?$/.test(d.homepage)) {
+      throw new Error(`${d.name}: homepage must be an https URL: ${JSON.stringify(d.homepage)}`);
+    }
     if (d.renamedFrom !== undefined) {
       if (!/^[a-z0-9][a-z0-9-]*$/.test(d.renamedFrom) || d.renamedFrom === d.name) {
         throw new Error(`${d.name}: renamedFrom must be another repo name: ${JSON.stringify(d.renamedFrom)}`);
@@ -74,6 +80,13 @@ export function planAction(decl, exists) {
 /** The API call that renames `renamedFrom` to the declared name. */
 export function renameArgs(decl) {
   return ['api', '--method', 'PATCH', `repos/${ORG}/${decl.renamedFrom}`, '-f', `name=${decl.name}`, '--silent'];
+}
+
+/** The `gh repo edit` arguments that make the repo's metadata match the declaration. */
+export function metadataArgs(decl) {
+  const args = ['repo', 'edit', `${ORG}/${decl.name}`, '--description', decl.description];
+  if (decl.homepage) args.push('--homepage', decl.homepage);
+  return args;
 }
 
 /** The `gh repo create` arguments for one declaration. The seed is a separate step. */
@@ -119,12 +132,9 @@ function main() {
   const dryRun = process.argv.includes('--dry-run');
   const packageNames = (JSON.parse(readFileSync(join(ROOT, 'registers', 'package-repos.json'), 'utf8')).repos ?? []).map(d => d.name);
   const declarations = parseDeclarations(readFileSync(join(ROOT, 'registers', 'app-repos.json'), 'utf8'), packageNames);
-  const plans = declarations.map(d => ({ decl: d, action: planAction(d, repoExists) })).filter(p => p.action !== 'none');
-  if (plans.length === 0) {
-    console.log(`All ${declarations.length} declared app repo(s) exist. Nothing to create.`);
-    return;
-  }
+  const plans = declarations.map(d => ({ decl: d, action: planAction(d, repoExists) }));
   for (const { decl, action } of plans) {
+    if (action === 'none') continue;
     if (action === 'rename') {
       console.log(`→ ${ORG}/${decl.renamedFrom} renamed to ${ORG}/${decl.name}`);
       if (dryRun) {
@@ -143,6 +153,15 @@ function main() {
     create(decl);
     console.log(`  ✓ created ${ORG}/${decl.name}`);
   }
+  if (dryRun) return;
+  for (const { decl } of plans) {
+    try {
+      run('gh', metadataArgs(decl), { stdio: ['ignore', 'ignore', 'pipe'] });
+    } catch {
+      console.log(`  ! could not set the description or homepage of ${ORG}/${decl.name}`);
+    }
+  }
+  console.log(`${declarations.length} declared app repo(s): metadata matches the register.`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
