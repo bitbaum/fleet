@@ -230,6 +230,11 @@ jobs:
       - name: Required app check policy regression tests
         run: node --test scripts/ci/app-required-checks.test.mjs
 
+      # The daily auth parity check's verdicts: configured-but-missing and
+      # shown-but-broken fail, not-configured-yet does not.
+      - name: Auth parity verdicts
+        run: node --test scripts/ci/auth-parity.test.mjs
+
       - name: Verified release notifications
         run: node scripts/packages/test-release-notify.mjs
 

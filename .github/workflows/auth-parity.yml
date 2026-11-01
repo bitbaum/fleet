@@ -1,0 +1,76 @@
+# Every sign-in method on every app's sign-in page, checked live each day.
+#
+# The owner's rule (2026-11-01): every app offers email + password, the
+# emailed sign-in link, passkeys, 2FA, recovery, "Continue with OrangeCat"
+# and "Continue with Google, Apple, GitHub, X or Facebook" (Morulia).
+# scripts/ci/auth-parity.mjs loads each sign-in page in Chromium at 390px and
+# asks each server what it serves. The run FAILS on a method that is
+# configured but not shown, or shown but broken. A method that is not
+# configured yet is reported and does not fail.
+#
+# Read-only, as docs/auth-parity-2026-10-30.md probed: no account, no
+# credential, no mail. OIDC stops at the authorize leg (requested once, not
+# followed). The app list is scripts/ci/auth-parity.apps.json.
+name: Auth parity
+
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: 'Comma-separated app names from auth-parity.apps.json (default: all)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auth-parity
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # No package.json here on purpose; same scratch install as render-sweep.yml.
+      - name: Install playwright
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
+          npm init -y >/dev/null
+          npm i --no-audit --no-fund playwright >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Self-test the verdicts
+        run: node --test scripts/ci/auth-parity.test.mjs
+
+      - name: Probe every sign-in page
+        env:
+          PLAYWRIGHT_FROM: ${{ runner.temp }}/pw
+          APPS: ${{ inputs.apps }}
+        run: |
+          set -uo pipefail
+          set +e
+          node scripts/ci/auth-parity.mjs --out auth-parity-report
+          status=$?
+          set -e
+          if [ -f auth-parity-report/auth-parity.md ]; then
+            cat auth-parity-report/auth-parity.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-parity-report
+          path: auth-parity-report/
+          if-no-files-found: ignore

@@ -777,6 +777,15 @@ api/admin/auth/cron/job paths before any request); no AI calls. Self-tested
 before each sweep. **Client sites are swept and baselined, never fixed from
 here.** To lower a count: fix the site, then `--emit-baseline` in the PR.
 
+**Sign-in methods on every sign-in page** — `scripts/ci/auth-parity.mjs`
+(`auth-parity.yml`, daily + on demand). For every app in
+`auth-parity.apps.json` it reads the sign-in page in Chromium at 390px and asks
+the server what it serves, then reports EP, ML, PK, 2FA, recovery, OrangeCat
+and the shared sign-in (Morulia) per app. It fails on configured-but-missing
+and shown-but-broken; not-configured-yet is reported only. Read-only: no
+account, no credential, no mail, and OIDC stops at the authorize leg. The
+inventory it starts from is `docs/auth-parity-2026-11-01.md`.
+
 **The feedback launcher sitting on host UI** — fixed in the widget itself
 (loki `widget/`), so all ~20 embedding sites get it without touching them. The
 launcher hit-tests candidate slots and never sits on a control; it hides
