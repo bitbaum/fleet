@@ -45,8 +45,14 @@ describe("signInMethods", () => {
   });
 
   it("shows each OIDC button exactly when its three values are set", () => {
-    expect(signInMethods({ ...BROKER }, false).signin).toBe(true);
-    expect(signInMethods({ ...BROKER, SIGNIN_CLIENT_SECRET: " " }, false).signin).toBe(false);
+    // Since AccountKit 0.24 the shared sign-in shows only with at least one
+    // provider the service publishes (signinProviders).
+    const published = { signinProviders: ["Google"] };
+    expect(signInMethods({ ...BROKER }, false, published).signin).toBe(true);
+    expect(signInMethods({ ...BROKER }, false, { signinProviders: [] }).signin).toBe(false);
+    expect(signInMethods({ ...BROKER, SIGNIN_CLIENT_SECRET: " " }, false, published).signin).toBe(
+      false,
+    );
     expect(signInMethods({ ...ORANGECAT }, false).orangecat).toBe(true);
     expect(signInMethods({ ORANGECAT_OAUTH_CLIENT_ID: "app" }, false).orangecat).toBe(false);
   });
