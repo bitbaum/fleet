@@ -1,17 +1,57 @@
 {
-  "generatedAt": "2026-11-01T21:01:24.963Z",
+  "generatedAt": "2026-11-02T07:58:38.378Z",
   "packages": [
+    {
+      "slug": "mail-kit",
+      "name": "@bitbaum/mail-kit",
+      "repo": "https://github.com/bitbaum/mail-kit",
+      "description": "The fleet's one email layer: Resend over raw fetch, zero dependencies, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
+      "version": "0.2.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/mail-kit@^0.2.0"
+      },
+      "adopters": 22,
+      "adopterNames": [
+        "accountkit",
+        "aoz-begleitung",
+        "biaslens",
+        "botsmann",
+        "causius",
+        "datacat",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "hirnli",
+        "kivvi",
+        "loki",
+        "orangecat",
+        "petvity",
+        "reparaturbonus-zh",
+        "s-ink",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.2.0"
+      }
+    },
     {
       "slug": "accountkit",
       "name": "@bitbaum/accountkit",
       "repo": "https://github.com/bitbaum/accountkit",
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.20.0",
+      "version": "0.21.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.20.0"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/accountkit#99d43a4439da4b57a471ebceae98a1203861d070"
       },
-      "adopters": 20,
+      "adopters": 21,
       "adopterNames": [
         "aoz-begleitung",
         "biaslens",
@@ -28,6 +68,7 @@
         "morulia",
         "orangecat",
         "petvity",
+        "reparaturbonus-zh",
         "skif",
         "solon",
         "substrata",
@@ -35,8 +76,9 @@
         "vitareba"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.20.0"
+        "source": "git",
+        "tag": "v0.21.0",
+        "commit": "99d43a4439da4b57a471ebceae98a1203861d070"
       }
     },
     {
@@ -75,43 +117,6 @@
       "release": {
         "source": "npm",
         "version": "1.22.0"
-      }
-    },
-    {
-      "slug": "mail-kit",
-      "name": "@bitbaum/mail-kit",
-      "repo": "https://github.com/bitbaum/mail-kit",
-      "description": "The fleet's one email layer: Resend over raw fetch, zero dependencies, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
-      "version": "0.2.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/mail-kit@^0.2.0"
-      },
-      "adopters": 19,
-      "adopterNames": [
-        "accountkit",
-        "aoz-begleitung",
-        "biaslens",
-        "botsmann",
-        "causius",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "hirnli",
-        "kivvi",
-        "loki",
-        "orangecat",
-        "petvity",
-        "s-ink",
-        "skif",
-        "solon",
-        "surf-your-life",
-        "vitareba"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.2.0"
       }
     },
     {
