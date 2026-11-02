@@ -305,7 +305,8 @@
       "git+https://github.com/bitbaum/accountkit.git#9c8d93ade6945615b5204d8eaad5c717078b7e17",
       "https://codeload.github.com/bitbaum/accountkit/tar.gz/ec5654270527757aa0e762f09b5aaabf272389a2",
       "git+https://github.com/bitbaum/accountkit.git#ec5654270527757aa0e762f09b5aaabf272389a2",
-      "0.2.1"
+      "0.2.1",
+      "0.26.0"
     ]
   },
   "deploymentReceipts": {
