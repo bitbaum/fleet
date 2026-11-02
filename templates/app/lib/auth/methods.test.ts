@@ -34,10 +34,10 @@ describe("signInMethods", () => {
     expect(methods.verifyEmail).toBe(false);
   });
 
-  it("offers the magic link and demands verification once mail works", () => {
+  it("offers the magic link once mail works, and never walls sign-in behind confirmation", () => {
     const methods = signInMethods({ NODE_ENV: "production" }, true);
     expect(methods.magicLink).toBe(true);
-    expect(methods.verifyEmail).toBe(true);
+    expect(methods.verifyEmail).toBe(false);
   });
 
   it("prints the magic link locally in development", () => {
