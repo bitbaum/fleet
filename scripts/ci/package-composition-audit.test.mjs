@@ -151,3 +151,46 @@ test("an undocumented exception cannot bypass adoption", () =>
     );
     assert.ok(auditComposition(dir, baseline).length);
   }));
+
+test("a block may bind through the shared package that wraps it (via)", () =>
+  fixture((dir) => {
+    writeFileSync(
+      join(dir, "package.json"),
+      JSON.stringify({
+        dependencies: {
+          "@bitbaum/sitekit": "^0.4.0",
+          "@bitbaum/mail-kit": "^0.2.0",
+          "@bitbaum/accountkit": "^0.25.0",
+        },
+      }),
+    );
+    const plan = (via) =>
+      JSON.stringify({
+        blocks: {
+          shell: {
+            package: "@bitbaum/sitekit",
+            bindings: [{ file: "shell.tsx", symbols: ["SiteMasthead"] }],
+          },
+          mail: {
+            package: "@bitbaum/mail-kit",
+            bindings: [{ file: "auth.ts", symbols: ["createAuthMailer"], ...(via ? { via } : {}) }],
+          },
+        },
+      });
+    writeFileSync(
+      join(dir, "auth.ts"),
+      "import { createAuthMailer } from '@bitbaum/accountkit/auth/mail'; export const m = createAuthMailer({});",
+    );
+    const mailFindings = (via) => {
+      writeFileSync(join(dir, "package-plan.json"), plan(via));
+      return auditComposition(dir, { ...baseline, mail: { package: "@bitbaum/mail-kit" } }).filter((f) =>
+        f.startsWith("mail:"),
+      );
+    };
+    assert.deepEqual(mailFindings(null), ["mail: auth.ts does not import its declared package"]);
+    assert.deepEqual(mailFindings("@bitbaum/accountkit"), []);
+    assert.deepEqual(mailFindings("@bitbaum/chatkit"), [
+      "mail: @bitbaum/chatkit (via) is not installed",
+      "mail: auth.ts does not import its declared package",
+    ]);
+  }));
