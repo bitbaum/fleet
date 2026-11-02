@@ -8,4 +8,3 @@
 # the same PR that adds the line.
 
 aoz-begleitung/src/app/layout.tsx           # not migrated: left to its owner's session (2026-11-02)
-sbb-fundbuero/app/layout.tsx                # preconnects to Google Fonts; not migrated yet
