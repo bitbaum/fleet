@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T20:57:54.042Z",
+  "generatedAt": "2026-11-02T21:08:00.051Z",
   "packages": [
     {
       "slug": "mail-kit",
@@ -11,7 +11,7 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/mail-kit@^0.2.0"
       },
-      "adopters": 22,
+      "adopters": 23,
       "adopterNames": [
         "accountkit",
         "aoz-begleitung",
@@ -28,6 +28,7 @@
         "loki",
         "orangecat",
         "petvity",
+        "printcraft",
         "reparaturbonus-zh",
         "s-ink",
         "skif",
@@ -51,7 +52,7 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/accountkit@^0.24.0"
       },
-      "adopters": 21,
+      "adopters": 22,
       "adopterNames": [
         "aoz-begleitung",
         "biaslens",
@@ -68,6 +69,7 @@
         "morulia",
         "orangecat",
         "petvity",
+        "printcraft",
         "reparaturbonus-zh",
         "skif",
         "solon",
