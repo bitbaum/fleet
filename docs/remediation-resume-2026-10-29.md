@@ -622,10 +622,17 @@ The OrangeCat proof found two defects, both fixed:
   them.** Fix: Loki
   [#1528](https://github.com/bitbaum/loki/pull/1528).
 
-Not proven by a machine:
+On 2026-11-02 `prove` also covered what had been left to people:
 
-- a reset mail arriving in a real inbox;
-- a Loki publish with a token that a real sign-in stored.
+- **A real password reset on all five.** The product's forgot-password page
+  sent the mail to a throwaway real inbox (mail.tm). Its link set a new
+  password, and that password signed in.
+- **Loki's OrangeCat token.** The token a real OrangeCat sign-in left in
+  Loki's `accounts` is accepted by OrangeCat, as publish needs.
+- **GitHub on Loki.** It signs in through Loki's own registered GitHub app
+  (AccountKit 0.22, [loki#1551](https://github.com/bitbaum/loki/pull/1551)),
+  with the `repo` and `workflow` grant and "Connect GitHub". It no longer
+  waits on the bitbaum sign-in's provider credentials.
 
 Resume at: step 2, AI Kit / ChatKit. Then truth dependencies and package pages,
 the unattended release proof, and the final census.
