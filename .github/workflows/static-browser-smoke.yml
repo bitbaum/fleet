@@ -1,0 +1,83 @@
+# Browser evidence for a content site: build it, serve the production build,
+# draw each path in Chromium at 320, 390 and 1280px, and fail on an error
+# status or any request to Google Fonts. Screenshots are artifacts.
+#
+# A site with no accounts, database or journeys of its own calls this from its
+# `browser-smoke.yml`, which is the workflow the package rollout gate
+# (scripts/ci/package-rollout-gate.mjs) requires of a consumer:
+#
+#   name: Browser smoke
+#   on: { pull_request: { branches: [main] }, push: { branches: [main] }, workflow_dispatch: {} }
+#   jobs:
+#     smoke:
+#       uses: bitbaum/fleet/.github/workflows/static-browser-smoke.yml@main
+#       with:
+#         paths: / /de
+#
+# Playwright is installed here, pinned, not added to the site: a content site
+# should not carry a browser driver in its lockfile to be drawn once per PR.
+name: Static browser smoke
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: Space-separated paths to draw
+        type: string
+        default: /
+      working-directory:
+        description: Where the app's package.json is
+        type: string
+        default: .
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: --max-old-space-size=4096
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: bitbaum/fleet
+          path: .fleet-smoke
+          sparse-checkout: scripts/test/static-browser-smoke.mjs
+          sparse-checkout-cone-mode: false
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: ${{ inputs.working-directory }}/package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ${{ inputs.working-directory }}/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Serve the production build
+        run: |
+          pnpm exec next start -p 3100 > "$RUNNER_TEMP/next.log" 2>&1 &
+          for i in $(seq 60); do curl -fsS -o /dev/null http://127.0.0.1:3100/ && exit 0; curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3100/ | grep -qv '^000$' && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/next.log"; exit 1
+      - name: Install the browser driver (pinned, outside the app)
+        run: npm install --prefix "$RUNNER_TEMP/pw" --no-save --no-audit --no-fund playwright-core@1.64.1
+      - name: Draw every path at 320, 390 and 1280px
+        env:
+          BASE_URL: http://127.0.0.1:3100
+          SMOKE_PATHS: ${{ inputs.paths }}
+          PLAYWRIGHT_CORE: ${{ runner.temp }}/pw/node_modules/playwright-core
+          BROWSER_EXECUTABLE: /usr/bin/google-chrome
+          OUT: ${{ github.workspace }}/browser-smoke-artifacts
+        run: node "$GITHUB_WORKSPACE/.fleet-smoke/scripts/test/static-browser-smoke.mjs"
+      - name: Keep the screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-smoke
+          path: browser-smoke-artifacts/
+          retention-days: 14
+          if-no-files-found: warn

@@ -211,6 +211,18 @@ workflow on the candidate commit. Other repositories retain package-specific
 requirements, and representative deployment proof is still required.
 
 
+### Content sites
+
+A site with no accounts, database or journeys of its own still needs real
+browser evidence before a shared package reaches it: tokens and faces change
+how it looks. Its `browser-smoke.yml` calls
+`.github/workflows/static-browser-smoke.yml`, which builds the site, serves the
+production build, draws each listed path in Chromium at 320, 390 and 1280px
+(`scripts/test/static-browser-smoke.mjs`) and fails on an error status or any
+request to Google Fonts. Overflow is reported as a warning. Screenshots are
+kept as the `browser-smoke` artifact. Canary artifacts and deployment proof
+are still required.
+
 ### Browser jobs inside combined consumer CI
 
 `consumerChecks` may require `workflow.yml#Exact job name` alongside the workflow.
