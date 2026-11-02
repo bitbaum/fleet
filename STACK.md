@@ -20,7 +20,7 @@ classes. George's standing decision (2026-09-01): uniform on the table below.
 | Validation | zod | — |
 | ORM / DB access | **Drizzle ORM** + `pg` driver | orangecat, botsmann: supabase-js (self-hosted Supabase architecture: RLS/auth/PostgREST). loki runner & ivy-portal: better-sqlite3 for embedded local state. |
 | Database | Postgres (self-hosted; Supabase where the app is Supabase-native) | loki runner/ivy: SQLite embedded |
-| Auth | **Every app owns its accounts** (decided 2026-10-11): **`better-auth` 1.x** on Drizzle + `pg`, offering every method — email + password with verification, magic link via `@bitbaum/mail-kit`, passkeys, TOTP 2FA, the shared bitbaum sign-in (Google, GitHub, X, Meta, Apple) and OrangeCat, both as OIDC. Roles live in the app's own users table. One package: `@bitbaum/accountkit/auth`. See "Identity". | orangecat itself is the identity provider (Supabase Auth). aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) pre-date better-auth — migrate on contact, not on a schedule |
+| Auth | **Every app owns its accounts** (decided 2026-10-11): **`better-auth` 1.x** on Drizzle + `pg`, offering every method — email + password with verification, magic link via `@bitbaum/mail-kit`, passkeys, TOTP 2FA, the shared bitbaum sign-in (every free provider Morulia holds keys for: Google, Microsoft, Facebook, GitHub, LinkedIn, Discord, GitLab, Slack, Twitch, Reddit) and OrangeCat, both as OIDC. Roles live in the app's own users table. One package: `@bitbaum/accountkit/auth`. See "Identity". | orangecat itself is the identity provider (Supabase Auth). aoz-begleitung (hand-rolled `jose`), botsmann + printcraft (Supabase Auth) pre-date better-auth — migrate on contact, not on a schedule |
 | Test runner (apps) | Vitest | loki: bespoke tsx gate scripts (deliberate architecture — each script is a named gate) |
 | Test runner (packages) | node:test (zero-dep) | — |
 | E2E | Playwright | — |
@@ -45,17 +45,22 @@ users table"), reversed by the owner on 2026-10-11.
   2FA — all working with no external setup — plus two OIDC buttons, each shown
   only when its env is set and hidden (never broken) otherwise:
   - **the shared bitbaum sign-in** (`SIGNIN_ISSUER`, `SIGNIN_CLIENT_ID`,
-    `SIGNIN_CLIENT_SECRET`): one service that holds the Google, GitHub, X,
-    Meta and Apple credentials ONCE and speaks OIDC to every app, issuing a
-    per-app (pairwise) subject and creating no OrangeCat account. Social
+    `SIGNIN_CLIENT_SECRET`): one service that holds every sign-in
+    provider's credentials ONCE and speaks OIDC to every app, issuing a
+    per-app (pairwise) subject and creating no OrangeCat account. It
+    publishes the providers switched on at `/api/providers`, and
+    AccountKit's button (0.24+) names exactly those; the free ones and
+    their sources are morulia `docs/providers.md` (Apple and X are paid).
+    Keys are pasted as morulia repository secrets; its `provider-keys.yml`
+    writes them to the box and switches the button on in every app (loki
+    `box-env-keys.yml`). Social
     providers are never configured per app. The service is its own repo,
     `bitbaum/morulia`, renamed from `bitbaum/signin` (declared in
     `registers/app-repos.json`), live at
     `morulia.orangecat.ch` since 2026-11-01 (`/api/health`,
     `/.well-known/openid-configuration`; the first host,
     `signin.orangecat.ch`, is retired). No upstream provider is configured
-    on it yet and no app has `SIGNIN_ISSUER`/`SIGNIN_CLIENT_ID`, so the button
-    is still absent everywhere until both are set.
+    on it yet (2026-11-02), so the button is absent everywhere.
   - **OrangeCat** (`ORANGECAT_OAUTH_CLIENT_ID`, `_SECRET`, optional
     `_ISSUER`): one click for people who already have OrangeCat — one option
     among them, never a requirement.
