@@ -9,10 +9,3 @@
 
 aoz-begleitung/src/app/layout.tsx           # not migrated: left to its owner's session (2026-11-02)
 sbb-fundbuero/app/layout.tsx                # preconnects to Google Fonts; not migrated yet
-camille-boulangerie/src/app/layout.tsx      # migrating: camille-boulangerie#51
-farmaciadelparco/src/app/[lang]/layout.tsx  # migrating: farmaciadelparco#12
-farmaciadelparco/src/app/accesso/layout.tsx # migrating: farmaciadelparco#12
-s-ink/app/[locale]/layout.tsx               # migrating: s-ink#55
-s-ink/app/global-not-found.tsx              # migrating: s-ink#55
-truthseeker/src/app/layout.tsx              # migrating: truthseeker#74
-xhiva/src/app/fonts.ts                      # migrating: Xhiva#23
