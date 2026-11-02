@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T10:05:01.975Z",
+  "generatedAt": "2026-11-02T10:34:18.946Z",
   "packages": [
     {
       "slug": "mail-kit",
@@ -85,10 +85,10 @@
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.22.0",
+      "version": "1.23.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/ai-kit@^1.22.0"
+        "command": "pnpm add @bitbaum/ai-kit@^1.23.0"
       },
       "adopters": 20,
       "adopterNames": [
@@ -115,7 +115,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "1.22.0"
+        "version": "1.23.0"
       }
     },
     {
