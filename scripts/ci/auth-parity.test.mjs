@@ -9,6 +9,7 @@ import {
   mounted,
   renderReport,
   shownMethods,
+  standardFailures,
   verdict,
 } from "./auth-parity.mjs";
 
@@ -61,6 +62,14 @@ test("page reading: AccountKit's own labels, in German and English", () => {
   assert.equal(en.EP, false, "no password field and no password button");
 });
 
+test("a product's own GitHub button is not Morulia's", () => {
+  const ui = { clickables: ["Continue with OrangeCat", "Continue with GitHub"], passwordInputs: 1, links: [] };
+  assert.equal(shownMethods(ui).MOR, true, "without the flag it reads as Morulia");
+  assert.equal(shownMethods(ui, { ownProviders: ["github"] }).MOR, false);
+  const both = { ...ui, clickables: [...ui.clickables, "Continue with Google, Apple, GitHub, X or Facebook"] };
+  assert.equal(shownMethods(both, { ownProviders: ["github"] }).MOR, true);
+});
+
 test("better-auth: a validation error means mounted, a 404 means not", () => {
   assert.equal(mounted(400, { code: "VALIDATION_ERROR" }), true);
   assert.equal(mounted(200, { challenge: "x" }), true);
@@ -98,5 +107,60 @@ test("the app list is well formed", () => {
     assert.match(a.origin, /^https:\/\/[a-z0-9.-]+$/, a.name);
     assert.match(a.signIn, /^\//, a.name);
     assert.ok(["accountkit", "compat", "authjs", "gotrue", "legacy"].includes(a.runtime), a.name);
+    if (a.standard) assert.ok(["accountkit", "compat"].includes(a.runtime), `${a.name}: the standard is AccountKit`);
+    if (a.served === false) assert.ok(a.note, `${a.name}: say why it is not served`);
   }
+});
+
+const ok = { state: "ok" };
+const allOn = Object.fromEntries(["EP", "ML", "PK", "2FA", "REC", "OC", "MOR"].map((m) => [m, ok]));
+const words = { createAccount: new Set(["Konto erstellen", "Create an account"]), signIn: new Set(["Anmelden", "Sign in"]) };
+const app = { signIn: "/de/sign-in", signUp: "/de/sign-up" };
+const signInPage = (clickables, linkText = "Konto erstellen") => ({
+  clickables,
+  links: [{ text: linkText, href: "https://x.example/de/sign-up?next=%2Fde" }],
+});
+const signUpPage = { clickables: [], links: [{ text: "Anmelden", href: "https://x.example/de/sign-in" }] };
+const DE = [
+  "Weiter mit OrangeCat",
+  "Mit Passkey anmelden",
+  "Anmelden",
+  "Stattdessen einen Anmeldelink per E-Mail schicken",
+  "Passwort vergessen?",
+  "Konto erstellen",
+];
+
+test("the standard: AccountKit's screens as drawn pass", () => {
+  assert.deepEqual(standardFailures({ app, methods: allOn, signIn: signInPage(DE), signUp: signUpPage, words }), []);
+});
+
+test("the standard: a method switched off fails, MOR does not", () => {
+  const methods = { ...allOn, PK: { state: "off" }, MOR: { state: "off" } };
+  const out = standardFailures({ app, methods, signIn: signInPage(DE), signUp: signUpPage, words });
+  assert.deepEqual(out, ["PK is off, below the standard"]);
+});
+
+test("the standard: recovery above the sign-in link is out of order (Loki's own form)", () => {
+  const loki = ["Continue with OrangeCat", "Sign in with a passkey", "Forgot password?", "Sign in", "Email me a sign-in link instead"];
+  const out = standardFailures({ app, methods: allOn, signIn: signInPage(loki, "Create an account"), signUp: signUpPage, words });
+  assert.equal(out.length, 1);
+  assert.match(out[0], /REC comes before ML/);
+});
+
+test("the standard: the switch links say AccountKit's words", () => {
+  const out = standardFailures({ app, methods: allOn, signIn: signInPage(DE, "Jetzt starten"), signUp: signUpPage, words });
+  assert.deepEqual(out, ['the link to /de/sign-up says "Jetzt starten", not AccountKit\'s words']);
+  const none = standardFailures({ app, methods: allOn, signIn: { clickables: DE, links: [] }, signUp: signUpPage, words });
+  assert.deepEqual(none, ["no link to /de/sign-up on the sign-in page"]);
+  assert.deepEqual(
+    standardFailures({ app, methods: allOn, signIn: signInPage(DE, "Jetzt starten"), signUp: signUpPage, words: null }),
+    [],
+    "without the package, wording is not judged",
+  );
+});
+
+test("an app that is not served is listed, not probed", () => {
+  const md = renderReport([{ name: "keller", runtime: "accountkit", notServed: "keller#9", failures: [] }], "2026-11-02");
+  assert.match(md, /\| keller \| accountkit \|.*not served \(keller#9\)/);
+  assert.match(md, /No failures/);
 });
