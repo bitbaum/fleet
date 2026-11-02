@@ -75,7 +75,18 @@ export function auditComposition(
         continue;
       }
       const source = read(binding.file);
-      const importNames = [entry.package, ...installedNames].map((name) =>
+      // `via`: the block reaches the product through another shared package
+      // that wraps it (account mail is mail-kit through accountkit's
+      // createAuthMailer). The wrapper must be installed and imported here.
+      const via = typeof binding.via === "string" ? binding.via : null;
+      const viaNames = via
+        ? Object.entries(deps)
+            .filter(([name, spec]) => dependencyIdentity(name, spec) === via)
+            .map(([name]) => name)
+        : [];
+      if (via && !viaNames.length)
+        findings.push(`${feature}: ${via} (via) is not installed`);
+      const importNames = [entry.package, ...installedNames, ...viaNames].map((name) =>
         name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
       );
       const importsPackage = importNames.some((name) =>
