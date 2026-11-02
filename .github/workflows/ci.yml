@@ -251,6 +251,12 @@ jobs:
       - name: The hosted-Supabase audit still detects, and still stays quiet
         run: bash scripts/ci/test-hosted-supabase-audit.sh
 
+      - name: The Google Fonts audit still detects, and still stays quiet
+        run: bash scripts/ci/test-google-fonts-audit.sh
+
+      - name: The content-site browser smoke still fails on Google Fonts and on errors
+        run: node --test scripts/test/static-browser-smoke.test.mjs
+
       - name: The org-drift audit still detects, and still stays quiet
         run: bash scripts/ci/test-org-drift-audit.sh
 
