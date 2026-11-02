@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T10:34:18.946Z",
+  "generatedAt": "2026-11-02T19:30:01.857Z",
   "packages": [
     {
       "slug": "mail-kit",
@@ -85,10 +85,10 @@
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.23.0",
+      "version": "1.24.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/ai-kit@^1.23.0"
+        "command": "pnpm add @bitbaum/ai-kit@^1.24.0"
       },
       "adopters": 20,
       "adopterNames": [
@@ -115,7 +115,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "1.23.0"
+        "version": "1.24.0"
       }
     },
     {
@@ -340,6 +340,32 @@
       }
     },
     {
+      "slug": "chartkit",
+      "name": "@bitbaum/chartkit",
+      "repo": "https://github.com/bitbaum/chartkit",
+      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
+      "version": "0.7.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
+      },
+      "adopters": 8,
+      "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "evig",
+        "hirnli",
+        "kivvi",
+        "petvity",
+        "substrata",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.7.0"
+      }
+    },
+    {
       "slug": "ai-forms",
       "name": "ai-forms",
       "repo": "https://github.com/bitbaum/ai-forms",
@@ -365,39 +391,14 @@
       }
     },
     {
-      "slug": "chartkit",
-      "name": "@bitbaum/chartkit",
-      "repo": "https://github.com/bitbaum/chartkit",
-      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.7.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
-      },
-      "adopters": 7,
-      "adopterNames": [
-        "aoz-begleitung",
-        "evig",
-        "hirnli",
-        "kivvi",
-        "petvity",
-        "substrata",
-        "vitareba"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.7.0"
-      }
-    },
-    {
       "slug": "sitekit",
       "name": "@bitbaum/sitekit",
       "repo": "https://github.com/bitbaum/sitekit",
       "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
-      "version": "0.4.2",
+      "version": "0.5.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/sitekit@^0.4.2"
+        "command": "pnpm add @bitbaum/sitekit@^0.5.0"
       },
       "adopters": 7,
       "adopterNames": [
@@ -411,7 +412,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.4.2"
+        "version": "0.5.0"
       }
     },
     {
