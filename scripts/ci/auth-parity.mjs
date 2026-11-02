@@ -24,6 +24,13 @@
  * sign-in page that does not load. A method that is neither configured nor
  * shown is reported and does not fail: it is not switched on yet.
  *
+ * An app marked `standard` (AccountKit's own screens) is held to more: every
+ * method but MOR is on, they are drawn in AccountKit's order, and the links
+ * between sign-in and sign-up say AccountKit's own words ("Create an account",
+ * "Sign in", in the page's language), read from the published package, never
+ * from a copy here. MOR waits for Morulia's first provider, as everywhere.
+ * An app marked `served: false` is listed and not probed (keller#9).
+ *
  * SAFETY (the probe method of docs/auth-parity-2026-10-30.md): read-only.
  * No account is created, no credential is submitted and no mail is sent. The
  * server probes send empty bodies, which better-auth rejects at validation
@@ -59,6 +66,74 @@ export const PATTERNS = {
 
 const RECOVERY_HREF = /forgot|reset-?password|recover|passwort-vergessen/i;
 
+/** What an app on AccountKit's screens offers, and the order its SignInForm draws them in. */
+export const STANDARD_METHODS = ["EP", "ML", "PK", "2FA", "REC", "OC"];
+export const STANDARD_ORDER = ["OC", "PK", "ML", "REC"];
+
+const pathOf = (href) => {
+  try {
+    return new URL(href, "https://x.invalid").pathname.replace(/\/+$/, "") || "/";
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Where a page on the standard departs from it. `words` holds AccountKit's
+ * labels for every locale ({ createAccount: Set, signIn: Set }), or null when
+ * the package could not be loaded (then wording is not judged).
+ */
+export function standardFailures({ app, methods, signIn, signUp, words }) {
+  const out = [];
+  for (const m of STANDARD_METHODS) {
+    const state = methods[m]?.state;
+    if (state !== "ok" && state !== "shown") out.push(`${m} is ${state === "off" ? "off" : state}, below the standard`);
+  }
+  const at = STANDARD_ORDER.map((m) => [m, signIn.clickables.findIndex((t) => PATTERNS[m].test(t))]).filter(
+    ([, i]) => i >= 0,
+  );
+  for (let k = 1; k < at.length; k++)
+    if (at[k][1] < at[k - 1][1]) {
+      out.push(`${at[k][0]} comes before ${at[k - 1][0]}; AccountKit's order is ${STANDARD_ORDER.join(", ")}`);
+      break;
+    }
+  if (!words) return out;
+  const switchLink = (page, to, allowed, name) => {
+    if (!page || !to) return;
+    const target = pathOf(to);
+    const link = (page.links ?? []).find((l) => pathOf(l.href) === target);
+    if (!link) out.push(`no link to ${to} on the ${name} page`);
+    else if (!allowed.has(link.text)) out.push(`the link to ${to} says "${link.text}", not AccountKit's words`);
+  };
+  switchLink(signIn, app.signUp, words.createAccount, "sign-in");
+  switchLink(signUp, app.signIn, words.signIn, "sign-up");
+  return out;
+}
+
+/**
+ * AccountKit's own words for every locale it ships, from the installed
+ * package (the workflow installs it beside playwright). null when absent.
+ */
+export async function loadStandardWords(roots) {
+  for (const root of roots) {
+    const pkgDir = join(root, "node_modules", "@bitbaum", "accountkit");
+    if (!existsSync(join(pkgDir, "package.json"))) continue;
+    const pkg = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8"));
+    const entry = pkg.exports?.["./auth"];
+    const file = typeof entry === "string" ? entry : (entry?.import ?? entry?.default);
+    if (!file) continue;
+    const m = await import(join(pkgDir, typeof file === "string" ? file : file.default));
+    const words = { createAccount: new Set(), signIn: new Set() };
+    for (const locale of m.AUTH_LABEL_LOCALES) {
+      const l = m.authLabelsFor(locale);
+      words.createAccount.add(l.createAccount);
+      words.signIn.add(l.signIn);
+    }
+    return words;
+  }
+  return null;
+}
+
 /* ----------------------------- classification ---------------------------- */
 
 /**
@@ -75,11 +150,21 @@ export function verdict({ c, shown, broken }) {
   return { state: "off", fail: false };
 }
 
-/** What the page shows, from the visible texts and inputs Chromium found. */
-export function shownMethods(ui) {
+const PROVIDER_NAMES = /\b(google|apple|github|facebook)\b/gi;
+
+/**
+ * What the page shows, from the visible texts and inputs Chromium found.
+ * `ownProviders` are providers a product signs in with through its own
+ * registered app (Loki's GitHub, AccountKit `githubSignIn`): a button that
+ * names only those is the product's own, not Morulia's.
+ */
+export function shownMethods(ui, { ownProviders = [] } = {}) {
+  const own = new Set(ownProviders.map((p) => p.toLowerCase()));
+  const notOwn = (t) => [...t.matchAll(PROVIDER_NAMES)].some(([name]) => !own.has(name.toLowerCase()));
   const texts = ui.clickables.join("\n");
   const shown = {};
   for (const m of ["OC", "MOR", "PK", "ML", "REC"]) shown[m] = PATTERNS[m].test(texts);
+  if (own.size) shown.MOR = ui.clickables.some((t) => PATTERNS.MOR.test(t) && notOwn(t));
   // A recovery link may say only "Forgot?" or carry an icon; its address says it.
   if ((ui.links ?? []).some((l) => RECOVERY_HREF.test(new URL(l.href, "https://x").pathname))) shown.REC = true;
   shown.EP = ui.passwordInputs > 0 || PATTERNS.EP.test(texts.replace(PATTERNS.REC, ""));
@@ -275,6 +360,7 @@ export function renderReport(rows, date) {
   const head = `| App | Runtime | ${METHODS.join(" | ")} | Sign-up: OC / MOR | Verdict |`;
   const sep = `|${"---|".repeat(METHODS.length + 4)}`;
   const body = rows.map((r) => {
+    if (r.notServed) return `| ${r.name} | ${r.runtime} | ${METHODS.map(() => "·").join(" | ")} | · | not served (${r.notServed}) |`;
     if (r.error) return `| ${r.name} | ${r.runtime} | ${METHODS.map(() => "?").join(" | ")} | ? | FAIL: ${r.error} |`;
     const cells = METHODS.map((m) => MARK[r.methods[m].state]);
     const su = r.signUp ? `${r.signUp.OC ? "yes" : "—"} / ${r.signUp.MOR ? "yes" : "—"}` : "n/a";
@@ -286,6 +372,8 @@ export function renderReport(rows, date) {
     "",
     "yes = shown on the sign-in page (2FA: served). — = not configured and not shown.",
     "MISSING = configured but not shown. BROKEN = shown, but the server or IdP refuses it.",
+    "· = not served, so not probed. An app on the standard (AccountKit's screens) also fails when a",
+    "method other than MOR is off, out of AccountKit's order, or its sign-in/sign-up links use other words.",
     "",
     head,
     sep,
@@ -298,8 +386,9 @@ export function renderReport(rows, date) {
 
 /* ---------------------------------- run ---------------------------------- */
 
-export async function probeApp(ctx, app) {
+export async function probeApp(ctx, app, { words = null } = {}) {
   const row = { name: app.name, runtime: app.runtime, origin: app.origin, failures: [], methods: {} };
+  if (app.served === false) return { ...row, notServed: app.note ?? "not served" };
   const signInUrl = app.origin + app.signIn;
   let ui;
   try {
@@ -309,7 +398,7 @@ export async function probeApp(ctx, app) {
     if (!ui) return { ...row, error: `sign-in page did not load (${e.message.split("\n")[0]})` };
   }
   if (ui.status >= 400) return { ...row, error: `sign-in page answered ${ui.status}` };
-  const shown = shownMethods(ui);
+  const shown = shownMethods(ui, { ownProviders: app.ownProviders });
   if (app.providerButtons === "OC") {
     shown.OC = shown.OC || shown.MOR;
     shown.MOR = false;
@@ -329,11 +418,13 @@ export async function probeApp(ctx, app) {
     if (v.state === "missing") row.failures.push(`${m} is configured but not on ${app.signIn}`);
     if (v.state === "broken") row.failures.push(`${m} is shown but broken: ${b}`);
   }
+  let signUpPage = null;
   if (app.signUp) {
     try {
       const page = await readPage(ctx, app.origin + app.signUp);
+      signUpPage = page;
       if (page.status >= 400) throw new Error(`answered ${page.status}`);
-      const su = shownMethods(page);
+      const su = shownMethods(page, { ownProviders: app.ownProviders });
       if (app.providerButtons === "OC") {
         su.OC = su.OC || su.MOR;
         su.MOR = false;
@@ -345,6 +436,8 @@ export async function probeApp(ctx, app) {
       row.failures.push(`sign-up page ${app.signUp} did not load (${e.message.split("\n")[0]})`);
     }
   }
+  if (app.standard)
+    row.failures.push(...standardFailures({ app, methods: row.methods, signIn: ui, signUp: signUpPage, words }));
   row.clickables = ui.clickables;
   row.linksSeen = ui.links.filter((l) => /regist|sign-?up|konto|account|forgot|vergessen|reset/i.test(l.text + l.href)).map((l) => l.href);
   return row;
@@ -370,6 +463,8 @@ async function main() {
   const { apps } = JSON.parse(readFileSync(APPS_PATH, "utf8"));
   const chosen = only.length ? apps.filter((a) => only.includes(a.name)) : apps;
   const { chromium } = await loadPlaywright();
+  const words = await loadStandardWords([process.env.PLAYWRIGHT_FROM, process.cwd()].filter(Boolean));
+  if (!words) console.warn("! @bitbaum/accountkit not installed beside playwright: the standard's wording is not judged.");
   const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
   const browser = await chromium.launch({ proxy });
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: UA });
@@ -377,7 +472,7 @@ async function main() {
   for (const app of chosen) {
     let row;
     try {
-      row = await probeApp(ctx, app);
+      row = await probeApp(ctx, app, { words });
     } catch (e) {
       row = { name: app.name, runtime: app.runtime, error: e.message.split("\n")[0] };
     }

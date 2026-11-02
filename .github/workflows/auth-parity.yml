@@ -6,7 +6,10 @@
 # scripts/ci/auth-parity.mjs loads each sign-in page in Chromium at 390px and
 # asks each server what it serves. The run FAILS on a method that is
 # configured but not shown, or shown but broken. A method that is not
-# configured yet is reported and does not fail.
+# configured yet is reported and does not fail. An app on the standard
+# (AccountKit's own screens, `standard: true`) also fails when a method other
+# than Morulia's is off, out of AccountKit's order, or when the links between
+# sign-in and sign-up do not say AccountKit's own words.
 #
 # Read-only, as docs/auth-parity-2026-10-30.md probed: no account, no
 # credential, no mail. OIDC stops at the authorize leg (requested once, not
@@ -42,11 +45,13 @@ jobs:
           node-version: 22
 
       # No package.json here on purpose; same scratch install as render-sweep.yml.
+      # AccountKit is installed beside it for its own words: an app on the
+      # standard is judged against the published labels, not a copy here.
       - name: Install playwright
         run: |
           mkdir -p "$RUNNER_TEMP/pw" && cd "$RUNNER_TEMP/pw"
           npm init -y >/dev/null
-          npm i --no-audit --no-fund playwright >/dev/null
+          npm i --no-audit --no-fund playwright @bitbaum/accountkit >/dev/null
           npx playwright install --with-deps chromium >/dev/null
 
       - name: Self-test the verdicts
