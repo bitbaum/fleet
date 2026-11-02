@@ -46,6 +46,7 @@ const issuers = {
   "bitbaum-signin": "/issuer/signin",
 };
 const authorized = [];
+const SIGNIN_PROVIDERS = ["Google", "GitHub"];
 const outbox = createServer(async (request, response) => {
   const issuer = Object.values(issuers).find((prefix) =>
     request.url?.startsWith(prefix + "/"),
@@ -68,6 +69,19 @@ const outbox = createServer(async (request, response) => {
           token_endpoint_auth_methods_supported: ["client_secret_post"],
         }),
       );
+      return;
+    }
+    // The shared sign-in publishes which providers it has switched on;
+    // AccountKit 0.24+ names exactly those on its button, and hides the
+    // button while the list is empty.
+    if (issuer === issuers["bitbaum-signin"] && path === "/api/providers") {
+      response
+        .writeHead(200, { "content-type": "application/json" })
+        .end(
+          JSON.stringify({
+            providers: SIGNIN_PROVIDERS.map((label) => ({ label })),
+          }),
+        );
       return;
     }
     if (path.startsWith("/authorize?")) {
@@ -195,10 +209,16 @@ try {
     "registration cannot grant admin",
   );
   const consumerRequire = createRequire(resolve("package.json"));
-  const { authLabelsFor } = await import(
+  const { authLabelsFor, signinButtonLabel } = await import(
     consumerRequire.resolve("@bitbaum/accountkit/auth")
   );
   const labels = authLabelsFor(signIn.split("/").filter(Boolean)[0]);
+  // AccountKit 0.24+ names the providers the shared sign-in publishes; older
+  // releases always showed the fixed `withSignin` label.
+  const signinLabel =
+    typeof signinButtonLabel === "function"
+      ? signinButtonLabel(labels, SIGNIN_PROVIDERS)
+      : labels.withSignin;
   if (scenario === "recovery" && process.env.AUTH_TEST_INTEGRATION_CHECK) {
     browser = await authChromium(consumerRequire).launch({
       ...(process.env.BROWSER_EXECUTABLE
@@ -245,14 +265,22 @@ try {
     const signUp = signIn.replace(/sign-in$/, "sign-up");
     const buttons = [
       ["orangecat", labels.withOrangecat, "journey-orangecat"],
-      ["bitbaum-signin", labels.withSignin, "journey-signin"],
+      ["bitbaum-signin", signinLabel, "journey-signin"],
     ];
     for (const path of [signIn, signUp]) {
-      await page.goto(base + path);
-      for (const [, label] of buttons)
-        await page
-          .getByRole("button", { name: label, exact: true })
-          .waitFor({ state: "visible", timeout: 20_000 });
+      // The provider list is read in the background on first use, so the
+      // first render of a fresh server may not have it yet: load again.
+      for (let attempt = 1; ; attempt++) {
+        await page.goto(base + path);
+        const shown = await Promise.all(
+          buttons.map(([, label]) =>
+            page.getByRole("button", { name: label, exact: true }).isVisible(),
+          ),
+        );
+        if (shown.every(Boolean)) break;
+        assert.ok(attempt < 10, `${path}: the sign-in buttons never appeared`);
+        await new Promise((done) => setTimeout(done, 1_000));
+      }
     }
     for (const [id, label, clientId] of buttons) {
       await page.goto(base + signIn + "?next=" + encodeURIComponent(account));
