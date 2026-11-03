@@ -50,7 +50,7 @@ test("page reading: AccountKit's own labels, in German and English", () => {
     passwordInputs: 1,
     links: [],
   });
-  assert.deepEqual(de, { OC: true, MOR: false, PK: true, ML: true, REC: true, EP: true });
+  assert.deepEqual(de, { OC: true, MOR: false, PK: true, ML: true, REC: true, LN: false, EP: true });
   const en = shownMethods({
     clickables: ["Continue with Google, Apple, GitHub, X or Facebook", "Sign in"],
     passwordInputs: 0,
@@ -68,6 +68,11 @@ test("a product's own GitHub button is not Morulia's", () => {
   assert.equal(shownMethods(ui, { ownProviders: ["github"] }).MOR, false);
   const both = { ...ui, clickables: [...ui.clickables, "Continue with Google, Apple, GitHub, X or Facebook"] };
   assert.equal(shownMethods(both, { ownProviders: ["github"] }).MOR, true);
+});
+
+test("Lightning login is read off the page in every language AccountKit ships", () => {
+  for (const label of ["Sign in with a Lightning wallet", "Mit einer Lightning-Wallet anmelden", "Se connecter avec un portefeuille Lightning"])
+    assert.equal(shownMethods({ clickables: [label], passwordInputs: 0, links: [] }).LN, true, label);
 });
 
 test("better-auth: a validation error means mounted, a 404 means not", () => {
@@ -90,7 +95,7 @@ test("the report names every failure", () => {
   const row = {
     name: "app",
     runtime: "accountkit",
-    methods: Object.fromEntries(["EP", "ML", "PK", "2FA", "REC", "OC", "MOR"].map((m) => [m, ok])),
+    methods: Object.fromEntries(["EP", "ML", "PK", "2FA", "REC", "OC", "MOR", "LN"].map((m) => [m, ok])),
     failures: ["PK is configured but not on /sign-in"],
   };
   const md = renderReport([row], "2026-11-01");
