@@ -10,6 +10,7 @@
  *   PK   passkey                   2FA  TOTP second factor (server only)
  *   REC  password recovery         OC   Continue with OrangeCat
  *   MOR  Continue with Google, Apple, GitHub, X or Facebook (Morulia)
+ *   LN   Lightning login (LNURL-auth, AccountKit 0.26.1+, ACCOUNTKIT_LIGHTNING)
  *
  * Two readings per method:
  *   configured  what the server says it serves: better-auth endpoints that
@@ -48,7 +49,7 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const APPS_PATH = join(HERE, "auth-parity.apps.json");
-export const METHODS = ["EP", "ML", "PK", "2FA", "REC", "OC", "MOR"];
+export const METHODS = ["EP", "ML", "PK", "2FA", "REC", "OC", "MOR", "LN"];
 /** 2FA is asked for after the password, never on the sign-in page itself. */
 const SERVER_ONLY = new Set(["2FA"]);
 const UA = "fleet-auth-parity (read-only; bitbaum/fleet scripts/ci/auth-parity.mjs)";
@@ -61,6 +62,7 @@ export const PATTERNS = {
   PK: /pass\s?key|zugangsschl|cl[ée] d.acc[eè]s|chiave d.accesso/i,
   ML: /(sign-?in|log-?in|anmelde|magic|e-?mail)[ -]?(link|code)|link (per|by|via) e-?mail|lien de connexion|mit code|login code|anmeldecode|sign-?in code/i,
   REC: /forgot|vergessen|oubli[ée]|dimenticat|reset/i,
+  LN: /lightning/i,
   EP: /password|passwort|mot de passe/i,
 };
 
@@ -163,7 +165,7 @@ export function shownMethods(ui, { ownProviders = [] } = {}) {
   const notOwn = (t) => [...t.matchAll(PROVIDER_NAMES)].some(([name]) => !own.has(name.toLowerCase()));
   const texts = ui.clickables.join("\n");
   const shown = {};
-  for (const m of ["OC", "MOR", "PK", "ML", "REC"]) shown[m] = PATTERNS[m].test(texts);
+  for (const m of ["OC", "MOR", "PK", "ML", "REC", "LN"]) shown[m] = PATTERNS[m].test(texts);
   if (own.size) shown.MOR = ui.clickables.some((t) => PATTERNS.MOR.test(t) && notOwn(t));
   // A recovery link may say only "Forgot?" or carry an icon; its address says it.
   if ((ui.links ?? []).some((l) => RECOVERY_HREF.test(new URL(l.href, "https://x").pathname))) shown.REC = true;
@@ -240,11 +242,15 @@ async function probeBetterAuth(app) {
   const ml = await req(`${api}/sign-in/magic-link`, { method: "POST", json: {}, ...o });
   const tf = await req(`${api}/two-factor/verify-totp`, { method: "POST", json: {}, ...o });
   const pk = await req(`${api}/passkey/generate-authenticate-options`, o);
+  // The wallet's callback with a malformed challenge: LUD-04's own error when
+  // mounted, 404 when not. Nothing is minted.
+  const ln = await req(`${api}/lightning/callback?tag=login&k1=00&sig=00&key=00`, o);
   out.configured.ML = mounted(ml.status, ml.data);
   // AccountKit offers recovery exactly when it offers the link: both need mail.
   out.configured.REC = out.configured.ML;
   out.configured["2FA"] = mounted(tf.status, tf.data);
   out.configured.PK = pk.status === 200 && Boolean(pk.data?.challenge);
+  out.configured.LN = ln.status !== 404 && ln.data?.status === "ERROR";
   const anyBetterAuth = out.configured.ML || out.configured["2FA"] || out.configured.PK;
   out.configured.EP = anyBetterAuth ? true : null;
   for (const [m, provider] of Object.entries(PROVIDERS)) {
@@ -296,7 +302,7 @@ async function serverProbe(app) {
     const a = await probeAuthJs(app);
     const b = await probeBetterAuth(app);
     // The bridge closes better-auth's own routes; whatever answers there counts.
-    for (const m of ["ML", "PK", "2FA", "REC"]) a.configured[m] = b.configured[m] ? true : null;
+    for (const m of ["ML", "PK", "2FA", "REC", "LN"]) a.configured[m] = b.configured[m] ? true : null;
     return a;
   }
   if (app.runtime === "authjs") return probeAuthJs(app);
