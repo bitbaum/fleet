@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T23:59:39.878Z",
+  "generatedAt": "2026-11-03T00:07:19.688Z",
   "packages": [
     {
       "slug": "design-tokens",
@@ -11,7 +11,7 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/design-tokens@^1.4.0"
       },
-      "adopters": 24,
+      "adopters": 25,
       "adopterNames": [
         "accountkit",
         "aoz-begleitung",
@@ -29,6 +29,7 @@
         "kivvi",
         "loki",
         "morulia",
+        "orangecat",
         "printcraft",
         "s-ink",
         "skif",
@@ -406,10 +407,10 @@
       "name": "@bitbaum/sitekit",
       "repo": "https://github.com/bitbaum/sitekit",
       "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/sitekit@^0.5.0"
+        "command": "pnpm add @bitbaum/sitekit@^0.5.1"
       },
       "adopters": 7,
       "adopterNames": [
@@ -423,7 +424,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.5.0"
+        "version": "0.5.1"
       }
     },
     {
