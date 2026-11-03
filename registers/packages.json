@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-03T07:41:46.299Z",
+  "generatedAt": "2026-11-03T07:47:00.531Z",
   "packages": [
     {
       "slug": "design-tokens",
       "name": "@bitbaum/design-tokens",
       "repo": "https://github.com/bitbaum/design-tokens",
       "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, the Tailwind preset that maps them, and next/font/local calls for every face the fleet's apps use.",
-      "version": "1.5.0",
+      "version": "1.5.1",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/design-tokens@^1.5.0"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/design-tokens#443d27875a8c4719029fff085053f2735d881366"
       },
       "adopters": 25,
       "adopterNames": [
@@ -40,8 +40,9 @@
         "whenkit"
       ],
       "release": {
-        "source": "npm",
-        "version": "1.5.0"
+        "source": "git",
+        "tag": "v1.5.1",
+        "commit": "443d27875a8c4719029fff085053f2735d881366"
       }
     },
     {
