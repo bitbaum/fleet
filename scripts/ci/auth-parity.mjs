@@ -69,7 +69,7 @@ export const PATTERNS = {
 const RECOVERY_HREF = /forgot|reset-?password|recover|passwort-vergessen/i;
 
 /** What an app on AccountKit's screens offers, and the order its SignInForm draws them in. */
-export const STANDARD_METHODS = ["EP", "ML", "PK", "2FA", "REC", "OC"];
+export const STANDARD_METHODS = ["EP", "ML", "PK", "2FA", "REC", "OC", "LN"];
 export const STANDARD_ORDER = ["OC", "PK", "ML", "REC"];
 
 const pathOf = (href) => {
