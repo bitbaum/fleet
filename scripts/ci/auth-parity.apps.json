@@ -13,14 +13,14 @@
     { "name": "kivvi", "origin": "https://kivvi.orangecat.ch", "runtime": "compat", "signIn": "/login", "signUp": "/register", "standard": true },
     { "name": "petvity", "origin": "https://petvity.orangecat.ch", "runtime": "compat", "signIn": "/login", "signUp": "/register", "standard": true },
     { "name": "surf-your-life", "origin": "https://surf-your-life.orangecat.ch", "runtime": "compat", "signIn": "/de/login", "signUp": "/de/register", "standard": true },
-    { "name": "vitareba", "origin": "https://vita.orangecat.ch", "runtime": "authjs", "signIn": "/de/login", "signUp": "/de/register" },
+    { "name": "vitareba", "origin": "https://vita.orangecat.ch", "runtime": "compat", "signIn": "/de/login", "signUp": "/de/register", "standard": true },
     { "name": "datacat", "origin": "https://datacat.orangecat.ch", "runtime": "accountkit", "signIn": "/login", "signUp": "/register", "standard": true },
     { "name": "keller", "origin": "https://keller.orangecat.ch", "runtime": "accountkit", "signIn": "/en/sign-in", "signUp": "/en/sign-up", "standard": true, "served": false, "note": "keller#9: served only once the owner confirms" },
-    { "name": "skif", "origin": "https://skif.orangecat.ch", "runtime": "authjs", "signIn": "/de/signin", "signUp": "/de/signin?mode=create", "providerButtons": "OC" },
+    { "name": "skif", "origin": "https://skif.orangecat.ch", "runtime": "accountkit", "signIn": "/de/signin", "signUp": "/de/signin?mode=create", "standard": true },
     { "name": "reparaturbonus-zh", "origin": "https://reparaturbonus.orangecat.ch", "runtime": "accountkit", "signIn": "/auth/signin", "signUp": "/auth/signup", "standard": true },
-    { "name": "aoz-begleitung", "origin": "https://aoz.orangecat.ch", "runtime": "legacy", "signIn": "/login", "signUp": "/register" },
-    { "name": "botsmann", "origin": "https://botsmann.orangecat.ch", "runtime": "gotrue", "signIn": "/auth/signin", "signUp": "/auth/signup" },
-    { "name": "printcraft", "origin": "https://printcraft.orangecat.ch", "runtime": "gotrue", "signIn": "/login", "signUp": "/register" },
+    { "name": "aoz-begleitung", "origin": "https://aoz.orangecat.ch", "runtime": "accountkit", "signIn": "/login", "standard": true, "note": "no open sign-up: /register claims an invitation code (aoz-begleitung policy), so only sign-in is compared" },
+    { "name": "botsmann", "origin": "https://botsmann.orangecat.ch", "runtime": "accountkit", "signIn": "/auth/signin", "signUp": "/auth/signup", "standard": true },
+    { "name": "printcraft", "origin": "https://printcraft.orangecat.ch", "runtime": "accountkit", "signIn": "/login", "signUp": "/register", "standard": true },
     { "name": "orangecat", "origin": "https://orangecat.ch", "runtime": "gotrue", "signIn": "/auth", "isOrangeCat": true }
   ]
 }
