@@ -8,7 +8,7 @@
 # configured but not shown, or shown but broken. A method that is not
 # configured yet is reported and does not fail. An app on the standard
 # (AccountKit's own screens, `standard: true`) also fails when a method other
-# than Morulia's is off, out of AccountKit's order, or when the links between
+# than Morulia's (Lightning login included) is off, out of AccountKit's order, or when the links between
 # sign-in and sign-up do not say AccountKit's own words.
 #
 # Read-only, as docs/auth-parity-2026-10-30.md probed: no account, no

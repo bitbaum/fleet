@@ -118,7 +118,7 @@ test("the app list is well formed", () => {
 });
 
 const ok = { state: "ok" };
-const allOn = Object.fromEntries(["EP", "ML", "PK", "2FA", "REC", "OC", "MOR"].map((m) => [m, ok]));
+const allOn = Object.fromEntries(["EP", "ML", "PK", "2FA", "REC", "OC", "MOR", "LN"].map((m) => [m, ok]));
 const words = { createAccount: new Set(["Konto erstellen", "Create an account"]), signIn: new Set(["Anmelden", "Sign in"]) };
 const app = { signIn: "/de/sign-in", signUp: "/de/sign-up" };
 const signInPage = (clickables, linkText = "Konto erstellen") => ({
