@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T08:13:45.034Z",
+  "generatedAt": "2026-11-05T16:50:29.689Z",
   "packages": [
     {
       "slug": "design-tokens",
@@ -506,6 +506,24 @@
       "release": {
         "source": "npm",
         "version": "0.1.1"
+      }
+    },
+    {
+      "slug": "writingkit",
+      "name": "@bitbaum/writingkit",
+      "repo": "https://github.com/bitbaum/writingkit",
+      "description": "Revision-safe content operations: coordinate generation and edits without overwriting newer writing.",
+      "version": "0.1.0",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/writingkit#b167b55c1cd06e3234a5a1001e98197759ee5d6b"
+      },
+      "adopters": 0,
+      "adopterNames": [],
+      "release": {
+        "source": "git",
+        "tag": "v0.1.0",
+        "commit": "b167b55c1cd06e3234a5a1001e98197759ee5d6b"
       }
     }
   ],
