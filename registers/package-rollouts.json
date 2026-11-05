@@ -211,6 +211,21 @@
       "canaryAdmission": "verified-candidate",
       "bootstrapPr": 254
     },
+    "@bitbaum/writingkit": {
+      "canary": "bitbaum/orangecat",
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryAdmission": "verified-candidate"
+    },
     "ai-forms": {
       "canary": "bitbaum/kivvi",
       "canaryImporter": "apps/web",

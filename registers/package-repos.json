@@ -14,6 +14,17 @@
       }
     },
     {
+      "name": "writingkit",
+      "description": "Revision-safe content operations: coordinate generation and editing without overwriting newer writing, account switches or cancelled requests.",
+      "source": {
+        "repo": "bitbaum/orangecat",
+        "path": "packages/writingkit"
+      },
+      "devDependencies": {
+        "typescript": "^6.0.3"
+      }
+    },
+    {
       "name": "chartkit",
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label \u2014 line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
       "source": {
