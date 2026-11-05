@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T16:50:29.689Z",
+  "generatedAt": "2026-11-05T23:31:46.072Z",
   "packages": [
     {
       "slug": "design-tokens",
@@ -407,10 +407,10 @@
       "name": "@bitbaum/sitekit",
       "repo": "https://github.com/bitbaum/sitekit",
       "description": "A website as data: a closed union of section shapes validated at runtime, one set of React renderers, and per-field provenance so a generated site can prove it fabricated nothing.",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/sitekit@^0.5.1"
+        "source": "git",
+        "command": "pnpm add github:bitbaum/sitekit#f183a4d4fd16337d58a46f91760cd7ede8ca8a8f"
       },
       "adopters": 7,
       "adopterNames": [
@@ -423,8 +423,9 @@
         "substrata"
       ],
       "release": {
-        "source": "npm",
-        "version": "0.5.1"
+        "source": "git",
+        "tag": "v0.6.0",
+        "commit": "f183a4d4fd16337d58a46f91760cd7ede8ca8a8f"
       }
     },
     {
@@ -492,6 +493,26 @@
       }
     },
     {
+      "slug": "writingkit",
+      "name": "@bitbaum/writingkit",
+      "repo": "https://github.com/bitbaum/writingkit",
+      "description": "Revision-safe content operations: coordinate generation and edits without overwriting newer writing.",
+      "version": "0.1.0",
+      "install": {
+        "source": "git",
+        "command": "pnpm add github:bitbaum/writingkit#b167b55c1cd06e3234a5a1001e98197759ee5d6b"
+      },
+      "adopters": 1,
+      "adopterNames": [
+        "orangecat"
+      ],
+      "release": {
+        "source": "git",
+        "tag": "v0.1.0",
+        "commit": "b167b55c1cd06e3234a5a1001e98197759ee5d6b"
+      }
+    },
+    {
       "slug": "paykit",
       "name": "@bitbaum/paykit",
       "repo": "https://github.com/bitbaum/paykit",
@@ -506,24 +527,6 @@
       "release": {
         "source": "npm",
         "version": "0.1.1"
-      }
-    },
-    {
-      "slug": "writingkit",
-      "name": "@bitbaum/writingkit",
-      "repo": "https://github.com/bitbaum/writingkit",
-      "description": "Revision-safe content operations: coordinate generation and edits without overwriting newer writing.",
-      "version": "0.1.0",
-      "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/writingkit#b167b55c1cd06e3234a5a1001e98197759ee5d6b"
-      },
-      "adopters": 0,
-      "adopterNames": [],
-      "release": {
-        "source": "git",
-        "tag": "v0.1.0",
-        "commit": "b167b55c1cd06e3234a5a1001e98197759ee5d6b"
       }
     }
   ],
