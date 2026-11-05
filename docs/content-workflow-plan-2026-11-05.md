@@ -1,8 +1,8 @@
 # Shared content foundation: OrangeCat, BiasLens, Heidi, and Loki
 
-Status: researched proposal; no shared package created or deployed. The OrangeCat workflow repair remains an unshipped working tree on `fix/article-writing-workflow`. BiasLens was inspected without changes at `98281f2`.
+Status: implementation underway. Read the [verified continuation checkpoint](#verified-checkpoint--continuation-on-2026-11-05) first for completed stages, release evidence and the remaining queue. The research and original migration order below describe the starting decision.
 
-This dated record captures the design decision, not current release status. Follow each product's handoff and pull request for implementation evidence. Previous bounded repairs were OrangeCat [#1562](https://github.com/bitbaum/orangecat/pull/1562) and Loki [#1588](https://github.com/bitbaum/loki/pull/1588); their wider audits remain open. The unfinished OrangeCat patch currently requires the original workspace or an explicitly transferred patch; the local branch name alone is not a remote backup.
+Follow each product's handoff and linked pull requests for implementation evidence. Previous bounded repairs were OrangeCat [#1562](https://github.com/bitbaum/orangecat/pull/1562) and Loki [#1588](https://github.com/bitbaum/loki/pull/1588); their wider audits remain open. A local branch or scratch patch alone is not a remote backup: preserve verified source on its pushed branch and record the exact unfinished state before changing agents.
 
 ## Decision
 
@@ -54,9 +54,9 @@ BiasLens: one source/article workspace with Read, Talk, Check and Rewrite capabi
 
 Loki: inspect the remaining composer/builder work against these boundaries. Reuse a writing foundation only where Loki actually edits a document; keep task execution and project commands in their existing workflow. Do not force every text input into an article editor. The previously deployed Loki repair is independent of this extraction.
 
-## Migration order and acceptance
+## Original migration order and acceptance
 
-Current queue: first close the reported BiasLens rewrite overflow as a bounded repair. Review its existing sitekit dropdown separately; improve shared navigation upstream, not with a local mega-menu fork. Then resume OrangeCat authoring and package extraction, with Heidi as a design consumer before a reading feature is implemented. Maintain one active application implementation at a time under the fleet completion procedure.
+Original queue at planning time: first close the reported BiasLens rewrite overflow as a bounded repair. Review its existing sitekit dropdown separately; improve shared navigation upstream, not with a local mega-menu fork. Then resume OrangeCat authoring and package extraction, with Heidi as a design consumer before a reading feature is implemented. Maintain one active application implementation at a time under the fleet completion procedure.
 
 Navigation acceptance: one shared renderer with host-supplied groups, descriptive links and active-route state; a desktop grouped panel and a phone layout that fits its viewport. Keep keyboard opening, Escape/focus return, outside-click dismissal, route-change dismissal and 44px targets. BiasLens supplies task groupings; sitekit owns markup and interaction. Inspect current sitekit main and open PRs before extending its installed flat-list API. Do not use a menu redesign as a reason to keep misleading destinations or duplicate writing doors.
 
@@ -68,3 +68,74 @@ Navigation acceptance: one shared renderer with host-supplied groups, descriptiv
 6. Resume the remaining Loki builder, tenant, mobile keyboard and delivery audit recorded in the repair handoff. Keep its work separately verifiable.
 
 Do not create another writing screen in either app during this migration. Do not automatically synchronize private drafts across products or publish analysis output to OrangeCat; any future handoff must be an explicit user action with source/provenance preserved.
+
+
+## Verified checkpoint — continuation on 2026-11-05
+
+Read this checkpoint before applying the original queue above. It records bounded
+changes; the wider audits remain open. Use the repository completion procedure
+for subsequent changes and retain exact source/deployment evidence in their PRs.
+
+- BiasLens responsive repair [#187](https://github.com/bitbaum/biaslens/pull/187)
+  deployed as `ed93e661d9e9988b1ce8133b6893c088064a057d`. Controlled source/rewrite
+  journeys passed at 320/390/834/1440px against the served site, preserving labels
+  and evidence notes. Later, another session's [#188](https://github.com/bitbaum/biaslens/pull/188)
+  added a manual composer, written articles/responses, wire topics and explicit
+  Post on OrangeCat. Its served receipt matches `5f88e9659dd43b1b62727b01350c3cc74fa98a4e`.
+  Read its updated `docs/HANDOFF.md` and `docs/plans/2026-11-one-loop.md` before
+  continuing; do not create a second implementation of that new composer.
+- WritingKit extraction [OrangeCat #1563](https://github.com/bitbaum/orangecat/pull/1563)
+  and repository registration [Fleet #476](https://github.com/bitbaum/fleet/pull/476)
+  are complete. The package owns a pure revision/identity/cancellation coordinator,
+  with no UI, HTTP, model, storage, evidence or language policy. Its standalone
+  runtime/type-contract/packed-consumer checks passed. The verified Git artifact,
+  rather than an npm publication, is recorded in the generated package registry;
+  use that producer for version/install facts.
+- OrangeCat [#1565](https://github.com/bitbaum/orangecat/pull/1565) merged through
+  Fleet sweep as `d2dbb21ccc187c1350e0deb3a2fa13e749994847`. It adopts WritingKit,
+  retires bootstrap source, puts the editor first and combines AI drafting/editing
+  under Ask Cat. Draft library, safe Undo, collapsed optional metadata, touch
+  targets and long-text wrapping passed browser checks. The sister-product import
+  from #1564 preserves existing drafts and source-banner ownership. Draft-ID fallback
+  now uses secure randomness. Full verification and normal hooks passed (5,681
+  tests/684 files); final-source CI, CodeQL and browser checks passed before merge.
+  The first browser runner timed out downloading Ubuntu fonts; the targeted rerun
+  passed. Canary policy [Fleet #479](https://github.com/bitbaum/fleet/pull/479),
+  generated catalogue [#480](https://github.com/bitbaum/fleet/pull/480), live binding
+  audit and central rollout gate passed through normal review/sweep.
+  [Main CI](https://github.com/bitbaum/orangecat/actions/runs/42071157777) and
+  [CD](https://github.com/bitbaum/orangecat/actions/runs/42072988284) passed.
+  The [served receipt](https://orangecat.ch/.well-known/fleet-release.json)
+  matches the merged commit, WritingKit artifact and tested lockfile digest;
+  CD's full staged-receipt verification passed. The served article index and
+  signed-out writing gate passed read-only browser checks at all four widths.
+- The article browser harness uses real components and product CSS with controlled
+  AI/auth/publish/upload boundaries. It does not establish real signed-in article
+  publication or physical OS-keyboard behavior. Keep these acceptance gaps explicit;
+  inspect draft changes during an in-flight publish in the subsequent audit.
+- Loki's bounded composer repair #1588 remains deployed. Other-session operations
+  fixes through #1593 are served as `8454c0acaa3388637e0a889f20f963760d3effb6`.
+  Its actual fleet-brief parser accepted the generated WritingKit row and pinned
+  Git install command without a local package list or parser change. Its package
+  pages require authentication; their signed-in UI was not verified here.
+  Those commits do not close the builder/tenant/mobile/delivery/governance audit.
+
+At 17:20 UTC, the [main browser workflow](https://github.com/bitbaum/orangecat/actions/runs/42071157688)
+still awaited its article-writing job. Its first runner timed out downloading
+Ubuntu font packages before tests; the targeted retry was still installing them.
+Cat chat passed on main; article-writing passed on the final PR commit. Inspect
+that main retry first, and keep downstream WritingKit promotion held until the
+required main browser evidence is green. Do not waive the gate or rerun a failed
+test blindly; separate runner downloads from a real application failure.
+
+Then extend sitekit's flat application navigation upstream, with BiasLens as the configured
+canary, rather than creating a local menu fork. BiasLens one-loop consolidation
+must preserve immutable sources, evidence/citation labels, capability checks,
+server revision conflicts and version history when adopting WritingKit. Heidi's
+reading adaptation is still unimplemented; preserve its target/bridge variety
+packs and generated-language/provenance checks. Resume Loki's wider audit as a
+separate verifiable scope. No private drafts synchronize automatically across apps.
+
+The strict inventory producer proposed the catalogue before its independent
+health-route duplication ratchet failed (18 to 20 files). No baseline was raised
+and no gate was waived; that pre-existing fleet-wide duplication work remains open.
