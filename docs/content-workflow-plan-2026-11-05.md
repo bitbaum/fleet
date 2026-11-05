@@ -120,15 +120,14 @@ for subsequent changes and retain exact source/deployment evidence in their PRs.
   pages require authentication; their signed-in UI was not verified here.
   Those commits do not close the builder/tenant/mobile/delivery/governance audit.
 
-At 17:20 UTC, the [main browser workflow](https://github.com/bitbaum/orangecat/actions/runs/42071157688)
-still awaited its article-writing job. Its first runner timed out downloading
-Ubuntu font packages before tests; the targeted retry was still installing them.
-Cat chat passed on main; article-writing passed on the final PR commit. Inspect
-that main retry first, and keep downstream WritingKit promotion held until the
-required main browser evidence is green. Do not waive the gate or rerun a failed
-test blindly; separate runner downloads from a real application failure.
+The [main browser workflow](https://github.com/bitbaum/orangecat/actions/runs/42071157688)
+subsequently passed on the exact served commit. Its first article-writing runner
+had timed out downloading Ubuntu font packages before tests; the targeted retry
+completed the four-width writer checks. Main CI, both browser jobs, CD and the
+served artifact now agree for the first canary. Subsequent consumers retain their
+own required checks and staged rollout gates; no gate was waived.
 
-Then extend sitekit's flat application navigation upstream, with BiasLens as the configured
+Next extend sitekit's flat application navigation upstream, with BiasLens as the configured
 canary, rather than creating a local menu fork. BiasLens one-loop consolidation
 must preserve immutable sources, evidence/citation labels, capability checks,
 server revision conflicts and version history when adopting WritingKit. Heidi's
