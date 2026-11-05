@@ -1,6 +1,22 @@
 {
   "soakHours": 0,
   "packages": {
+    "@bitbaum/writingkit": {
+      "canary": "bitbaum/orangecat",
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "candidateDependencyChecks": [
+        "ci.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 1565
+    },
     "@bitbaum/accountkit": {
       "canary": "bitbaum/biaslens",
       "candidateChecks": [
