@@ -53,6 +53,28 @@ and supported exceptions explicitly, with a condition for revisiting them.
 
 ## Handle interruptions honestly
 
+Keep an agent-neutral checkpoint from the start of multi-step work, and refresh
+it after each meaningful stage and before a long check. Token exhaustion,
+session resets and switching coding tools are normal interruptions; do not wait
+for a final response to write the first handoff. Use the repository's existing
+handoff or execution ledger, with a pointer to it from its agent instructions.
+For cross-repository work, keep one queue that links to those records rather
+than competing copies of each application's status.
+
+The checkpoint records the user's objective and decisions, the active scope,
+repository/branch/commit and uncommitted files, exact completed checks and their
+evidence, running jobs, blockers, remaining acceptance criteria and the next
+command or action. Distinguish proposed, implemented, checked, merged, deployed
+and exercised. Write it so any coding agent can continue without the previous
+chat history; omit credentials and private conversation dumps.
+
+Make the handoff portable before changing machines: push saved branches through
+normal hooks and commit the repository handoff. Where unfinished work cannot
+yet pass those gates, preserve an explicitly unfinished patch and record where
+it lives and how it must be transferred. A local path is not a remote backup.
+On resume, read the checkpoint, inspect git status and running jobs, then check
+current remote heads before repeating a check or editing the same files.
+
 For a transient failure, retry a bounded number of times, inspect the actual
 error and use the environment's supported network/authentication path. Continue
 useful work within the active application's scope. Do not loop indefinitely,
