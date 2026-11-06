@@ -48,10 +48,12 @@ command -v jq >/dev/null 2>&1 || { echo "jq not found" >&2; exit 2; }
 # ── The concerns we track ────────────────────────────────────────────────────
 #
 # Each line: name|regex over file paths. Deliberately conservative — a concern
-# belongs here only if a shared implementation is PLAUSIBLE. Auth, DB schemas
-# and UI markup are excluded on purpose: they are coupled to a framework, a
-# schema, or a design system, and "centralize everything" is how apps stop being
-# able to look or behave like themselves.
+# belongs here only if a shared implementation is PLAUSIBLE. Auth and DB schemas
+# are excluded on purpose: they are coupled to a framework or a schema. UI
+# markup is excluded from THIS file because its look is each app's own tokens;
+# its BEHAVIOUR and layout skeleton are measured by experience-audit.mjs
+# (SHARED.md "The experience standard"), which is where a bare text box or a
+# home-made header is counted.
 #
 # chat-composer is the one UI entry, and it counts BEHAVIOUR, not looks: 13
 # chats in 10 repos (2026-09-25) each re-learned — or never learned — the mic,
