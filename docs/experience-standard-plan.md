@@ -39,8 +39,8 @@ Each component takes **transports**, never a database or vendor:
 | 1    | Direction recorded: `AGENTS.md`, `SHARED.md`, `templates/agent-rules.md` (propagates to every repo's `AGENTS.md` by PR) | done in fleet PR "The experience belongs to the package" |
 | 2    | `scripts/ci/experience-audit.mjs`, wired into `package-composition-audit.mjs`; app template ceiling `{}` | done in the same PR |
 | 3    | chatkit: `DictationField`, `CommentThread`                                              | see chatkit repo CHANGELOG |
-| 4    | writingkit: `/react` composer, tools, `ArticleActions`; headless `assist`               | see writingkit repo CHANGELOG |
-| 5    | BiasLens consumes them and deletes its copies; sets its ceiling                         | pending; [#194](https://github.com/bitbaum/biaslens/pull/194) verifies the earlier headless lifecycle only, retaining local composer markup |
+| 4    | writingkit: `/react` composer, tools, `ArticleActions`; headless `assist`               | [ArticleComposer source](https://github.com/bitbaum/writingkit/commit/99fe5ae1c02827f8061cca7301439935f0173d37) exists; lifecycle acceptance and registered rollout pending; `ArticleActions` is not exported at that commit |
+| 5    | BiasLens consumes them and deletes its copies; sets its ceiling                         | [lifecycle #194](https://github.com/bitbaum/biaslens/pull/194) deployed 2026-11-06; shared component migration and ceiling remain pending |
 | 6    | OrangeCat adopts Speak/Improve and `DictationField` in its article composer; sets its ceiling | see orangecat CHANGELOG |
 | 7    | Every other product: set ceiling to today's counts (`--init`), then migrate fields      | not started |
 | 8    | OrangeCat's own header/footer/menu (3 files named as chrome) → sitekit                  | not started |
@@ -48,6 +48,28 @@ Each component takes **transports**, never a database or vendor:
 
 When a step is finished, replace its state with the PR that finished it and
 the date; do not write "done" without a link.
+
+## Carry lifecycle acceptance into the shared composer
+
+The headless lifecycle integration in [BiasLens #194](https://github.com/bitbaum/biaslens/pull/194)
+is a bounded prerequisite, not completion of steps 4–5. Its real-component
+browser suite covers ignored abort, edit/revert and changed instructions, safe
+Undo, Strict Mode, cancellation followed by new work, account/draft/report
+switches, device-draft handoff, retries and preserved source/output labels.
+Carry those cases into the package before replacing the consumer's local editor.
+
+The inspected [ArticleComposer source](https://github.com/bitbaum/writingkit/blob/99fe5ae1c02827f8061cca7301439935f0173d37/src/react/ArticleComposer.tsx)
+awaits `transport.assist` in `draftFromBrief`, then sets title/body directly.
+That path does not use `WritingSession`; the assist transport has no cancellation
+signal. Wire the existing coordinator into the component, extend the host
+contract where necessary, and verify lifecycle/Undo/context changes in the
+package and consumer. Keep original sources and versioned server writes in their
+host adapters. Do not retire the verified protections during the UI migration.
+
+Verify the newer component's registered release and install contract, then
+canary it in OrangeCat before downstream promotion. A changelog or source export
+alone is not that rollout evidence. Follow the current register for version and
+installation facts rather than copying an unpromoted source ref into consumers.
 
 ## How to resume
 
