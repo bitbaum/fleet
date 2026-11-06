@@ -607,7 +607,7 @@ async function main() {
           const branch = api(`repos/${canary}`).default_branch;
           const tip = api(`repos/${canary}/commits/${branch}`).sha;
           const deploy = api(
-            `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
+            `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
           ).workflow_runs[0];
           const checks = greenWorkflows(canary, tip);
           const result = await canaryDeploymentEvidence({
@@ -712,7 +712,7 @@ async function main() {
         const branch = api(`repos/${canary}`).default_branch;
         const tip = api(`repos/${canary}/commits/${branch}`).sha;
         const deploy = api(
-          `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
+          `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
         ).workflow_runs[0];
         const checks = greenWorkflows(canary, tip);
         const result = await canaryDeploymentEvidence({
@@ -763,7 +763,7 @@ async function main() {
         const branch = api(`repos/${canary}`).default_branch;
         const tip = api(`repos/${canary}/commits/${branch}`).sha;
         const deploy = api(
-          `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
+          `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
         ).workflow_runs[0];
         const checks = greenWorkflows(canary, tip);
         const result = await canaryDeploymentEvidence({
@@ -813,7 +813,7 @@ async function main() {
       const branch = api(`repos/${canary}`).default_branch;
       const tip = api(`repos/${canary}/commits/${branch}`).sha;
       const deploy = api(
-        `repos/${canary}/actions/workflows/deploy.yml/runs?branch=${branch}&per_page=1`,
+        `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
       ).workflow_runs[0];
       const checks = greenWorkflows(canary, tip);
       const result = await canaryDeploymentEvidence({

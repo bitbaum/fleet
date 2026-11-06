@@ -162,3 +162,28 @@ provenance checks. Resume Loki's wider audit as a separate verifiable scope. No 
 The strict inventory producer proposed the catalogue before its independent
 health-route duplication ratchet failed (18 to 20 files). No baseline was raised
 and no gate was waived; that pre-existing fleet-wide duplication work remains open.
+
+## WritingKit continuation — 2026-11-06
+
+[BiasLens #194](https://github.com/bitbaum/biaslens/pull/194) adopts the verified
+WritingKit Git artifact in the existing composer and source RewriteStudio.
+Its handoff owns source and acceptance details. Final candidate
+`43d041271f8fe849a201514e2d9104026ba68126` passed full local verification
+(211 tests plus nine design checks), production build, complete browser smoke,
+and controlled real-component lifecycle checks at 320/390/834/1440px. Exact-head
+CI, browser screenshots/lifecycle and database-backed account checks passed.
+
+The rollout gate exposed a prerequisite: it hard-coded `deploy.yml`, while
+OrangeCat's actual deployment workflow is `cd.yml`. The policy now explicitly
+selects that workflow and OrangeCat's opened served receipt. CLI fixtures retain
+both root/starter default workflows and test the OrangeCat override, including
+holds for stale commit, lock digest, missing artifacts and unavailable receipt.
+This config does not bypass canary CI/browser, current-main, artifact or receipt
+requirements. Merge/deployment/served journey evidence for the adoption remains
+to be established in #194 through the normal fleet sweep; no manual merge.
+
+Next: complete that bounded rollout, then resume one-loop consolidation and the
+versioned investigation adapter. Preserve server revision conflicts, capability
+checks and history; stopping a wait cannot roll back a saved server rewrite.
+Heidi reading adaptation and Loki's wider audit remain separate queued scopes.
+Real signed-in publication and physical-keyboard acceptance remain open.
