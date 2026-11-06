@@ -1,6 +1,6 @@
 # Shared content foundation: OrangeCat, BiasLens, Heidi, and Loki
 
-Status: implementation underway. Read the [verified continuation checkpoint](#verified-checkpoint--continuation-on-2026-11-05) first for completed stages, release evidence and the remaining queue. The research and original migration order below describe the starting decision.
+Status: implementation underway. Read the latest [WritingKit release checkpoint](#writingkit-lifecycle-release--2026-11-06) for current release evidence and the next scope; the [earlier checkpoint](#verified-checkpoint--continuation-on-2026-11-05) records the preceding stages. The research and original migration order below describe the starting decision.
 
 Follow each product's handoff and linked pull requests for implementation evidence. Previous bounded repairs were OrangeCat [#1562](https://github.com/bitbaum/orangecat/pull/1562) and Loki [#1588](https://github.com/bitbaum/loki/pull/1588); their wider audits remain open. A local branch or scratch patch alone is not a remote backup: preserve verified source on its pushed branch and record the exact unfinished state before changing agents.
 
@@ -151,9 +151,8 @@ It did not perform real production article publication or physical-keyboard
 acceptance; those gaps remain in the writing handoff.
 
 BiasLens's newer writing tools and comments from #189 are preserved; do not add
-another composer. Next adopt WritingKit in the existing BiasLens composer and
-rewrite lifecycle, then continue its one-loop workspace consolidation on current
-main.
+another composer. The WritingKit lifecycle adoption is recorded below; shared
+composer migration precedes wider one-loop consolidation on current main.
 Preserve immutable sources, evidence/citation labels, capability checks, server
 revision conflicts and version history. Resume Heidi's reading adaptation as a
 separate scope, preserving target/bridge variety packs and generated-language/
@@ -163,36 +162,53 @@ The strict inventory producer proposed the catalogue before its independent
 health-route duplication ratchet failed (18 to 20 files). No baseline was raised
 and no gate was waived; that pre-existing fleet-wide duplication work remains open.
 
-## WritingKit continuation — 2026-11-06
+## WritingKit lifecycle release — 2026-11-06
 
-[BiasLens #194](https://github.com/bitbaum/biaslens/pull/194) adopts the verified
-WritingKit Git artifact in the existing composer and source RewriteStudio.
-Its handoff owns source and acceptance details. Final candidate
-`43d041271f8fe849a201514e2d9104026ba68126` passed full local verification
-(211 tests plus nine design checks), production build, complete browser smoke,
-and controlled real-component lifecycle checks at 320/390/834/1440px. Exact-head
-CI, browser screenshots/lifecycle and database-backed account checks passed.
+[BiasLens #194](https://github.com/bitbaum/biaslens/pull/194) adopted the verified
+WritingKit coordinator in the existing composer and source RewriteStudio.
+It merged through the [fleet sweep](https://github.com/bitbaum/biaslens/actions/runs/42199245864)
+as `c0faeeeaf4adaee0c414e84a490309e57e7c060e`, preserving the concurrent ChatKit
+upgrade and generated rules. Its handoff/PR owns the implementation evidence.
+Local and exact-head gates passed: 211 tests in 42 files, nine design checks,
+production build, complete browser smoke and real-component lifecycle checks at
+320/390/834/1440px. The fixture covers Strict Mode, ignored abort, edit/revert,
+changed instructions/options, guarded Undo, cancellation/new work, account/draft/
+report changes, device handoff, retry and labelled source-copy preservation.
 
-The rollout gate exposed a prerequisite: it hard-coded `deploy.yml`, while
-OrangeCat's actual deployment workflow is `cd.yml`. The policy now explicitly
-selects that workflow and OrangeCat's opened served receipt. CLI fixtures retain
-both root/starter default workflows and test the OrangeCat override, including
-holds for stale commit, lock digest, missing artifacts and unavailable receipt.
-The receipt producer and gate share the workspace-source identity rule: local
-packages resolve to tracked in-repository metadata and the owning commit, never
-an unverified link. All 52 focused rollout/receipt tests passed, including
-rejection of mismatched workspace metadata. The repaired gate accepted #194
-against the current OrangeCat receipt with every requirement intact. Merge/deployment/served journey evidence for the adoption remains
-to be established in #194 through the normal fleet sweep; no manual merge.
+[Main CI](https://github.com/bitbaum/biaslens/actions/runs/42199333420),
+[main browser/account checks](https://github.com/bitbaum/biaslens/actions/runs/42199334193)
+and [deployment](https://github.com/bitbaum/biaslens/actions/runs/42199523018)
+passed. The [served receipt](https://biaslens.orangecat.ch/.well-known/fleet-release.json)
+matched the merged commit, all 11 shared artifacts and tested lock SHA-256
+`b1c0ed7aae758dffa69498c0a59f33604d802292ad8ad25f1725dd7c5633f445`.
+The normal receipt verifier accepted the complete contract. Current-artifact
+browser journeys passed at all four widths: actual signed-out device draft
+save/reload/preview and publication sign-in gate, plus controlled analysis,
+source recovery, changed-option stale rewrite rejection, source preservation,
+labels/evidence in copied output, article chat and transcript results. These
+controlled model boundaries do not establish real signed-in publication.
 
-Next: complete that bounded rollout. Concurrent work released the shared
-WritingKit React composer at `99fe5ae1c02827f8061cca7301439935f0173d37`; the
-new [experience plan](experience-standard-plan.md) requires consuming that
-component and retiring local markup. This lifecycle-only adoption retains the
-previous canary-verified artifact; it does not close shared composer adoption.
-Promote the newer component through its OrangeCat canary first, then carry the
-lifecycle/Undo/source acceptance into BiasLens before wider one-loop
-consolidation and the versioned investigation adapter. Preserve server revision conflicts, capability
-checks and history; stopping a wait cannot roll back a saved server rewrite.
-Heidi reading adaptation and Loki's wider audit remain separate queued scopes.
-Real signed-in publication and physical-keyboard acceptance remain open.
+[Fleet #490](https://github.com/bitbaum/fleet/pull/490) fixed a rollout prerequisite:
+use OrangeCat's actual CD workflow and complete served receipt, and share the
+tracked-workspace source identity rule with its producer. All 112 package/
+experience/rollout/currency/receipt tests, CI, starter account journey and canary
+contracts passed. The gate kept the consumer held while OrangeCat's main moved.
+Its superseded deploy skipped as designed; the newer main needed a failed-job
+retry for a transient sign-in wait and a cancelled Chromium installation.
+[Canary CI](https://github.com/bitbaum/orangecat/actions/runs/42195639631),
+[browser checks](https://github.com/bitbaum/orangecat/actions/runs/42195639653),
+[CD](https://github.com/bitbaum/orangecat/actions/runs/42198434465) and its
+[receipt](https://orangecat.ch/.well-known/fleet-release.json) then agreed on
+`d7eab3fe4e306e9c98a2cdf58ce3a7fcc91edf1a`. The repaired live rollout gate
+accepted the final BiasLens candidate. No gate was waived or merge performed
+by hand.
+
+Next: follow the [experience plan](experience-standard-plan.md#carry-lifecycle-acceptance-into-the-shared-composer)
+to move these protections into the newer React composer before its registered
+release/canary and consumer UI migration. This release closes the headless
+lifecycle integration, not retirement of local editor markup or the full app
+audit. Then resume one-loop consolidation and the versioned investigation
+adapter. Preserve server revision conflicts, capabilities and history; stopping
+a wait cannot roll back a saved server rewrite. Heidi reading adaptation and
+Loki's wider audit remain separate queued scopes. Real signed-in publication
+and physical-keyboard acceptance remain open.
