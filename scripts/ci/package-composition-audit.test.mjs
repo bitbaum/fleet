@@ -194,3 +194,19 @@ test("a block may bind through the shared package that wraps it (via)", () =>
       "mail: auth.ts does not import its declared package",
     ]);
   }));
+
+test("a product that sets an experience ceiling may not exceed it; one without only reports", () => {
+  fixture((dir) => {
+    writeFileSync(join(dir, "Notes.tsx"), "export const A = () => <textarea />;");
+    const free = auditComposition(dir, baseline);
+    assert.ok(!free.some((f) => /ceiling/.test(f)), free.join("\n"));
+    const plan = JSON.parse(readFileSync(join(dir, "package-plan.json"), "utf8"));
+    plan.experience = { ceiling: {} };
+    writeFileSync(join(dir, "package-plan.json"), JSON.stringify(plan));
+    const held = auditComposition(dir, baseline);
+    assert.ok(held.some((f) => /bareTextareas: 1 above the ceiling of 0/.test(f)), held.join("\n"));
+    plan.experience = { ceiling: { bareTextareas: 1 } };
+    writeFileSync(join(dir, "package-plan.json"), JSON.stringify(plan));
+    assert.deepEqual(auditComposition(dir, baseline), []);
+  });
+});

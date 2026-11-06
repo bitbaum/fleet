@@ -275,6 +275,55 @@ Each repo keeps the gates that catch its own instances (OrangeCat:
 `scripts/test/choice-rows.ts`, `design:check`). A rule with no gate behind it
 is a rule that gets re-explained.
 
+## The experience belongs to the package
+
+The owner's words, 2026-11-06: "when I say develop some app and it creates a
+field where people are expected to enter something and the field doesn't have a
+microphone or an AI extension, and it creates a navigation, header or footer
+totally different from all the great things we have created … if it is using
+packages and the UI/UX looks different, for the users it is the same as not
+using packages. They are not getting the experience we determined to be great."
+He is right, and the measurement agrees: every product installs the shared
+packages, and the screens people touch are still built per app
+(`scripts/ci/experience-audit.mjs`, numbers in `SHARED.md` → "The experience
+standard").
+
+**A package ships the experience, not only the logic.** Behaviour and the layout
+skeleton — what is on the screen, in what order, at what size, what a tap does,
+what happens when it fails — live in the package's component. The app owns what
+it is called, what it says, what its backend does and how it looks (colour,
+type, radius, through `@bitbaum/design-tokens` and the package's own
+`--ck-*` / `--wk-*` variables). Brand is a theme; behaviour is not one.
+
+The standard, each line already built:
+
+1. **Anywhere a person types words, there is a microphone** (`@bitbaum/chatkit`:
+   `Composer` for a conversation, `DictationField` for any other text box).
+   Long text also offers "improve this" (the same field, `onImprove`).
+2. **Writing an article is `@bitbaum/writingkit/react`**: speak it, improve it,
+   add a photo or a chart, preview, publish, and the page the reader gets.
+3. **A conversation under anything is `CommentThread`** (chatkit): oldest first,
+   the same box with the mic, removable by its author.
+4. **Header, menu, tab bar, footer and the row of actions on an item are
+   sitekit.** An app supplies destinations and labels, never the markup.
+5. **A new product starts at zero**: the app template's `package-plan.json` sets
+   `"experience": { "ceiling": {} }`, and `package-composition.yml` fails a pull
+   request that adds a bare text box, its own header, a composer, a comment list
+   or an article editor of its own.
+
+**Extending the package is the work, not a detour.** When a product needs
+something the component cannot do, add the slot or the prop to the package, with
+its test, release it, and consume the release — in the same session. Writing the
+local version "for now" is how the fleet got thirteen chats and, in November
+2026, two article composers and two comment systems built in one week. If a
+file really must be the exception (a code editor where dictation would corrupt
+the text), its first line says so: `// experience-exempt: <reason>`; the reason
+is the review.
+
+The measured state, what is done and the exact next step are in
+`docs/experience-standard-plan.md`. A session that picks this work up reads it
+first and updates it last.
+
 ## Packages
 
 **Before implementation, make a package composition plan.** Read `SHARED.md`
