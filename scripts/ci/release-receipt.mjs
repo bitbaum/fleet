@@ -5,7 +5,7 @@ import {
   writeFileSync,
   realpathSync,
 } from "node:fs";
-import { resolve, relative, dirname, posix } from "node:path";
+import { resolve, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -18,6 +18,7 @@ import {
 import {
   isImmutableArtifact,
   isPackageVersion,
+  workspaceSourceArtifact,
 } from "./release-receipt-contract.mjs";
 export { receiptMatches } from "./release-receipt-contract.mjs";
 
@@ -120,25 +121,11 @@ export function createReleaseReceipt({
       spec.startsWith("workspace:") &&
       artifact?.startsWith("link:")
     ) {
-      const link = artifact.slice(5);
-      const path = posix.normalize(posix.join(currentImporter, link));
       const local = workspacePackages[`${currentImporter}:${depName}`];
-      if (
-        link.startsWith("/") ||
-        /[\\\r\n]/.test(link) ||
-        !isProjectPath(path) ||
-        !local ||
-        local.path !== path ||
-        local.name !== name ||
-        local.version !== actual?.version
-      ) {
-        throw new Error(
-          `${name}: workspace package must resolve to its tracked in-repository source`,
-        );
-      }
-      // A local package is part of this exact clean repository commit. Its
-      // declared version alone would not distinguish later source changes.
-      artifact = `https://codeload.github.com/${repo}/tar.gz/${commit}`;
+      artifact = workspaceSourceArtifact({ repo, commit, importer: currentImporter,
+        link: artifact.slice(5), name, local });
+      if (local.version !== actual?.version)
+        throw new Error(`${name}: workspace package must resolve to its tracked in-repository source`);
     }
     if (!isImmutableArtifact(artifact ?? ""))
       throw new Error(`${name}: immutable locked artifact required`);
