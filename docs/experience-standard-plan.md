@@ -40,7 +40,7 @@ Each component takes **transports**, never a database or vendor:
 | 2    | `scripts/ci/experience-audit.mjs`, wired into `package-composition-audit.mjs`; app template ceiling `{}` | done in the same PR |
 | 3    | chatkit: `DictationField`, `CommentThread`                                              | see chatkit repo CHANGELOG |
 | 4    | writingkit: `/react` composer, tools, `ArticleActions`; headless `assist`               | see writingkit repo CHANGELOG |
-| 5    | BiasLens consumes them and deletes its copies; sets its ceiling                         | see biaslens CHANGELOG |
+| 5    | BiasLens consumes them and deletes its copies; sets its ceiling                         | pending; [#194](https://github.com/bitbaum/biaslens/pull/194) verifies the earlier headless lifecycle only, retaining local composer markup |
 | 6    | OrangeCat adopts Speak/Improve and `DictationField` in its article composer; sets its ceiling | see orangecat CHANGELOG |
 | 7    | Every other product: set ceiling to today's counts (`--init`), then migrate fields      | not started |
 | 8    | OrangeCat's own header/footer/menu (3 files named as chrome) → sitekit                  | not started |

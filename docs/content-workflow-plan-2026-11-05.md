@@ -185,8 +185,14 @@ rejection of mismatched workspace metadata. The repaired gate accepted #194
 against the current OrangeCat receipt with every requirement intact. Merge/deployment/served journey evidence for the adoption remains
 to be established in #194 through the normal fleet sweep; no manual merge.
 
-Next: complete that bounded rollout, then resume one-loop consolidation and the
-versioned investigation adapter. Preserve server revision conflicts, capability
+Next: complete that bounded rollout. Concurrent work released the shared
+WritingKit React composer at `99fe5ae1c02827f8061cca7301439935f0173d37`; the
+new [experience plan](experience-standard-plan.md) requires consuming that
+component and retiring local markup. This lifecycle-only adoption retains the
+previous canary-verified artifact; it does not close shared composer adoption.
+Promote the newer component through its OrangeCat canary first, then carry the
+lifecycle/Undo/source acceptance into BiasLens before wider one-loop
+consolidation and the versioned investigation adapter. Preserve server revision conflicts, capability
 checks and history; stopping a wait cannot roll back a saved server rewrite.
 Heidi reading adaptation and Loki's wider audit remain separate queued scopes.
 Real signed-in publication and physical-keyboard acceptance remain open.
