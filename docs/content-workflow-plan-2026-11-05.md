@@ -127,13 +127,37 @@ completed the four-width writer checks. Main CI, both browser jobs, CD and the
 served artifact now agree for the first canary. Subsequent consumers retain their
 own required checks and staged rollout gates; no gate was waived.
 
-Next extend sitekit's flat application navigation upstream, with BiasLens as the configured
-canary, rather than creating a local menu fork. BiasLens one-loop consolidation
-must preserve immutable sources, evidence/citation labels, capability checks,
-server revision conflicts and version history when adopting WritingKit. Heidi's
-reading adaptation is still unimplemented; preserve its target/bridge variety
-packs and generated-language/provenance checks. Resume Loki's wider audit as a
-separate verifiable scope. No private drafts synchronize automatically across apps.
+## Navigation continuation — 2026-11-06
+
+Shared navigation is implemented upstream and published in
+[SiteKit 0.7.0](https://github.com/bitbaum/sitekit/releases/tag/v0.7.0).
+[BiasLens #192](https://github.com/bitbaum/biaslens/pull/192) configures the grouped
+menu, descriptive destinations and shared SVG shortcuts. It merged through the
+fleet sweep as `91a3819f3dc7799136884ce0809c9c8cfd48a282`. Its handoff/PR owns
+current deployment and served-journey evidence.
+[Main CI](https://github.com/bitbaum/biaslens/actions/runs/42135595070),
+[main browser checks](https://github.com/bitbaum/biaslens/actions/runs/42135595506)
+and [deployment](https://github.com/bitbaum/biaslens/actions/runs/42135748792)
+passed. The [served receipt](https://biaslens.orangecat.ch/.well-known/fleet-release.json)
+matched the merged commit, SiteKit 0.7.0 and the tested lockfile digest.
+Package verification passed 46 tests; consumer
+verification passed 211 unit tests plus nine design checks, production build,
+four-width menu/account checks, existing user flows and the real account CI
+lifecycle. Screenshot review drove upstream fixes for header-frame alignment,
+narrow account-popup clipping and nested host-widget style ownership.
+A controlled served-site journey passed at 320/390/834/1440px, including both
+menu account states, keyboard/focus/dismissal behavior and the no-JS fallback.
+It did not perform real production article publication or physical-keyboard
+acceptance; those gaps remain in the writing handoff.
+
+BiasLens's newer writing tools and comments from #189 are preserved; do not add
+another composer. Next adopt WritingKit in the existing BiasLens composer and
+rewrite lifecycle, then continue its one-loop workspace consolidation on current
+main.
+Preserve immutable sources, evidence/citation labels, capability checks, server
+revision conflicts and version history. Resume Heidi's reading adaptation as a
+separate scope, preserving target/bridge variety packs and generated-language/
+provenance checks. Resume Loki's wider audit as a separate verifiable scope. No private drafts synchronize automatically across apps.
 
 The strict inventory producer proposed the catalogue before its independent
 health-route duplication ratchet failed (18 to 20 files). No baseline was raised
