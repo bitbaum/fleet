@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T23:57:46.773Z",
+  "generatedAt": "2026-11-06T08:31:38.880Z",
   "packages": [
     {
       "slug": "design-tokens",
@@ -11,7 +11,7 @@
         "source": "npm",
         "command": "pnpm add @bitbaum/design-tokens@^1.5.2"
       },
-      "adopters": 25,
+      "adopters": 26,
       "adopterNames": [
         "accountkit",
         "aoz-begleitung",
@@ -37,7 +37,8 @@
         "substrata",
         "surf-your-life",
         "truthseeker",
-        "whenkit"
+        "whenkit",
+        "writingkit"
       ],
       "release": {
         "source": "npm",
@@ -164,6 +165,42 @@
       }
     },
     {
+      "slug": "chatkit",
+      "name": "@bitbaum/chatkit",
+      "repo": "https://github.com/bitbaum/chatkit",
+      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
+      "version": "0.23.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chatkit@^0.23.0"
+      },
+      "adopters": 18,
+      "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "bitbaum",
+        "botsmann",
+        "causius",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "kivvi",
+        "loki",
+        "orangecat",
+        "skif",
+        "solon",
+        "substrata",
+        "surf-your-life",
+        "vitareba",
+        "writingkit"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.23.0"
+      }
+    },
+    {
       "slug": "bip-kit",
       "name": "bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
@@ -196,41 +233,6 @@
       "release": {
         "source": "npm",
         "version": "0.6.1"
-      }
-    },
-    {
-      "slug": "chatkit",
-      "name": "@bitbaum/chatkit",
-      "repo": "https://github.com/bitbaum/chatkit",
-      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.22.1",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.22.1"
-      },
-      "adopters": 17,
-      "adopterNames": [
-        "aoz-begleitung",
-        "biaslens",
-        "bitbaum",
-        "botsmann",
-        "causius",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "kivvi",
-        "loki",
-        "orangecat",
-        "skif",
-        "solon",
-        "substrata",
-        "surf-your-life",
-        "vitareba"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.22.1"
       }
     },
     {
@@ -495,7 +497,7 @@
       "slug": "writingkit",
       "name": "@bitbaum/writingkit",
       "repo": "https://github.com/bitbaum/writingkit",
-      "description": "Revision-safe content operations: coordinate generation and edits without overwriting newer writing.",
+      "description": "Revision-safe content operations and the article composer every product shares: title and text with a microphone and writing help, speak-to-write, photos, charts, drafts that survive sign-in.",
       "version": "0.1.0",
       "install": {
         "source": "git",
