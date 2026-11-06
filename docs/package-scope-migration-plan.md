@@ -49,7 +49,7 @@ After each first publish the workflow links trusted publishing itself.
    currency reconciler, shared-registry audit, package-composition audit,
    rollout gate and their tests accept the new name; `SHARED.md` drops the
    "unscoped" note. Audits must treat the old name as a legacy alias until step 5.
-3. **Codemod** `scripts/packages/rename-package.mjs` (dry run by default, one
+3. **Codemod** (a rename script, not written yet; dry run by default, one
    non-draft PR per repo on a `fleet/package-scope` branch, same shape as
    `sync-agent-rules.mjs`): rewrite dependency names and import specifiers in
    source, `package.json`, `pnpm-workspace.yaml` (release-age exclusions),
