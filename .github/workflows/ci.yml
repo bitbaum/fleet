@@ -199,6 +199,11 @@ jobs:
       - name: Package repository settings stay enabled and fail closed
         run: node scripts/packages/test-reconcile-package-repo-settings.mjs
 
+      # The one-off move of four unscoped packages under @bitbaum: renames
+      # specifiers and dependency keys, never prose, lockfiles or changelogs.
+      - name: The package-scope rename touches specifiers and nothing else
+        run: node scripts/packages/test-rename-package.mjs
+
       # Every package repo is rendered from templates/package, and existing
       # ones are offered its missing files by pull request. So the template's
       # workflows must parse and hold valid shell (they fail far from here
