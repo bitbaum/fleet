@@ -178,8 +178,11 @@ OrangeCat's actual deployment workflow is `cd.yml`. The policy now explicitly
 selects that workflow and OrangeCat's opened served receipt. CLI fixtures retain
 both root/starter default workflows and test the OrangeCat override, including
 holds for stale commit, lock digest, missing artifacts and unavailable receipt.
-This config does not bypass canary CI/browser, current-main, artifact or receipt
-requirements. Merge/deployment/served journey evidence for the adoption remains
+The receipt producer and gate share the workspace-source identity rule: local
+packages resolve to tracked in-repository metadata and the owning commit, never
+an unverified link. All 52 focused rollout/receipt tests passed, including
+rejection of mismatched workspace metadata. The repaired gate accepted #194
+against the current OrangeCat receipt with every requirement intact. Merge/deployment/served journey evidence for the adoption remains
 to be established in #194 through the normal fleet sweep; no manual merge.
 
 Next: complete that bounded rollout, then resume one-loop consolidation and the

@@ -1,3 +1,5 @@
+import { posix } from "node:path";
+
 export const isPackageVersion = (value) =>
   typeof value === "string" && /^\d+\.\d+\.\d+(?:[-+][\w.+-]+)?$/.test(value);
 export const isImmutableArtifact = (value) =>
@@ -9,6 +11,48 @@ export const isImmutableArtifact = (value) =>
       /^git\+https:\/\/github\.com\/bitbaum\/[\w.-]+(?:\.git)?#[0-9a-f]{40}$/.test(
         value,
       )));
+
+export function workspaceSourcePath(importer, link) {
+  const path = posix.normalize(posix.join(importer, link));
+  if (
+    link.startsWith("/") ||
+    /[\\\r\n]/.test(link) ||
+    path.startsWith("/") ||
+    path.split("/").some((part) => !part || part === "." || part === "..")
+  )
+    throw new Error("Workspace package must resolve inside the repository");
+  return path;
+}
+
+/** Local workspace packages are identified by their tracked repository commit. */
+export function workspaceSourceArtifact({
+  repo,
+  commit,
+  importer,
+  link,
+  name,
+  local,
+}) {
+  let path;
+  try {
+    path = workspaceSourcePath(importer, link);
+  } catch {
+    /* Report the package below. */
+  }
+  if (
+    !/^[\w.-]+\/[\w.-]+$/.test(repo ?? "") ||
+    !/^[0-9a-f]{40}$/.test(commit ?? "") ||
+    !path ||
+    !local ||
+    local.path !== path ||
+    local.name !== name ||
+    !isPackageVersion(local.version)
+  )
+    throw new Error(
+      `${name}: workspace package must resolve to its tracked in-repository source`,
+    );
+  return `https://codeload.github.com/${repo}/tar.gz/${commit}`;
+}
 
 /** Expected artifacts are the caller's complete canonical first-party map. */
 export function receiptMatches(
@@ -28,7 +72,8 @@ export function receiptMatches(
   )
     return false;
   if (lockSha256 && receipt.lockSha256 !== lockSha256) return false;
-  if (projects && JSON.stringify(receipt.projects) !== JSON.stringify(projects)) return false;
+  if (projects && JSON.stringify(receipt.projects) !== JSON.stringify(projects))
+    return false;
   const actual = Object.entries(receipt.artifacts ?? {}).sort();
   if (
     actual.some(

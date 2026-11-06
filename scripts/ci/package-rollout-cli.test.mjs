@@ -9,24 +9,36 @@ import { createHash } from "node:crypto";
 // Exercise the real CLI, including both API orchestration paths. No network.
 for (const [project, pkg, canary, workflow] of [
   [".", "@bitbaum/sitekit", "bitbaum/biaslens", "deploy.yml"],
-  ["templates/app", "@bitbaum/sitekit", "bitbaum/biaslens", "deploy.yml"],
+  [
+    "templates/app",
+    "@bitbaum/sitekit",
+    "bitbaum/biaslens",
+    "deploy.yml",
+  ],
   [".", "@bitbaum/writingkit", "bitbaum/orangecat", "cd.yml"],
 ]) {
   test(`${project} ${pkg}: the CLI enforces served receipts as well as green workflows`, () => {
     const dir = mkdtempSync(join(tmpdir(), "rollout-cli-"));
     const tip = "c".repeat(40);
     const lock = (version) =>
-      `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies:\n      '${pkg}':\n        specifier: ^${version}\n        version: ${version}\n`;
+      `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies:\n      '${pkg}':\n        specifier: ^${version}\n        version: ${version}\n${pkg === "@bitbaum/writingkit" ? "      '@bitbaum/product-local':\n        specifier: workspace:*\n        version: link:packages/local\n" : ""}`;
     const receipt = {
       formatVersion: 1,
       repo: canary,
       commit: tip,
       project: ".",
       createdAt: "2026-10-20T00:00:00Z",
-      lockSha256: createHash("sha256").update(lock("0.4.2")).digest("hex"),
+      lockSha256: createHash("sha256")
+        .update(lock("0.4.2"))
+        .digest("hex"),
       artifacts: { [pkg]: "0.4.2" },
       versions: { [pkg]: "0.4.2" },
     };
+    if (pkg === "@bitbaum/writingkit") {
+      receipt.artifacts["@bitbaum/product-local"] =
+        `https://codeload.github.com/${canary}/tar.gz/${tip}`;
+      receipt.versions["@bitbaum/product-local"] = "0.2.0";
+    }
     try {
       writeFileSync(
         join(dir, "gh"),
@@ -36,7 +48,7 @@ const project = process.env.FIXTURE_PROJECT;
 const pkg = ${JSON.stringify(pkg)}, canary = ${JSON.stringify(canary)}, workflow = ${JSON.stringify(workflow)};
 const tip = 'c'.repeat(40);
 const lock = ${lock.toString()};
-const manifest = v => JSON.stringify({name:'fixture-app',dependencies:{[pkg]:'^'+v}});
+const manifest = v => JSON.stringify({name:'fixture-app',dependencies:{[pkg]:'^'+v,...(pkg==='@bitbaum/writingkit'?{'@bitbaum/product-local':'workspace:*'}:{})}});
 let result;
 if (verb !== 'api') throw Error('unexpected CLI invocation');
 if (path === 'repos/bitbaum/example/pulls/1') result={base:{sha:'a'.repeat(40)},head:{sha:'b'.repeat(40)}};
@@ -51,7 +63,7 @@ else if (path.includes('/contents/')) {
  const prefix=project==='.'?'':project+'/';
  const name=repo===canary?file:file.startsWith(prefix)?file.slice(prefix.length):null;
  const v=repo===canary||ref==='b'.repeat(40)?'0.4.2':'0.4.0';
- const content=name==='package.json'?manifest(v):name==='pnpm-lock.yaml'?lock(v):null;
+ const content=name==='package.json'?manifest(v):name==='pnpm-lock.yaml'?lock(v):name==='packages/local/package.json'?JSON.stringify({name:process.env.FIXTURE_LOCAL_BAD?'wrong-name':'@bitbaum/product-local',version:'0.2.0'}):null;
  if(content!==null) result={content:Buffer.from(content).toString('base64')};
 }
 if(result===undefined){console.error('404');process.exit(1)}
@@ -66,13 +78,14 @@ console.log(JSON.stringify(result));
  return new Response(process.env.FIXTURE_RECEIPT,{status:Number(process.env.FIXTURE_STATUS??200),headers:{'content-type':'application/json'}});
 };`,
       );
-      const run = (value, status = 200) =>
+      const run = (value, status = 200, localBad = false) =>
         spawnSync(
           process.execPath,
           [
             "--import",
             join(dir, "fetch.mjs"),
-            new URL("./package-rollout-gate.mjs", import.meta.url).pathname,
+            new URL("./package-rollout-gate.mjs", import.meta.url)
+              .pathname,
             "bitbaum/example",
             "1",
           ],
@@ -84,6 +97,7 @@ console.log(JSON.stringify(result));
               FIXTURE_PROJECT: project,
               FIXTURE_RECEIPT: JSON.stringify(value),
               FIXTURE_STATUS: String(status),
+              FIXTURE_LOCAL_BAD: localBad ? "1" : "",
             },
           },
         );
@@ -96,9 +110,14 @@ console.log(JSON.stringify(result));
       ]) {
         const held = run(bad);
         assert.equal(held.status, 1, held.stdout + held.stderr);
-        assert.match(held.stdout, /wait for .* to deploy this artifact/);
+        assert.match(
+          held.stdout,
+          /wait for .* to deploy this artifact/,
+        );
       }
       assert.equal(run(receipt, 503).status, 2);
+      if (pkg === "@bitbaum/writingkit")
+        assert.equal(run(receipt, 200, true).status, 2);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

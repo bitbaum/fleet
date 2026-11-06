@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { receiptMatches } from "./release-receipt-contract.mjs";
+import { receiptMatches, workspaceSourceArtifact, workspaceSourcePath } from "./release-receipt-contract.mjs";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -387,12 +387,58 @@ function canaryDepsAt(repo, ref, config) {
   return workspaceDepsAt(repo, ref, importer);
 }
 function receiptDepsAt(repo, ref, config) {
-  const projects = config.receiptProjects ?? (config.receiptProject ? [config.receiptProject] : null);
-  if (!projects) return canaryDepsAt(repo, ref, config);
+  const projects = config.receiptProjects ?? [
+    config.receiptProject ?? config.canaryImporter ?? ".",
+  ];
   if (!Array.isArray(projects) || projects.length === 0)
     throw new Error(`${repo}: invalid receipt projects`);
-  return Object.assign({}, ...projects.map((project) => workspaceDepsAt(repo, ref, project)));
+  return Object.assign(
+    {},
+    ...projects.map((project) => {
+      const deps =
+        project === "."
+          ? depsAt(repo, ref)
+          : workspaceDepsAt(repo, ref, project);
+      const manifest = JSON.parse(
+        content(
+          repo,
+          project === "." ? "package.json" : `${project}/package.json`,
+          ref,
+        ),
+      );
+      const specs = {
+        ...manifest.dependencies,
+        ...manifest.devDependencies,
+        ...manifest.optionalDependencies,
+      };
+      for (const [name, artifact] of Object.entries(deps)) {
+        if (!shared(name) || !artifact.startsWith("link:")) continue;
+        const spec = Object.entries(specs).find(
+          ([key, value]) => dependencyIdentity(key, value) === name,
+        )?.[1];
+        if (typeof spec !== "string" || !spec.startsWith("workspace:"))
+          throw new Error(
+            `${name}: workspace source requires a workspace dependency`,
+          );
+        const link = artifact.slice(5),
+          path = workspaceSourcePath(project, link);
+        const local = JSON.parse(
+          content(repo, `${path}/package.json`, ref),
+        );
+        deps[name] = workspaceSourceArtifact({
+          repo,
+          commit: ref,
+          importer: project,
+          link,
+          name,
+          local: { ...local, path },
+        });
+      }
+      return deps;
+    }),
+  );
 }
+
 export function successfulWorkflows(runs) {
   const seen = new Set(),
     passed = [];
