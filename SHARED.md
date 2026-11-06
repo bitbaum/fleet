@@ -514,6 +514,61 @@ as a composer — **6 in 5 repos** on 2026-09-25 (heidi, kivvi, loki ×2,
 orangecat, substrata) — so a NEW one fails `--check`. It cannot see chats whose input is
 inline in a page (most of the last row) — this section is the guard for those.
 
+## The experience standard — what a person gets from every product
+
+**Owner, 2026-11-06:** a non-technical person who says "make me a website"
+must get, out of the door, the quality we have already decided is good — not
+find out that the menu or the text box is worse than ours and not know to say
+so. Installing a package is not that. Using its component is. AGENTS.md → "The
+experience belongs to the package" is the rule; this is the standard and where
+it stands.
+
+| A person…                                | …gets                                                               | From                                                      |
+| ---------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
+| types in any long text box               | a microphone that always works, 16px, drafts that survive           | chatkit `DictationField` (a conversation: `Composer`)    |
+| writes an article                        | speak it, improve it, photo, chart, preview, publish, share         | writingkit `/react`                                       |
+| talks under an article, a page, an item  | one thread, same box with the mic, remove your own                  | chatkit `CommentThread`                                   |
+| opens the site                           | one header, one menu that explains each screen, one phone tab bar   | sitekit (`SiteMasthead`, `SiteTabBar`, `SiteFooter`)      |
+| acts on an item                          | one primary, then equal cells; owner controls apart                 | writingkit `ArticleActions` (the pattern, "One shape")    |
+| types a short field (name, email, price) | a normal input at 16px; no mic unless it is prose                   | the app (the audit leaves single-line inputs alone)       |
+
+What the app still owns: its words, its colours (tokens), its routes, its
+backend (each component takes a **transport** — `publish`, `assist`, `photos`,
+`transcribeUrl`, `comments` — and never a database or a vendor). Where a
+component's layout truly cannot serve a product, the product extends the
+package; it does not fork the markup.
+
+**Measured 2026-11-06** with `scripts/ci/experience-audit.mjs` on each repo's
+default branch (a count of source files, not a proof — it reads text and cannot
+tell a code editor from a note field, which is what `// experience-exempt:`
+is for):
+
+| Repo        | bareTextareas | localChrome | localComposers | localComments | localArticleEditors |
+| ----------- | ------------: | ----------: | -------------: | ------------: | ------------------: |
+| orangecat   |            47 |           3 |              0 |             0 |                   1 |
+| biaslens    |             6 |           0 |              1 |             0 |                   0 |
+| loki        |            34 |           2 |              1 |             0 |                   0 |
+| evig        |            96 |           3 |              0 |             0 |                   0 |
+| substrata   |             7 |           1 |              0 |             0 |                   0 |
+| heidi       |             6 |           0 |              0 |             0 |                   0 |
+| solon       |             4 |           0 |              0 |             0 |                   0 |
+| causius     |             4 |           1 |              0 |             0 |                   0 |
+| diplodoctor |             2 |           1 |              0 |             0 |                   0 |
+
+BiasLens's one `localComposers` file is the article composer it shipped in
+November 2026 as app code; it moves into `writingkit` in the plan, which is the
+case the rule exists for. `localComments` reads 0 across the fleet because
+comment lists are rarely named as such: the audit under-counts there, and the
+plan says so.
+
+**How it is enforced.** `package-composition.yml` (already called by every
+product's CI) runs the audit. A product whose `package-plan.json` has
+`experience.ceiling` fails a pull request that raises any count; the app
+template ships `"ceiling": {}`, so a new product starts at zero. An existing
+product sets its ceiling to today's counts (`experience-audit.mjs --init`) in
+the PR that adopts the components, and lowers it as it migrates. Nobody raises
+a ceiling.
+
 ## Your own model — the standard every app meets
 
 **Anyone must be able to power an app with the strongest model they can

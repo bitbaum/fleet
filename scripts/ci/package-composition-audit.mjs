@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dependencyIdentity } from "./package-rollout-gate.mjs";
+import { measure, overCeiling } from "./experience-audit.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export function auditComposition(
   dir,
@@ -140,6 +141,11 @@ export function auditComposition(
     findings.push("No checked merge path for shared dependency updates.");
   if (!existsSync(resolve(dir, ".github/workflows/deploy.yml")))
     findings.push("No deployment path for merged shared dependency updates.");
+  // The experience: a product that sets `experience.ceiling` in its plan may
+  // not ship more files that stand where a package owns the behaviour
+  // (bare text fields, its own chrome, composers, comments, article editors).
+  // Without a ceiling it is only reported by experience-audit.mjs.
+  findings.push(...overCeiling(measure(dir).counts, plan));
   return findings;
 }
 if (
