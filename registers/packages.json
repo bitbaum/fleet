@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T08:31:38.880Z",
+  "generatedAt": "2026-11-09T10:49:41.279Z",
   "packages": [
     {
       "slug": "design-tokens",
@@ -202,13 +202,13 @@
     },
     {
       "slug": "bip-kit",
-      "name": "bip-kit",
+      "name": "@bitbaum/bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
-      "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
+      "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (@bitbaum/bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
       "version": "0.6.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add bip-kit@^0.6.1"
+        "command": "pnpm add @bitbaum/bip-kit@^0.6.1"
       },
       "adopters": 17,
       "adopterNames": [
@@ -237,13 +237,13 @@
     },
     {
       "slug": "limitkit",
-      "name": "limitkit",
+      "name": "@bitbaum/limitkit",
       "repo": "https://github.com/bitbaum/limitkit",
       "description": "Rate limiting as a decision, not a middleware: fixed and sliding windows over an injectable store, a bounded in-memory store, standard RateLimit headers, and client-IP extraction. No HTTP client, no framework.",
       "version": "0.2.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add limitkit@^0.2.1"
+        "command": "pnpm add @bitbaum/limitkit@^0.2.1"
       },
       "adopters": 17,
       "adopterNames": [
@@ -297,6 +297,33 @@
       "release": {
         "source": "npm",
         "version": "0.3.3"
+      }
+    },
+    {
+      "slug": "chartkit",
+      "name": "@bitbaum/chartkit",
+      "repo": "https://github.com/bitbaum/chartkit",
+      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
+      "version": "0.7.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
+      },
+      "adopters": 9,
+      "adopterNames": [
+        "aoz-begleitung",
+        "biaslens",
+        "evig",
+        "hirnli",
+        "kivvi",
+        "petvity",
+        "solon",
+        "substrata",
+        "vitareba"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.7.0"
       }
     },
     {
@@ -354,32 +381,6 @@
       }
     },
     {
-      "slug": "chartkit",
-      "name": "@bitbaum/chartkit",
-      "repo": "https://github.com/bitbaum/chartkit",
-      "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.7.0",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
-      },
-      "adopters": 8,
-      "adopterNames": [
-        "aoz-begleitung",
-        "biaslens",
-        "evig",
-        "hirnli",
-        "kivvi",
-        "petvity",
-        "substrata",
-        "vitareba"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.7.0"
-      }
-    },
-    {
       "slug": "ai-forms",
       "name": "ai-forms",
       "repo": "https://github.com/bitbaum/ai-forms",
@@ -431,13 +432,13 @@
     },
     {
       "slug": "threadkit",
-      "name": "threadkit",
+      "name": "@bitbaum/threadkit",
       "repo": "https://github.com/bitbaum/threadkit",
       "description": "Headless multi-participant message threads. Permission is participation, unread is per-person, and an AI can be a participant subject to the same visibility rules as everyone else.",
       "version": "0.1.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add threadkit@^0.1.1"
+        "command": "pnpm add @bitbaum/threadkit@^0.1.1"
       },
       "adopters": 6,
       "adopterNames": [
@@ -458,10 +459,10 @@
       "name": "@bitbaum/geo-kit",
       "repo": "https://github.com/bitbaum/geo-kit",
       "description": "Versioned, on-demand geography resources and sourced boundary assertions for web applications, and a Canvas 2D renderer for them (globe or map).",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/geo-kit@^0.3.0"
+        "command": "pnpm add @bitbaum/geo-kit@^0.4.0"
       },
       "adopters": 3,
       "adopterNames": [
@@ -471,7 +472,27 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.3.0"
+        "version": "0.4.0"
+      }
+    },
+    {
+      "slug": "writingkit",
+      "name": "@bitbaum/writingkit",
+      "repo": "https://github.com/bitbaum/writingkit",
+      "description": "Revision-safe content operations and the article composer every product shares: title and text with a microphone and writing help, speak-to-write, photos, charts, drafts that survive sign-in.",
+      "version": "0.2.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/writingkit@^0.2.0"
+      },
+      "adopters": 2,
+      "adopterNames": [
+        "biaslens",
+        "orangecat"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.2.0"
       }
     },
     {
@@ -491,26 +512,6 @@
       "release": {
         "source": "npm",
         "version": "1.0.1"
-      }
-    },
-    {
-      "slug": "writingkit",
-      "name": "@bitbaum/writingkit",
-      "repo": "https://github.com/bitbaum/writingkit",
-      "description": "Revision-safe content operations and the article composer every product shares: title and text with a microphone and writing help, speak-to-write, photos, charts, drafts that survive sign-in.",
-      "version": "0.1.0",
-      "install": {
-        "source": "git",
-        "command": "pnpm add github:bitbaum/writingkit#b167b55c1cd06e3234a5a1001e98197759ee5d6b"
-      },
-      "adopters": 1,
-      "adopterNames": [
-        "orangecat"
-      ],
-      "release": {
-        "source": "git",
-        "tag": "v0.1.0",
-        "commit": "b167b55c1cd06e3234a5a1001e98197759ee5d6b"
       }
     },
     {
