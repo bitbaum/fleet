@@ -1,0 +1,437 @@
+{
+  "schema": 1,
+  "org": "bitbaum",
+  "generatedAt": "2026-11-09T11:25:00Z",
+  "previous": {
+    "file": "2026-11-08T101400Z.json",
+    "sha256": "94ba54b4f508edf6e4454bcd6adcdad7309a9bebb0893e035944baef90aeea55"
+  },
+  "repos": [
+    {
+      "repo": "bitbaum/.github",
+      "branch": "main",
+      "head": "36fa9868fa17c442184401e79e66fa14f5465f8f",
+      "committedAt": "2026-09-17T07:42:41Z"
+    },
+    {
+      "repoSha256": "0c34d9631b1b7d840745837fb239aafa6f2b31f4c01bb2ea4ffebed95dd013d7",
+      "branch": "main",
+      "head": "792261af2bf74f0a7629c7dd42cf31744fe697ad",
+      "committedAt": "2026-11-02T22:17:19Z"
+    },
+    {
+      "repo": "bitbaum/accountkit",
+      "branch": "main",
+      "head": "76eb7dea9aaff2084674c8df2df063a2f5e18a01",
+      "committedAt": "2026-11-08T02:44:47Z"
+    },
+    {
+      "repo": "bitbaum/ai-forms",
+      "branch": "main",
+      "head": "1afccb462f5d9ab578c573df79b8fae06f73c5f6",
+      "committedAt": "2026-11-07T23:37:17Z"
+    },
+    {
+      "repo": "bitbaum/ai-kit",
+      "branch": "main",
+      "head": "9a65a34c10f0f5e46159d0ff8992f5bfa705b014",
+      "committedAt": "2026-11-07T15:07:51Z"
+    },
+    {
+      "repoSha256": "d148f7d65034ba49cdb450ed5722f4da8118af66346826afb85b6e036595beec",
+      "branch": "main",
+      "head": "089ace89ce6ebc195eb2ad4d72b74bb372b537de",
+      "committedAt": "2026-09-17T08:03:37Z"
+    },
+    {
+      "repo": "bitbaum/aoz-begleitung",
+      "branch": "master",
+      "head": "4ab677fd1895f1a9ee64b1280439176430fe61d7",
+      "committedAt": "2026-11-07T19:37:44Z"
+    },
+    {
+      "repo": "bitbaum/biaslens",
+      "branch": "main",
+      "head": "bdd900e4538c1f92ed6b04fe425ad48e92d47e30",
+      "committedAt": "2026-11-07T13:37:00Z"
+    },
+    {
+      "repo": "bitbaum/bip-kit",
+      "branch": "main",
+      "head": "53850fbd30a533df4c46aa4cb8074403220be6a9",
+      "committedAt": "2026-11-06T12:55:41Z"
+    },
+    {
+      "repo": "bitbaum/bitbaum",
+      "branch": "main",
+      "head": "45755948ccccc5c0af5051c1588d232dad8019d8",
+      "committedAt": "2026-11-09T11:07:50Z"
+    },
+    {
+      "repo": "bitbaum/botsmann",
+      "branch": "main",
+      "head": "b928756713f735716f5d950e2966d96ab228dbba",
+      "committedAt": "2026-11-06T08:59:00Z"
+    },
+    {
+      "repo": "bitbaum/botsmann-blog-content",
+      "branch": "main",
+      "head": "a821980370939b6f655fa285edceae17d4813eb6",
+      "committedAt": "2026-03-09T15:33:13Z"
+    },
+    {
+      "repo": "bitbaum/botsmann-knowledge-content",
+      "branch": "main",
+      "head": "8c4afd7dbe4a60b51c1bf300646511a4b4d2ce83",
+      "committedAt": "2026-01-12T04:54:15Z"
+    },
+    {
+      "repo": "bitbaum/camille-boulangerie",
+      "branch": "main",
+      "head": "424d72bded38a894c3e3c4a2f74e64daf7e2af01",
+      "committedAt": "2026-11-07T23:06:55Z"
+    },
+    {
+      "repo": "bitbaum/causius",
+      "branch": "main",
+      "head": "c06eaccd22bec82b7fadbf44405acf88f63e7d7e",
+      "committedAt": "2026-11-06T09:28:31Z"
+    },
+    {
+      "repoSha256": "20e6c4e2b95e3ee00523f6c77d658a834bc19ef6c5c6d8af83a8b53222e7cf2b",
+      "branch": "main",
+      "head": "afad5dddb15bd9f282a5ea1c15237f691e07dd7d",
+      "committedAt": "2026-10-16T16:17:25Z"
+    },
+    {
+      "repoSha256": "8a1dd4d8596a52484147d985a5a3688b7c2aba4959a2335742acb151393e7ab9",
+      "branch": "main",
+      "head": "04dbc0990196185f6013689a0953ad428e1a7a7e",
+      "committedAt": "2026-10-16T15:43:09Z"
+    },
+    {
+      "repo": "bitbaum/chartkit",
+      "branch": "main",
+      "head": "c9963c20936b0e20eb3b1ef3cd8ca8f9a3f7f9e7",
+      "committedAt": "2026-11-06T15:47:24Z"
+    },
+    {
+      "repo": "bitbaum/chatkit",
+      "branch": "main",
+      "head": "2b89d690aff5945946a97f0f82225605f183c585",
+      "committedAt": "2026-11-08T18:20:34Z"
+    },
+    {
+      "repo": "bitbaum/crewless",
+      "branch": "main",
+      "head": "a239866425c17fee83f28fc3052c7885ffd6b4b2",
+      "committedAt": "2026-09-17T07:55:18Z"
+    },
+    {
+      "repo": "bitbaum/datacat",
+      "branch": "main",
+      "head": "3c020be482bd272f048a37f8bd29f4a87ff6bdd0",
+      "committedAt": "2026-11-06T09:08:14Z"
+    },
+    {
+      "repoSha256": "403ab78f400a844f37e4407849c57d843282e2eca550b5ef2815cc79bd7a4c6f",
+      "branch": "main",
+      "head": "a48d3b4864dfc980c0cad4b722cb295f464a2369",
+      "committedAt": "2026-10-03T05:46:07Z"
+    },
+    {
+      "repo": "bitbaum/design-tokens",
+      "branch": "main",
+      "head": "d8fb5fdaa329a0df81a9a79e9e83768916fffd73",
+      "committedAt": "2026-11-07T23:54:27Z"
+    },
+    {
+      "repo": "bitbaum/diplodoctor",
+      "branch": "main",
+      "head": "200d1d47a81c488bd4a26fc91e9f618bd3459559",
+      "committedAt": "2026-11-06T09:10:45Z"
+    },
+    {
+      "repo": "bitbaum/dotfiles",
+      "branch": "master",
+      "head": "ba0edfe22fb737ecc4c313b0c2176f425c899d00",
+      "committedAt": "2026-10-19T12:01:35Z"
+    },
+    {
+      "repo": "bitbaum/evig",
+      "branch": "main",
+      "head": "c82aad7ab66fbb821895b7c066bb918330e610dc",
+      "committedAt": "2026-11-09T07:12:36Z"
+    },
+    {
+      "repoSha256": "0c1f5b00f934f7349f74bddfba734397c93dec710326fef00acee97e15f42d86",
+      "branch": "main",
+      "head": "fe8a7e0c39ba38d4de44b906a9f214095f6cbce2",
+      "committedAt": "2026-11-02T22:15:59Z"
+    },
+    {
+      "repoSha256": "28022b85f1be58f6c72e3ea1b2c89a97c7b3b60af73b1416346cf791372528c8",
+      "branch": "main",
+      "head": "71d964821ad1a12f5518e6e21f418337d34e870f",
+      "committedAt": "2026-10-30T21:26:22Z"
+    },
+    {
+      "repo": "bitbaum/fitfoot",
+      "branch": "main",
+      "head": "45d15c1da97148b7cb0923dc1e8d8826d8fe8e6c",
+      "committedAt": "2026-03-28T23:10:02Z"
+    },
+    {
+      "repo": "bitbaum/fleet",
+      "branch": "main",
+      "head": "8752d0fb0a0883cf5c068ccce8ef3c46cbd593bb",
+      "committedAt": "2026-11-09T10:52:34Z"
+    },
+    {
+      "repo": "bitbaum/g-but",
+      "branch": "main",
+      "head": "0a295d73a382578d58d778f741e559cb9fdc3acb",
+      "committedAt": "2026-02-27T07:09:40Z"
+    },
+    {
+      "repo": "bitbaum/geo-kit",
+      "branch": "main",
+      "head": "dc5fded4951b74d821adec91d0781d642fdbd260",
+      "committedAt": "2026-11-09T10:44:01Z"
+    },
+    {
+      "repoSha256": "c54c2680558e7d95de136c7a30b8c047346561b3bf3583123943bc887c503dc7",
+      "branch": "main",
+      "head": "43480e2f73aa8ddf6d3f5f71f553e7090aea40be",
+      "committedAt": "2026-09-03T14:05:51Z"
+    },
+    {
+      "repo": "bitbaum/heidi",
+      "branch": "main",
+      "head": "1fb7f5d1a15dbbf16838f43b5953550239d9acc7",
+      "committedAt": "2026-11-06T09:10:38Z"
+    },
+    {
+      "repo": "bitbaum/hire",
+      "branch": "main",
+      "head": "b7088e3564ada97e4a93d55a170b84ee23ad9cca",
+      "committedAt": "2026-09-15T08:15:24Z"
+    },
+    {
+      "repo": "bitbaum/hirnli",
+      "branch": "main",
+      "head": "464991dbc80f831f2407564eed87cfb4e029b53f",
+      "committedAt": "2026-11-07T07:52:09Z"
+    },
+    {
+      "repo": "bitbaum/hochhinhouse",
+      "branch": "main",
+      "head": "b8493dfb1dad89c94254d4c9a3c535eb48a0b6ff",
+      "committedAt": "2026-11-06T09:06:58Z"
+    },
+    {
+      "repo": "bitbaum/hochhinhouse-party",
+      "branch": "main",
+      "head": "d368ab70f16779a3e3d57437d57bd45186819cca",
+      "committedAt": "2026-11-06T09:17:28Z"
+    },
+    {
+      "repo": "bitbaum/ivy-portal",
+      "branch": "main",
+      "head": "1cac8a79983f47bccf95102a185b035ba1cf6878",
+      "committedAt": "2026-11-07T22:50:59Z"
+    },
+    {
+      "repoSha256": "6e60e7a0c68767422925d5eee93f5d6a634747e37a09ca9e8b415c2018a52d5d",
+      "branch": "main",
+      "head": "a06b4dc9b7d92a848b28fd80b30584752a249869",
+      "committedAt": "2026-11-03T01:47:39Z"
+    },
+    {
+      "repo": "bitbaum/kivvi",
+      "branch": "main",
+      "head": "4c2c7a6a9e4110a34510b59c65f108aae2509b50",
+      "committedAt": "2026-11-06T09:21:00Z"
+    },
+    {
+      "repo": "bitbaum/limitkit",
+      "branch": "main",
+      "head": "d55dd07b3570ef4b75669eaa077576872e92790c",
+      "committedAt": "2026-11-07T16:06:11Z"
+    },
+    {
+      "repo": "bitbaum/listkit",
+      "branch": "main",
+      "head": "fe547517ee31d2caadfaa5355b3f2f935337c88e",
+      "committedAt": "2026-11-09T02:58:53Z"
+    },
+    {
+      "repo": "bitbaum/loki",
+      "branch": "main",
+      "head": "fc736533470bf97e1861e6dfcaef93066e6729bc",
+      "committedAt": "2026-11-08T20:32:47Z"
+    },
+    {
+      "repo": "bitbaum/loki-releases",
+      "branch": "main",
+      "head": "57270303a18fe551d8da6d6e037d232f41d13cd1",
+      "committedAt": "2026-10-21T18:30:44Z"
+    },
+    {
+      "repo": "bitbaum/mail-kit",
+      "branch": "main",
+      "head": "d799d01a52339a15a8ffbe67144e3e09ae3e592d",
+      "committedAt": "2026-11-06T08:57:47Z"
+    },
+    {
+      "repo": "bitbaum/morulia",
+      "branch": "main",
+      "head": "73e6732a62e8a40546b56ffb54af37da2231bb45",
+      "committedAt": "2026-11-06T09:10:36Z"
+    },
+    {
+      "repo": "bitbaum/orangecat",
+      "branch": "main",
+      "head": "dd2146bb31d4e33fb568d476e1646687b7340ae7",
+      "committedAt": "2026-11-07T13:48:51Z"
+    },
+    {
+      "repoSha256": "86126218ca7e1aaa2ecc1af88c607e1352b88bf3904dc1c7abdde5da96f614ad",
+      "branch": "main",
+      "head": "daa2ab69ed99c0870840208441be19c907cabf80",
+      "committedAt": "2026-10-10T04:03:38Z"
+    },
+    {
+      "repo": "bitbaum/paykit",
+      "branch": "main",
+      "head": "a7e45f0bdb06c57c23a996e14b4935d26f8c4282",
+      "committedAt": "2026-11-06T09:02:49Z"
+    },
+    {
+      "repo": "bitbaum/petvity",
+      "branch": "main",
+      "head": "2acdcbc1a450350b3e77bb3cb84226d8010c0545",
+      "committedAt": "2026-11-07T14:31:18Z"
+    },
+    {
+      "repo": "bitbaum/printcraft",
+      "branch": "main",
+      "head": "4ff25875f7b1793c73d82fa9c0b8a825122e9b53",
+      "committedAt": "2026-11-06T10:25:52Z"
+    },
+    {
+      "repo": "bitbaum/reparaturbonus-zh",
+      "branch": "main",
+      "head": "10173136d8bd66f994576f11157c26b2843cb773",
+      "committedAt": "2026-11-06T09:06:42Z"
+    },
+    {
+      "repo": "bitbaum/s-ink",
+      "branch": "main",
+      "head": "ccbf20f4b48b15fe37065ac0da5bb965e9897cac",
+      "committedAt": "2026-11-07T08:45:01Z"
+    },
+    {
+      "repo": "bitbaum/sbb-fundbuero",
+      "branch": "master",
+      "head": "6429993322994d418a2dd4cfe02416a269786137",
+      "committedAt": "2026-11-06T09:07:23Z"
+    },
+    {
+      "repo": "bitbaum/searchkit",
+      "branch": "main",
+      "head": "c846132a7a6eacaf79e3a8b2d4bfd082fca95b92",
+      "committedAt": "2026-11-06T08:58:42Z"
+    },
+    {
+      "repo": "bitbaum/sitekit",
+      "branch": "main",
+      "head": "af403fd752ac465b0e2e96f561ab2ae9c281494b",
+      "committedAt": "2026-11-07T06:46:45Z"
+    },
+    {
+      "repo": "bitbaum/skif",
+      "branch": "main",
+      "head": "287b939f491966201ec30de393c87d0181534b81",
+      "committedAt": "2026-11-06T09:20:46Z"
+    },
+    {
+      "repo": "bitbaum/solon",
+      "branch": "main",
+      "head": "f7ead787895811ddf06c638b39ca8805366e0296",
+      "committedAt": "2026-11-09T10:42:30Z"
+    },
+    {
+      "repo": "bitbaum/speechkit",
+      "branch": "main",
+      "head": "243aab2458473f9d4f8728e8b13b7c77a9987b68",
+      "committedAt": "2026-11-08T06:32:08Z"
+    },
+    {
+      "repo": "bitbaum/substrata",
+      "branch": "main",
+      "head": "7abef9c485617f24c95c456fedb125728a0acaad",
+      "committedAt": "2026-11-09T11:02:26Z"
+    },
+    {
+      "repo": "bitbaum/surf-your-life",
+      "branch": "main",
+      "head": "65234b03e957aa3a3efd099251cbc79e3f4fad8b",
+      "committedAt": "2026-11-07T13:44:34Z"
+    },
+    {
+      "repo": "bitbaum/threadkit",
+      "branch": "main",
+      "head": "2f5acf54e412bd5d7850dd6e008afb4cb95c7492",
+      "committedAt": "2026-11-07T22:50:32Z"
+    },
+    {
+      "repo": "bitbaum/truthseeker",
+      "branch": "main",
+      "head": "2678093983ab451563b4dbc6ffbc695c8aca71d7",
+      "committedAt": "2026-11-07T01:17:06Z"
+    },
+    {
+      "repo": "bitbaum/vitareba",
+      "branch": "main",
+      "head": "ecd707347d6dd34cadfe9357c6c47a0eba711780",
+      "committedAt": "2026-11-07T13:45:49Z"
+    },
+    {
+      "repo": "bitbaum/volt",
+      "branch": "main",
+      "head": "719dec529d920ce3ee5113d733151f59d40e4e46",
+      "committedAt": "2026-10-27T11:03:57Z"
+    },
+    {
+      "repo": "bitbaum/whenkit",
+      "branch": "main",
+      "head": "9458b739693f1fd878b52f26a8c06920d9bdd06c",
+      "committedAt": "2026-11-08T18:17:29Z"
+    },
+    {
+      "repo": "bitbaum/writingkit",
+      "branch": "main",
+      "head": "dd2b8fdc55090e75ce4a42d36f39df2d522c561f",
+      "committedAt": "2026-11-06T09:09:46Z"
+    },
+    {
+      "repo": "bitbaum/zeitkastli",
+      "branch": "main",
+      "head": "6af754a0cb54e722c4d32ca963da7e739072029a",
+      "committedAt": "2026-11-07T06:46:53Z"
+    },
+    {
+      "repoSha256": "16c7f1122e66fd00a0a7ebf9f7fe3f271737687edad60856d018c17676ecd0cf",
+      "branch": "main",
+      "head": "11e9237e9317242782afb60399786956c9bcc410",
+      "committedAt": "2026-10-30T17:27:05Z"
+    }
+  ],
+  "_notes": [
+    "One row per non-fork repository: its default branch and HEAD commit at generatedAt.",
+    "A private repository is named only by repoSha256 = sha256(\"<org>/<name>\").",
+    "The .ots file beside this manifest is an OpenTimestamps proof over its sha256; `ots info` shows the hash, `ots verify` needs a Bitcoin node.",
+    "previous chains this manifest to the one before it; the series is only as forgeable as the Bitcoin blocks it is anchored in."
+  ]
+}
