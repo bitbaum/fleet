@@ -4,6 +4,14 @@ import { fileURLToPath } from "node:url";
 import { dependencyIdentity } from "./package-rollout-gate.mjs";
 import { measure, overCeiling } from "./experience-audit.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+// Names mid-migration to @bitbaum/*: a plan may still name the old one until its
+// repository is renamed (scripts/packages/rename-package.mjs). Retire an entry
+// when no adopter uses the old name.
+const LEGACY_NAMES = { "bip-kit": "@bitbaum/bip-kit" };
+const sameBlock = (declared, required) =>
+  declared === required ||
+  LEGACY_NAMES[declared] === required ||
+  LEGACY_NAMES[required] === declared;
 export function auditComposition(
   dir,
   baseline = JSON.parse(
@@ -49,7 +57,7 @@ export function auditComposition(
         );
       continue;
     }
-    if (entry.package !== required.package)
+    if (!sameBlock(entry.package, required.package))
       findings.push(
         `${feature}: expected ${required.package}, or document the specific exception`,
       );
