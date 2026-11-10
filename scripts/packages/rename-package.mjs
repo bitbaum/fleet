@@ -32,7 +32,11 @@ const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '.next', 'build', 'co
 const SKIP_FILES = new Set(['pnpm-lock.yaml', 'package-lock.json', 'yarn.lock', 'CHANGELOG.md']);
 // Code, styles and config only: prose (markdown, text) and the generated AGENTS.md rules block name
 // packages for people, and are not import specifiers.
-const TEXT = /\.(?:[cm]?[jt]sx?|css|json|html)$/;
+// Code and styles only. JSON is data: translated copy, register snapshots and overrides keyed by the
+// register's package names must not change; package.json and package-plan.json are handled by name below.
+const TEXT = /\.(?:[cm]?[jt]sx?|css|html)$/;
+// Derived or mirrored files are regenerated from their source, never edited by hand.
+const DERIVED = /(?:\.generated\.|\.snapshot\.|(?:^|\/)site-template\/)/;
 const SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
 const names = Object.keys(RENAMES).join('|');
 const SPECIFIER = new RegExp(`(["'])(${names})(/[^"'\\s]*)?\\1`, 'g');
@@ -42,9 +46,17 @@ const ALIAS = new RegExp(`^npm:(${names})@`);
 export function rewrite(path, text) {
   const base = path.split('/').pop();
   if (SKIP_FILES.has(base) || base === 'pnpm-workspace.yaml') return null;
+  if (DERIVED.test(path)) return null;
   if (base === 'package.json') return rewritePackageJson(text);
+  if (base === 'package-plan.json') return rewritePlan(text);
   if (!TEXT.test(base)) return null;
   const next = text.replace(SPECIFIER, (_all, q, name, sub = '') => `${q}${RENAMES[name]}${sub}${q}`);
+  return next === text ? null : next;
+}
+
+/** A package plan names packages in `"package": "<name>"` entries; nothing else in it is a specifier. */
+function rewritePlan(text) {
+  const next = text.replace(new RegExp(`("package"\\s*:\\s*")(${names})(")`, 'g'), (_all, a, name, b) => `${a}${RENAMES[name]}${b}`);
   return next === text ? null : next;
 }
 
