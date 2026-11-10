@@ -11,7 +11,8 @@
  *
  * What changes, and only this:
  *   - package.json dependency keys (all four sections) and `npm:` alias values;
- *   - quoted specifiers in text sources: 'bip-kit', "bip-kit/react", `limitkit`;
+ *   - quoted specifiers in code, style and config files: 'bip-kit' or "bip-kit/react"
+ *     (backticks, markdown and text are prose and stay as they are);
  *   - "package" entries in package-plan.json;
  *   - pnpm-workspace.yaml: a release-age exclusion for the new name's version,
  *     when the file already uses minimumReleaseAgeExclude.
@@ -29,16 +30,18 @@ export const RENAMES = {
 };
 const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', '.next', 'build', 'coverage', '.turbo', 'out']);
 const SKIP_FILES = new Set(['pnpm-lock.yaml', 'package-lock.json', 'yarn.lock', 'CHANGELOG.md']);
-const TEXT = /\.(?:[cm]?[jt]sx?|css|mdx?|json|ya?ml|html|txt)$/;
+// Code, styles and config only: prose (markdown, text) and the generated AGENTS.md rules block name
+// packages for people, and are not import specifiers.
+const TEXT = /\.(?:[cm]?[jt]sx?|css|json|html)$/;
 const SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
 const names = Object.keys(RENAMES).join('|');
-const SPECIFIER = new RegExp(`(["'\`])(${names})(/[^"'\`\\s]*)?\\1`, 'g');
+const SPECIFIER = new RegExp(`(["'])(${names})(/[^"'\\s]*)?\\1`, 'g');
 const ALIAS = new RegExp(`^npm:(${names})@`);
 
 /** Pure: new text for one file, or null when nothing changes. */
 export function rewrite(path, text) {
   const base = path.split('/').pop();
-  if (SKIP_FILES.has(base)) return null;
+  if (SKIP_FILES.has(base) || base === 'pnpm-workspace.yaml') return null;
   if (base === 'package.json') return rewritePackageJson(text);
   if (!TEXT.test(base)) return null;
   const next = text.replace(SPECIFIER, (_all, q, name, sub = '') => `${q}${RENAMES[name]}${sub}${q}`);
@@ -69,6 +72,8 @@ function rewritePackageJson(text) {
 /** Pure: pnpm-workspace.yaml with release-age exclusions for the renamed packages in use. */
 export function addReleaseAgeExclusions(yaml, versions) {
   if (!/^minimumReleaseAgeExclude:/m.test(yaml)) return null;
+  // One scope glob already exempts every @bitbaum package; naming versions would be noise.
+  if (/^\s*-\s*['"]?@bitbaum\/\*['"]?\s*$/m.test(yaml)) return null;
   let next = yaml;
   for (const [name, version] of Object.entries(versions)) {
     const entry = `${name}@${version}`;
@@ -76,6 +81,24 @@ export function addReleaseAgeExclusions(yaml, versions) {
     next = next.replace(/^minimumReleaseAgeExclude:\n/m, `minimumReleaseAgeExclude:\n  - '${entry}'\n`);
   }
   return next === yaml ? null : next;
+}
+
+/** Which unscoped names a file actually used (so only those get a release-age exclusion). */
+function renamedNames(path, text) {
+  const found = new Set();
+  if (path.endsWith('package.json')) {
+    try {
+      const data = JSON.parse(text);
+      for (const section of SECTIONS) for (const [key, range] of Object.entries(data[section] ?? {})) {
+        if (RENAMES[key]) found.add(key);
+        const alias = typeof range === 'string' ? range.match(ALIAS) : null;
+        if (alias) found.add(alias[1]);
+      }
+    } catch { /* not JSON: nothing renamed */ }
+    return found;
+  }
+  for (const m of text.matchAll(SPECIFIER)) found.add(m[2]);
+  return found;
 }
 
 function* walk(dir) {
@@ -97,7 +120,7 @@ export function plan(dir, versions = {}) {
     const next = rewrite(file, text);
     if (next !== null) {
       changes.push({ file: relative(dir, file), text: next });
-      for (const name of Object.keys(RENAMES)) if (next.includes(RENAMES[name]) && versions[RENAMES[name]]) used[RENAMES[name]] = versions[RENAMES[name]];
+      for (const name of renamedNames(file, text)) if (versions[RENAMES[name]]) used[RENAMES[name]] = versions[RENAMES[name]];
     }
   }
   const ws = join(dir, 'pnpm-workspace.yaml');
