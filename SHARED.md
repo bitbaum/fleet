@@ -297,11 +297,13 @@ and every CI and deploy job installs with `pnpm install --frozen-lockfile`. A
 new version enters one repo at a time, as a reviewable lockfile diff, through
 that repo's own CI and its own deploy. There is no fleet-wide push and no
 ambient upgrade. `minimumReleaseAge` sits in front of that as a second gate:
-a fresh publish is refused until it ages, and our own packages need an explicit
-`minimumReleaseAgeExclude` line to be installable at all — which is why a
-missing entry fails `pnpm install --frozen-lockfile` **before a line of code
-runs**, surfacing as a bare exit 1 with no annotation, reading like a broken
-build rather than a refused dependency.
+a fresh publish is refused until it ages, and our own packages are exempt
+from it: `minimumReleaseAgeExclude` lists `"@bitbaum/*"` (one glob, so a package
+published tomorrow is covered too; pnpm 11 matches the pattern) plus the four
+unscoped names `limitkit`, `bip-kit`, `threadkit` and `ai-forms`. A missing
+entry fails `pnpm install --frozen-lockfile` **before a line of code runs**,
+surfacing as a bare exit 1 with no annotation, reading like a broken build
+rather than a refused dependency.
 
 **So the blast radius of a bad publish is one repo — whichever bumps first —
 and its CI is the thing that catches it.** That is what the "proving consumer"
