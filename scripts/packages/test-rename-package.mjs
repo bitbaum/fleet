@@ -23,6 +23,12 @@ eq(out.dependencies, { '@bitbaum/bip-kit': '^0.6.1', react: '19' }, 'dependency 
 eq(out.devDependencies.x, 'npm:@bitbaum/ai-forms@^0.1.3', 'npm: aliases point at the new name');
 eq(rewrite('package.json', JSON.stringify({ dependencies: { react: '19' } })), null, 'a package.json without them is untouched');
 eq(rewrite('package-plan.json', `{"package": "limitkit"}`), `{"package": "@bitbaum/limitkit"}`, 'plan entries are renamed');
+eq(rewrite('package-plan.json', `{"limitkit": {"package": "limitkit", "notes": "the limitkit"}}`), `{"limitkit": {"package": "@bitbaum/limitkit", "notes": "the limitkit"}}`, 'only a plan\'s package entries change, not its keys or notes');
+eq(rewrite('messages/en.json', `{"value": "limitkit"}`), null, 'translated copy and other JSON data are left alone');
+eq(rewrite('site/overrides.json', `{"bip-kit": {}}`), null, 'JSON keyed by the register\'s names is left alone');
+eq(rewrite('src/lib/snapshot.generated.ts', `import "bip-kit";`), null, 'generated files are left alone');
+eq(rewrite('site/packages.snapshot.json', `{"name": "bip-kit"}`), null, 'snapshots are left alone');
+eq(rewrite('scripts/site-template/lib/a.ts', `import "limitkit";`), null, 'a mirrored template directory is left alone');
 
 const yaml = `allowBuilds:\n  esbuild: true\nminimumReleaseAgeExclude:\n  - 'x@1'\n`;
 eq(addReleaseAgeExclusions(yaml, { '@bitbaum/limitkit': '0.2.1' }), `allowBuilds:\n  esbuild: true\nminimumReleaseAgeExclude:\n  - '@bitbaum/limitkit@0.2.1'\n  - 'x@1'\n`, 'a release-age exclusion is added for the new name');
