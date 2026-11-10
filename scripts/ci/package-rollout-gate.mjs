@@ -278,20 +278,29 @@ export function hasConsumerSourceChanges(files, prefix = "") {
     return true;
   });
 }
+// A pnpm lockfile is several MB in the bigger apps. execFileSync's default
+// 1 MB buffer then dies with ENOBUFS, and the contents API's JSON form leaves
+// `content` empty above 1 MB, so either way the gate saw "evidence
+// unavailable" and held every green floor-raise PR in those apps for days.
+const GH_MAX_BUFFER = 256 * 1024 * 1024;
+function gh(args) {
+  return execFileSync("gh", args, {
+    encoding: "utf8",
+    maxBuffer: GH_MAX_BUFFER,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
 function api(path) {
-  return JSON.parse(
-    execFileSync("gh", ["api", path], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    }),
-  );
+  return JSON.parse(gh(["api", path]));
 }
 function content(repo, path, ref) {
   try {
-    const result = api(
+    return gh([
+      "api",
       `repos/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
-    );
-    return Buffer.from(result.content, "base64").toString();
+      "-H",
+      "Accept: application/vnd.github.raw",
+    ]);
   } catch (error) {
     if (String(error.stderr).includes("404")) return null;
     throw error;
@@ -505,6 +514,71 @@ function greenWorkflows(repo, sha) {
     },
   );
 }
+/**
+ * Files a canary's own CI skips by `paths-ignore` (docs, Markdown, LICENSE).
+ * A commit that changes only these cannot change what was built, tested or
+ * deployed, so it does not erase the evidence of the commit before it.
+ */
+export function isDocsOnlyChange(files) {
+  return (
+    Array.isArray(files) &&
+    files.length > 0 &&
+    files.every(({ filename }) =>
+      /\.mdx?$/i.test(filename) ||
+      filename.startsWith("docs/") ||
+      /(?:^|\/)(?:LICENSE|CHANGELOG|README)(?:\.[^/]*)?$/i.test(filename) ||
+      filename.startsWith(".vscode/"),
+    )
+  );
+}
+
+/**
+ * Green checks for a canary tip. When the tip is a docs-only commit, its CI
+ * never ran (paths-ignore), and reading checks off the tip alone held every
+ * downstream consumer of every package canaried there until some unrelated
+ * code change landed: kivvi's tip on 2026-11-06 was an AGENTS.md sync, and
+ * the gate held the whole fleet's chatkit 0.23.0 floor raise for four days.
+ * Walk back (at most `limit` commits) through docs-only commits only, and take
+ * a missing check from the nearest ancestor where it is green.
+ */
+export function canaryChecksWithDocsOnlyAncestors({
+  tip,
+  requiredChecks,
+  checksAt,
+  history,
+  filesBetween,
+  limit = 10,
+}) {
+  const checks = new Set(checksAt(tip));
+  let missing = requiredChecks.filter((check) => !checks.has(check));
+  if (!missing.length) return [...checks];
+  const ancestors = (typeof history === "function" ? history() : history)
+    .filter((sha) => sha !== tip)
+    .slice(0, limit);
+  let newer = tip;
+  for (const sha of ancestors) {
+    if (!isDocsOnlyChange(filesBetween(sha, newer))) break;
+    const green = checksAt(sha);
+    for (const check of missing) if (green.includes(check)) checks.add(check);
+    missing = missing.filter((check) => !checks.has(check));
+    if (!missing.length) break;
+    newer = sha;
+  }
+  return [...checks];
+}
+function canaryTipChecks(canary, tip, requiredChecks) {
+  return canaryChecksWithDocsOnlyAncestors({
+    tip,
+    requiredChecks,
+    checksAt: (sha) => greenWorkflows(canary, sha),
+    history: () =>
+      api(`repos/${canary}/commits?sha=${tip}&per_page=11`).map(
+        (commit) => commit.sha,
+      ),
+    filesBetween: (older, newer) =>
+      api(`repos/${canary}/compare/${older}...${newer}`).files ?? [],
+  });
+}
 /** Evidence is specific to the importer and receipt projects. */
 export function canaryEvidenceKey(canary, config, requiredChecks) {
   return JSON.stringify([canary, config.canaryImporter ?? null, config.receiptProject ?? null,
@@ -655,7 +729,7 @@ async function main() {
           const deploy = api(
             `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
           ).workflow_runs[0];
-          const checks = greenWorkflows(canary, tip);
+          const checks = canaryTipChecks(canary, tip, requiredChecks);
           const result = await canaryDeploymentEvidence({
             canary,
             tip,
@@ -760,7 +834,7 @@ async function main() {
         const deploy = api(
           `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
         ).workflow_runs[0];
-        const checks = greenWorkflows(canary, tip);
+        const checks = canaryTipChecks(canary, tip, requiredChecks);
         const result = await canaryDeploymentEvidence({
           canary,
           tip,
@@ -811,7 +885,7 @@ async function main() {
         const deploy = api(
           `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
         ).workflow_runs[0];
-        const checks = greenWorkflows(canary, tip);
+        const checks = canaryTipChecks(canary, tip, requiredChecks);
         const result = await canaryDeploymentEvidence({
           canary,
           tip,
@@ -861,7 +935,7 @@ async function main() {
       const deploy = api(
         `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
       ).workflow_runs[0];
-      const checks = greenWorkflows(canary, tip);
+      const checks = canaryTipChecks(canary, tip, requiredChecks);
       const result = await canaryDeploymentEvidence({
         canary,
         tip,
