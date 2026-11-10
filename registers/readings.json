@@ -1,31 +1,31 @@
 {
-  "generatedAt": "2026-11-09T13:17:24.941Z",
+  "generatedAt": "2026-11-10T12:55:58.187Z",
   "org": "bitbaum",
   "current": {
-    "date": "2026-11-09",
+    "date": "2026-11-10",
     "stars": 3,
     "forks": 1,
     "downloads": {
-      "lastMonth": 95198,
+      "lastMonth": 99685,
       "byPackage": {
-        "@bitbaum/design-tokens": 7117,
-        "@bitbaum/mail-kit": 10762,
-        "@bitbaum/accountkit": 12819,
-        "@bitbaum/ai-kit": 12650,
-        "@bitbaum/chatkit": 14277,
-        "@bitbaum/bip-kit": 199,
-        "@bitbaum/limitkit": 238,
-        "@bitbaum/whenkit": 5121,
-        "@bitbaum/chartkit": 4574,
-        "@bitbaum/listkit": 3783,
-        "@bitbaum/searchkit": 4647,
-        "ai-forms": 10624,
-        "@bitbaum/sitekit": 4556,
-        "@bitbaum/threadkit": 230,
-        "@bitbaum/geo-kit": 2341,
-        "@bitbaum/writingkit": 252,
-        "@bitbaum/speechkit": 749,
-        "@bitbaum/paykit": 259
+        "@bitbaum/design-tokens": 7475,
+        "@bitbaum/mail-kit": 11236,
+        "@bitbaum/accountkit": 13153,
+        "@bitbaum/ai-kit": 13154,
+        "@bitbaum/chatkit": 15236,
+        "@bitbaum/bip-kit": 210,
+        "@bitbaum/limitkit": 248,
+        "@bitbaum/whenkit": 5334,
+        "@bitbaum/chartkit": 4767,
+        "@bitbaum/listkit": 3891,
+        "@bitbaum/searchkit": 4878,
+        "ai-forms": 11116,
+        "@bitbaum/sitekit": 4655,
+        "@bitbaum/threadkit": 239,
+        "@bitbaum/geo-kit": 2758,
+        "@bitbaum/writingkit": 293,
+        "@bitbaum/speechkit": 778,
+        "@bitbaum/paykit": 264
       }
     },
     "clients": {
@@ -382,6 +382,15 @@
       "stars": 3,
       "forks": 1,
       "downloads": 95198,
+      "payingClients": 0,
+      "mrrChf": 0,
+      "originatorSharePaid": 0
+    },
+    {
+      "date": "2026-11-10",
+      "stars": 3,
+      "forks": 1,
+      "downloads": 99685,
       "payingClients": 0,
       "mrrChf": 0,
       "originatorSharePaid": 0
