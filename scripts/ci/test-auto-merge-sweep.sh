@@ -48,6 +48,9 @@ run_sweep() {
   local rearm_if_files="${RS_REARM_IF_FILES:-}" rearm_if_workflows="${RS_REARM_IF_WORKFLOWS:-}"
   local status_field="${RS_STATUS:-completed}"
   local base_sha="${RS_BASESHA:-basesha000000}"
+  # RS_PRCI_AT: when the PR's newest CI run was created; the base tip landed at 2026-01-01T10:00:00Z.
+  local base_time="2026-01-01T10:00:00Z"
+  local pr_ci_at="${RS_PRCI_AT:-2026-01-01T10:05:00Z}"
   local head_field="${RS_HEADSHA:-$base_sha}"
   local live_url=""
   local branch_field=""
@@ -105,7 +108,7 @@ DOCS
   local merge_token="${RS_MERGE_TOKEN:-shared-merge-token}"
   [ "$merge_token" != "__none__" ] || merge_token=""
   RS_DOCS=""; RS_DOCS_COMMENTS=""; RS_COMPARE=""; RS_MERGE_TOKEN=""
-  RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""
+  RS_BASESHA=""; RS_LIVE=""; RS_HEADBRANCH=""; RS_PRCI_AT=""
   RS_STATUS=""; RS_HEADSHA=""; RS_PRS=""; RS_VIEW=""; RS_REDJOBS=""; RS_REARM_SEEN=""; RS_REARM_LATE=""; RS_ASSOC=""; RS_COMMITS=""; RS_REVIEWS=""; RS_PERM=""; RS_AUTHOR=""; RS_BODY=""; RS_FILES=""; RS_TITLE=""; RS_REARM_IF_FILES=""; RS_REARM_IF_WORKFLOWS=""
 
   cat > "$dir/gh" <<FAKE
@@ -114,6 +117,7 @@ ARGS="\$*"
 echo "\$ARGS" >> "$GH_LOG"
 printf '%s\t%s\n' "\${GH_TOKEN:-}" "\$ARGS" >> "$TOKEN_LOG"
 case "\$ARGS" in
+  *"/commits/"*"committer.date"*)   echo "$base_time" ;;
   *"/commits/"*)                    echo "$base_sha" ;;
   # Deploy-reconciler queries, matched BEFORE the generic CI one — ordering is
   # the only thing separating them, since all three start with "run list".
@@ -126,6 +130,8 @@ case "\$ARGS" in
   "run list"*)                      printf '%s\n' '{"databaseId":42,"status":"$status_field","conclusion":"$conclusion","headSha":"$head_field"$branch_field}' ;;
   *"/actions/runs/"*"/jobs"*)       printf '%s\n' '$failed_steps' ;;
   "run rerun"*)                     echo "rerun dispatched" ;;
+  # The red-base carve-out compares when the PR's CI ran with when the base tip landed.
+  *"/actions/runs?head_sha="*)       echo "$pr_ci_at" ;;
   *"/actions/runs/"*)               printf '%s\n' '$attempt' ;;
   "run view"*)                      cat "$dir/redjobs.txt" ;;
   # The deadlock-name block also calls pr list, with a --jq the real gh would
@@ -444,7 +450,7 @@ pr_fixture() { # <rollup-check-names, comma-separated>
   for name in $1; do
     checks="${checks:+$checks,}{\"status\":\"COMPLETED\",\"conclusion\":\"SUCCESS\",\"name\":\"$name\"}"
   done
-  printf '[{"number":7,"title":"the fix","isDraft":false,"mergeable":"MERGEABLE","mergeStateStatus":"UNSTABLE","labels":[],"createdAt":"2026-01-01T00:00:00Z","statusCheckRollup":[%s]}]' "$checks"
+  printf '[{"number":7,"title":"the fix","isDraft":false,"mergeable":"MERGEABLE","mergeStateStatus":"UNSTABLE","labels":[],"createdAt":"2026-01-01T00:00:00Z","headRefOid":"headsha0001","statusCheckRollup":[%s]}]' "$checks"
 }
 
 #   13e. The tip is ahead of the last run only by that run's own write-back
@@ -471,6 +477,15 @@ if RS_PRS="$(pr_fixture 'Some Red Job,lint')" run_sweep failure 'Run tests' 1; t
   [ "$(merges)" -ge 1 ] \
     && ok 'merges a PR that is green on every job the red base fails' \
     || no 'merges a PR that is green on every job the red base fails'
+fi
+
+# 14b. Green on the failing job, but proven on an OLDER base than the red tip:
+#      that is not a repair, it never saw the breakage (solon 2026-11-10, five
+#      unrelated PRs merged onto a red main). Refresh it instead of merging.
+if RS_PRCI_AT=2026-01-01T09:55:00Z RS_PRS="$(pr_fixture 'Some Red Job,lint')" run_sweep failure 'Run tests' 1; then
+  [ "$(merges)" -eq 0 ] && grep -q 'update-branch' "$GH_LOG" \
+    && ok 'a PR whose CI predates the red tip is refreshed, not merged onto the red base' \
+    || no 'a PR whose CI predates the red tip is refreshed, not merged onto the red base'
 fi
 
 # 15. A PR that never RAN the failing job proves nothing about it. Letting it
