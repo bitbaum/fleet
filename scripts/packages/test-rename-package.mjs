@@ -26,6 +26,7 @@ eq(rewrite('package-plan.json', `{"package": "limitkit"}`), `{"package": "@bitba
 
 const yaml = `allowBuilds:\n  esbuild: true\nminimumReleaseAgeExclude:\n  - 'x@1'\n`;
 eq(addReleaseAgeExclusions(yaml, { '@bitbaum/limitkit': '0.2.1' }), `allowBuilds:\n  esbuild: true\nminimumReleaseAgeExclude:\n  - '@bitbaum/limitkit@0.2.1'\n  - 'x@1'\n`, 'a release-age exclusion is added for the new name');
+eq(addReleaseAgeExclusions(`minimumReleaseAgeExclude:\n  - "@bitbaum/*"\n  - limitkit\n`, { '@bitbaum/limitkit': '0.2.1' }), null, 'a @bitbaum/* glob already covers the new names');
 eq(addReleaseAgeExclusions(`allowBuilds:\n  a: true\n`, { '@bitbaum/limitkit': '0.2.1' }), null, 'no exclusion list, no change');
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

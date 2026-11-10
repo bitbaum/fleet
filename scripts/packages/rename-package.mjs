@@ -72,6 +72,8 @@ function rewritePackageJson(text) {
 /** Pure: pnpm-workspace.yaml with release-age exclusions for the renamed packages in use. */
 export function addReleaseAgeExclusions(yaml, versions) {
   if (!/^minimumReleaseAgeExclude:/m.test(yaml)) return null;
+  // One scope glob already exempts every @bitbaum package; naming versions would be noise.
+  if (/^\s*-\s*['"]?@bitbaum\/\*['"]?\s*$/m.test(yaml)) return null;
   let next = yaml;
   for (const [name, version] of Object.entries(versions)) {
     const entry = `${name}@${version}`;
