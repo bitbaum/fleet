@@ -210,3 +210,34 @@ test("a product that sets an experience ceiling may not exceed it; one without o
     assert.deepEqual(auditComposition(dir, baseline), []);
   });
 });
+test("old and scoped names of a migrating package satisfy each other", () => {
+  for (const [planned, required] of [
+    ["@bitbaum/bip-kit", "bip-kit"],
+    ["bip-kit", "@bitbaum/bip-kit"],
+  ])
+    fixture((dir) => {
+      writeFileSync(
+        join(dir, "package.json"),
+        JSON.stringify({ dependencies: { [planned]: "^0.6.1" } }),
+      );
+      writeFileSync(
+        join(dir, "package-plan.json"),
+        JSON.stringify({
+          blocks: {
+            publishing: {
+              package: planned,
+              bindings: [{ file: "shell.tsx", symbols: ["Shell"] }],
+            },
+          },
+        }),
+      );
+      writeFileSync(
+        join(dir, "shell.tsx"),
+        `import {Shell} from '${planned}/react'; export const Page=()=> <Shell />;`,
+      );
+      assert.deepEqual(
+        auditComposition(dir, { publishing: { package: required } }),
+        [],
+      );
+    });
+});
