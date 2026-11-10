@@ -481,7 +481,7 @@ if [ -n "$DEPLOY_WORKFLOW" ] && [ -n "${base_ci:-}" ] && [ -z "${base_red_jobs}"
 fi
 
 prs_json=$(gh pr list --repo "$REPO" --state open --base "$BASE_BRANCH" --limit 50 \
-  --json number,title,isDraft,mergeable,mergeStateStatus,labels,statusCheckRollup,createdAt)
+  --json number,title,isDraft,mergeable,mergeStateStatus,labels,statusCheckRollup,createdAt,headRefOid)
 
 count=$(printf '%s' "$prs_json" | jq 'length')
 if [ "$count" -eq 0 ]; then
@@ -858,6 +858,37 @@ INNER_EOF
     if [ -n "$uncovered" ]; then
       echo "[auto-merge] #${number} skip: ${BASE_BRANCH} is red on [${uncovered%; }] and this PR does not prove those green — ${title}"
       continue
+    fi
+    # GREEN ON A STALE BASE PROVES NOTHING ABOUT THE RED ONE. A PR's checks run
+    # on the merge result GitHub computed when the PR's CI was triggered. With
+    # no "require up to date" rule that state is never BEHIND, so a PR whose
+    # last CI predates the commit that turned the base red still shows
+    # verify=SUCCESS, and the carve-out read that as a repair. bitbaum/solon,
+    # 2026-11-10: #491 turned main red at 10:16 UTC and the sweep then merged
+    # seven unrelated PRs onto it as "repairs" (#493-#497, #500, #501), each
+    # green on a base without #491, while every deploy stayed blocked.
+    # So the PR's newest CI run must have been created AFTER the current base
+    # tip was committed. (A run's pull_requests[].base.sha is the base as it is
+    # NOW, not as it was then, so it cannot answer this; the times can.) If it
+    # was not, refresh the branch so its CI runs on the red base, and judge it
+    # on a later sweep.
+    head_oid=$(printf '%s' "$pr" | jq -r '.headRefOid // empty')
+    base_time=$(gh api "repos/${REPO}/commits/${base_sha}" --jq '.commit.committer.date' 2>/dev/null || true)
+    proven_at=""
+    if [ -n "$head_oid" ]; then
+      proven_at=$(gh api "repos/${REPO}/actions/runs?head_sha=${head_oid}&event=pull_request&per_page=20" \
+        --jq "[.workflow_runs[] | select(.path | endswith(\"/${CI_WORKFLOW}\"))] | sort_by(.created_at) | last | (.created_at // empty)" 2>/dev/null || true)
+    fi
+    if [ -z "$base_time" ] || [ -z "$proven_at" ] || [[ ! "$proven_at" > "$base_time" ]]; then
+      echo "[auto-merge] #${number} is green on the failing jobs, but its CI (${proven_at:-unknown}) predates the red ${BASE_BRANCH} ${base_sha:0:8} (${base_time:-unknown}) — refreshing it so its checks run on the red base: ${title}"
+      if [ -z "${MERGE_TOKEN:-}" ]; then
+        echo "[auto-merge] #${number} needs the shared write token to refresh its branch — leaving it untouched" >&2
+      elif GH_TOKEN="$MERGE_TOKEN" gh api -X PUT "repos/${REPO}/pulls/${number}/update-branch" --silent 2>/dev/null; then
+        echo "[auto-merge] #${number} updated; it is judged on the red base on a later sweep"
+      else
+        echo "[auto-merge] #${number} update-branch failed — leaving for the next sweep" >&2
+      fi
+      break
     fi
     echo "[auto-merge] #${number} is green on every job ${BASE_BRANCH} fails — merging it to repair the base: ${title}" >&2
     if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
