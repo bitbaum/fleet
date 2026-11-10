@@ -67,7 +67,7 @@ else if (path.includes('/contents/')) {
  if(content!==null) result={content:Buffer.from(content).toString('base64')};
 }
 if(result===undefined){console.error('404');process.exit(1)}
-console.log(JSON.stringify(result));
+if(process.argv.includes('Accept: application/vnd.github.raw')&&result&&typeof result.content==='string')process.stdout.write(Buffer.from(result.content,'base64').toString());else console.log(JSON.stringify(result));
 `,
         { mode: 0o755 },
       );
@@ -179,7 +179,7 @@ else if(path.includes('/contents/')) {
  if(value!==null) result=encode(value);
 }
 if(result===undefined){console.error('404');process.exit(1)}
-console.log(JSON.stringify(result));
+if(process.argv.includes('Accept: application/vnd.github.raw')&&result&&typeof result.content==='string')process.stdout.write(Buffer.from(result.content,'base64').toString());else console.log(JSON.stringify(result));
 `,
       { mode: 0o755 },
     );
@@ -237,7 +237,7 @@ else if (path.includes('/contents/')) {
  if (content!==null) result={content:Buffer.from(content).toString('base64')};
 }
 if(result===undefined){console.error('404');process.exit(1)}
-console.log(JSON.stringify(result));
+if(process.argv.includes('Accept: application/vnd.github.raw')&&result&&typeof result.content==='string')process.stdout.write(Buffer.from(result.content,'base64').toString());else console.log(JSON.stringify(result));
 `,
       { mode: 0o755 },
     );

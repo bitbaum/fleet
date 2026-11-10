@@ -12,6 +12,8 @@ import {
   hasConsumerSourceChanges,
   lockedNpmDependencies,
   canaryDeploymentEvidence,
+  canaryChecksWithDocsOnlyAncestors,
+  isDocsOnlyChange,
 } from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
@@ -607,4 +609,40 @@ test("the pull request baseline is its merge base, and an unreadable one holds",
   assert.deepEqual(seen, [["a".repeat(40), "b".repeat(40)]]);
   for (const reply of [undefined, {}, { merge_base_commit: { sha: "main" } }])
     assert.throws(() => pullRequestBaseline(pr, () => reply), /merge base/);
+});
+
+test("a docs-only canary tip keeps the checks of the commit before it", () => {
+  const checks = { tip: [], mid: [], base: ["ci.yml", "browser-smoke.yml"] };
+  const files = {
+    "mid..tip": [{ filename: "AGENTS.md" }],
+    "base..mid": [{ filename: "docs/notes.md" }, { filename: "LICENSE" }],
+  };
+  const read = (sha) => checks[sha];
+  const between = (older, newer) => files[`${older}..${newer}`];
+  assert.deepEqual(
+    canaryChecksWithDocsOnlyAncestors({
+      tip: "tip",
+      requiredChecks: ["ci.yml", "browser-smoke.yml"],
+      checksAt: read,
+      history: ["tip", "mid", "base"],
+      filesBetween: between,
+    }).sort(),
+    ["browser-smoke.yml", "ci.yml"],
+  );
+});
+test("a code change between canary commits stops the walk back", () => {
+  const checks = { tip: [], base: ["ci.yml", "browser-smoke.yml"] };
+  assert.deepEqual(
+    canaryChecksWithDocsOnlyAncestors({
+      tip: "tip",
+      requiredChecks: ["ci.yml", "browser-smoke.yml"],
+      checksAt: (sha) => checks[sha],
+      history: ["tip", "base"],
+      filesBetween: () => [{ filename: "AGENTS.md" }, { filename: "src/a.ts" }],
+    }),
+    [],
+  );
+  assert.equal(isDocsOnlyChange([{ filename: "pnpm-lock.yaml" }]), false);
+  assert.equal(isDocsOnlyChange([]), false);
+  assert.equal(isDocsOnlyChange([{ filename: "README.md" }]), true);
 });
