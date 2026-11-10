@@ -498,3 +498,13 @@ test("CLI verifies tracked workspace sources and real installed symlink targets"
     }
   }
 });
+
+test("the receipt attests every rollout package the gate expects, not only @bitbaum/* names", () => {
+  const result = createReleaseReceipt({
+    ...input,
+    manifest: { dependencies: { limitkit: "^0.2.1", unrelated: "^1.0.0" } },
+    pnpmLock: `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies:\n      limitkit:\n        specifier: ^0.2.1\n        version: 0.2.1\n      unrelated:\n        specifier: ^1.0.0\n        version: 1.0.1\npackages:\n`,
+    installed: { limitkit: { name: "limitkit", version: "0.2.1" } },
+  });
+  assert.deepEqual(result.artifacts, { limitkit: "0.2.1" });
+});

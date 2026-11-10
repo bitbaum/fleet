@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   dependencyIdentity,
+  isSharedPackage,
   lockedDependencies,
   lockedNpmDependencies,
 } from "./package-rollout-gate.mjs";
@@ -22,14 +23,8 @@ import {
 } from "./release-receipt-contract.mjs";
 export { receiptMatches } from "./release-receipt-contract.mjs";
 
-const registry = JSON.parse(
-  readFileSync(
-    new URL("../../registers/packages.json", import.meta.url),
-    "utf8",
-  ),
-);
-const known = new Set(registry.packages.map((pkg) => pkg.name));
-const isShared = (name) => known.has(name) || name.startsWith("@bitbaum/");
+// The gate's own definition, so a receipt attests what the gate expects.
+const isShared = isSharedPackage;
 const dependencies = (manifest) => ({
   ...manifest.dependencies,
   ...manifest.devDependencies,

@@ -37,8 +37,16 @@ export function dependencyIdentity(name, spec) {
   }
   return name;
 }
-const shared = (name) =>
-  known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name];
+/**
+ * The one definition of a first-party package. The release receipt
+ * (release-receipt.mjs) attests exactly these, and this gate expects exactly
+ * these: when the two lists differed (limitkit and bip-kit are rollout
+ * packages but not in packages.json), every canary that used them carried a
+ * receipt the gate could never match, and every floor raise held.
+ */
+export const isSharedPackage = (name) =>
+  known.has(name) || name.startsWith("@bitbaum/") || Boolean(policy.packages[name]);
+const shared = isSharedPackage;
 export const isLocalPathSpec = (spec) =>
   typeof spec === "string" && /^(?:file|link):/.test(spec);
 export function lockedDependencies(manifest, lock, importer = ".") {
