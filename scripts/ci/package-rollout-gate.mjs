@@ -39,6 +39,8 @@ export function dependencyIdentity(name, spec) {
 }
 const shared = (name) =>
   known.has(name) || name.startsWith("@bitbaum/") || policy.packages[name];
+export const isLocalPathSpec = (spec) =>
+  typeof spec === "string" && /^(?:file|link):/.test(spec);
 export function lockedDependencies(manifest, lock, importer = ".") {
   const deps = {
     ...manifest.dependencies,
@@ -58,6 +60,10 @@ export function lockedDependencies(manifest, lock, importer = ".") {
       ),
     )?.[1] ?? "";
   for (const [name, spec] of Object.entries(deps)) {
+    // A path into this repo (an example installing the package it sits in,
+    // `file:../..`) is local source, not a published artifact: there is
+    // nothing to canary, and gating it held a package's own rename PR.
+    if (isLocalPathSpec(spec)) continue;
     const identity = dependencyIdentity(name, spec);
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const version = root.match(
@@ -89,6 +95,7 @@ export function lockedNpmDependencies(manifest, lock, importer = ".") {
   const prefix = importer === "." ? "" : importer.replace(/\/$/, "") + "/";
   const result = {};
   for (const [name, spec] of Object.entries(deps)) {
+    if (isLocalPathSpec(spec)) continue;
     const identity = dependencyIdentity(name, spec);
     const entry =
       lock.packages[`${prefix}node_modules/${name}`] ??
