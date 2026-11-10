@@ -646,3 +646,18 @@ test("a code change between canary commits stops the walk back", () => {
   assert.equal(isDocsOnlyChange([]), false);
   assert.equal(isDocsOnlyChange([{ filename: "README.md" }]), true);
 });
+
+test("a file: dependency on the repo's own package is local source, not an artifact", () => {
+  const manifest = { dependencies: { "@bitbaum/ai-forms": "file:../..", "@bitbaum/sitekit": "^0.4.0" } };
+  const lock = `lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    dependencies:
+      '@bitbaum/sitekit':
+        specifier: ^0.4.0
+        version: 0.4.2
+`;
+  assert.deepEqual(lockedDependencies(manifest, lock), { "@bitbaum/sitekit": "0.4.2" });
+});
