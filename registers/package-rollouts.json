@@ -313,6 +313,44 @@
         "ci.yml"
       ],
       "canaryAdmission": "verified-candidate"
+    },
+    "@bitbaum/bip-kit": {
+      "canary": "bitbaum/kivvi",
+      "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 251
+    },
+    "@bitbaum/limitkit": {
+      "canary": "bitbaum/kivvi",
+      "canaryImporter": "apps/web",
+      "receiptProject": "apps/web",
+      "receiptProjects": [
+        "apps/web",
+        "packages/ai"
+      ],
+      "candidateChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryChecks": [
+        "ci.yml",
+        "browser-smoke.yml"
+      ],
+      "canaryAdmission": "verified-candidate",
+      "bootstrapPr": 251
     }
   },
   "blocked": {
