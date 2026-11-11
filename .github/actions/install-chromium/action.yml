@@ -1,0 +1,53 @@
+# Install Playwright's Chromium for a job's browser checks, and survive an
+# unreachable Ubuntu archive.
+#
+# `playwright install --with-deps` runs apt-get. On 2026-11-11 the runners could
+# not resolve security.ubuntu.com for hours, and every job that installed
+# Chromium failed (or hung ~10 minutes) before a single test ran. The runner
+# image already carries Chrome's system libraries, so when apt fails we install
+# the browser alone. A library that really is missing then fails the browser
+# checks themselves, visibly, rather than this step. Same approach as
+# bitbaum/solon#550, shared here so every repo uses one copy.
+#
+# Use (after pnpm install, so `pnpm exec playwright` resolves the repo's own
+# Playwright version):
+#
+#   - uses: bitbaum/fleet/.github/actions/install-chromium@main
+#
+# Inputs:
+#   browsers          what to install (default: chromium; "" installs all)
+#   apt-timeout       seconds to give the --with-deps attempt (default 240)
+#   working-directory where the repo's package.json lives (default .)
+name: Install Playwright Chromium
+description: playwright install --with-deps, falling back to the browser alone when apt cannot reach Ubuntu's archive.
+inputs:
+  browsers:
+    description: Browsers to install (space-separated). Empty installs Playwright's default set.
+    required: false
+    default: chromium
+  apt-timeout:
+    description: Seconds to allow the --with-deps attempt before falling back.
+    required: false
+    default: "240"
+  working-directory:
+    description: Directory to run in.
+    required: false
+    default: .
+runs:
+  using: composite
+  steps:
+    - name: Install Playwright browsers
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        BROWSERS: ${{ inputs.browsers }}
+        APT_TIMEOUT: ${{ inputs.apt-timeout }}
+      run: |
+        set -u
+        # shellcheck disable=SC2086 # BROWSERS is a space-separated list on purpose
+        if timeout "$APT_TIMEOUT" pnpm exec playwright install --with-deps $BROWSERS; then
+          exit 0
+        fi
+        echo "::warning::playwright install --with-deps failed or timed out (apt could not reach Ubuntu's archive?); installing the browser without system deps"
+        # shellcheck disable=SC2086
+        pnpm exec playwright install $BROWSERS
