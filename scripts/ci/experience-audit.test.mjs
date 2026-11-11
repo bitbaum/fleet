@@ -74,3 +74,29 @@ test('a ceiling holds the count; no ceiling only reports; a missing kind means z
   assert.match(over[0], /bareTextareas: 3 above the ceiling of 2/);
   assert.match(over[1], /localChrome: 1 above the ceiling of 0/);
 });
+
+test('a chat with attachments or voice switched off needs a reason on that line', () => {
+  const chat = "import { ChatApp } from '@bitbaum/chatkit/react';\n";
+  assert.deepEqual(classify('src/Chat.tsx', chat + 'export const C = () => <ChatApp composer={{ attach: false }} />;'), ['mutedChats']);
+  assert.deepEqual(classify('src/Chat.tsx', chat + 'export const C = () => <ChatApp composer={{ voice: false }} />;'), ['mutedChats']);
+  assert.deepEqual(
+    classify('src/Chat.tsx', chat + 'export const C = () => <ChatApp composer={{ attach: {} , voice: {} }} />;'),
+    [],
+  );
+  assert.deepEqual(
+    classify(
+      'src/Chat.tsx',
+      chat + '<ChatApp\n  composer={{ attach: false }} // experience-exempt: read-only archive, nothing can be sent\n/>',
+    ),
+    [],
+  );
+  assert.deepEqual(classify('src/Other.tsx', 'const o = { attach: false };\n<ChatApp />'), []);
+});
+
+test('mutedChats fails only a product whose ceiling names it', () => {
+  const counts = { bareTextareas: 0, localChrome: 0, localComposers: 0, localComments: 0, localArticleEditors: 0, mutedChats: 2 };
+  assert.deepEqual(overCeiling(counts, { experience: { ceiling: {} } }), []);
+  const over = overCeiling(counts, { experience: { ceiling: { mutedChats: 0 } } });
+  assert.equal(over.length, 1);
+  assert.match(over[0], /mutedChats: 2 above the ceiling of 0/);
+});
