@@ -557,6 +557,13 @@ is for):
 | causius     |             4 |           1 |              0 |             0 |                   0 |
 | diplodoctor |             2 |           1 |              0 |             0 |                   0 |
 
+The audit also reports `mutedChats` (2026-11-11): a file that renders chatkit's
+`ChatApp` or `Composer` with `attach: false` or `voice: false` on a line with no
+`experience-exempt: <reason>`. A chat with no paperclip or no microphone cannot
+be used by everyone it serves (Solon's law chat shipped with both off). It is
+opt-in: it fails a product only when its ceiling names it, e.g.
+`"mutedChats": 0`, so no product's CI changes until it asks.
+
 BiasLens's one `localComposers` file is the article composer it shipped in
 November 2026 as app code; it moves into `writingkit` in the plan, which is the
 case the rule exists for. `localComments` reads 0 across the fleet because

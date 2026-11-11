@@ -24,6 +24,12 @@
  *                       import chatkit
  *   localArticleEditors an Article/Post/Blog Composer/Editor/Form file that
  *                       does not import writingkit
+ *   mutedChats          a file that renders chatkit's ChatApp/Composer with
+ *                       `attach: false` or `voice: false` on a line that carries
+ *                       no `experience-exempt: <reason>` comment. A chat with no
+ *                       paperclip or no microphone is a chat that cannot be
+ *                       used by everyone it serves. Opt-in: it only fails a
+ *                       product whose ceiling names it (`"mutedChats": 0`).
  *
  * What it does with the counts is the product's choice, in package-plan.json:
  *
@@ -52,6 +58,7 @@ export const KINDS = [
   'localComposers',
   'localComments',
   'localArticleEditors',
+  'mutedChats',
 ];
 
 const SKIP_DIRS = new Set([
@@ -79,6 +86,9 @@ const ARTICLE_EDITOR = /^(Article|Post|Blog)(Composer|Editor|Form)\.(tsx|jsx)$/;
 
 const imports = (source, pkg) =>
   new RegExp(`(?:from\\s*|import\\s*)['"]${pkg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:/[^'"]*)?['"]`).test(source);
+
+const MUTED = /\b(attach|voice)\s*(?::|=)\s*\{?\s*false\b/;
+const LINE_EXEMPT = /experience-exempt:\s*\S.{19,}/;
 
 const EXEMPT = /^\s*(?:\/\/|\/\*)\s*experience-exempt:\s*(\S.{19,})/;
 
@@ -112,6 +122,12 @@ export function classify(path, source) {
   if (COMPOSER.test(name) && !chatkit) kinds.push('localComposers');
   if (COMMENTS.test(name) && !chatkit) kinds.push('localComments');
   if (ARTICLE_EDITOR.test(name) && !writingkit) kinds.push('localArticleEditors');
+  if (
+    chatkit &&
+    /<(ChatApp|Composer)\b/.test(source) &&
+    source.split('\n').some((line) => MUTED.test(line) && !LINE_EXEMPT.test(line))
+  )
+    kinds.push('mutedChats');
   return kinds;
 }
 
@@ -138,7 +154,9 @@ export function measure(dir) {
 export function overCeiling(counts, plan) {
   const ceiling = plan?.experience?.ceiling;
   if (!ceiling || typeof ceiling !== 'object') return [];
-  return KINDS.filter((k) => counts[k] > (Number.isInteger(ceiling[k]) ? ceiling[k] : 0)).map(
+  // mutedChats is opt-in: a product that has not named it in its ceiling is not
+  // failed for it (existing products have a baseline they never agreed to).
+  return KINDS.filter((k) => (k !== 'mutedChats' || Number.isInteger(ceiling[k])) && counts[k] > (Number.isInteger(ceiling[k]) ? ceiling[k] : 0)).map(
     (k) =>
       `${k}: ${counts[k]} above the ceiling of ${Number.isInteger(ceiling[k]) ? ceiling[k] : 0} — use the package's component (see AGENTS.md "The experience belongs to the package"), or lower the count; do not raise the ceiling.`,
   );
