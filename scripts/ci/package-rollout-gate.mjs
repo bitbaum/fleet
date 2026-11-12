@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { receiptMatches, workspaceSourceArtifact, workspaceSourcePath } from "./release-receipt-contract.mjs";
+import { everyRunForSha, runsForShaPath } from "./runs-for-sha.mjs";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -509,9 +510,8 @@ export function successfulConsumerChecks(runs, requirements, sha, readJobs) {
   return passed;
 }
 function greenWorkflows(repo, sha) {
-  const runs = api(
-    `repos/${repo}/actions/runs?head_sha=${sha}&per_page=100`,
-  ).workflow_runs;
+  // Every page: a long-lived tip buries its own CI under sweep dispatches.
+  const runs = everyRunForSha((page) => api(runsForShaPath(repo, sha, page)));
   return successfulConsumerChecks(
     runs,
     policy.consumerChecks?.[repo] ?? [],

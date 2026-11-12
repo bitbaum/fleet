@@ -114,7 +114,7 @@ test("production Git release discovery uses remote tags and raw source, not thre
     run,
     (_repo, ref) => { sourceReads.push(ref); return "0.7.0"; },
     (path) => {
-      assert.equal(path, `repos/bitbaum/accountkit/actions/runs?head_sha=${latest}&per_page=100`);
+      assert.equal(path, `repos/bitbaum/accountkit/actions/runs?head_sha=${latest}&per_page=100&page=1`);
       return { workflow_runs: [{ path: ".github/workflows/ci.yml", event: "push", conclusion: "success" }] };
     },
   );
