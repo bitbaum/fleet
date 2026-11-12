@@ -43,6 +43,7 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { everyRunForSha, runsForShaPath } from "./runs-for-sha.mjs";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -337,9 +338,11 @@ export function deployedByShaIndex(runsForSha, deployFiles) {
 
 export function runsForSha(owner, repo, sha) {
   try {
-    return JSON.parse(
-      gh(["api", `repos/${owner}/${repo}/actions/runs?head_sha=${sha}&per_page=100`, "--jq",
-          "[.workflow_runs[] | {path, status, conclusion}]"]),
+    return everyRunForSha((page) =>
+      JSON.parse(
+        gh(["api", runsForShaPath(`${owner}/${repo}`, sha, page), "--jq",
+            "{total_count, workflow_runs: [.workflow_runs[] | {path, status, conclusion}]}"]),
+      ),
     );
   } catch {
     return null; // unreadable: deployedByShaIndex(null) is false, so it does not

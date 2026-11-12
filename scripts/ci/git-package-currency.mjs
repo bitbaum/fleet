@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { everyRunForSha, runsForShaPath } from "./runs-for-sha.mjs";
 
 const rawPackageVersion = (repo, ref, run = execFileSync) => {
   const url = `https://raw.githubusercontent.com/${repo}/${encodeURIComponent(ref)}/package.json`;
@@ -155,9 +156,9 @@ export function latestVerifiedGitRelease(repo, request, run = execFileSync, read
       : readPackage(repo, sha, run);
     if (declaredVersion !== release.version)
       continue;
-    const runs = (request ?? checkRuns)(
-      `repos/${repo}/actions/runs?head_sha=${sha}&per_page=100`,
-    ).workflow_runs;
+    const runs = everyRunForSha((page) =>
+      (request ?? checkRuns)(runsForShaPath(repo, sha, page)),
+    );
     const latest = runs.find(
       (run) =>
         run.path === ".github/workflows/ci.yml" &&
