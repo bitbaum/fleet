@@ -22,6 +22,7 @@ a new one. The existing `/react` + `styles.css` convention is the shape.
 | ----------------------------------------------------------------------- | ------------------ | -------------------------------------- |
 | Any text field with a microphone, 16px, optional "improve"              | `@bitbaum/chatkit` | `DictationField` (`/react`)            |
 | A comment thread (list + composer with mic + remove own)                | `@bitbaum/chatkit` | `CommentThread` (`/react`)             |
+| A messenger: conversations, a thread between people and agents, files   | `@bitbaum/chatkit` | `Messenger` (`/messenger`); rules in `@bitbaum/threadkit` |
 | Article composer: Speak, Improve, Photo, Chart, Preview, drafts, publish | `@bitbaum/writingkit` | `/react`: `ArticleComposer`, panels |
 | Writing-help prompts, input and answer checks (headless)                | `@bitbaum/writingkit` | root: `assist`                       |
 | Article page actions (primary + equal cells, owner row apart)           | `@bitbaum/writingkit` | `/react`: `ArticleActions`           |
@@ -45,6 +46,10 @@ Each component takes **transports**, never a database or vendor:
 | 7    | Every other product: set ceiling to today's counts (`--init`), then migrate fields      | not started |
 | 8    | OrangeCat's own header/footer/menu (3 files named as chrome) → sitekit                  | not started |
 | 9    | evig (96 bare text areas), loki (34): the largest counts, so the largest wins           | not started |
+| 10   | chatkit: `Messenger` (`/messenger`), `Composer layout="inline"`, file uploads through the app's transport | [chatkit #82](https://github.com/bitbaum/chatkit/pull/82), opened 2026-11-12 |
+| 11   | threadkit 0.1.2: attachment policy, `readState`, mention matcher                        | merged as [threadkit #54](https://github.com/bitbaum/threadkit/pull/54) and tagged 2026-11-12; **not on npm**: its publish run was refused (`ENEEDAUTH`), because `publish.yml` is not linked as the package's trusted publisher on npmjs.com. Until it is, chatkit carries those rules in `src/thread-rules.ts` |
+| 12   | OrangeCat's direct messages are the packaged Messenger; attachments in a private bucket | see orangecat CHANGELOG, 2026-11-12 |
+| 13   | Messenger, next: remove chatkit's `src/thread-rules.ts` once threadkit 0.1.2 is on npm; presence (the transport event exists, OrangeCat does not emit it yet); voice messages as an attachment (the composer's microphone dictates, it does not record a message); the Cat reading a picture it is tagged under; a second adopter (`SHARED.md` names vitareba's care-team messaging as running on threadkit; its screen has not been read) | not started |
 
 When a step is finished, replace its state with the PR that finished it and
 the date; do not write "done" without a link.

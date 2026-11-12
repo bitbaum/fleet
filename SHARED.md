@@ -462,6 +462,27 @@ and closed that chat's four gaps while at it: 16px answers, the
 `visualViewport` keyboard fix (`useViewportHeight`), mic failures shown in
 words, and the Web-Speech-first fallback from heidi.
 
+### People talking to people — the same package
+
+A messenger (direct messages, a group, a conversation an agent has joined) is
+`Messenger` from `@bitbaum/chatkit/messenger`, never a list, a bubble and a
+composer assembled in the app. OrangeCat's was assembled in the app: about
+8,700 lines, in which the Cat's answer in a conversation between two people
+looked like the other person's, nothing said an agent was taking part, the
+box sat in the middle of a phone with an empty band under it, and nothing
+could be attached (owner, 2026-11-12). None of that could be fixed for the
+next product, so it was fixed in the package and OrangeCat consumes it.
+
+The app implements `MessengerTransport` (its routes, its realtime channel, its
+storage) and nothing else; the rules behind the screen (who may write, what is
+unread, what may be attached, how far a message was read) are
+`@bitbaum/threadkit`'s. What the package guarantees is the README's
+"People talking to people" section and `test/browser-messenger.mjs`; where
+attachments are stored, and at what cost, is the app's
+(orangecat `src/config/message-attachments.ts` is the worked example: a
+private bucket behind signed URLs, a policy shared by browser, routes and
+bucket, a daily sweep).
+
 ### The checklist — each line is a bug somebody already fixed once
 
 1. **A microphone in the composer, always.** Web Speech first; if it is missing
@@ -530,6 +551,7 @@ it stands.
 | types in any long text box               | a microphone that always works, 16px, drafts that survive           | chatkit `DictationField` (a conversation: `Composer`)    |
 | writes an article                        | speak it, improve it, photo, chart, preview, publish, share         | writingkit `/react`                                       |
 | talks under an article, a page, an item  | one thread, same box with the mic, remove your own                  | chatkit `CommentThread`                                   |
+| writes to another person, or several     | one messenger: list, thread, a one-row box with the mic, photos, videos and files, and an agent never mistaken for a person | chatkit `Messenger` (`/messenger`) |
 | opens the site                           | one header, one menu that explains each screen, one phone tab bar   | sitekit (`SiteMasthead`, `SiteTabBar`, `SiteFooter`)      |
 | acts on an item                          | one primary, then equal cells; owner controls apart                 | writingkit `ArticleActions` (the pattern, "One shape")    |
 | types a short field (name, email, price) | a normal input at 16px; no mic unless it is prose                   | the app (the audit leaves single-line inputs alone)       |
