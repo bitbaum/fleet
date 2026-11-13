@@ -198,7 +198,7 @@ test('pnpm Git aliases normalize both codeload and git transport prefixes', asyn
   }
 });
 
-test('actual workflow mutation rejects stale source/declarations and updates optional aliases', async () => {
+test('actual workflow mutation rejects a stale declaration, survives a moved branch and updates optional aliases', async () => {
   const { readFileSync, writeFileSync, mkdtempSync, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
@@ -216,16 +216,21 @@ test('actual workflow mutation rejects stale source/declarations and updates opt
     writeFileSync(file, original);
     const row = { ...preferredPackageUpdate(input), path: 'package.json', sourceSha: head };
     const run = bump => spawnSync(process.execPath, ['-e', script], { cwd: dir, input: JSON.stringify([bump]), encoding: 'utf8' });
-    let result = run({ ...row, sourceSha: 'c'.repeat(40) });
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Source changed since planning/);
-    assert.equal(readFileSync(file, 'utf8'), original);
-    result = run({ ...row, from: '^0.1.0' });
+    // The declaration changed since the plan: refused, whatever the commit.
+    let result = run({ ...row, from: '^0.1.0' });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /Stale declaration/);
     assert.equal(readFileSync(file, 'utf8'), original);
     result = run(row);
     assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(readFileSync(file, 'utf8')).optionalDependencies[row.name], row.to);
+    // The branch moved since the plan but the declaration is what was
+    // planned: the bump goes ahead. A busy repository lost the old
+    // whole-commit lease on every run (orangecat, 2026-11-13).
+    writeFileSync(file, original);
+    result = run({ ...row, sourceSha: 'c'.repeat(40) });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /main moved since planning/);
     assert.equal(JSON.parse(readFileSync(file, 'utf8')).optionalDependencies[row.name], row.to);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

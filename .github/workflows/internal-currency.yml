@@ -180,7 +180,16 @@ jobs:
             const fs = require("node:fs");
             const bumps = JSON.parse(fs.readFileSync(0, "utf8"));
             const head = require("node:child_process").execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-            if (bumps.some(b => b.sourceSha !== head)) throw new Error("Source changed since planning; rerun the census");
+            // The branch moving since the plan is not a reason to stop: the plan
+            // runs once for every repository and the bumps follow three at a
+            // time, so a busy repository (orangecat merges every few minutes)
+            // lost this race on every run and was never bumped (nine of thirty
+            // on 2026-11-13). What must not have changed is the declaration
+            // being raised, and that is checked line by line below
+            // ("Stale declaration"); pnpm then resolves against the tree as it
+            // is now.
+            if (bumps.some(b => b.sourceSha !== head))
+              console.log("main moved since planning; each declaration is checked against the plan");
             for (const b of bumps) {
               const pkg = JSON.parse(fs.readFileSync(b.path, "utf8"));
               for (const field of ["dependencies", "devDependencies", "optionalDependencies"]) {
