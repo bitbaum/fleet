@@ -65,6 +65,17 @@ tags verified stable versions even before npm bootstrap. The template sync
 offers missing release files to every registered package, not just newly
 extracted packages. Existing files remain owned by their repositories.
 
+## Released but not on npm
+
+`scripts/ci/npm-publish-lag-audit.mjs` runs every three hours
+(`.github/workflows/npm-publish-lag.yml`). A registered npm package whose
+version on `main` is newer than npm's `latest` for more than two hours is a
+finding: it opens or updates one issue in this repository, "npm releases behind
+GitHub", with the npm Trusted Publisher link and the exact values to enter, and
+closes it when npm catches up. That form needs the npm account's own 2FA, so it
+is the one step an agent cannot take; the issue makes it a two-minute task
+instead of a red run in a package's Actions tab that nobody reads.
+
 ## Account lifecycle evidence
 
 `.github/workflows/shared-auth-journey.yml` builds the consuming app without auth

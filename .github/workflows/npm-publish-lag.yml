@@ -1,0 +1,59 @@
+# Is every released package actually on npm?
+#
+# A package's version bump tags itself on GitHub and publishes through npm
+# Trusted Publishing. When npm does not trust the workflow the upload fails
+# with ENEEDAUTH, and the only trace is a red run nobody reads: bip-kit 0.7.x
+# sat unpublished for three days in November 2026 and stalled two products.
+# This finds that within hours and puts the one human fix — npm's Trusted
+# Publisher form, which needs the owner's 2FA — in an issue with every value
+# spelled out. The issue closes itself once npm catches up.
+name: npm publish lag
+
+on:
+  schedule:
+    - cron: "23 */3 * * *"
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - scripts/ci/npm-publish-lag-audit.mjs
+      - scripts/ci/test-npm-publish-lag-audit.mjs
+      - .github/workflows/npm-publish-lag.yml
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: npm-publish-lag
+  cancel-in-progress: false
+
+jobs:
+  lag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: The judgement is pure — test it before trusting it
+        run: node scripts/ci/test-npm-publish-lag-audit.mjs
+
+      - name: Released on GitHub, published on npm?
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          { echo '## npm publish lag'; echo; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          node scripts/ci/npm-publish-lag-audit.mjs --issue 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          status=${PIPESTATUS[0]}
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: A lag is a failure
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/npm-publish-lag-audit.mjs --check
