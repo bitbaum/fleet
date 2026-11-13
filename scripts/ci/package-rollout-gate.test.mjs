@@ -14,6 +14,7 @@ import {
   canaryDeploymentEvidence,
   canaryChecksWithDocsOnlyAncestors,
   isDocsOnlyChange,
+  deployedCanaryCommit,
 } from "./package-rollout-gate.mjs";
 const name = "@bitbaum/sitekit",
   now = Date.parse("2026-10-24T12:00:00Z");
@@ -660,4 +661,29 @@ importers:
         version: 0.4.2
 `;
   assert.deepEqual(lockedDependencies(manifest, lock), { "@bitbaum/sitekit": "0.4.2" });
+});
+
+test("the canary is measured at the commit its last successful deploy put live", () => {
+  const tip = "a".repeat(40);
+  const live = "b".repeat(40);
+  const older = "c".repeat(40);
+  const run = (head_sha, status, conclusion) => ({ head_sha, status, conclusion });
+  // A newer commit is still deploying: the live one is measured, not the tip.
+  assert.deepEqual(
+    deployedCanaryCommit({
+      tip,
+      deploys: [run(tip, "in_progress", null), run(live, "completed", "success"), run(older, "completed", "success")],
+    }).commit,
+    live,
+  );
+  // A failed deploy of the tip does not make its commit live.
+  assert.equal(
+    deployedCanaryCommit({ tip, deploys: [run(tip, "completed", "failure"), run(live, "completed", "success")] }).commit,
+    live,
+  );
+  // No successful deploy on record: the tip, and the newest run as the deploy.
+  const none = deployedCanaryCommit({ tip, deploys: [run(tip, "completed", "failure")] });
+  assert.equal(none.commit, tip);
+  assert.equal(none.deploy.conclusion, "failure");
+  assert.equal(deployedCanaryCommit({ tip, deploys: [] }).commit, tip);
 });

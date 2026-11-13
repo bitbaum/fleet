@@ -659,6 +659,55 @@ export async function canaryDeploymentEvidence({
 }
 
 /**
+ * The canary commit the gate measures: the one its last successful deploy put
+ * live, not the branch tip. The question is "does the canary RUN this artifact
+ * and did that commit pass its checks"; the live receipt answers it for the
+ * deployed commit, and still has to match it. Measuring the tip held every
+ * consumer of a busy canary: OrangeCat's receipt names its workspace packages
+ * by commit tarball, so it matched only while the tip itself was live, and its
+ * main moves every few minutes against a fifteen-minute deploy (2026-11-13:
+ * paykit 0.3.0 held bitbaum/loki#1652 through every sweep of the night while
+ * OrangeCat ran it). With no successful deploy on record, the tip is measured.
+ */
+export function deployedCanaryCommit({ tip, deploys }) {
+  const live = (deploys ?? []).find(
+    (run) =>
+      run?.status === "completed" &&
+      run?.conclusion === "success" &&
+      /^[0-9a-f]{40}$/.test(run?.head_sha ?? ""),
+  );
+  return live
+    ? { commit: live.head_sha, deploy: live }
+    : { commit: tip, deploy: deploys?.[0] };
+}
+
+async function readCanaryEvidence(canary, config, requiredChecks) {
+  const branch = api(`repos/${canary}`).default_branch;
+  const tip = api(`repos/${canary}/commits/${branch}`).sha;
+  const { commit, deploy } = deployedCanaryCommit({
+    tip,
+    deploys: api(
+      `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=10`,
+    ).workflow_runs,
+  });
+  return canaryDeploymentEvidence({
+    canary,
+    tip: commit,
+    dependencies: canaryDepsAt(canary, commit, config),
+    receiptDependencies: receiptDepsAt(canary, commit, config),
+    receiptProject: config.receiptProject ?? ".",
+    receiptProjects: config.receiptProjects,
+    deploy,
+    checks: canaryTipChecks(canary, commit, requiredChecks),
+    requiredChecks,
+    receiptUrl: policy.deploymentReceipts?.[canary],
+    lock:
+      content(canary, "pnpm-lock.yaml", commit) ??
+      content(canary, "package-lock.json", commit),
+  });
+}
+
+/**
  * The commit the pull request's own change is measured from. `pr.base.sha` is
  * the base branch as GitHub last recorded it, not where the branch forked: a
  * branch that predates a dependency bump on the base would read as reverting
@@ -739,27 +788,7 @@ async function main() {
           const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
           const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
           if (cache.has(cacheKey)) return cache.get(cacheKey);
-          const branch = api(`repos/${canary}`).default_branch;
-          const tip = api(`repos/${canary}/commits/${branch}`).sha;
-          const deploy = api(
-            `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
-          ).workflow_runs[0];
-          const checks = canaryTipChecks(canary, tip, requiredChecks);
-          const result = await canaryDeploymentEvidence({
-            canary,
-            tip,
-            dependencies: canaryDepsAt(canary, tip, config),
-            receiptDependencies: receiptDepsAt(canary, tip, config),
-            receiptProject: config.receiptProject ?? ".",
-            receiptProjects: config.receiptProjects,
-            deploy,
-            checks,
-            requiredChecks,
-            receiptUrl: policy.deploymentReceipts?.[canary],
-            lock:
-              content(canary, "pnpm-lock.yaml", tip) ??
-              content(canary, "package-lock.json", tip),
-          });
+          const result = await readCanaryEvidence(canary, config, requiredChecks);
           cache.set(cacheKey, result);
           return result;
         },
@@ -844,27 +873,7 @@ async function main() {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
         const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
         if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
-        const branch = api(`repos/${canary}`).default_branch;
-        const tip = api(`repos/${canary}/commits/${branch}`).sha;
-        const deploy = api(
-          `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
-        ).workflow_runs[0];
-        const checks = canaryTipChecks(canary, tip, requiredChecks);
-        const result = await canaryDeploymentEvidence({
-          canary,
-          tip,
-          dependencies: canaryDepsAt(canary, tip, config),
-          receiptDependencies: receiptDepsAt(canary, tip, config),
-          receiptProject: config.receiptProject ?? ".",
-          receiptProjects: config.receiptProjects,
-          deploy,
-          checks,
-          requiredChecks,
-          receiptUrl: policy.deploymentReceipts?.[canary],
-          lock:
-            content(canary, "pnpm-lock.yaml", tip) ??
-            content(canary, "package-lock.json", tip),
-        });
+        const result = await readCanaryEvidence(canary, config, requiredChecks);
         canaryCache.set(cacheKey, result);
         return result;
       },
@@ -895,27 +904,7 @@ async function main() {
         const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
         const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
         if (canaryCache.has(cacheKey)) return canaryCache.get(cacheKey);
-        const branch = api(`repos/${canary}`).default_branch;
-        const tip = api(`repos/${canary}/commits/${branch}`).sha;
-        const deploy = api(
-          `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
-        ).workflow_runs[0];
-        const checks = canaryTipChecks(canary, tip, requiredChecks);
-        const result = await canaryDeploymentEvidence({
-          canary,
-          tip,
-          dependencies: canaryDepsAt(canary, tip, config),
-          receiptDependencies: receiptDepsAt(canary, tip, config),
-          receiptProject: config.receiptProject ?? ".",
-          receiptProjects: config.receiptProjects,
-          deploy,
-          checks,
-          requiredChecks,
-          receiptUrl: policy.deploymentReceipts?.[canary],
-          lock:
-            content(canary, "pnpm-lock.yaml", tip) ??
-            content(canary, "package-lock.json", tip),
-        });
+        const result = await readCanaryEvidence(canary, config, requiredChecks);
         canaryCache.set(cacheKey, result);
         return result;
       },
@@ -945,27 +934,7 @@ async function main() {
       const requiredChecks = config.canaryChecks ?? ["ci.yml", "browser-smoke.yml"];
       const cacheKey = canaryEvidenceKey(canary, config, requiredChecks);
       if (cache.has(cacheKey)) return cache.get(cacheKey);
-      const branch = api(`repos/${canary}`).default_branch;
-      const tip = api(`repos/${canary}/commits/${branch}`).sha;
-      const deploy = api(
-        `repos/${canary}/actions/workflows/${encodeURIComponent(policy.deploymentWorkflows?.[canary] ?? "deploy.yml")}/runs?branch=${branch}&per_page=1`,
-      ).workflow_runs[0];
-      const checks = canaryTipChecks(canary, tip, requiredChecks);
-      const result = await canaryDeploymentEvidence({
-        canary,
-        tip,
-        dependencies: canaryDepsAt(canary, tip, config),
-        receiptDependencies: receiptDepsAt(canary, tip, config),
-        receiptProject: config.receiptProject ?? ".",
-        receiptProjects: config.receiptProjects,
-        deploy,
-        checks,
-        requiredChecks,
-        receiptUrl: policy.deploymentReceipts?.[canary],
-        lock:
-          content(canary, "pnpm-lock.yaml", tip) ??
-          content(canary, "package-lock.json", tip),
-      });
+      const result = await readCanaryEvidence(canary, config, requiredChecks);
       cache.set(cacheKey, result);
       return result;
     },
