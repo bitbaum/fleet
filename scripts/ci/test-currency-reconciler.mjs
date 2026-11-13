@@ -27,6 +27,7 @@ import {
   latestOf,
   branchFor,
   MAX_PRS,
+  capPlan,
   INTERNAL_SCOPE,
 } from "./currency-reconciler.mjs";
 
@@ -198,6 +199,14 @@ check("the cap is small enough to be a real guard", MAX_PRS > 0 && MAX_PRS <= 30
 // counted across 43 repos on 2026-09-21; 12 was set from a miscount and
 // tripped immediately.
 check("the cap clears the 13 the first live run actually found", MAX_PRS >= 13);
+// 2026-11-09: 32 planned, cap 30, every run refused all 32 for four days.
+{
+  const queue = Array.from({ length: 32 }, (_, i) => ({ repo: `bitbaum/r${i}`, bumps: [] }));
+  const { run, waiting } = capPlan(queue);
+  check("over the cap, a run takes the head of the queue, never nothing", run.length === MAX_PRS && run[0].repo === "bitbaum/r0");
+  check("and names what waits for the next run", waiting.length === 2 && waiting[0] === "bitbaum/r30");
+  check("under the cap, everything runs", capPlan(queue.slice(0, 5)).run.length === 5 && capPlan(queue.slice(0, 5)).waiting.length === 0);
+}
 check("but still refuses a whole-fleet sweep (43 repos)", MAX_PRS < 43);
 
 console.log();
