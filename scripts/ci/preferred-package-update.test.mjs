@@ -243,3 +243,18 @@ test('automatic currency events are not suppressed by the manual dry-run input',
   const workflow = readFileSync(new URL('../../.github/workflows/internal-currency.yml', import.meta.url), 'utf8');
   assert.match(workflow, /if:\s*\$\{\{\s*needs\.plan\.outputs\.any == 'true' && \(github\.event_name != 'workflow_dispatch' \|\| inputs\.go == true\)\s*\}\}/);
 });
+
+test('an npm consumer of a package that is on npm stays on npm while Git leads the publish', () => {
+  // 2026-11-13: bip-kit's Git release (0.7.1) led npm (0.6.1); `^0.6.1` was
+  // rewritten to github:bitbaum/bip-kit#<sha>, pnpm refused to build it, and
+  // the whole bump failed for eight repositories.
+  const lead = { ...target, name: '@bitbaum/bip-kit', repo: 'https://github.com/bitbaum/bip-kit', version: '0.7.1', npmVersion: '0.6.1' };
+  const consumer = { repo: 'app', path: 'package.json', name: '@bitbaum/bip-kit', from: '^0.6.1', identity: { packageName: '@bitbaum/bip-kit', range: '^0.6.1' }, currentVersion: '0.6.1', target: lead, sourceSha };
+  assert.equal(preferredPackageUpdate(consumer), null, 'npm has nothing newer: wait for the publish');
+  const behind = preferredPackageUpdate({ ...consumer, from: '^0.5.0', identity: { packageName: '@bitbaum/bip-kit', range: '^0.5.0' }, currentVersion: '0.5.0' });
+  assert.equal(behind.to, '^0.6.1', 'npm has something newer: take that, not the Git artifact');
+  assert.equal(behind.source, 'npm');
+  // A consumer already on Git still advances along Git.
+  const onGit = preferredPackageUpdate({ ...consumer, from: `github:bitbaum/bip-kit#${'c'.repeat(40)}`, identity: { packageName: '@bitbaum/bip-kit' } });
+  assert.equal(onGit.to, `github:bitbaum/bip-kit#${sha}`);
+});

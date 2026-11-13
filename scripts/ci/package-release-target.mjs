@@ -29,6 +29,9 @@ export function releasedPackage(pkg, npmVersion, gitRelease) {
       version: git.version,
       install: { source: "git", command: `pnpm add github:${repo}#${git.sha}` },
       release: { source: "git", tag: git.tag, commit: git.sha },
+      // What npm has, for consumers that install from npm and stay there
+      // (preferred-package-update.mjs).
+      npmVersion: npm,
     };
   }
   return {
