@@ -34,6 +34,20 @@ export const INTERNAL_SCOPE = "@bitbaum/";
 export const MAX_PRS = 30;
 
 /**
+ * Over the cap, the run takes the FIRST `max` repositories of the plan and
+ * leaves the rest for the next run. It used to take none: on 2026-11-09 the
+ * queue reached 32, every run after that refused all 32, and nothing was
+ * bumped for four days, so the queue could only grow. That stall is why eight
+ * apps were still on an ai-kit with Google in the free chain on 2026-11-13,
+ * a day after the fix was published. A guard that stops everything when work
+ * piles up guarantees the pile. The plan is canary-first, so the head of the
+ * queue is the part the rest waits on.
+ */
+export function capPlan(plan, max = MAX_PRS) {
+  return { run: plan.slice(0, max), waiting: plan.slice(max).map((entry) => entry.repo) };
+}
+
+/**
  * Split a registry range into its operator and its floor version.
  *
  * Returns null for anything that is not a plain registry range — a git pin, a
@@ -284,13 +298,11 @@ async function main() {
   if (asJson && unreadable.length) console.error(`UNCHECKED repositories: ${unreadable.join(", ")}`);
 
   if (asJson) {
-    // Over the cap, emit an EMPTY matrix rather than the plan. The workflow
-    // acts on whatever this prints, so refusing here is the refusal.
-    if (plan.length > MAX_PRS) {
-      console.error(`Refusing ${plan.length} repository updates: cap is ${MAX_PRS}; inspect the plan before changing it.`);
-      process.exitCode = 1;
-    }
-    console.log(JSON.stringify(plan.length > MAX_PRS ? [] : plan));
+    // Over the cap, emit the head of the queue; the rest waits for the next run.
+    const { run, waiting } = capPlan(plan);
+    if (waiting.length)
+      console.error(`${plan.length} repository updates planned, cap is ${MAX_PRS}: ${waiting.length} wait for the next run (${waiting.join(", ")}).`);
+    console.log(JSON.stringify(run));
     return;
   }
 
@@ -319,11 +331,9 @@ async function main() {
 
   if (plan.length > MAX_PRS) {
     console.error(
-      `\n✗ ${plan.length} repos want a bump, over the cap of ${MAX_PRS}. Opening NONE.` +
-        `\n  A whole fleet going stale at once is likelier a bug in this predicate than` +
-        `\n  ${plan.length} genuinely stale repos. Read the plan above before raising the cap.`,
+      `\n! ${plan.length} repos want a bump, over the cap of ${MAX_PRS}: a run opens the first` +
+        `\n  ${MAX_PRS} and the rest wait for the next one.`,
     );
-    process.exitCode = 1;
   }
 }
 
