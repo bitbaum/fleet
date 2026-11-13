@@ -276,6 +276,11 @@ jobs:
       - name: The live-claims audit still detects, and still stays quiet
         run: node scripts/ci/test-live-claims-audit.mjs
 
+      # A package tagged on GitHub but missing from npm (ENEEDAUTH): reported
+      # with the npm Trusted Publisher fix, quiet while a release is publishing.
+      - name: The npm publish-lag audit still detects, and still stays quiet
+        run: node scripts/ci/test-npm-publish-lag-audit.mjs
+
       # The judgement is a pure function of (repos, register, allow), so its
       # test needs no network — the fixtures are the shapes that were live on
       # 2026-09-11, including hirnli's correct-but-looks-wrong homepage.
