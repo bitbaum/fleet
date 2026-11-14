@@ -29,4 +29,14 @@ else throw new Error('Unexpected API request: '+args.join(' '));
   const result=run(valid);assert.equal(result.status,0,result.stderr);
   assert.deepEqual(JSON.parse(readFileSync(join(dir,'post'),'utf8')),{event_type:'shared-package-release',client_payload:{repository:'bitbaum/accountkit',version:'0.7.2',commit:sha}});
   console.log('7 release-notification scenarios pass: only verified tagged releases notify; missing authority fails visibly.');
+
+  // The second notice (release-notify-tagged.yml) runs once the tag exists. It
+  // is only a fix while it asks the same question, on the tag workflow's name.
+  const yamlOf = file => JSON.parse(execFileSync('python3', ['-c', 'import yaml,sys,json; print(json.dumps(yaml.safe_load(open(sys.argv[1])), default=str))', new URL(`../../templates/package/.github/workflows/${file}`, import.meta.url).pathname], {encoding:'utf8'}));
+  const tagged = yamlOf('release-notify-tagged.yml');
+  const tagger = yamlOf('git-release.yml');
+  assert.equal(tagged.jobs.notify.steps[0].run.trimEnd(), script.trimEnd(), 'release-notify-tagged.yml must run release-notify.yml\'s step unchanged');
+  assert.deepEqual(tagged.true.workflow_run.workflows, [tagger.name], 'it must listen to the workflow that creates the tag');
+  assert.match(tagged.jobs.notify.if, /conclusion == 'success'/);
+  console.log('the tagged notice asks the same question, after the tag workflow.');
 } finally {rmSync(dir,{recursive:true,force:true});}
