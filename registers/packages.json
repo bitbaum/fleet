@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-11-10T05:55:23.258Z",
+  "generatedAt": "2026-11-14T12:21:09.538Z",
   "packages": [
     {
       "slug": "design-tokens",
       "name": "@bitbaum/design-tokens",
       "repo": "https://github.com/bitbaum/design-tokens",
-      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, the Tailwind preset that maps them, and next/font/local calls for every face the fleet's apps use.",
-      "version": "1.5.2",
+      "description": "Design SSOT for OrangeCat, Loki and Solon — tokens, self-hosted faces, the Tailwind preset that maps them, next/font/local calls for every face the fleet's apps use, and every product's mark.",
+      "version": "1.7.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/design-tokens@^1.5.2"
+        "command": "pnpm add @bitbaum/design-tokens@^1.7.1"
       },
-      "adopters": 26,
+      "adopters": 27,
       "adopterNames": [
         "accountkit",
         "aoz-begleitung",
@@ -25,6 +25,7 @@
         "diplodoctor",
         "evig",
         "fleet",
+        "heidi",
         "hirnli",
         "kivvi",
         "loki",
@@ -42,18 +43,18 @@
       ],
       "release": {
         "source": "npm",
-        "version": "1.5.2"
+        "version": "1.7.1"
       }
     },
     {
       "slug": "mail-kit",
       "name": "@bitbaum/mail-kit",
       "repo": "https://github.com/bitbaum/mail-kit",
-      "description": "The fleet's one email layer: Resend over raw fetch, one HTML layout with dark mode and a plain-text twin, signed one-click unsubscribe, zero dependencies, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
-      "version": "0.3.0",
+      "description": "The fleet's one email layer: Resend over raw fetch by default, or the app's own mail server over SMTP, one HTML layout with dark mode and a plain-text twin, signed one-click unsubscribe, honest never-throwing results, sandbox/placeholder guards, and the shared-sender convention encoded once.",
+      "version": "0.4.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/mail-kit@^0.3.0"
+        "command": "pnpm add @bitbaum/mail-kit@^0.4.0"
       },
       "adopters": 23,
       "adopterNames": [
@@ -83,7 +84,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.3.0"
+        "version": "0.4.0"
       }
     },
     {
@@ -91,10 +92,10 @@
       "name": "@bitbaum/accountkit",
       "repo": "https://github.com/bitbaum/accountkit",
       "description": "One account for every bitbaum product: the account menu, accounts themselves (better-auth: password, magic link, passkeys, 2FA, OIDC) and Sign in with OrangeCat. Styled from @bitbaum/design-tokens.",
-      "version": "0.27.0",
+      "version": "0.32.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/accountkit@^0.27.0"
+        "command": "pnpm add @bitbaum/accountkit@^0.32.1"
       },
       "adopters": 22,
       "adopterNames": [
@@ -123,7 +124,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.27.0"
+        "version": "0.32.1"
       }
     },
     {
@@ -131,10 +132,10 @@
       "name": "@bitbaum/ai-kit",
       "repo": "https://github.com/bitbaum/ai-kit",
       "description": null,
-      "version": "1.24.0",
+      "version": "1.29.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/ai-kit@^1.24.0"
+        "command": "pnpm add @bitbaum/ai-kit@^1.29.0"
       },
       "adopters": 20,
       "adopterNames": [
@@ -161,18 +162,18 @@
       ],
       "release": {
         "source": "npm",
-        "version": "1.24.0"
+        "version": "1.29.0"
       }
     },
     {
       "slug": "chatkit",
       "name": "@bitbaum/chatkit",
       "repo": "https://github.com/bitbaum/chatkit",
-      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, and LLM markdown — the fleet's chat standard as a package.",
-      "version": "0.23.0",
+      "description": "One chat for every product: a composer with a microphone that always works, a thread that does not fight the reader, messages with copy and retry, LLM markdown, and a messenger for people and the agents among them — the fleet's chat standard as a package.",
+      "version": "0.36.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/chatkit@^0.23.0"
+        "command": "pnpm add @bitbaum/chatkit@^0.36.0"
       },
       "adopters": 18,
       "adopterNames": [
@@ -197,7 +198,43 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.23.0"
+        "version": "0.36.0"
+      }
+    },
+    {
+      "slug": "limitkit",
+      "name": "@bitbaum/limitkit",
+      "repo": "https://github.com/bitbaum/limitkit",
+      "description": "Rate limiting as a decision, not a middleware: fixed and sliding windows over an injectable store, a bounded in-memory store, standard RateLimit headers, and client-IP extraction. No HTTP client, no framework.",
+      "version": "0.2.1",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/limitkit@^0.2.1"
+      },
+      "adopters": 18,
+      "adopterNames": [
+        "accountkit",
+        "aoz-begleitung",
+        "biaslens",
+        "botsmann",
+        "causius",
+        "diplodoctor",
+        "evig",
+        "fleet",
+        "heidi",
+        "kivvi",
+        "loki",
+        "morulia",
+        "orangecat",
+        "petvity",
+        "skif",
+        "solon",
+        "surf-your-life",
+        "truthseeker"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.2.1"
       }
     },
     {
@@ -205,10 +242,10 @@
       "name": "@bitbaum/bip-kit",
       "repo": "https://github.com/bitbaum/bip-kit",
       "description": "Building in Public, as a content contract: parse markdown into typed blocks and render them with a reference React renderer (@bitbaum/bip-kit/react) — blog, roadmap, changelog on your product site, bring your own design tokens.",
-      "version": "0.6.1",
+      "version": "0.9.1",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/bip-kit@^0.6.1"
+        "command": "pnpm add @bitbaum/bip-kit@^0.9.1"
       },
       "adopters": 17,
       "adopterNames": [
@@ -232,42 +269,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.6.1"
-      }
-    },
-    {
-      "slug": "limitkit",
-      "name": "@bitbaum/limitkit",
-      "repo": "https://github.com/bitbaum/limitkit",
-      "description": "Rate limiting as a decision, not a middleware: fixed and sliding windows over an injectable store, a bounded in-memory store, standard RateLimit headers, and client-IP extraction. No HTTP client, no framework.",
-      "version": "0.2.1",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/limitkit@^0.2.1"
-      },
-      "adopters": 17,
-      "adopterNames": [
-        "accountkit",
-        "aoz-begleitung",
-        "biaslens",
-        "botsmann",
-        "causius",
-        "diplodoctor",
-        "evig",
-        "fleet",
-        "heidi",
-        "kivvi",
-        "loki",
-        "morulia",
-        "orangecat",
-        "petvity",
-        "skif",
-        "surf-your-life",
-        "truthseeker"
-      ],
-      "release": {
-        "source": "npm",
-        "version": "0.2.1"
+        "version": "0.9.1"
       }
     },
     {
@@ -304,10 +306,10 @@
       "name": "@bitbaum/chartkit",
       "repo": "https://github.com/bitbaum/chartkit",
       "description": "One chart for every product: token-driven SVG charts that render on the server, read as a table, and never cut a label — line, ranked bars, share bars, sparkline, meter, timeline, stat tiles.",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/chartkit@^0.7.0"
+        "command": "pnpm add @bitbaum/chartkit@^0.8.0"
       },
       "adopters": 9,
       "adopterNames": [
@@ -323,7 +325,7 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.7.0"
+        "version": "0.8.0"
       }
     },
     {
@@ -382,13 +384,13 @@
     },
     {
       "slug": "ai-forms",
-      "name": "ai-forms",
+      "name": "@bitbaum/ai-forms",
       "repo": "https://github.com/bitbaum/ai-forms",
       "description": "Headless AI form filling and conversational refinement. Provider-agnostic core, React hook, and a server route factory.",
       "version": "0.1.3",
       "install": {
         "source": "npm",
-        "command": "pnpm add ai-forms@^0.1.3"
+        "command": "pnpm add @bitbaum/ai-forms@^0.1.3"
       },
       "adopters": 7,
       "adopterNames": [
@@ -435,23 +437,23 @@
       "name": "@bitbaum/threadkit",
       "repo": "https://github.com/bitbaum/threadkit",
       "description": "Headless multi-participant message threads. Permission is participation, unread is per-person, and an AI can be a participant subject to the same visibility rules as everyone else.",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/threadkit@^0.1.1"
+        "command": "pnpm add @bitbaum/threadkit@^0.1.2"
       },
       "adopters": 6,
       "adopterNames": [
         "aoz-begleitung",
+        "chatkit",
         "heidi",
-        "orangecat",
         "skif",
         "substrata",
         "vitareba"
       ],
       "release": {
         "source": "npm",
-        "version": "0.1.1"
+        "version": "0.1.2"
       }
     },
     {
@@ -459,10 +461,10 @@
       "name": "@bitbaum/geo-kit",
       "repo": "https://github.com/bitbaum/geo-kit",
       "description": "Versioned, on-demand geography resources and sourced boundary assertions for web applications, and a Canvas 2D renderer for them (globe or map).",
-      "version": "0.5.0",
+      "version": "0.8.0",
       "install": {
         "source": "npm",
-        "command": "pnpm add @bitbaum/geo-kit@^0.5.0"
+        "command": "pnpm add @bitbaum/geo-kit@^0.8.0"
       },
       "adopters": 3,
       "adopterNames": [
@@ -472,7 +474,28 @@
       ],
       "release": {
         "source": "npm",
-        "version": "0.5.0"
+        "version": "0.8.0"
+      }
+    },
+    {
+      "slug": "paykit",
+      "name": "@bitbaum/paykit",
+      "repo": "https://github.com/bitbaum/paykit",
+      "description": "Let a website get paid without holding the money. Sell time-boxed passes through a payment provider (Bitcoin through an OrangeCat account), classify a pasted Bitcoin receive string, and record a shown code (Twint, another currency) the visitor pays in their own app.",
+      "version": "0.3.0",
+      "install": {
+        "source": "npm",
+        "command": "pnpm add @bitbaum/paykit@^0.3.0"
+      },
+      "adopters": 3,
+      "adopterNames": [
+        "heidi",
+        "loki",
+        "orangecat"
+      ],
+      "release": {
+        "source": "npm",
+        "version": "0.3.0"
       }
     },
     {
@@ -512,23 +535,6 @@
       "release": {
         "source": "npm",
         "version": "1.0.1"
-      }
-    },
-    {
-      "slug": "paykit",
-      "name": "@bitbaum/paykit",
-      "repo": "https://github.com/bitbaum/paykit",
-      "description": "Let a website get paid without holding the money. Classify a pasted Bitcoin receive string, and record a shown code (Twint, another currency) the visitor pays in their own app.",
-      "version": "0.1.1",
-      "install": {
-        "source": "npm",
-        "command": "pnpm add @bitbaum/paykit@^0.1.1"
-      },
-      "adopters": 0,
-      "adopterNames": [],
-      "release": {
-        "source": "npm",
-        "version": "0.1.1"
       }
     }
   ],
