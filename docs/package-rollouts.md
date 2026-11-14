@@ -177,6 +177,14 @@ Bitbaum with the exact changed registry commit. Scheduled reconciliation remains
 the fallback when a publisher notification fails. Template synchronization adds
 this missing workflow to existing packages through their normal checked PRs.
 
+A version bump merged by pull request is tagged by `git-release.yml` a few
+seconds after CI completes, so the CI-time notice finds no tag and stands
+down, and Publish cannot repeat it (a run started by `GITHUB_TOKEN` chains no
+further). `release-notify-tagged.yml` asks again when the tag workflow
+completes. Its step is `release-notify.yml`'s, held equal by
+`scripts/packages/test-release-notify.mjs`. Until 13 Nov 2026 every ai-kit
+release reached consumers only on the six-hourly schedule.
+
 ## Different integration classes
 
 A package policy may add `additionalCanaries`, each with its own `canary`,
